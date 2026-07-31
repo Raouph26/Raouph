@@ -608,6 +608,7 @@
         <div id="resource-row">
             <div class="resource-box"><span class="resource-label">HANDS</span><span class="resource-value" id="val-hands">4</span></div>
             <div class="resource-box"><span class="resource-label">REROLLS</span><span class="resource-value" id="val-rerolls">3</span></div>
+            <div class="resource-box"><span class="resource-label">GOLD</span><span class="resource-value" id="val-gold">0</span></div>
         </div>
         <div id="score-banner">—</div>
         <div id="active-word-line"></div>
@@ -652,62 +653,139 @@
         hard: { name:'HARD', stages:8, targets:[0, 300, 800, 2000, 5000, 12000, 30000, 75000, 200000] },
         extreme: { name:'EXTREME', stages:12, targets:[0, 300, 800, 2000, 5000, 12000, 30000, 75000, 200000, 400000, 800000, 1500000, 3000000] }
     };
-    const CHIPS_LEVELS = [20, 40, 70, 110];
-    const ADDMULT_LEVELS = [2, 4, 7, 12];
-    const XMULT_LEVELS = [1.25, 1.50, 1.75, 2.00];
-    const RELIC_TYPES = [
-        { type:'chips', name:'Gold Bonus', levels:CHIPS_LEVELS, fmt:(v)=>'+'+v+' CHIPS' },
-        { type:'addMult', name:'Mult Boost', levels:ADDMULT_LEVELS, fmt:(v)=>'+'+v+' MULT' },
-        { type:'xMult', name:'Power Multi', levels:XMULT_LEVELS, fmt:(v)=>'x'+v.toFixed(2)+' MULT' }
+    const GLYPH_DATABASE = [
+        { id:"scavenger", name:"The Scavenger", type:"green", color:"#22C55E", desc:"+2 Discards per stage." },
+        { id:"perfectionist", name:"The Perfectionist", type:"green", color:"#22C55E", desc:"+1 Hand per stage." },
+        { id:"recycler", name:"The Recycler", type:"green", color:"#22C55E", desc:"Discarding 3 Vowels at once refunds 1 Discard (Max 1/round)." },
+        { id:"deep_pockets", name:"Deep Pockets", type:"green", color:"#22C55E", desc:"Start each round with +2 extra tiles in tray." },
+        { id:"vowel_anchor", name:"Vowel Anchor", type:"blue", color:"#3B82F6", desc:"+15 Base Points for every Vowel played." },
+        { id:"consonant_charge", name:"Consonant Charge", type:"blue", color:"#3B82F6", desc:"+10 Base Points for every Consonant played." },
+        { id:"scrabble_master", name:"Scrabble Master", type:"blue", color:"#3B82F6", desc:"+40 Base Points if word contains Q, X, Z, or J." },
+        { id:"long_form", name:"Long Form", type:"blue", color:"#3B82F6", desc:"+60 Base Points if played word is 6+ letters." },
+        { id:"grammarian", name:"The Grammarian", type:"red", color:"#EF4444", desc:"+3 MULT for every Vowel in played word." },
+        { id:"novelist", name:"The Novelist", type:"red", color:"#EF4444", desc:"x3 MULT if played word is 6+ letters." },
+        { id:"bookends", name:"Bookends", type:"red", color:"#EF4444", desc:"x4 MULT if first and last letters match." },
+        { id:"heavy_hitter", name:"Heavy Hitter", type:"red", color:"#EF4444", desc:"x2 MULT if word has 2+ rare letters (Q, X, Z, J, V)." },
+        { id:"wildcard_rune", name:"Wildcard Rune", type:"purple", color:"#A855F7", desc:"At round start, 1 random tile in active hand becomes Wild." },
+        { id:"duplicator", name:"Duplicator", type:"purple", color:"#A855F7", desc:"Playing a 5-letter word duplicates its highest-scoring letter into bag." },
+        { id:"vowel_shifter", name:"Vowel Shifter", type:"purple", color:"#A855F7", desc:"'Y' counts as both Vowel and Consonant for scoring." },
+        { id:"alchemy", name:"Golden Touch", type:"purple", color:"#A855F7", desc:"Scoring 100+ Points in a single hand grants +2 Bag Gold." }
     ];
-    function getRelicLevelClass(level) { if(level>=4) return 'level-4'; if(level>=3) return 'level-3'; if(level>=2) return 'level-2'; return ''; }
-    function getRelicValue(type, level) { const rt = RELIC_TYPES.find(r=>r.type===type); if(!rt) return 0; return rt.levels[Math.min(level,4)-1] || rt.levels[0]; }
-    function getRelicLabel(type, level) { const rt = RELIC_TYPES.find(r=>r.type===type); if(!rt) return ''; return rt.fmt(getRelicValue(type, level)); }
-    function upgradeRelic(slotIndex) { const relic = G.relics[slotIndex]; if(!relic || relic.level >= 4) return; relic.level++; relic.value = getRelicValue(relic.type, relic.level); relic.desc = getRelicLabel(relic.type, relic.level); }
+    const MAX_GLYPH_SLOTS = 4;
+    const BASE_HAND_SIZE = 10;
+    const VOWEL_LETTERS = new Set(['A','E','I','O','U']);
+    const RARE_LETTERS = new Set(['Q','X','Z','J','V']);
+    function isVowelLetter(letter) { if(letter==='Y'&&GlyphManager.hasGlyph('vowel_shifter')) return true; return VOWEL_LETTERS.has(letter); }
+    function isConsonantLetter(letter) { return /[A-Z]/.test(letter) && !VOWEL_LETTERS.has(letter); }
+    function getHandSize() { return BASE_HAND_SIZE + (GlyphManager.hasGlyph('deep_pockets') ? 2 : 0); }
+
+    const GlyphManager = {
+        hasGlyph(id) { return G.equippedGlyphs.some(g=>g.id===id); },
+        getGlyphData(id) { return GLYPH_DATABASE.find(g=>g.id===id); },
+        getAbbrev(name) { const clean=name.replace(/^The\s+/i,''); const parts=clean.split(/\s+/); return parts.length>=2 ? (parts[0][0]+parts[1][0]).toUpperCase() : clean.slice(0,2).toUpperCase(); },
+        onStageStart() {
+            G.recyclerUsedThisStage = false;
+            if (this.hasGlyph('scavenger')) G.rerollsLeft += 2;
+            if (this.hasGlyph('perfectionist')) G.playsLeft += 1;
+        },
+        onRoundStart(activeTiles) {
+            if (!this.hasGlyph('wildcard_rune')) return;
+            const candidates = (activeTiles||[]).filter(t=>t&&t.type==='normal');
+            if (candidates.length===0) return;
+            candidates[Math.floor(Math.random()*candidates.length)].type = 'wildcard';
+        },
+        calculateScoreModifiers(word, basePoints, baseMult) {
+            let finalPoints = basePoints||0, finalMult = baseMult||1;
+            if (!G.equippedGlyphs || G.equippedGlyphs.length===0 || !word) return { finalPoints, finalMult };
+            const letters = word.split('');
+            const vowelCount = letters.filter(isVowelLetter).length;
+            const consonantCount = letters.filter(isConsonantLetter).length;
+            const rareCount = letters.filter(l=>RARE_LETTERS.has(l)).length;
+            const hasScrabbleLetter = letters.some(l=>l==='Q'||l==='X'||l==='Z'||l==='J');
+            if (this.hasGlyph('vowel_anchor')) finalPoints += 15*vowelCount;
+            if (this.hasGlyph('consonant_charge')) finalPoints += 10*consonantCount;
+            if (this.hasGlyph('scrabble_master') && hasScrabbleLetter) finalPoints += 40;
+            if (this.hasGlyph('long_form') && word.length>=6) finalPoints += 60;
+            if (this.hasGlyph('grammarian')) finalMult += 3*vowelCount;
+            if (this.hasGlyph('novelist') && word.length>=6) finalMult *= 3;
+            if (this.hasGlyph('bookends') && letters.length>1 && letters[0]===letters[letters.length-1]) finalMult *= 4;
+            if (this.hasGlyph('heavy_hitter') && rareCount>=2) finalMult *= 2;
+            return { finalPoints, finalMult };
+        },
+        getGlyphEffectPreview(id, word) {
+            const letters=(word||'').split(''); const vowelCount=letters.filter(isVowelLetter).length; const consonantCount=letters.filter(isConsonantLetter).length; const rareCount=letters.filter(l=>RARE_LETTERS.has(l)).length; const hasScrabbleLetter=letters.some(l=>l==='Q'||l==='X'||l==='Z'||l==='J');
+            switch(id) {
+                case 'vowel_anchor': return vowelCount>0 ? {kind:'points', value:15*vowelCount, label:'+'+(15*vowelCount)+' PTS'} : null;
+                case 'consonant_charge': return consonantCount>0 ? {kind:'points', value:10*consonantCount, label:'+'+(10*consonantCount)+' PTS'} : null;
+                case 'scrabble_master': return hasScrabbleLetter ? {kind:'points', value:40, label:'+40 PTS'} : null;
+                case 'long_form': return (word&&word.length>=6) ? {kind:'points', value:60, label:'+60 PTS'} : null;
+                case 'grammarian': return vowelCount>0 ? {kind:'mult-add', value:3*vowelCount, label:'+'+(3*vowelCount)+' MULT'} : null;
+                case 'novelist': return (word&&word.length>=6) ? {kind:'mult-mul', value:3, label:'x3 MULT'} : null;
+                case 'bookends': return (letters.length>1&&letters[0]===letters[letters.length-1]) ? {kind:'mult-mul', value:4, label:'x4 MULT'} : null;
+                case 'heavy_hitter': return rareCount>=2 ? {kind:'mult-mul', value:2, label:'x2 MULT'} : null;
+                default: return null;
+            }
+        },
+        onDiscardEvent(discardedTiles) {
+            if (!this.hasGlyph('recycler') || G.recyclerUsedThisStage) return;
+            if (discardedTiles.length===3 && discardedTiles.every(t=>t&&isVowelLetter(t.letter))) {
+                G.rerollsLeft += 1;
+                G.recyclerUsedThisStage = true;
+            }
+        },
+        onWordScored(word, finalScore, playedTiles) {
+            if (this.hasGlyph('alchemy') && finalScore>=100) G.bagGold += 2;
+            if (this.hasGlyph('duplicator') && word && word.length===5 && playedTiles && playedTiles.length) {
+                const normalTiles = playedTiles.filter(t=>t&&t.type==='normal');
+                if (normalTiles.length) {
+                    const best = normalTiles.reduce((a,b)=>(b.chips||0)>(a.chips||0)?b:a);
+                    G.tileBag.push({id:'t_dup_'+Math.random().toString(36).slice(2,11)+'_'+Date.now(), letter:best.letter, chips:best.chips, type:'normal', aura:assignRandomAura()});
+                }
+            }
+        }
+    };
 
     const G = {
         difficulty:'medium', currentStage:1, stageTargets:DIFFICULTIES.medium.targets, totalStages:DIFFICULTIES.medium.stages,
         currentScore:0, playsLeft:4, rerollsLeft:3, shakeStrength:100, currentTheme:'wordling-light',
         hand:[], activeWord:[], tileBag:[], discardPile:[], removedLetters:new Set(), stageScores:[],
-        relics:[], dictSet:new Set(), modalType:null, isAnimating:false, rerollMode:false, rerollMarks:new Set(), gameStarted:false,
+        equippedGlyphs:[], bagGold:0, recyclerUsedThisStage:false, dictSet:new Set(), modalType:null, isAnimating:false, rerollMode:false, rerollMarks:new Set(), gameStarted:false,
         draftChoices:null, dragData:null, selectedGlyph:-1
     };
 
     function assignRandomAura() { const r=Math.random(); if(r<0.15) return 'blue'; if(r<0.22) return 'red'; if(r<0.26) return 'gold'; return null; }
     function buildInitialBag() { const tiles=[]; TILE_DIST.forEach(({letter,chips,qty})=>{ if(G.removedLetters.has(letter)) return; for(let i=0;i<qty;i++) tiles.push({id:'t_'+Math.random().toString(36).slice(2,11)+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), letter, chips, type:'normal', aura: assignRandomAura()}); }); tiles.push({id:'t_*_1', letter:'*', chips:0, type:'wildcard'}); tiles.push({id:'t_!_1', letter:'!', chips:0, type:'finisher'}); return shuffle(tiles); }
-    function drawToHand() { while(G.hand.filter(t=>t!==null).length < 10){ if(G.tileBag.length===0) { if(G.discardPile.length===0) break; G.tileBag = shuffle(G.discardPile); G.discardPile = []; } const tile = G.tileBag.pop(); const emptyIdx = G.hand.indexOf(null); if(emptyIdx!==-1) G.hand[emptyIdx] = tile; else G.hand.push(tile); } document.getElementById('bag-counter').textContent = 'BAG: '+G.tileBag.length; }
+    function drawToHand() { while(G.hand.filter(t=>t!==null).length < getHandSize()){ if(G.tileBag.length===0) { if(G.discardPile.length===0) break; G.tileBag = shuffle(G.discardPile); G.discardPile = []; } const tile = G.tileBag.pop(); const emptyIdx = G.hand.indexOf(null); if(emptyIdx!==-1) G.hand[emptyIdx] = tile; else G.hand.push(tile); } document.getElementById('bag-counter').textContent = 'BAG: '+G.tileBag.length; }
     function resetStageState() { G.currentScore=0; G.playsLeft=4; G.rerollsLeft=3; G.activeWord=[]; G.hand=[]; G.selectedGlyph=-1; G.isAnimating=false; G.rerollMode=false; G.rerollMarks.clear(); drawToHand(); }
-    function startRun() { G.removedLetters = new Set(); G.relics = []; G.stageScores = []; G.tileBag = buildInitialBag(); G.discardPile = []; G.currentStage = 1; resetStageState(); }
+    function startRun() { G.removedLetters = new Set(); G.equippedGlyphs = []; G.bagGold = 0; G.stageScores = []; G.tileBag = buildInitialBag(); G.discardPile = []; G.currentStage = 1; resetStageState(); }
     function getLengthBaseChips(l) { if(l>=7) return 300; if(l===6) return 150; if(l===5) return 80; if(l===4) return 40; if(l===3) return 20; return 0; }
     function getLengthBaseMult(l) { if(l>=7) return 8; if(l===6) return 5; if(l===5) return 3; if(l===4) return 2; if(l===3) return 1; return 1; }
     function calcScore() {
-        let totalChips=0, additiveMult=0, hasWildcard=false; const letters=[];
-        G.activeWord.forEach(t=>{ if(t.type==='wildcard'){ hasWildcard=true; return; } let chip=t.chips||0; if(t.aura==='blue') chip+=10; if(t.aura==='gold') chip*=2; totalChips+=chip; if(t.aura==='red') additiveMult+=2; letters.push(t.letter); });
+        let totalChips=0, hasWildcard=false; const letters=[];
+        G.activeWord.forEach(t=>{ if(t.type==='wildcard'){ hasWildcard=true; return; } let chip=t.chips||0; if(t.aura==='blue') chip+=10; if(t.aura==='gold') chip*=2; totalChips+=chip; letters.push(t.letter); });
         const length=G.activeWord.length; const baseChips=getLengthBaseChips(length); const baseMult=getLengthBaseMult(length);
-        for (const r of G.relics) { if (r.type === 'chips') totalChips += r.value; }
-        totalChips += baseChips; let totalMult = baseMult;
-        for (const r of G.relics) { if (r.type === 'addMult') totalMult += r.value; }
-        let subtotal = Math.floor(totalChips * totalMult);
-        let finisherMult = 1; if(length>0 && G.activeWord[length-1].type==='finisher') finisherMult = 3;
-        let xMultProduct = 1;
-        for (const r of G.relics) { if (r.type === 'xMult') xMultProduct *= r.value; }
-        const finalScore = Math.floor(subtotal * finisherMult * xMultProduct);
+        totalChips += baseChips;
         let word=letters.join(''), valid=false;
         if(hasWildcard){ const pattern=G.activeWord.map(t=>t.type==='wildcard'?'?':t.letter).join(''); for(let c=65;c<=90;c++){ const tw=pattern.replace(/\?/g,String.fromCharCode(c)); if(G.dictSet.has(tw)){ valid=true; word=tw; break; } } }
         else if(letters.length>0) valid=G.dictSet.has(word);
-        return {word,valid,totalChips,totalMult,subtotal,finisherMult,xMultProduct,totalScore:finalScore,occ:length};
+        const mods = GlyphManager.calculateScoreModifiers(word, totalChips, baseMult);
+        totalChips = mods.finalPoints; let totalMult = mods.finalMult;
+        let subtotal = Math.floor(totalChips * totalMult);
+        let finisherMult = 1; if(length>0 && G.activeWord[length-1].type==='finisher') finisherMult = 3;
+        const finalScore = Math.floor(subtotal * finisherMult);
+        return {word,valid,totalChips,totalMult,subtotal,finisherMult,totalScore:finalScore,occ:length};
     }
     function vibrate(ms=8) { if(document.getElementById('vibration-toggle').checked&&navigator.vibrate){ try{navigator.vibrate(ms);}catch(e){} } }
     function getInsertIndexFromX(clientX) { const container=document.getElementById('active-word-line'); const tiles=container.querySelectorAll('.active-tile'); const cr=container.getBoundingClientRect(); const x=clientX-cr.left; for(let i=0;i<tiles.length;i++){ const tr=tiles[i].getBoundingClientRect(); const tc=tr.left-cr.left+tr.width/2; if(x<tc) return i; } return G.activeWord.length; }
-    function placeTileInSlot(handIndex, insertAt=null) { if(G.isAnimating||G.rerollMode) return; if(handIndex<0||handIndex>=10||!G.hand[handIndex]) return; if(G.activeWord.length>=8) return; const tile=G.hand[handIndex]; G.hand[handIndex]=null; const idx=(insertAt!==null)?insertAt:G.activeWord.length; G.activeWord.splice(idx,0,tile); AudioEngine.playTap(); vibrate(6); render(); }
+    function placeTileInSlot(handIndex, insertAt=null) { if(G.isAnimating||G.rerollMode) return; if(handIndex<0||handIndex>=getHandSize()||!G.hand[handIndex]) return; if(G.activeWord.length>=8) return; const tile=G.hand[handIndex]; G.hand[handIndex]=null; const idx=(insertAt!==null)?insertAt:G.activeWord.length; G.activeWord.splice(idx,0,tile); AudioEngine.playTap(); vibrate(6); render(); }
     function removeTileFromWord(wordIndex) { if(G.isAnimating||G.rerollMode) return; if(wordIndex<0||wordIndex>=G.activeWord.length) return; const tile=G.activeWord[wordIndex]; const ei=G.hand.findIndex(t=>t===null); if(ei===-1) return; G.hand[ei]=tile; G.activeWord.splice(wordIndex,1); AudioEngine.playTap(); vibrate(6); render(); }
     function swapHandTiles(i1,i2) { if(i1===i2) return; const t=G.hand[i1]; G.hand[i1]=G.hand[i2]; G.hand[i2]=t; AudioEngine.playTap(); render(); }
     function clearActiveWord() { if(G.isAnimating||G.rerollMode) return; while(G.activeWord.length>0){ const t=G.activeWord.pop(); const e=G.hand.findIndex(x=>x===null); if(e!==-1) G.hand[e]=t; } AudioEngine.playTap(); render(); }
-    function shuffleHand() { if(G.isAnimating||G.hand.filter(t=>t).length<2||G.rerollMode) return; const tiles=G.hand.filter(t=>t!==null); const s=shuffle(tiles); let idx=0; for(let i=0;i<10;i++){ if(G.hand[i]!==null) G.hand[i]=s[idx++]; } AudioEngine.playShuffle(); vibrate(8); render(); }
-    function toggleRerollMark(hi) { if(hi<0||hi>=10||!G.hand[hi]) return; const id=G.hand[hi].id; if(G.rerollMarks.has(id)) G.rerollMarks.delete(id); else { if(G.rerollMarks.size>=3) return; G.rerollMarks.add(id); } AudioEngine.playTap(); render(); }
+    function shuffleHand() { if(G.isAnimating||G.hand.filter(t=>t).length<2||G.rerollMode) return; const tiles=G.hand.filter(t=>t!==null); const s=shuffle(tiles); let idx=0; for(let i=0;i<getHandSize();i++){ if(G.hand[i]!==null) G.hand[i]=s[idx++]; } AudioEngine.playShuffle(); vibrate(8); render(); }
+    function toggleRerollMark(hi) { if(hi<0||hi>=getHandSize()||!G.hand[hi]) return; const id=G.hand[hi].id; if(G.rerollMarks.has(id)) G.rerollMarks.delete(id); else { if(G.rerollMarks.size>=3) return; G.rerollMarks.add(id); } AudioEngine.playTap(); render(); }
     function enterReroll() { if(G.isAnimating||G.rerollsLeft<=0||G.hand.every(t=>t===null)) return; G.rerollMode=true; G.rerollMarks.clear(); render(); }
     function exitReroll() { G.rerollMode=false; G.rerollMarks.clear(); render(); }
-    function confirmReroll() { if(!G.rerollMode||G.rerollMarks.size===0){ exitReroll(); return; } if(G.rerollsLeft<=0) return; G.rerollsLeft--; for(let i=0;i<10;i++){ if(G.hand[i]&&G.rerollMarks.has(G.hand[i].id)){ G.discardPile.push(G.hand[i]); G.hand[i]=null; } } G.rerollMarks.clear(); G.rerollMode=false; drawToHand(); AudioEngine.playShuffle(); vibrate(12); render(); }
+    function confirmReroll() { if(!G.rerollMode||G.rerollMarks.size===0){ exitReroll(); return; } if(G.rerollsLeft<=0) return; G.rerollsLeft--; const discarded=[]; for(let i=0;i<getHandSize();i++){ if(G.hand[i]&&G.rerollMarks.has(G.hand[i].id)){ discarded.push(G.hand[i]); G.discardPile.push(G.hand[i]); G.hand[i]=null; } } GlyphManager.onDiscardEvent(discarded); G.rerollMarks.clear(); G.rerollMode=false; drawToHand(); AudioEngine.playShuffle(); vibrate(12); render(); }
     function toggleRerollBtn() { if(G.rerollMode) confirmReroll(); else enterReroll(); }
 
     function showConfirmModal() { document.getElementById('confirm-modal').classList.add('show'); }
@@ -757,13 +835,15 @@
         pointsEl.textContent = displayChips; pointsEl.classList.add('pop'); await sleep(150); pointsEl.classList.remove('pop');
         multEl.textContent = displayMult.toFixed(1); multEl.classList.add('pop'); await sleep(150); multEl.classList.remove('pop');
 
-        for (let i = 0; i < G.relics.length; i++) {
-            const relic = G.relics[i]; const slotEl = glyphSlots[i]; if (!slotEl) continue;
-            slotEl.classList.add('active'); let indicatorText = '';
-            if (relic.type === 'chips') { displayChips += relic.value; pointsEl.textContent = displayChips; pointsEl.classList.add('pop'); indicatorText = '+' + relic.value + ' CHIPS'; }
-            else if (relic.type === 'addMult') { displayMult += relic.value; multEl.textContent = displayMult.toFixed(1); multEl.classList.add('pop'); indicatorText = '+' + relic.value + ' MULT'; }
-            else if (relic.type === 'xMult') { indicatorText = 'x' + relic.value.toFixed(2) + ' MULT'; }
-            spawnGlyphIndicator(slotEl, indicatorText); await sleep(350);
+        for (let i = 0; i < G.equippedGlyphs.length; i++) {
+            const glyph = G.equippedGlyphs[i]; const slotEl = glyphSlots[i]; if (!slotEl || !glyph) continue;
+            const effect = GlyphManager.getGlyphEffectPreview(glyph.id, payload.word);
+            if (!effect) continue;
+            slotEl.classList.add('active');
+            if (effect.kind === 'points') { displayChips += effect.value; pointsEl.textContent = displayChips; pointsEl.classList.add('pop'); }
+            else if (effect.kind === 'mult-add') { displayMult += effect.value; multEl.textContent = displayMult.toFixed(1); multEl.classList.add('pop'); }
+            else if (effect.kind === 'mult-mul') { displayMult *= effect.value; multEl.textContent = displayMult.toFixed(1); multEl.classList.add('pop'); }
+            spawnGlyphIndicator(slotEl, effect.label); await sleep(350);
             slotEl.classList.remove('active'); pointsEl.classList.remove('pop'); multEl.classList.remove('pop');
         }
 
@@ -772,6 +852,7 @@
         await sleep(400); timesEl.classList.remove('highlight');
 
         G.playsLeft--; G.currentScore += payload.totalScore;
+        GlyphManager.onWordScored(payload.word, payload.totalScore, tilesCopy);
         AudioEngine.playSubmit(); vibrate(18);
         const sp = Math.min(14, Math.max(3, payload.totalScore / 10)) * (G.shakeStrength / 100);
         const c = document.getElementById('game-container');
@@ -788,7 +869,7 @@
 
     function showDraft() { const draftDiv=document.getElementById('view-draft'); draftDiv.innerHTML=''; draftDiv.classList.remove('show'); const panel=document.createElement('div'); panel.className='draft-panel'; const choices=generateDraftChoices(); G.draftChoices=choices; const h2=document.createElement('h2'); h2.textContent='CHOOSE REWARD'; panel.appendChild(h2); choices.forEach((choice,i)=>{ const btn=document.createElement('button'); btn.className='draft-btn'; btn.textContent=choice.label; btn.addEventListener('click',()=>{ choice.apply(); draftDiv.classList.remove('show'); advanceStage(); }); panel.appendChild(btn); }); draftDiv.appendChild(panel); draftDiv.classList.remove('hidden'); requestAnimationFrame(()=>requestAnimationFrame(()=>draftDiv.classList.add('show'))); }
     function advanceStage() { G.currentStage++; if(G.currentStage > G.totalStages) { showModal('victory'); return; } renderMap(); }
-    function generateDraftChoices() { const pool=[]; RELIC_TYPES.forEach(rt=>{ const existingIdx=G.relics.findIndex(r=>r.type===rt.type); if(existingIdx>=0&&G.relics[existingIdx].level<4){ const cl=G.relics[existingIdx].level; const nl=cl+1; pool.push({label:'UPGRADE '+rt.name+': '+rt.fmt(rt.levels[cl-1])+' -> '+rt.fmt(rt.levels[nl-1]),apply:()=>{upgradeRelic(existingIdx);}}); } else if(existingIdx===-1&&G.relics.length<4){ pool.push({label:'NEW '+rt.name+': '+rt.fmt(rt.levels[0]),apply:()=>{G.relics.push({name:rt.name,type:rt.type,level:1,value:rt.levels[0],desc:rt.fmt(rt.levels[0])});}}); } }); pool.push({label:'Add 2 Special Tiles',apply:()=>{G.tileBag.push({id:'t_*_'+Date.now(),letter:'*',chips:0,type:'wildcard'});G.tileBag.push({id:'t_!_'+Date.now(),letter:'!',chips:0,type:'finisher'});}}); pool.push({label:'Remove 2 Bad Letters',apply:()=>{const c=['Q','Z','J','X','K','V','W','Y'];const s=[];for(let l of c){if(!G.removedLetters.has(l)){s.push(l);if(s.length===2) break;}}s.forEach(l=>G.removedLetters.add(l));}}); return shuffle(pool).slice(0,3); }
+    function generateDraftChoices() { const pool=[]; GLYPH_DATABASE.forEach(g=>{ const alreadyEquipped=G.equippedGlyphs.some(eg=>eg.id===g.id); if(!alreadyEquipped&&G.equippedGlyphs.length<MAX_GLYPH_SLOTS){ pool.push({label:'GLYPH: '+g.name+' — '+g.desc,apply:()=>{G.equippedGlyphs.push({id:g.id});}}); } }); pool.push({label:'Add 2 Special Tiles',apply:()=>{G.tileBag.push({id:'t_*_'+Date.now(),letter:'*',chips:0,type:'wildcard'});G.tileBag.push({id:'t_!_'+Date.now(),letter:'!',chips:0,type:'finisher'});}}); pool.push({label:'Remove 2 Bad Letters',apply:()=>{const c=['Q','Z','J','X','K','V','W','Y'];const s=[];for(let l of c){if(!G.removedLetters.has(l)){s.push(l);if(s.length===2) break;}}s.forEach(l=>G.removedLetters.add(l));}}); return shuffle(pool).slice(0,3); }
 
     function showModal(type) { G.modalType=type; const o=document.getElementById('modal-overlay'); const t=document.getElementById('modal-title'); const s=document.getElementById('modal-subtitle'); const b=document.getElementById('btn-modal-action'); const mb=document.getElementById('btn-modal-menu'); if(type==='game-over'){ t.textContent='GAME OVER'; s.textContent='Score: '+G.currentScore; b.textContent='Retry Run'; b.style.display='block'; mb.style.display='block'; } else { t.textContent='VICTORY!'; s.textContent='All stages conquered!'; b.textContent='New Game'; b.style.display='block'; mb.style.display='block'; } o.classList.add('show'); }
     function hideModal() { G.modalType=null; document.getElementById('modal-overlay').classList.remove('show'); }
@@ -798,17 +879,21 @@
 
     function renderGlyphs() {
         const container = document.getElementById('glyph-slots'); container.innerHTML = '';
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < MAX_GLYPH_SLOTS; i++) {
             const slot = document.createElement('div'); slot.className = 'glyph-slot';
             if (i === G.selectedGlyph) slot.classList.add('selected');
-            const relic = G.relics[i];
-            if (!relic) slot.classList.add('empty');
-            if (relic) {
-                const lvlClass = getRelicLevelClass(relic.level); if (lvlClass) slot.classList.add(lvlClass);
-                const badge = document.createElement('span'); badge.className = 'glyph-level-badge'; badge.textContent = 'Lv' + relic.level; slot.appendChild(badge);
-                const stat = document.createElement('span'); stat.className = 'glyph-stat'; stat.textContent = getRelicLabel(relic.type, relic.level); slot.appendChild(stat);
+            const equipped = G.equippedGlyphs[i];
+            if (!equipped) slot.classList.add('empty');
+            if (equipped) {
+                const data = GlyphManager.getGlyphData(equipped.id);
+                if (data) {
+                    slot.style.borderTopColor = data.color; slot.style.borderTopWidth = '3px';
+                    slot.title = data.name + ' — ' + data.desc;
+                    const badge = document.createElement('span'); badge.className = 'glyph-level-badge'; badge.style.background = data.color; badge.textContent = data.type.toUpperCase(); slot.appendChild(badge);
+                    const stat = document.createElement('span'); stat.className = 'glyph-stat'; stat.style.color = data.color; stat.textContent = GlyphManager.getAbbrev(data.name); slot.appendChild(stat);
+                }
             }
-            slot.addEventListener('click', (e) => { e.stopPropagation(); if (G.selectedGlyph === -1) { if (!relic) return; G.selectedGlyph = i; renderGlyphs(); } else if (G.selectedGlyph === i) { G.selectedGlyph = -1; renderGlyphs(); } else { const temp = G.relics[G.selectedGlyph]; G.relics[G.selectedGlyph] = G.relics[i]; G.relics[i] = temp; G.selectedGlyph = -1; AudioEngine.playTap(); renderGlyphs(); } });
+            slot.addEventListener('click', (e) => { e.stopPropagation(); if (G.selectedGlyph === -1) { if (!equipped) return; G.selectedGlyph = i; renderGlyphs(); } else if (G.selectedGlyph === i) { G.selectedGlyph = -1; renderGlyphs(); } else { const temp = G.equippedGlyphs[G.selectedGlyph]; G.equippedGlyphs[G.selectedGlyph] = G.equippedGlyphs[i]; G.equippedGlyphs[i] = temp; G.selectedGlyph = -1; AudioEngine.playTap(); renderGlyphs(); } });
             container.appendChild(slot);
         }
     }
@@ -829,13 +914,13 @@
         document.getElementById('bag-counter').textContent='BAG: '+G.tileBag.length;
         const p=calcScore();
         document.getElementById('val-points').textContent=p.totalChips; document.getElementById('val-mults').textContent=p.totalMult.toFixed(1);
-        document.getElementById('val-hands').textContent=G.playsLeft; document.getElementById('val-rerolls').textContent=G.rerollsLeft;
+        document.getElementById('val-hands').textContent=G.playsLeft; document.getElementById('val-rerolls').textContent=G.rerollsLeft; document.getElementById('val-gold').textContent=G.bagGold;
         const sb=document.getElementById('score-banner'); if(p.occ===0) sb.textContent='—'; else if(!p.valid) sb.textContent='INVALID WORD'; else sb.textContent=p.totalChips+' × '+p.totalMult.toFixed(1)+' = '+p.totalScore+' PTS';
         sb.classList.toggle('invalid',p.occ>0&&!p.valid);
         const awl=document.getElementById('active-word-line'); awl.innerHTML='';
         G.activeWord.forEach((tile,idx)=>{ const wrap=document.createElement('div'); wrap.className='active-tile'; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.addEventListener('click',(e)=>{e.stopPropagation();removeTileFromWord(idx);}); wrap.appendChild(inner); awl.appendChild(wrap); });
         const hr=document.getElementById('hand-rack'); hr.innerHTML='';
-        for(let i=0;i<10;i++){ const wrap=document.createElement('div'); wrap.className='hand-tile-wrap'; const tile=G.hand[i]; if(tile){ const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.style.animationDelay=(i*0.08)+'s'; inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.addEventListener('pointerdown',(e)=>onDragStart(e,i)); wrap.appendChild(inner); } else { wrap.classList.add('empty-slot'); } hr.appendChild(wrap); }
+        for(let i=0;i<getHandSize();i++){ const wrap=document.createElement('div'); wrap.className='hand-tile-wrap'; const tile=G.hand[i]; if(tile){ const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.style.animationDelay=(i*0.08)+'s'; inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.addEventListener('pointerdown',(e)=>onDragStart(e,i)); wrap.appendChild(inner); } else { wrap.classList.add('empty-slot'); } hr.appendChild(wrap); }
         renderGlyphs();
         document.getElementById('btn-submit').disabled=p.occ===0||!p.valid||G.playsLeft<=0||G.isAnimating||G.rerollMode;
         document.getElementById('btn-reroll').disabled=G.rerollsLeft<=0||G.isAnimating;
@@ -846,7 +931,7 @@
 
     function renderMap() { const diff=DIFFICULTIES[G.difficulty]; document.getElementById('map-header').textContent=diff.name+' RUN - STAGE '+G.currentStage+'/'+G.totalStages; const ladder=document.getElementById('map-ladder'); ladder.innerHTML=''; for(let i=1;i<=G.totalStages;i++){ const wrap=document.createElement('div'); wrap.className='map-node-wrap'; wrap.style.animationDelay=(i*0.1)+'s'; const node=document.createElement('div'); node.className='map-node'; const info=document.createElement('div'); info.className='map-node-info'; if(i<G.currentStage){ node.classList.add('completed'); node.textContent='✓'; info.textContent='Stage '+i+' - Score: '+(G.stageScores[i]||0); } else if(i===G.currentStage){ node.classList.add('current'); node.textContent=i; info.textContent='Stage '+i+' - Target: '+G.stageTargets[i]; } else { node.classList.add('upcoming'); node.textContent=i; info.textContent='Stage '+i+' - Locked'; } wrap.appendChild(node); wrap.appendChild(info); ladder.appendChild(wrap); if(i<G.totalStages){ const conn=document.createElement('div'); conn.className='map-connector'; ladder.appendChild(conn); } } document.getElementById('btn-start-stage').textContent='START STAGE '+G.currentStage; document.getElementById('btn-start-stage').onclick=startStage; document.getElementById('view-map').classList.remove('hidden'); document.getElementById('view-game').classList.add('hidden'); document.getElementById('view-draft').classList.add('hidden'); }
     function showMap() { resetStageState(); renderMap(); }
-    function startStage() { document.getElementById('view-map').classList.add('hidden'); document.getElementById('view-game').classList.remove('hidden'); resetStageState(); AudioEngine.startMusic(); render(); }
+    function startStage() { document.getElementById('view-map').classList.add('hidden'); document.getElementById('view-game').classList.remove('hidden'); resetStageState(); GlyphManager.onStageStart(); GlyphManager.onRoundStart(G.hand); AudioEngine.startMusic(); render(); }
 
     function initDict() { G.dictSet=new Set(DICTIONARY_WORDS.split(' ')); }
 
