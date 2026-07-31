@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>WORDLING!</title>
+    <style>
+        :root {
+            --theme-bg1: #6ecf9a;
+            --theme-bg2: #f0a860;
+            --theme-chip: #6ecf9a;
+            --theme-mult: #f0a860;
+            --theme-submit1: #6ecf9a;
+            --theme-submit2: #7ec89a;
+            --white: #ffffff;
+            --text: #2d3436;
+            --text-soft: #636e72;
+            --shadow-sm: 0 4px 12px rgba(0,0,0,0.07);
+            --shadow-md: 0 8px 24px rgba(0,0,0,0.10);
+            --inner-highlight: inset 0 2px 0 rgba(255,255,255,0.75);
+            --radius-md: 22px;
+            --radius-xl: 36px;
+            --tile-radius: 20px;
+        }
+        * {
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: #e8f4ec;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-weight: 800;
+            overflow: hidden;
+        }
+        #game-container {
+            max-width: 440px;
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            background: linear-gradient(135deg, var(--theme-bg1) 50%, var(--theme-bg2) 50%);
+            background-size: 200% 200%;
+            animation: bgShift 8s ease-in-out infinite alternate;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        @keyframes bgShift { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
+        #bg-overlay {
+            position: absolute; inset: 0; pointer-events: none; z-index: 0;
+            background: transparent; transition: background 0.5s ease;
+        }
+        #game-container::after {
+            content: ""; position: absolute; inset: 0;
+            background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.15) 0px, rgba(255,255,255,0.15) 1px, transparent 1px, transparent 10px),
+            repeating-linear-gradient(-45deg, rgba(255,255,255,0.15) 0px, rgba(255,255,255,0.15) 1px, transparent 1px, transparent 10px);
+            pointer-events: none; z-index: 1; animation: gridShift 20s linear infinite;
+        }
+        @keyframes gridShift { 0% { background-position: 0 0, 0 0; } 100% { background-position: 20px 20px, 20px -20px; } }
+        @keyframes popupFloat { 0% { opacity: 1; transform: translateY(0) scale(0.3); } 25% { opacity: 1; transform: translateY(-16px) scale(1.25); } 100% { opacity: 0; transform: translateY(-50px) scale(0.7); } }
+        @keyframes shake { 0%,100% { transform: translate(0,0); } 20% { transform: translate(-5px,3px); } 40% { transform: translate(4px,-2px); } 60% { transform: translate(-3px,-1px); } 80% { transform: translate(2px,4px); } }
+        @keyframes titleBounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        @keyframes tileIdle { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }
+        @keyframes tilePopIn { 0% { transform: scale(0.5); opacity: 0.4; } 60% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes tileScoringPop { 0% { transform: translateY(0) scale(1); } 50% { transform: translateY(-6px) scale(1.1); } 100% { transform: translateY(0) scale(1); } }
+        @keyframes nodePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.6); } 50% { box-shadow: 0 0 0 14px rgba(255,255,255,0); } }
+        @keyframes nodeSlideIn { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+        @keyframes hudPop { 0% { transform: scale(1); } 50% { transform: scale(1.25); color: var(--theme-bg2); } 100% { transform: scale(1); } }
+        @keyframes glyphGlow { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,215,0,0.6); } 50% { transform: scale(1.12); box-shadow: 0 0 28px rgba(255,215,0,0.8); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,215,0,0); } }
+        @keyframes indicatorRise { 0% { opacity: 1; transform: translateY(0) scale(0.6); } 100% { opacity: 0; transform: translateY(-60px) scale(1.1); } }
+        @keyframes glyphSelectBounce { 0% { transform: scale(1); } 30% { transform: scale(1.08); } 60% { transform: scale(0.96); } 100% { transform: scale(1); } }
+
+        .score-popup {
+            position: absolute; pointer-events: none; font-weight: 900; font-size: 0.9rem; z-index: 40;
+            animation: popupFloat 0.95s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            padding: 5px 14px; border-radius: 22px; box-shadow: 0 5px 16px rgba(0,0,0,0.12);
+            white-space: nowrap; text-align: center;
+        }
+        .score-popup.chip-popup { background: #d0f5e0; color: #1a4d2e; }
+        .score-popup.mult-popup { background: #fde5d0; color: #5c3a1a; border-radius: 50%; width:48px; height:48px; padding:0; line-height:48px; font-size:0.85rem; }
+        .score-popup.total-popup { background: #ffffff; color: #2d3436; font-size:1.3rem; padding:7px 20px; border-radius:26px; }
+        .glyph-indicator {
+            position: absolute; pointer-events: none; font-weight: 900; font-size: 0.75rem; z-index: 35;
+            animation: indicatorRise 0.8s ease-out forwards;
+            padding: 4px 10px; border-radius: 14px; background: rgba(20,20,30,0.9); color: #ffd700;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.4); white-space: nowrap;
+        }
+        .hud-value.pop { animation: hudPop 0.25s ease; }
+        #hud-times.highlight { color: #ffd700; text-shadow: 0 0 16px rgba(255,215,0,0.7); transform: scale(1.3); transition: all 0.3s ease; }
+
+        .view-panel {
+            position: absolute; inset: 0; display: flex; flex-direction: column; z-index: 5;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+        }
+        #view-menu { align-items: center; justify-content: center; gap:16px; padding:30px; z-index:10; background: rgba(255,255,255,0.25); transform: translateX(0); }
+        #view-menu.slide-left { transform: translateX(-110%); opacity: 0; pointer-events: none; }
+        #view-difficulty { align-items: center; justify-content: center; gap:16px; padding:30px; z-index:9; background: rgba(255,255,255,0.20); transform: translateX(110%); opacity: 0; pointer-events: none; }
+        #view-difficulty.slide-in { transform: translateX(0); opacity: 1; pointer-events: auto; }
+        #view-themes { align-items: center; justify-content: center; gap:16px; padding:30px; z-index:9; background: rgba(255,255,255,0.20); transform: translateX(110%); opacity: 0; pointer-events: none; display: flex; flex-wrap: wrap; flex-direction: row; }
+        #view-themes.slide-in { transform: translateX(0); opacity: 1; pointer-events: auto; }
+        #view-draft { align-items: center; justify-content: center; gap:20px; padding:30px; z-index:20; backdrop-filter: blur(8px); background: rgba(0,0,0,0.25); }
+        #view-game { padding: 10px 16px 12px; gap:7px; display:flex; flex-direction:column; justify-content: flex-start; }
+        .hidden { display: none !important; }
+
+        #view-menu h1 {
+            font-size:3.4rem; font-weight:900; color:#fff; letter-spacing:-1px;
+            text-shadow: 2px 2px 0 #2d3436, -2px -2px 0 #2d3436, 2px -2px 0 #2d3436, -2px 2px 0 #2d3436;
+            animation: titleBounce 3s ease-in-out infinite;
+        }
+        #view-difficulty h2, #view-themes h2, #view-draft h2, #view-map h2 { color:#fff; text-shadow:0 4px 14px rgba(0,0,0,0.14); font-size:1.8rem; font-weight:900; width:100%; text-align:center; margin-bottom: 10px; }
+        .menu-btn, .diff-btn, .draft-btn {
+            width:250px; padding:16px 0; border-radius: var(--radius-xl); font-weight:800; font-size:1rem; letter-spacing:0.6px;
+            cursor:pointer; box-shadow: var(--shadow-md), var(--inner-highlight); transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align:center; background: var(--white); color: var(--text); border:none;
+        }
+        .menu-btn:active, .diff-btn:active, .theme-card:active, .draft-btn:active { transform: scale(0.95); }
+        .menu-btn.play-btn { background: linear-gradient(135deg, var(--theme-bg1), var(--theme-bg2)); color:#fff; font-size:1.15rem; }
+        .menu-btn.themes-btn { background:#e8dff5; }
+        .menu-btn.settings-btn { background: linear-gradient(135deg, #dfe6e9, #b2bec3); color: var(--text); }
+        .menu-btn.store-btn { background:rgba(255,255,255,0.55); color:#b2bec3; cursor:not-allowed; box-shadow:none; }
+        .diff-easy { background:#7ec89a; }
+        .diff-medium { background:#f0c060; color:#2d3436; }
+        .diff-hard { background:#e08850; }
+        .diff-extreme { background:#2d3436; color:#fff; }
+
+        /* Theme grid cards */
+        .theme-card {
+            width: calc(50% - 8px); aspect-ratio: 1.2 / 1;
+            border-radius: 24px; margin: 0; cursor: pointer;
+            box-shadow: var(--shadow-md), var(--inner-highlight);
+            transition: all 0.2s ease; display: flex; align-items: center;
+            justify-content: center; font-weight: 900; font-size: 1.1rem;
+            color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            background-size: cover; background-position: center;
+            border: 3px solid transparent; flex-shrink: 0;
+        }
+        .theme-card.active { outline: 4px solid #fff; outline-offset: 3px; border-color: #fff; }
+        .theme-card.orange-green { background: linear-gradient(135deg, #6ecf9a 50%, #f0a860 50%); }
+        .theme-card.black-white { background: linear-gradient(135deg, #2d3436 50%, #a8b0b5 50%); }
+        .theme-card.blue-red { background: linear-gradient(135deg, #74b9ff 50%, #ff7675 50%); }
+        .theme-card.purple-yellow { background: linear-gradient(135deg, #a29bfe 50%, #fdcb6e 50%); color: #2d3436; text-shadow: none; }
+
+        #header { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-shrink:0; }
+        #stage-text { font-weight:800; font-size:0.85rem; color:var(--text); background:rgba(255,255,255,0.6); padding:6px 16px; border-radius:22px; backdrop-filter:blur(4px); box-shadow:var(--shadow-sm); }
+        #bag-counter { font-weight:800; font-size:0.75rem; color:var(--text); background:rgba(255,255,255,0.6); padding:4px 10px; border-radius:20px; backdrop-filter:blur(4px); box-shadow:var(--shadow-sm); margin-left:4px; }
+        #btn-settings, #btn-back-menu { background:var(--white); border-radius:22px; padding:8px 14px; font-weight:800; cursor:pointer; box-shadow:var(--shadow-sm), var(--inner-highlight); transition:all 0.2s; color:var(--text); font-size:0.95rem; border:none; }
+        #top-info { flex-shrink:0; display:flex; flex-direction:column; gap:4px; }
+        #progress-wrap { height:12px; background:rgba(255,255,255,0.5); border-radius:6px; overflow:hidden; }
+        #progress-fill { height:100%; background:linear-gradient(90deg, var(--theme-chip), var(--theme-mult)); border-radius:6px; transition:width 0.4s; width:0%; }
+        #score-pill { align-self:center; font-weight:900; font-size:0.85rem; color:var(--text); background:rgba(255,255,255,0.6); padding:4px 18px; border-radius:16px; backdrop-filter:blur(4px); box-shadow:var(--shadow-sm); }
+        #hud-row { display:flex; align-items:center; gap:10px; justify-content:center; flex-shrink:0; margin:3px 0; }
+        .hud-box { flex:1; max-width:130px; text-align:center; font-weight:900; padding:10px 12px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm), var(--inner-highlight); background:var(--white); }
+        #box-points .hud-label { color:var(--theme-chip); } #box-mults .hud-label { color:var(--theme-mult); }
+        .hud-label { font-size:0.62rem; letter-spacing:1.8px; text-transform:uppercase; font-weight:900; }
+        .hud-value { font-size:1.8rem; line-height:1.1; color:var(--text); font-weight:900; letter-spacing:-0.5px; transition: color 0.2s; }
+        #hud-times { font-size:1.8rem; font-weight:900; color:var(--text); transition: all 0.3s ease; }
+        #score-banner { text-align:center; font-weight:900; font-size:0.85rem; min-height:20px; color:var(--text); }
+        #score-banner.invalid { color:#e17055; }
+
+        #active-word-line {
+            display: flex; flex-wrap: nowrap; align-items: center; justify-content: center;
+            gap: 6px; padding: 8px 6px; min-height: 70px; width: 100%;
+            overflow-x: hidden; flex-shrink: 0; margin: 4px 0;
+        }
+        .active-tile {
+            flex: 1 1 auto; min-width: 36px; max-width: 68px; aspect-ratio: 1 / 1;
+            height: auto; flex-shrink: 1; transition: all 0.2s ease;
+        }
+        .active-tile .tile-inner {
+            font-size: clamp(0.95rem, 3.5vw, 1.6rem);
+            animation: tilePopIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .active-tile .tile-chips { font-size: 9px; bottom: 2px; right: 4px; }
+
+        #hand-rack { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 10px 6px; width: 100%; flex-shrink: 0; min-height: 150px; }
+        .hand-tile-wrap { width: clamp(52px, 13vw, 68px); height: clamp(52px, 13vw, 68px); flex-shrink: 0; }
+
+        .tile-inner {
+            width:100%; height:100%; background:#ffffff; border-radius: var(--tile-radius);
+            display:flex; align-items:center; justify-content:center; font-weight:900;
+            font-size: clamp(1.3rem, 4vw, 1.7rem); color:var(--text); position:relative;
+            cursor:pointer; box-shadow: 0 5px 10px rgba(0,0,0,0.07), var(--inner-highlight-strong);
+            line-height:1; margin:0; padding:0; transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            letter-spacing:-0.3px; overflow: hidden; pointer-events: auto;
+            border: 3px solid transparent;
+            animation: tileIdle 3s ease-in-out infinite;
+        }
+        .tile-inner:active { transform:scale(0.9); }
+        .tile-letter { line-height:1; pointer-events:none; z-index:1; }
+        .tile-chips { position:absolute; bottom:3px; right:6px; font-size:10px; color:var(--text-soft); font-weight:700; pointer-events:none; z-index:1; }
+        .tile-inner.marked-reroll {
+            border: 3px solid #e17055 !important;
+            box-shadow: 0 0 18px rgba(225,112,85,0.8), 0 5px 10px rgba(0,0,0,0.08) !important;
+            background: #fff0ed !important;
+        }
+        .tile-inner.aura-blue { border: 3px solid #3498ff !important; box-shadow: 0 0 14px rgba(52,152,255,0.5), 0 5px 10px rgba(0,0,0,0.07); }
+        .tile-inner.aura-red { border: 3px solid #ff4757 !important; box-shadow: 0 0 14px rgba(255,71,87,0.5), 0 5px 10px rgba(0,0,0,0.07); }
+        .tile-inner.aura-gold { border: 3px solid #ffb800 !important; box-shadow: 0 0 14px rgba(255,184,0,0.5), 0 5px 10px rgba(0,0,0,0.07); }
+        .tile-inner.wildcard { background: #fef9e7; border: 3px solid #ffb800 !important; box-shadow: 0 0 14px rgba(255,184,0,0.5), 0 5px 10px rgba(0,0,0,0.07); }
+        .tile-inner.finisher { background: #fef0e7; border: 3px solid #ffb800 !important; box-shadow: 0 0 14px rgba(255,184,0,0.5), 0 5px 10px rgba(0,0,0,0.07); }
+        .tile-inner.dragging {
+            transform: scale(1.15);
+            box-shadow: 0 16px 32px rgba(0,0,0,0.25) !important;
+            z-index: 60; border: 3px solid var(--theme-bg2) !important; opacity: 0.95;
+        }
+        .drag-clone {
+            position: fixed; pointer-events: none; z-index: 100;
+            transform: translate(-50%, -50%) scale(1.15);
+            box-shadow: 0 16px 32px rgba(0,0,0,0.25) !important;
+            border-radius: var(--tile-radius); opacity: 0.9;
+        }
+
+        #glyph-slots { display:flex; gap:10px; justify-content:center; padding:10px 0; flex-shrink:0; }
+        .glyph-slot {
+            width: 62px; height: 62px; border-radius: 16px;
+            background: rgba(20, 20, 30, 0.72);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; position: relative; font-weight: 900;
+            font-size: 0.9rem; color: #e8e8f0;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+            border: 2px solid rgba(148, 163, 184, 0.55);
+            transition: all 0.2s; flex-shrink: 0;
+        }
+        .glyph-slot.selected { border-color: #ffd700 !important; box-shadow: 0 0 20px rgba(255,215,0,0.55), 0 6px 18px rgba(0,0,0,0.35) !important; animation: glyphSelectBounce 0.4s ease; }
+        .glyph-slot.active { animation: glyphGlow 0.5s ease; border-color: #ffd700; }
+        .glyph-slot.level-2 { border-color: rgba(0, 220, 220, 0.75); box-shadow: 0 0 14px rgba(0,220,220,0.30), 0 6px 18px rgba(0,0,0,0.35); }
+        .glyph-slot.level-3 { border-color: rgba(255, 184, 0, 0.75); box-shadow: 0 0 16px rgba(255,184,0,0.38), 0 6px 18px rgba(0,0,0,0.35); }
+        .glyph-slot.level-4 { border-color: rgba(186, 85, 211, 0.82); box-shadow: 0 0 20px rgba(186,85,211,0.45), 0 6px 18px rgba(0,0,0,0.35); }
+        .glyph-level-badge {
+            position: absolute; top: -7px; right: -8px;
+            font-size: 0.48rem; font-weight: 900; padding: 2px 7px;
+            border-radius: 10px; color: #fff; background: rgba(15, 15, 25, 0.85);
+            border: 1px solid rgba(255,255,255,0.25); z-index: 2; white-space: nowrap;
+        }
+        .glyph-stat { font-size: 0.82rem; font-weight: 900; letter-spacing: -0.3px; text-align: center; line-height: 1.1; }
+
+        #controls-row { display:flex; gap:10px; flex-shrink:0; }
+        .btn-action {
+            flex:1; padding:16px 4px; border-radius: var(--radius-xl); font-weight:800; font-size:0.72rem; letter-spacing:0.8px;
+            cursor:pointer; box-shadow: var(--shadow-sm), var(--inner-highlight); background:var(--white); color:var(--text);
+            transition: all 0.2s; text-align:center; white-space:nowrap; border:none;
+        }
+        .btn-action:active:not(:disabled) { transform:scale(0.94); }
+        .btn-action:disabled { opacity:0.45; transform:scale(0.97); cursor:not-allowed; filter:grayscale(0.15); }
+        #btn-submit { background:linear-gradient(135deg, var(--theme-submit1), var(--theme-submit2)); color:#fff; font-size:0.8rem; letter-spacing:1.2px; }
+        #btn-reroll.reroll-mode { background:#e17055; color:#fff; }
+
+        #view-map {
+            align-items: center; padding: 20px 16px 30px; gap: 12px; z-index: 8;
+            background: rgba(255,255,255,0.18); overflow-y: auto;
+        }
+        #map-header { text-align:center; color:#fff; font-weight:900; font-size:1.1rem; text-shadow:0 2px 8px rgba(0,0,0,0.2); }
+        #map-ladder { display:flex; flex-direction:column; align-items:center; gap:0; width:100%; flex:1; justify-content:center; }
+        .map-node-wrap { display:flex; align-items:center; justify-content: center; gap:12px; width:100%; animation: nodeSlideIn 0.5s ease-out forwards; opacity:0; }
+        .map-node {
+            width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,0.5);
+            box-shadow: var(--shadow-sm); display:flex; align-items:center; justify-content:center;
+            font-weight:900; font-size:1rem; color:var(--text); flex-shrink:0; position:relative;
+            border: 3px solid transparent;
+        }
+        .map-node.completed { background:#6ecf9a; color:#fff; border-color:#2d3436; }
+        .map-node.current { background:#fff; color:var(--text); border-color:var(--theme-bg2); animation: nodePulse 2s ease-in-out infinite; }
+        .map-node.upcoming { background:rgba(255,255,255,0.25); color:#999; }
+        .map-node-info { flex:0 1 auto; color:#fff; font-weight:700; font-size:0.8rem; text-shadow:0 1px 4px rgba(0,0,0,0.2); }
+        .map-connector { width:3px; height:20px; background:rgba(255,255,255,0.4); }
+        #btn-start-stage {
+            width:100%; max-width:320px; padding:16px; border-radius:var(--radius-xl); font-weight:800; font-size:1rem;
+            cursor:pointer; box-shadow:var(--shadow-md), var(--inner-highlight); transition:all 0.2s;
+            text-align:center; background: linear-gradient(135deg, var(--theme-bg1), var(--theme-bg2)); color:#fff; border:none;
+            flex-shrink:0; margin-top: auto; margin-bottom: 10px;
+        }
+        #btn-start-stage:active { transform:scale(0.95); }
+
+        #confirm-modal { position:absolute; inset:0; background:rgba(0,0,0,0.35); backdrop-filter:blur(8px); display:none; align-items:center; justify-content:center; z-index:85; }
+        #confirm-modal.show { display:flex; }
+        .confirm-inner { background:var(--white); border-radius:28px; padding:22px; width:280px; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; gap:14px; }
+        .confirm-inner p { font-weight:700; font-size:0.85rem; color:var(--text); }
+        .confirm-btns { display:flex; gap:10px; }
+        .confirm-btns button { flex:1; padding:12px; border-radius:14px; font-weight:800; font-size:0.75rem; cursor:pointer; border:none; }
+        .confirm-btns .btn-cancel { background:#e9ecef; color:var(--text); }
+        .confirm-btns .btn-quit { background:#e17055; color:#fff; }
+
+        #options-modal, #modal-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.25); backdrop-filter:blur(8px); display:none; align-items:center; justify-content:center; z-index:80; }
+        #options-modal.show, #modal-overlay.show { display:flex; }
+        .modal-inner { background:var(--white); border-radius:34px; padding:26px 22px; width:100%; max-width:320px; box-shadow:0 24px 48px rgba(0,0,0,0.14), var(--inner-highlight); display:flex; flex-direction:column; gap:14px; }
+        .modal-inner h3 { text-align:center; font-size:1.3rem; font-weight:900; }
+        .modal-inner label { display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:0.8rem; color:var(--text); gap:10px; }
+        .modal-inner input[type="range"] { accent-color:var(--theme-chip); flex:1; min-width:60px; height:6px; }
+        .modal-inner input[type="checkbox"] { width:22px; height:22px; accent-color:var(--theme-chip); }
+        .slider-val { font-weight:800; min-width:32px; text-align:right; font-size:0.74rem; color:var(--theme-chip); }
+        #btn-close-settings, #btn-modal-action { padding:15px; border-radius: var(--radius-xl); font-weight:800; cursor:pointer; box-shadow:var(--shadow-sm), var(--inner-highlight); transition:all 0.2s; text-align:center; color:var(--text); margin-top:6px; border:none; background:var(--white); }
+        #btn-close-settings { background:#f2f2f2; } #btn-modal-action { background:#fef5e0; color:#2d3436; font-weight:900; }
+        .btn-main-menu { margin-top:8px; padding:12px; border-radius:14px; font-weight:700; font-size:0.72rem; cursor:pointer; border:none; background:#e9ecef; color:var(--text); letter-spacing:0.5px; }
+        #game-container.shake-active { animation: shake 0.25s ease-out; }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <div id="bg-overlay"></div>
+    <div id="view-menu" class="view-panel"><h1>WORDLING!</h1><button class="menu-btn play-btn" id="btn-play">▶ PLAY</button><button class="menu-btn themes-btn" id="btn-menu-themes">◆ THEMES</button><button class="menu-btn settings-btn" id="btn-menu-options">⚙ SETTINGS</button><button class="menu-btn store-btn" disabled>STORE · SOON</button></div>
+    <div id="view-themes" class="view-panel">
+        <h2>CHOOSE THEME</h2>
+        <div class="theme-card orange-green active" data-theme="orange-green">ORANGE & GREEN</div>
+        <div class="theme-card black-white" data-theme="black-white">BLACK & WHITE</div>
+        <div class="theme-card blue-red" data-theme="blue-red">BLUE & RED</div>
+        <div class="theme-card purple-yellow" data-theme="purple-yellow">PURPLE & YELLOW</div>
+        <button class="menu-btn" id="btn-back-themes" style="width:100%; margin-top:10px;">BACK</button>
+    </div>
+    <div id="view-difficulty" class="view-panel"><h2>CHOOSE LEVEL</h2><button class="diff-btn diff-easy" data-diff="easy">EASY · 4 STAGES</button><button class="diff-btn diff-medium" data-diff="medium">MEDIUM · 8 STAGES</button><button class="diff-btn diff-hard" data-diff="hard">HARD · 8 STAGES</button><button class="diff-btn diff-extreme" data-diff="extreme">EXTREME · 12 STAGES</button><button class="menu-btn" id="btn-back-diff">BACK</button></div>
+    <div id="view-map" class="view-panel hidden"><div id="map-header"></div><div id="map-ladder"></div><button id="btn-start-stage">START STAGE</button></div>
+    <div id="view-game" class="view-panel hidden">
+        <div id="header"><button id="btn-back-menu">BACK</button><span id="stage-text">Stage 1/4</span><span id="bag-counter">BAG: 98</span><button id="btn-settings">⚙</button></div>
+        <div id="top-info"><div id="progress-wrap"><div id="progress-fill"></div></div><div id="score-pill">0 / 40</div></div>
+        <div id="hud-row"><div class="hud-box" id="box-points"><div class="hud-label">POINTS</div><div class="hud-value" id="val-points">0</div></div><span id="hud-times">&times;</span><div class="hud-box" id="box-mults"><div class="hud-label">MULTIS</div><div class="hud-value" id="val-mults">1.0</div></div></div>
+        <div id="score-banner">—</div>
+        <div id="active-word-line"></div>
+        <div id="hand-rack"></div>
+        <div id="glyph-slots"></div>
+        <div id="controls-row"><button class="btn-action" id="btn-shuffle-hand">SHUFFLE</button><button class="btn-action" id="btn-clear">CLEAR</button><button class="btn-action" id="btn-reroll">REROLL</button><button class="btn-action" id="btn-submit">SUBMIT</button></div>
+    </div>
+    <div id="view-draft" class="hidden"></div>
+    <div id="confirm-modal"><div class="confirm-inner"><p>Quit Run? Your progress will be lost.</p><div class="confirm-btns"><button class="btn-cancel" id="btn-confirm-cancel">Cancel</button><button class="btn-quit" id="btn-confirm-quit">Quit</button></div></div></div>
+    <div id="options-modal"><div class="modal-inner"><h3>SETTINGS</h3><label>Music <input type="range" id="music-slider" min="0" max="100" value="25"><span class="slider-val" id="music-val">25%</span></label><label>Sounds <input type="range" id="sounds-slider" min="0" max="100" value="65"><span class="slider-val" id="sounds-val">65%</span></label><label>Vibration <input type="checkbox" id="vibration-toggle" checked></label><label>Screen Shake <input type="range" id="shake-slider" min="0" max="100" value="100"><span class="slider-val" id="shake-val">100%</span></label><label>Disable Ads <input type="checkbox" disabled><span style="font-size:0.65rem;">(soon)</span></label><button id="btn-close-settings">CLOSE</button></div></div>
+    <div id="modal-overlay"><div class="modal-inner" style="text-align:center;"><h2 id="modal-title">GAME OVER</h2><p id="modal-subtitle"></p><button id="btn-modal-action">Retry Run</button><button class="btn-main-menu" id="btn-modal-menu">Main Menu</button></div></div>
+</div>
+<script>
+(function() {
+    const AudioEngine = {
+        audioCtx: null, musicGain: null, musicOsc: null, musicLFO: null, sfxGain:0.65, musicVol:0.25,
+        _ensureContext() { if(!this.audioCtx){ const AC=window.AudioContext||window.webkitAudioContext; if(AC) this.audioCtx=new AC(); } if(this.audioCtx&&this.audioCtx.state==='suspended') this.audioCtx.resume(); return this.audioCtx; },
+        _sfxOut() { const ctx=this._ensureContext(); if(!ctx) return null; const g=ctx.createGain(); g.gain.value=this.sfxGain; g.connect(ctx.destination); return g; },
+        startMusic() { const ctx=this._ensureContext(); if(!ctx||this.musicOsc) return; this.musicGain=ctx.createGain(); this.musicGain.gain.value=this.musicVol*0.015; this.musicGain.connect(ctx.destination); this.musicOsc=ctx.createOscillator(); this.musicOsc.type='sine'; this.musicOsc.frequency.value=55; this.musicLFO=ctx.createOscillator(); this.musicLFO.type='sine'; this.musicLFO.frequency.value=0.08; const lfoG=ctx.createGain(); lfoG.gain.value=3; this.musicLFO.connect(lfoG); lfoG.connect(this.musicOsc.frequency); this.musicOsc.connect(this.musicGain); this.musicOsc.start(); this.musicLFO.start(); },
+        stopMusic() { if(this.musicOsc){ try{this.musicOsc.stop();}catch(e){} this.musicOsc=null; } if(this.musicLFO){ try{this.musicLFO.stop();}catch(e){} this.musicLFO=null; } if(this.musicGain){ this.musicGain.disconnect(); this.musicGain=null; } },
+        setMusicVolume(v) { this.musicVol=v; if(this.musicGain) this.musicGain.gain.value=v*0.015; },
+        setSfxVolume(v) { this.sfxGain=v; },
+        playTap() { const g=this._sfxOut(); if(!g) return; const ctx=this.audioCtx; const t=ctx.currentTime; const o=ctx.createOscillator(); o.type='triangle'; o.frequency.setValueAtTime(400,t); o.frequency.exponentialRampToValueAtTime(180,t+0.04); const gn=ctx.createGain(); gn.gain.setValueAtTime(0.1,t); gn.gain.exponentialRampToValueAtTime(0.001,t+0.05); o.connect(gn); gn.connect(g); o.start(t); o.stop(t+0.06); },
+        playShuffle() { const g=this._sfxOut(); if(!g) return; const ctx=this.audioCtx; const t=ctx.currentTime; [500,620,730].forEach((f,i)=>{ const o=ctx.createOscillator(); o.type='sine'; const st=t+i*0.035; o.frequency.setValueAtTime(f,st); const gn=ctx.createGain(); gn.gain.setValueAtTime(0.04,st); gn.gain.exponentialRampToValueAtTime(0.001,st+0.05); o.connect(gn); gn.connect(g); o.start(st); o.stop(st+0.06); }); },
+        playError() { const g=this._sfxOut(); if(!g) return; const ctx=this.audioCtx; const t=ctx.currentTime; const o=ctx.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(90,t); o.frequency.linearRampToValueAtTime(55,t+0.15); const gn=ctx.createGain(); gn.gain.setValueAtTime(0.18,t); gn.gain.exponentialRampToValueAtTime(0.001,t+0.18); o.connect(gn); gn.connect(g); o.start(t); o.stop(t+0.2); },
+        playPopup() { const g=this._sfxOut(); if(!g) return; const ctx=this.audioCtx; const t=ctx.currentTime; const o=ctx.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(660,t); o.frequency.exponentialRampToValueAtTime(440,t+0.07); const gn=ctx.createGain(); gn.gain.setValueAtTime(0.08,t); gn.gain.exponentialRampToValueAtTime(0.001,t+0.07); o.connect(gn); gn.connect(g); o.start(t); o.stop(t+0.08); },
+        playSubmit() { const g=this._sfxOut(); if(!g) return; const ctx=this.audioCtx; const t=ctx.currentTime; const freqs=[261.63,329.63,392.0,523.25]; freqs.forEach((f,i)=>{ const o=ctx.createOscillator(); o.type='sine'; const st=t+i*0.04; o.frequency.setValueAtTime(f,st); const gn=ctx.createGain(); gn.gain.setValueAtTime(0,st); gn.gain.linearRampToValueAtTime(0.09,st+0.25); gn.gain.exponentialRampToValueAtTime(0.001,st+0.9); o.connect(gn); gn.connect(g); o.start(st); o.stop(st+1.0); }); }
+    };
+    const THEMES = {
+        'orange-green': { bg1: '#6ecf9a', bg2: '#f0a860', chip: '#6ecf9a', mult: '#f0a860', sub1: '#6ecf9a', sub2: '#7ec89a' },
+        'black-white': { bg1: '#2d3436', bg2: '#a8b0b5', chip: '#2d3436', mult: '#636e72', sub1: '#2d3436', sub2: '#555555' },
+        'blue-red':    { bg1: '#74b9ff', bg2: '#ff7675', chip: '#74b9ff', mult: '#ff7675', sub1: '#74b9ff', sub2: '#a0c4ff' },
+        'purple-yellow':{ bg1: '#a29bfe', bg2: '#fdcb6e', chip: '#a29bfe', mult: '#fdcb6e', sub1: '#a29bfe', sub2: '#c4b8ff' }
+    };
+    function applyTheme(n){ const t=THEMES[n]||THEMES['orange-green']; const r=document.documentElement; r.style.setProperty('--theme-bg1',t.bg1); r.style.setProperty('--theme-bg2',t.bg2); r.style.setProperty('--theme-chip',t.chip); r.style.setProperty('--theme-mult',t.mult); r.style.setProperty('--theme-submit1',t.sub1); r.style.setProperty('--theme-submit2',t.sub2); try{localStorage.setItem('wordling-theme',n);}catch(e){} }
+
+    const TILE_DIST = [
+        {letter:'A',chips:1,qty:9},{letter:'B',chips:2,qty:2},{letter:'C',chips:2,qty:2},{letter:'D',chips:2,qty:4},{letter:'E',chips:1,qty:12},{letter:'F',chips:4,qty:2},{letter:'G',chips:2,qty:3},{letter:'H',chips:4,qty:2},{letter:'I',chips:1,qty:9},{letter:'J',chips:8,qty:1},{letter:'K',chips:4,qty:1},{letter:'L',chips:1,qty:4},{letter:'M',chips:2,qty:2},{letter:'N',chips:1,qty:6},{letter:'O',chips:1,qty:8},{letter:'P',chips:2,qty:2},{letter:'Q',chips:8,qty:1},{letter:'R',chips:1,qty:6},{letter:'S',chips:1,qty:4},{letter:'T',chips:1,qty:6},{letter:'U',chips:1,qty:4},{letter:'V',chips:4,qty:2},{letter:'W',chips:4,qty:2},{letter:'X',chips:8,qty:1},{letter:'Y',chips:4,qty:2},{letter:'Z',chips:8,qty:1}
+    ];
+    const FALLBACK_WORDS = ["AA","AB","AD","AE","AG","AH","AI","AL","AM","AN","AR","AS","AT","AW","AX","AY","BA","BE","BI","BO","BY","DA","DE","DO","EA","ED","EF","EH","EL","EM","EN","ER","ES","ET","EX","FA","FE","GO","HA","HE","HI","HM","HO","ID","IF","IN","IS","IT","JO","KA","LA","LI","LO","MA","ME","MI","MM","MO","MU","MY","NA","NE","NO","NU","OD","OE","OF","OH","OI","OM","ON","OP","OR","OS","OW","OX","OY","PA","PE","PI","QI","RE","SH","SI","SO","TA","TE","TI","TO","UH","UM","UN","UP","US","UT","WE","WO","XI","XU","YA","YE","YO","ZA","ACE","ACT","ADD","AGE","AGO","AID","AIM","AIR","ALL","AND","ANT","APE","ARC","ARE","ARM","ART","ASK","ATE","AVE","BAD","BAG","BAN","BAR","BAT","BAY","BED","BEE","BET","BIG","BIN","BIT","BOW","BOX","BOY","BUD","BUG","BUN","BUS","BUT","BUY","CAB","CAM","CAN","CAP","CAR","CAT","COP","COW","CRY","CUB","CUP","CUR","CUT","DAB","DAD","DAM","DAY","DEW","DID","DIE","DIG","DIM","DIP","DOG","DOT","DRY","DUB","DUD","DUE","DUG","DUO","DYE","EAR","EAT","EGG","EGO","ELM","END","ERA","EVE","EWE","EYE","FAN","FAR","FAT","FAX","FED","FEE","FEW","FIG","FIN","FIR","FIT","FIX","FLY","FOE","FOG","FOR","FOX","FRO","FRY","FUN","FUR","GAG","GAP","GAS","GEL","GEM","GET","GIG","GIN","GNU","GOD","GOT","GUM","GUN","GUT","GUY","GYM","HAD","HAM","HAS","HAT","HAY","HEN","HER","HEW","HID","HIM","HIP","HIS","HIT","HOB","HOG","HOP","HOT","HOW","HUB","HUE","HUG","HUM","HUT","ICE","ICY","ILL","IMP","INK","INN","ION","IRE","IRK","ITS","IVY","JAB","JAG","JAM","JAR","JAW","JAY","JET","JIG","JOB","JOG","JOT","JOY","JUG","JUT","KEG","KEN","KEY","KID","KIN","KIT","LAB","LAD","LAG","LAP","LAW","LAY","LEA","LED","LEG","LET","LID","LIE","LIP","LIT","LOG","LOT","LOW","LUG","MAD","MAN","MAP","MAR","MAT","MAW","MAX","MAY","MEN","MET","MID","MIX","MOB","MOD","MOM","MOP","MOW","MRS","MUD","MUG","MUM","NAB","NAG","NAP","NET","NEW","NIB","NIL","NIP","NIT","NOD","NOR","NOT","NOW","NUB","NUN","NUT","OAK","OAR","OAT","ODD","ODE","OFF","OFT","OIL","OLD","ONE","OPT","ORB","ORE","OUR","OUT","OVA","OWE","OWL","OWN","PAD","PAL","PAN","PAP","PAR","PAT","PAW","PAY","PEA","PEG","PEN","PEP","PER","PET","PEW","PIE","PIG","PIN","PIT","PLY","POD","POP","POT","POW","PRY","PUB","PUG","PUN","PUP","PUS","PUT","RAG","RAM","RAN","RAP","RAT","RAW","RAY","RED","REF","REP","RIB","RID","RIG","RIM","RIP","ROB","ROD","ROE","ROT","ROW","RUB","RUG","RUM","RUN","RUT","RYE","SAC","SAD","SAG","SAP","SAT","SAW","SAY","SEA","SEE","SET","SEW","SHE","SHY","SIN","SIP","SIR","SIS","SIT","SIX","SKI","SKY","SLY","SOB","SOD","SON","SOP","SOT","SOW","SOY","SPA","SPY","STY","SUB","SUE","SUM","SUN","SUP","TAB","TAD","TAG","TAN","TAP","TAR","TAT","TAX","TEA","TEN","THE","TIE","TIN","TIP","TOE","TON","TOO","TOP","TOT","TOW","TOY","TRY","TUB","TUG","TWO","URN","USE","VAN","VAT","VET","VEX","VIA","VIE","VOW","WAD","WAG","WAR","WAS","WAX","WAY","WEB","WED","WET","WHO","WHY","WIG","WIN","WIT","WOE","WOK","WON","WOO","WOW","YAK","YAM","YAP","YAW","YEA","YES","YET","YEW","YOU","ZAP","ZEN","ZIG","ZIP","ZIT","ZOO","ABLE","ALSO","AREA","ARMY","AWAY","BACK","BALL","BAND","BANK","BASE","BATH","BEAR","BEAT","BEEN","BELL","BELT","BEST","BILL","BIRD","BITE","BLOW","BLUE","BOAT","BODY","BOMB","BOND","BONE","BOOK","BORN","BOSS","BOTH","BOWL","BURN","BUSY","CALL","CALM","CAME","CAMP","CARD","CARE","CASE","CASH","CAST","CAVE","CELL","CHAT","CHIP","CITY","CLUB","COAL","COAT","CODE","COIN","COLD","COME","COOK","COOL","COPE","COPY","CORE","COST","CREW","CROP","CURE","DALE","DAME","DAMP","DARE","DARK","DASH","DATA","DATE","DAWN","DEAD","DEAL","DEAR","DEBT","DECK","DEED","DEEM","DEEP","DEER","DEMO","DENY","DESK","DIAL","DICE","DIET","DIRT","DISH","DISK","DOCK","DOES","DOME","DONE","DOOR","DOSE","DOWN","DOZE","DRAG","DRAW","DREW","DROP","DRUG","DRUM","DUAL","DUCK","DUEL","DUKE","DULL","DUMP","DUST","DUTY","EACH","EARN","EASE","EAST","EASY","EDGE","EDIT","ELSE","EMIT","EPIC","EVEN","EVER","EVIL","EXAM","EXIT","FACE","FACT","FADE","FAIL","FAIR","FAKE","FALL","FAME","FANG","FARM","FAST","FATE","FEAR","FEAT","FEED","FEEL","FEET","FELL","FELT","FILE","FILL","FILM","FIND","FINE","FIRE","FIRM","FISH","FIST","FLAG","FLAT","FLEW","FLIP","FLOW","FOAM","FOLD","FOLK","FOND","FOOD","FOOL","FOOT","FORD","FORM","FORT","FOUL","FOUR","FREE","FROM","FUEL","FULL","FUND","FURY","FUSE","GAIN","GALE","GAME","GANG","GAPE","GARB","GATE","GAZE","GEAR","GIFT","GIRL","GIVE","GLAD","GLEN","GLOW","GLUE","GNAT","GOAL","GOAT","GOES","GOLD","GOLF","GONE","GOOD","GORE","GRAB","GRAM","GRAY","GREW","GREY","GRIM","GRIN","GRIP","GROW","GULF","GURU","GUST","GUTS","HACK","HAIL","HAIR","HALE","HALF","HALL","HALT","HAND","HANG","HARD","HARE","HARM","HARP","HASH","HAST","HATE","HAUL","HAVE","HAZE","HEAD","HEAL","HEAP","HEAR","HEAT","HEEL","HEIR","HELD","HELL","HELM","HELP","HERB","HERD","HERE","HERO","HIDE","HIGH","HIKE","HILL","HILT","HIND","HINT","HIRE","HIVE","HOLD","HOLE","HOLY","HOME","HONE","HOOD","HOOF","HOOK","HOPE","HORN","HOST","HOUR","HOWL","HUGE","HULL","HUNG","HUNT","HURT","HUSH","ICON","IDEA","IDLE","INCH","INTO","IRON","ISLE","ITEM","JACK","JADE","JAIL","JAZZ","JEAN","JERK","JEST","JOIN","JOKE","JOLT","JURY","JUST","KEEN","KEEP","KELP","KEPT","KICK","KILL","KIND","KING","KISS","KITE","KNEE","KNEW","KNIT","KNOB","KNOT","KNOW","LACE","LACK","LADY","LAID","LAKE","LAMB","LAME","LAMP","LAND","LANE","LARK","LASH","LASS","LAST","LATE","LAWN","LEAD","LEAF","LEAK","LEAN","LEAP","LEFT","LEND","LENS","LENT","LESS","LIAR","LICK","LIFE","LIFT","LIKE","LILY","LIMB","LIME","LIMP","LINE","LINK","LINT","LION","LIST","LIVE","LOAD","LOAF","LOAN","LOCK","LOFT","LOGO","LONE","LONG","LOOK","LOOM","LOOP","LORD","LORE","LOSE","LOSS","LOST","LOUD","LOVE","LUCK","LUMP","LUNG","LURE","LURK","LUSH","LUST","MACE","MADE","MAID","MAIL","MAIN","MAKE","MALE","MALL","MALT","MANE","MANY","MARE","MARK","MASK","MASS","MAST","MATE","MAZE","MEAD","MEAL","MEAN","MEAT","MEET","MELD","MELT","MEMO","MEND","MENU","MERE","MESA","MESH","MESS","MILD","MILE","MILK","MILL","MIME","MIND","MINE","MINT","MIRE","MISS","MIST","MITE","MOCK","MODE","MOLD","MOLE","MONK","MOOD","MOON","MOOR","MORE","MOSS","MOST","MOTH","MOVE","MUCH","MULE","MULL","MUSE","MUSH","MUST","MUTE","MYTH","NAIL","NAME","NAVY","NEAR","NEAT","NECK","NEED","NEST","NEWS","NEXT","NICE","NINE","NODE","NONE","NOOK","NOON","NORM","NOSE","NOSY","NOTE","NOUN","NUDE","OATH","OBEY","ODDS","OGRE","OKRA","OMEN","OMIT","ONCE","ONLY","ONTO","OOZE","OPAL","OPEN","ORAL","OUST","OVAL","OVEN","OVER","PACE","PACK","PACT","PAGE","PAID","PAIL","PAIN","PAIR","PALE","PALM","PANE","PANG","PANT","PAPA","PARK","PART","PASS","PAST","PATH","PAVE","PAWN","PEAK","PEAL","PEAR","PEAS","PECK","PEEL","PEER","PELT","PERK","PEST","PICK","PIER","PIKE","PILE","PILL","PINE","PINK","PINT","PIPE","PLAN","PLAY","PLEA","PLOT","PLOW","PLOY","PLUG","PLUM","PLUS","POKE","POLE","POLL","POLO","POND","PONY","POOL","POOR","POPE","PORE","PORK","PORT","POSE","POST","POUR","PRAY","PREP","PREY","PROD","PROP","PROW","PULL","PUMP","PUNK","PURE","PURL","PUSH","QUAD","QUIT","QUIZ","RACE","RACK","RAFT","RAGE","RAGS","RAID","RAIL","RAIN","RAKE","RALLY","RAMP","RANG","RANK","RARE","RASH","RASP","RATE","RAVE","READ","REAL","REAP","REAR","REED","REEF","REEL","REIN","RENT","REST","RICH","RIDE","RIFT","RING","RIOT","RIPE","RISE","RISK","ROAD","ROAM","ROAR","ROBE","ROCK","RODE","ROLE","ROLL","ROOF","ROOM","ROOT","ROPE","ROSE","RUBY","RUDE","RUIN","RULE","RUSH","RUST","RUTH","SACK","SAFE","SAGE","SAID","SAIL","SAKE","SALE","SALT","SAME","SAND","SANE","SANG","SANK","SAVE","SCAN","SCAR","SEAL","SEAM","SEAR","SEAT","SEED","SEEK","SEEM","SEEN","SELF","SELL","SEMI","SEND","SENT","SEPT","SHED","SHIN","SHIP","SHOE","SHOP","SHOT","SHOW","SHUT","SICK","SIDE","SIFT","SIGH","SIGN","SILK","SILL","SILO","SINK","SIRE","SITE","SIZE","SKID","SKIM","SKIN","SKIP","SKIT","SLAB","SLAM","SLAP","SLAT","SLAY","SLED","SLEW","SLID","SLIM","SLIP","SLIT","SLOB","SLOT","SLOW","SLUG","SLUM","SLUT","SMOG","SNAP","SNIP","SNOB","SNOW","SNUB","SNUG","SOAK","SOAP","SOAR","SOCK","SODA","SOFA","SOFT","SOIL","SOLD","SOLE","SOLO","SOME","SONG","SOON","SORE","SORT","SOUL","SOUR","SPAN","SPAR","SPEC","SPED","SPIN","SPIT","SPOT","SPUN","STAB","STAG","STAR","STAY","STEM","STEP","STIR","STOP","STUB","STUD","STUN","SUCH","SUIT","SULK","SUMP","SUNG","SUNK","SURE","SURF","SWAN","SWAP","SWIM","TACK","TACT","TAIL","TAKE","TALE","TALK","TALL","TAME","TANK","TAPE","TAPS","TARN","TART","TASK","TEAL","TEAM","TEAR","TECH","TEEN","TELL","TEMP","TEND","TENT","TERM","TEST","TEXT","THAN","THAT","THEM","THEN","THEY","THIN","THIS","THUS","TICK","TIDE","TIDY","TIED","TIER","TILE","TILL","TILT","TIME","TINY","TIRE","TOAD","TOIL","TOLD","TOLL","TOMB","TONE","TOOK","TOOL","TOPS","TORE","TORN","TOUR","TOWN","TRAP","TRAY","TREE","TREK","TRIM","TRIO","TROD","TROT","TRUE","TUBE","TUCK","TUFT","TUNA","TUNE","TURF","TURN","TUSK","TWIN","TWIT","TYKE","TYPE","UGLY","UNDO","UNIT","UNTO","UPON","URGE","USED","USER","VAIN","VALE","VANE","VARY","VASE","VAST","VEAL","VEER","VEIL","VEIN","VENT","VERB","VERY","VEST","VETO","VICE","VIEW","VINE","VOID","VOLT","VOTE","WADE","WAGE","WAIL","WAIT","WAKE","WALK","WALL","WAND","WANT","WARD","WARM","WARN","WARP","WART","WARY","WASH","WASP","WAVE","WAVY","WAXY","WAYS","WEAK","WEAL","WEAN","WEAR","WEED","WEEK","WELL","WELT","WENT","WERE","WEST","WHEN","WHIM","WHIP","WHOM","WICK","WIDE","WIFE","WILD","WILL","WILT","WILY","WIND","WINE","WING","WINK","WIPE","WIRE","WISE","WISH","WISP","WITH","WITS","WOLF","WOMB","WOOD","WOOL","WORD","WORE","WORK","WORM","WORN","WOVE","WRAP","WREN","YANK","YARD","YARN","YEAR","YELL","YELP","YOKE","YOLK","YORE","YOUR","ZEAL","ZERO","ZINC","ZONE","ZOOM"];
+    function shuffle(arr) { const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+    function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+    const DIFFICULTIES = {
+        easy: { name:'EASY', stages:4, targets:[0, 300, 1200, 5000, 20000] },
+        medium: { name:'MEDIUM', stages:8, targets:[0, 300, 800, 2000, 5000, 12000, 30000, 75000, 200000] },
+        hard: { name:'HARD', stages:8, targets:[0, 300, 800, 2000, 5000, 12000, 30000, 75000, 200000] },
+        extreme: { name:'EXTREME', stages:12, targets:[0, 300, 800, 2000, 5000, 12000, 30000, 75000, 200000, 400000, 800000, 1500000, 3000000] }
+    };
+    const CHIPS_LEVELS = [20, 40, 70, 110];
+    const ADDMULT_LEVELS = [2, 4, 7, 12];
+    const XMULT_LEVELS = [1.25, 1.50, 1.75, 2.00];
+    const RELIC_TYPES = [
+        { type:'chips', name:'Gold Bonus', levels:CHIPS_LEVELS, fmt:(v)=>'+'+v+' CHIPS' },
+        { type:'addMult', name:'Mult Boost', levels:ADDMULT_LEVELS, fmt:(v)=>'+'+v+' MULT' },
+        { type:'xMult', name:'Power Multi', levels:XMULT_LEVELS, fmt:(v)=>'x'+v.toFixed(2)+' MULT' }
+    ];
+    function getRelicLevelClass(level) { if(level>=4) return 'level-4'; if(level>=3) return 'level-3'; if(level>=2) return 'level-2'; return ''; }
+    function getRelicValue(type, level) { const rt = RELIC_TYPES.find(r=>r.type===type); if(!rt) return 0; return rt.levels[Math.min(level,4)-1] || rt.levels[0]; }
+    function getRelicLabel(type, level) { const rt = RELIC_TYPES.find(r=>r.type===type); if(!rt) return ''; return rt.fmt(getRelicValue(type, level)); }
+    function upgradeRelic(slotIndex) { const relic = G.relics[slotIndex]; if(!relic || relic.level >= 4) return; relic.level++; relic.value = getRelicValue(relic.type, relic.level); relic.desc = getRelicLabel(relic.type, relic.level); }
+
+    const G = {
+        difficulty:'medium', currentStage:1, stageTargets:DIFFICULTIES.medium.targets, totalStages:DIFFICULTIES.medium.stages,
+        currentScore:0, playsLeft:4, rerollsLeft:3, shakeStrength:100, currentTheme:'orange-green',
+        hand:[], activeWord:[], tileBag:[], discardPile:[], removedLetters:new Set(), stageScores:[],
+        relics:[], dictSet:new Set(), modalType:null, isAnimating:false, rerollMode:false, rerollMarks:new Set(), gameStarted:false,
+        draftChoices:null, dragData:null, selectedGlyph:-1
+    };
+
+    function assignRandomAura() { const r=Math.random(); if(r<0.15) return 'blue'; if(r<0.22) return 'red'; if(r<0.26) return 'gold'; return null; }
+    function buildInitialBag() { const tiles=[]; TILE_DIST.forEach(({letter,chips,qty})=>{ if(G.removedLetters.has(letter)) return; for(let i=0;i<qty;i++) tiles.push({id:'t_'+Math.random().toString(36).slice(2,11)+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), letter, chips, type:'normal', aura: assignRandomAura()}); }); tiles.push({id:'t_*_1', letter:'*', chips:0, type:'wildcard'}); tiles.push({id:'t_!_1', letter:'!', chips:0, type:'finisher'}); return shuffle(tiles); }
+    function drawToHand() { while(G.hand.filter(t=>t!==null).length < 10){ if(G.tileBag.length===0) { if(G.discardPile.length===0) break; G.tileBag = shuffle(G.discardPile); G.discardPile = []; } const tile = G.tileBag.pop(); const emptyIdx = G.hand.indexOf(null); if(emptyIdx!==-1) G.hand[emptyIdx] = tile; else G.hand.push(tile); } document.getElementById('bag-counter').textContent = 'BAG: '+G.tileBag.length; }
+    function resetStageState() { G.currentScore=0; G.playsLeft=4; G.rerollsLeft=3; G.activeWord=[]; G.hand=[]; G.selectedGlyph=-1; G.isAnimating=false; G.rerollMode=false; G.rerollMarks.clear(); drawToHand(); }
+    function startRun() { G.removedLetters = new Set(); G.relics = []; G.stageScores = []; G.tileBag = buildInitialBag(); G.discardPile = []; G.currentStage = 1; resetStageState(); }
+    function getLengthBaseChips(l) { if(l>=7) return 300; if(l===6) return 150; if(l===5) return 80; if(l===4) return 40; if(l===3) return 20; return 0; }
+    function getLengthBaseMult(l) { if(l>=7) return 8; if(l===6) return 5; if(l===5) return 3; if(l===4) return 2; if(l===3) return 1; return 1; }
+    function calcScore() {
+        let totalChips=0, additiveMult=0, hasWildcard=false; const letters=[];
+        G.activeWord.forEach(t=>{ if(t.type==='wildcard'){ hasWildcard=true; return; } let chip=t.chips||0; if(t.aura==='blue') chip+=10; if(t.aura==='gold') chip*=2; totalChips+=chip; if(t.aura==='red') additiveMult+=2; letters.push(t.letter); });
+        const length=G.activeWord.length; const baseChips=getLengthBaseChips(length); const baseMult=getLengthBaseMult(length);
+        for (const r of G.relics) { if (r.type === 'chips') totalChips += r.value; }
+        totalChips += baseChips; let totalMult = baseMult;
+        for (const r of G.relics) { if (r.type === 'addMult') totalMult += r.value; }
+        let subtotal = Math.floor(totalChips * totalMult);
+        let finisherMult = 1; if(length>0 && G.activeWord[length-1].type==='finisher') finisherMult = 3;
+        let xMultProduct = 1;
+        for (const r of G.relics) { if (r.type === 'xMult') xMultProduct *= r.value; }
+        const finalScore = Math.floor(subtotal * finisherMult * xMultProduct);
+        let word=letters.join(''), valid=false;
+        if(hasWildcard){ const pattern=G.activeWord.map(t=>t.type==='wildcard'?'?':t.letter).join(''); for(let c=65;c<=90;c++){ const tw=pattern.replace(/\?/g,String.fromCharCode(c)); if(G.dictSet.has(tw)){ valid=true; word=tw; break; } } }
+        else if(letters.length>0) valid=G.dictSet.has(word);
+        return {word,valid,totalChips,totalMult,subtotal,finisherMult,xMultProduct,totalScore:finalScore,occ:length};
+    }
+    function vibrate(ms=8) { if(document.getElementById('vibration-toggle').checked&&navigator.vibrate){ try{navigator.vibrate(ms);}catch(e){} } }
+    function getInsertIndexFromX(clientX) { const container=document.getElementById('active-word-line'); const tiles=container.querySelectorAll('.active-tile'); const cr=container.getBoundingClientRect(); const x=clientX-cr.left; for(let i=0;i<tiles.length;i++){ const tr=tiles[i].getBoundingClientRect(); const tc=tr.left-cr.left+tr.width/2; if(x<tc) return i; } return G.activeWord.length; }
+    function placeTileInSlot(handIndex, insertAt=null) { if(G.isAnimating||G.rerollMode) return; if(handIndex<0||handIndex>=10||!G.hand[handIndex]) return; if(G.activeWord.length>=8) return; const tile=G.hand[handIndex]; G.hand[handIndex]=null; const idx=(insertAt!==null)?insertAt:G.activeWord.length; G.activeWord.splice(idx,0,tile); AudioEngine.playTap(); vibrate(6); render(); }
+    function removeTileFromWord(wordIndex) { if(G.isAnimating||G.rerollMode) return; if(wordIndex<0||wordIndex>=G.activeWord.length) return; const tile=G.activeWord[wordIndex]; const ei=G.hand.findIndex(t=>t===null); if(ei===-1) return; G.hand[ei]=tile; G.activeWord.splice(wordIndex,1); AudioEngine.playTap(); vibrate(6); render(); }
+    function swapHandTiles(i1,i2) { if(i1===i2) return; const t=G.hand[i1]; G.hand[i1]=G.hand[i2]; G.hand[i2]=t; AudioEngine.playTap(); render(); }
+    function clearActiveWord() { if(G.isAnimating||G.rerollMode) return; while(G.activeWord.length>0){ const t=G.activeWord.pop(); const e=G.hand.findIndex(x=>x===null); if(e!==-1) G.hand[e]=t; } AudioEngine.playTap(); render(); }
+    function shuffleHand() { if(G.isAnimating||G.hand.filter(t=>t).length<2||G.rerollMode) return; const tiles=G.hand.filter(t=>t!==null); const s=shuffle(tiles); let idx=0; for(let i=0;i<10;i++){ if(G.hand[i]!==null) G.hand[i]=s[idx++]; } AudioEngine.playShuffle(); vibrate(8); render(); }
+    function toggleRerollMark(hi) { if(hi<0||hi>=10||!G.hand[hi]) return; const id=G.hand[hi].id; if(G.rerollMarks.has(id)) G.rerollMarks.delete(id); else { if(G.rerollMarks.size>=3) return; G.rerollMarks.add(id); } AudioEngine.playTap(); render(); }
+    function enterReroll() { if(G.isAnimating||G.rerollsLeft<=0||G.hand.every(t=>t===null)) return; G.rerollMode=true; G.rerollMarks.clear(); render(); }
+    function exitReroll() { G.rerollMode=false; G.rerollMarks.clear(); render(); }
+    function confirmReroll() { if(!G.rerollMode||G.rerollMarks.size===0){ exitReroll(); return; } if(G.rerollsLeft<=0) return; G.rerollsLeft--; for(let i=0;i<10;i++){ if(G.hand[i]&&G.rerollMarks.has(G.hand[i].id)){ G.discardPile.push(G.hand[i]); G.hand[i]=null; } } G.rerollMarks.clear(); G.rerollMode=false; drawToHand(); AudioEngine.playShuffle(); vibrate(12); render(); }
+    function toggleRerollBtn() { if(G.rerollMode) confirmReroll(); else enterReroll(); }
+
+    function showConfirmModal() { document.getElementById('confirm-modal').classList.add('show'); }
+    function hideConfirmModal() { document.getElementById('confirm-modal').classList.remove('show'); }
+
+    function spawnPopup(el,value,isMult) { if(!el) return; const container=document.getElementById('game-container'); const rect=el.getBoundingClientRect(), cr=container.getBoundingClientRect(); const popup=document.createElement('span'); popup.className='score-popup '+(isMult?'mult-popup':'chip-popup'); popup.textContent=(isMult?'×':'+')+value; popup.style.left=(rect.left-cr.left+rect.width/2-(isMult?24:22))+'px'; popup.style.top=(rect.top-cr.top-(isMult?18:8))+'px'; container.appendChild(popup); AudioEngine.playPopup(); setTimeout(()=>{ if(popup.parentNode) popup.remove(); },980); }
+    function spawnGlyphIndicator(glyphEl, text) { const container = document.getElementById('game-container'); const rect = glyphEl.getBoundingClientRect(); const cr = container.getBoundingClientRect(); const indicator = document.createElement('span'); indicator.className = 'glyph-indicator'; indicator.textContent = text; indicator.style.left = (rect.left - cr.left + rect.width/2 - 30) + 'px'; indicator.style.top = (rect.top - cr.top - 10) + 'px'; container.appendChild(indicator); AudioEngine.playPopup(); setTimeout(() => { if(indicator.parentNode) indicator.remove(); }, 850); }
+
+    async function submitWord() {
+        if(G.isAnimating||G.rerollMode){ if(G.rerollMode) exitReroll(); return; }
+        if(G.playsLeft<=0) return;
+        const payload = calcScore();
+        if(!payload.valid||payload.occ===0){ AudioEngine.playError(); vibrate(25); const b=document.getElementById('score-banner'); b.classList.add('invalid'); setTimeout(()=>b.classList.remove('invalid'),400); return; }
+
+        G.isAnimating = true;
+        document.getElementById('btn-submit').disabled = true;
+        document.getElementById('btn-reroll').disabled = true;
+        document.getElementById('btn-clear').disabled = true;
+        document.getElementById('btn-shuffle-hand').disabled = true;
+
+        const overlay = document.getElementById('bg-overlay');
+        const pointsEl = document.getElementById('val-points');
+        const multEl = document.getElementById('val-mults');
+        const timesEl = document.getElementById('hud-times');
+        const bannerEl = document.getElementById('score-banner');
+
+        const tileEls = [...document.querySelectorAll('#active-word-line .active-tile .tile-inner')];
+        const tilesCopy = [...G.activeWord];
+        const glyphSlots = [...document.querySelectorAll('#glyph-slots .glyph-slot')];
+
+        overlay.style.background = 'rgba(30,144,255,0.18)';
+        let runningChips = 0; pointsEl.textContent = '0';
+        for (let i = 0; i < tilesCopy.length; i++) {
+            const tile = tilesCopy[i]; const el = tileEls[i];
+            if (!tile || !el) continue;
+            el.classList.add('scoring-pop');
+            let chip = tile.chips || 0; if (tile.aura === 'blue') chip += 10; if (tile.aura === 'gold') chip *= 2;
+            runningChips += chip; pointsEl.textContent = runningChips; pointsEl.classList.add('pop');
+            spawnPopup(el, chip, false); if (tile.aura === 'red') setTimeout(() => spawnPopup(el, 2, true), 160);
+            await sleep(220); el.classList.remove('scoring-pop'); pointsEl.classList.remove('pop');
+        }
+
+        overlay.style.background = 'rgba(255,69,58,0.20)'; await sleep(250);
+        let displayChips = runningChips + getLengthBaseChips(tilesCopy.length);
+        let displayMult = getLengthBaseMult(tilesCopy.length);
+        pointsEl.textContent = displayChips; pointsEl.classList.add('pop'); await sleep(150); pointsEl.classList.remove('pop');
+        multEl.textContent = displayMult.toFixed(1); multEl.classList.add('pop'); await sleep(150); multEl.classList.remove('pop');
+
+        for (let i = 0; i < G.relics.length; i++) {
+            const relic = G.relics[i]; const slotEl = glyphSlots[i]; if (!slotEl) continue;
+            slotEl.classList.add('active'); let indicatorText = '';
+            if (relic.type === 'chips') { displayChips += relic.value; pointsEl.textContent = displayChips; pointsEl.classList.add('pop'); indicatorText = '+' + relic.value + ' CHIPS'; }
+            else if (relic.type === 'addMult') { displayMult += relic.value; multEl.textContent = displayMult.toFixed(1); multEl.classList.add('pop'); indicatorText = '+' + relic.value + ' MULT'; }
+            else if (relic.type === 'xMult') { indicatorText = 'x' + relic.value.toFixed(2) + ' MULT'; }
+            spawnGlyphIndicator(slotEl, indicatorText); await sleep(350);
+            slotEl.classList.remove('active'); pointsEl.classList.remove('pop'); multEl.classList.remove('pop');
+        }
+
+        await sleep(300); timesEl.classList.add('highlight');
+        bannerEl.textContent = payload.totalChips + ' × ' + payload.totalMult.toFixed(1) + ' = ' + payload.totalScore + ' PTS';
+        await sleep(400); timesEl.classList.remove('highlight');
+
+        G.playsLeft--; G.currentScore += payload.totalScore;
+        AudioEngine.playSubmit(); vibrate(18);
+        const sp = Math.min(14, Math.max(3, payload.totalScore / 10)) * (G.shakeStrength / 100);
+        const c = document.getElementById('game-container');
+        c.style.setProperty('--shake-px', sp + 'px'); c.classList.add('shake-active');
+        setTimeout(() => c.classList.remove('shake-active'), 250);
+        G.discardPile.push(...G.activeWord); G.activeWord = []; drawToHand(); G.isAnimating = false;
+        overlay.style.background = 'transparent';
+
+        if (G.currentScore >= G.stageTargets[G.currentStage]) { G.stageScores[G.currentStage] = G.currentScore; showDraft(); }
+        else if (G.playsLeft <= 0) showModal('game-over');
+        else render();
+    }
+
+    function showDraft() { const draftDiv=document.getElementById('view-draft'); draftDiv.innerHTML=''; const choices=generateDraftChoices(); G.draftChoices=choices; const h2=document.createElement('h2'); h2.textContent='CHOOSE REWARD'; draftDiv.appendChild(h2); choices.forEach((choice,i)=>{ const btn=document.createElement('button'); btn.className='draft-btn'; btn.textContent=choice.label; btn.addEventListener('click',()=>{ choice.apply(); draftDiv.classList.add('hidden'); advanceStage(); }); draftDiv.appendChild(btn); }); draftDiv.classList.remove('hidden'); }
+    function advanceStage() { G.currentStage++; if(G.currentStage > G.totalStages) { showModal('victory'); return; } renderMap(); }
+    function generateDraftChoices() { const pool=[]; RELIC_TYPES.forEach(rt=>{ const existingIdx=G.relics.findIndex(r=>r.type===rt.type); if(existingIdx>=0&&G.relics[existingIdx].level<4){ const cl=G.relics[existingIdx].level; const nl=cl+1; pool.push({label:'UPGRADE '+rt.name+': '+rt.fmt(rt.levels[cl-1])+' -> '+rt.fmt(rt.levels[nl-1]),apply:()=>{upgradeRelic(existingIdx);}}); } else if(existingIdx===-1&&G.relics.length<4){ pool.push({label:'NEW '+rt.name+': '+rt.fmt(rt.levels[0]),apply:()=>{G.relics.push({name:rt.name,type:rt.type,level:1,value:rt.levels[0],desc:rt.fmt(rt.levels[0])});}}); } }); pool.push({label:'Add 2 Special Tiles',apply:()=>{G.tileBag.push({id:'t_*_'+Date.now(),letter:'*',chips:0,type:'wildcard'});G.tileBag.push({id:'t_!_'+Date.now(),letter:'!',chips:0,type:'finisher'});}}); pool.push({label:'Remove 2 Bad Letters',apply:()=>{const c=['Q','Z','J','X','K','V','W','Y'];const s=[];for(let l of c){if(!G.removedLetters.has(l)){s.push(l);if(s.length===2) break;}}s.forEach(l=>G.removedLetters.add(l));}}); return shuffle(pool).slice(0,3); }
+
+    function showModal(type) { G.modalType=type; const o=document.getElementById('modal-overlay'); const t=document.getElementById('modal-title'); const s=document.getElementById('modal-subtitle'); const b=document.getElementById('btn-modal-action'); const mb=document.getElementById('btn-modal-menu'); if(type==='game-over'){ t.textContent='GAME OVER'; s.textContent='Score: '+G.currentScore; b.textContent='Retry Run'; b.style.display='block'; mb.style.display='block'; } else { t.textContent='VICTORY!'; s.textContent='All stages conquered!'; b.textContent='New Game'; b.style.display='block'; mb.style.display='block'; } o.classList.add('show'); }
+    function hideModal() { G.modalType=null; document.getElementById('modal-overlay').classList.remove('show'); }
+    function handleModalAction() { if(G.modalType==='game-over') resetRun(); else if(G.modalType==='victory') resetRun(); hideModal(); }
+    function handleModalMenu() { goToMenu(); hideModal(); }
+    function resetRun() { startRun(); showMap(); hideModal(); }
+
+    function renderGlyphs() {
+        const container = document.getElementById('glyph-slots'); container.innerHTML = '';
+        for (let i = 0; i < 4; i++) {
+            const slot = document.createElement('div'); slot.className = 'glyph-slot';
+            if (i === G.selectedGlyph) slot.classList.add('selected');
+            const relic = G.relics[i];
+            if (relic) {
+                const lvlClass = getRelicLevelClass(relic.level); if (lvlClass) slot.classList.add(lvlClass);
+                const badge = document.createElement('span'); badge.className = 'glyph-level-badge'; badge.textContent = 'LVL ' + relic.level; slot.appendChild(badge);
+                const stat = document.createElement('span'); stat.className = 'glyph-stat'; stat.textContent = getRelicLabel(relic.type, relic.level); slot.appendChild(stat);
+            }
+            slot.addEventListener('click', (e) => { e.stopPropagation(); if (G.selectedGlyph === -1) { G.selectedGlyph = i; renderGlyphs(); } else if (G.selectedGlyph === i) { G.selectedGlyph = -1; renderGlyphs(); } else { const temp = G.relics[G.selectedGlyph]; G.relics[G.selectedGlyph] = G.relics[i]; G.relics[i] = temp; G.selectedGlyph = -1; AudioEngine.playTap(); renderGlyphs(); } });
+            container.appendChild(slot);
+        }
+    }
+
+    function getTileClass(tile) { let cls='tile-inner'; if(tile.type==='wildcard') cls+=' wildcard'; else if(tile.type==='finisher') cls+=' finisher'; else if(tile.aura) cls+=' aura-'+tile.aura; if(G.rerollMode&&G.rerollMarks.has(tile.id)) cls+=' marked-reroll'; return cls; }
+
+    function onDragStart(e, handIndex) { if(G.isAnimating) return; const tile=G.hand[handIndex]; if(!tile) return; e.preventDefault(); const el=document.querySelector(`#hand-rack .hand-tile-wrap:nth-child(${handIndex+1}) .tile-inner`); if(!el) return; G.dragData={handIndex,tile,el,clone:null,startX:e.touches?e.touches[0].clientX:e.clientX,startY:e.touches?e.touches[0].clientY:e.clientY,hasMoved:false}; document.addEventListener('touchmove',onDragMove,{passive:false}); document.addEventListener('touchend',onDragEnd); document.addEventListener('mousemove',onDragMove); document.addEventListener('mouseup',onDragEnd); }
+    function onDragMove(e) { if(!G.dragData) return; e.preventDefault(); const px=e.touches?e.touches[0].clientX:e.clientX; const py=e.touches?e.touches[0].clientY:e.clientY; if(Math.abs(px-G.dragData.startX)>4||Math.abs(py-G.dragData.startY)>4) G.dragData.hasMoved=true; if(!G.dragData.clone&&G.dragData.hasMoved){ const clone=G.dragData.el.cloneNode(true); clone.className='drag-clone'; clone.style.width=G.dragData.el.offsetWidth+'px'; clone.style.height=G.dragData.el.offsetHeight+'px'; clone.style.background='#fff'; clone.innerHTML=G.dragData.el.innerHTML; document.body.appendChild(clone); G.dragData.clone=clone; G.dragData.el.style.opacity='0.4'; } if(G.dragData.clone){ G.dragData.clone.style.left=px+'px'; G.dragData.clone.style.top=py+'px'; } }
+    function onDragEnd(e) { if(!G.dragData) return; const {handIndex,el,clone,hasMoved}=G.dragData; el.classList.remove('dragging'); el.style.opacity='1'; if(clone) clone.remove(); document.removeEventListener('touchmove',onDragMove); document.removeEventListener('touchend',onDragEnd); document.removeEventListener('mousemove',onDragMove); document.removeEventListener('mouseup',onDragEnd); const px=e.changedTouches?e.changedTouches[0].clientX:e.clientX; const py=e.changedTouches?e.changedTouches[0].clientY:e.clientY; if(!hasMoved){ G.dragData=null; if(G.rerollMode) toggleRerollMark(handIndex); else placeTileInSlot(handIndex); return; } const targetEl=document.elementFromPoint(px,py); if(!targetEl){ G.dragData=null; render(); return; } const handWrap=targetEl.closest('.hand-tile-wrap'); const activeTile=targetEl.closest('.active-tile'); const wordLine=targetEl.closest('#active-word-line'); if(activeTile||wordLine){ const idx=getInsertIndexFromX(px); placeTileInSlot(handIndex,idx); } else if(handWrap){ const all=[...document.querySelectorAll('#hand-rack .hand-tile-wrap')]; const ti=all.indexOf(handWrap); if(ti>=0&&ti!==handIndex) swapHandTiles(handIndex,ti); } G.dragData=null; render(); }
+
+    function render() {
+        if(!G.gameStarted) return;
+        document.getElementById('stage-text').textContent='Stage '+G.currentStage+'/'+G.totalStages;
+        const tgt=G.stageTargets[G.currentStage]; const pct=Math.min(100,(G.currentScore/tgt)*100);
+        document.getElementById('progress-fill').style.width=pct+'%';
+        document.getElementById('score-pill').textContent=G.currentScore+' / '+tgt;
+        document.getElementById('bag-counter').textContent='BAG: '+G.tileBag.length;
+        const p=calcScore();
+        document.getElementById('val-points').textContent=p.totalChips; document.getElementById('val-mults').textContent=p.totalMult.toFixed(1);
+        const sb=document.getElementById('score-banner'); if(p.occ===0) sb.textContent='—'; else if(!p.valid) sb.textContent='INVALID WORD'; else sb.textContent=p.totalChips+' × '+p.totalMult.toFixed(1)+' = '+p.totalScore+' PTS';
+        sb.classList.toggle('invalid',p.occ>0&&!p.valid);
+        const awl=document.getElementById('active-word-line'); awl.innerHTML='';
+        G.activeWord.forEach((tile,idx)=>{ const wrap=document.createElement('div'); wrap.className='active-tile'; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.addEventListener('click',(e)=>{e.stopPropagation();removeTileFromWord(idx);}); wrap.appendChild(inner); awl.appendChild(wrap); });
+        const hr=document.getElementById('hand-rack'); hr.innerHTML='';
+        for(let i=0;i<10;i++){ const wrap=document.createElement('div'); wrap.className='hand-tile-wrap'; const tile=G.hand[i]; if(tile){ const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.style.animationDelay=(i*0.08)+'s'; inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.addEventListener('touchstart',(e)=>onDragStart(e,i),{passive:false}); inner.addEventListener('mousedown',(e)=>onDragStart(e,i)); wrap.appendChild(inner); } else { wrap.classList.add('empty-slot'); } hr.appendChild(wrap); }
+        renderGlyphs();
+        document.getElementById('btn-submit').disabled=p.occ===0||!p.valid||G.playsLeft<=0||G.isAnimating||G.rerollMode;
+        document.getElementById('btn-reroll').disabled=G.rerollsLeft<=0||G.isAnimating;
+        document.getElementById('btn-clear').disabled=(p.occ===0&&!G.rerollMode)||G.isAnimating;
+        document.getElementById('btn-shuffle-hand').disabled=G.hand.filter(t=>t).length<2||G.isAnimating||G.rerollMode;
+        const rb=document.getElementById('btn-reroll'); if(G.rerollMode){ rb.classList.add('reroll-mode'); rb.textContent='CONFIRM ('+G.rerollMarks.size+'/3)'; } else { rb.classList.remove('reroll-mode'); rb.textContent='REROLL'; }
+    }
+
+    function renderMap() { const diff=DIFFICULTIES[G.difficulty]; document.getElementById('map-header').textContent=diff.name+' RUN - STAGE '+G.currentStage+'/'+G.totalStages; const ladder=document.getElementById('map-ladder'); ladder.innerHTML=''; for(let i=1;i<=G.totalStages;i++){ const wrap=document.createElement('div'); wrap.className='map-node-wrap'; wrap.style.animationDelay=(i*0.1)+'s'; const node=document.createElement('div'); node.className='map-node'; const info=document.createElement('div'); info.className='map-node-info'; if(i<G.currentStage){ node.classList.add('completed'); node.textContent='✓'; info.textContent='Stage '+i+' - Score: '+(G.stageScores[i]||0); } else if(i===G.currentStage){ node.classList.add('current'); node.textContent=i; info.textContent='Stage '+i+' - Target: '+G.stageTargets[i]; } else { node.classList.add('upcoming'); node.textContent=i; info.textContent='Stage '+i+' - Locked'; } wrap.appendChild(node); wrap.appendChild(info); ladder.appendChild(wrap); if(i<G.totalStages){ const conn=document.createElement('div'); conn.className='map-connector'; ladder.appendChild(conn); } } document.getElementById('btn-start-stage').textContent='START STAGE '+G.currentStage; document.getElementById('btn-start-stage').onclick=startStage; document.getElementById('view-map').classList.remove('hidden'); document.getElementById('view-game').classList.add('hidden'); document.getElementById('view-draft').classList.add('hidden'); }
+    function showMap() { resetStageState(); renderMap(); }
+    function startStage() { document.getElementById('view-map').classList.add('hidden'); document.getElementById('view-game').classList.remove('hidden'); resetStageState(); AudioEngine.startMusic(); render(); }
+
+    async function initDict() { try{ const r=await fetch('https://raw.githubusercontent.com/dolph/dictionary/master/enable1.txt',{method:'GET',mode:'cors'}); if(!r.ok) throw new Error('Fetch failed'); const t=await r.text(); G.dictSet=new Set(t.split(/\r?\n/).map(w=>w.trim().toUpperCase()).filter(w=>w.length>=2)); } catch(e){ console.warn('Dict fetch failed, using fallback.'); G.dictSet=new Set(FALLBACK_WORDS.map(w=>w.toUpperCase())); } }
+
+    function slideToView(showId, hideId) { const he=document.getElementById(hideId),se=document.getElementById(showId); if(he){he.classList.add('slide-left');he.classList.remove('slide-in');} if(se){se.classList.remove('hidden');requestAnimationFrame(()=>{se.classList.add('slide-in');});} setTimeout(()=>{if(he)he.classList.add('hidden');},400); }
+    function slideBack(showId, hideId) { const he=document.getElementById(hideId),se=document.getElementById(showId); if(he){he.classList.remove('slide-in');} if(se){se.classList.remove('hidden','slide-left');se.classList.add('slide-in');} setTimeout(()=>{if(he)he.classList.add('hidden');},400); }
+
+    function bind() {
+        document.getElementById('btn-play').addEventListener('click',()=>slideToView('view-difficulty','view-menu'));
+        document.getElementById('btn-menu-themes').addEventListener('click',()=>slideToView('view-themes','view-menu'));
+        document.getElementById('btn-menu-options').addEventListener('click',()=>document.getElementById('options-modal').classList.add('show'));
+        document.getElementById('btn-back-diff').addEventListener('click',()=>slideBack('view-menu','view-difficulty'));
+        document.getElementById('btn-back-themes').addEventListener('click',()=>slideBack('view-menu','view-themes'));
+        document.querySelectorAll('.diff-btn').forEach(b=>b.addEventListener('click',()=>{selectDifficulty(b.dataset.diff);}));
+        document.querySelectorAll('.theme-card').forEach(c=>c.addEventListener('click',()=>{ applyTheme(c.dataset.theme); G.currentTheme=c.dataset.theme; document.querySelectorAll('.theme-card').forEach(x=>x.classList.toggle('active',x.dataset.theme===G.currentTheme)); }));
+        document.getElementById('btn-back-menu').addEventListener('click', showConfirmModal);
+        document.getElementById('btn-confirm-cancel').addEventListener('click', hideConfirmModal);
+        document.getElementById('btn-confirm-quit').addEventListener('click', () => { hideConfirmModal(); goToMenu(); });
+        document.getElementById('btn-settings').addEventListener('click',()=>document.getElementById('options-modal').classList.add('show'));
+        document.getElementById('btn-close-settings').addEventListener('click',()=>document.getElementById('options-modal').classList.remove('show'));
+        document.getElementById('options-modal').addEventListener('click',e=>{if(e.target===document.getElementById('options-modal'))document.getElementById('options-modal').classList.remove('show');});
+        document.getElementById('music-slider').addEventListener('input',e=>{AudioEngine.setMusicVolume(parseInt(e.target.value)/100);document.getElementById('music-val').textContent=e.target.value+'%';});
+        document.getElementById('sounds-slider').addEventListener('input',e=>{AudioEngine.setSfxVolume(parseInt(e.target.value)/100);document.getElementById('sounds-val').textContent=e.target.value+'%';});
+        document.getElementById('shake-slider').addEventListener('input',e=>{G.shakeStrength=parseInt(e.target.value);document.getElementById('shake-val').textContent=e.target.value+'%';});
+        document.getElementById('btn-shuffle-hand').addEventListener('click',shuffleHand);
+        document.getElementById('btn-clear').addEventListener('click',clearActiveWord);
+        document.getElementById('btn-reroll').addEventListener('click',toggleRerollBtn);
+        document.getElementById('btn-submit').addEventListener('click',()=>submitWord());
+        document.getElementById('btn-modal-action').addEventListener('click',handleModalAction);
+        document.getElementById('btn-modal-menu').addEventListener('click',handleModalMenu);
+        document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('modal-overlay'))hideModal();});
+        const ia=()=>{AudioEngine._ensureContext();document.removeEventListener('touchstart',ia);document.removeEventListener('click',ia);};
+        document.addEventListener('touchstart',ia,{once:false});document.addEventListener('click',ia,{once:false});
+    }
+    function selectDifficulty(d){G.difficulty=d;G.stageTargets=DIFFICULTIES[d].targets;G.totalStages=DIFFICULTIES[d].stages;G.gameStarted=true;startRun();document.getElementById('view-difficulty').classList.add('hidden');renderMap();}
+    function showDifficulty(){document.getElementById('view-menu').classList.add('hidden');document.getElementById('view-difficulty').classList.remove('hidden');}
+    function showThemes(){document.getElementById('view-menu').classList.add('hidden');document.getElementById('view-themes').classList.remove('hidden');}
+    function updateThemeButtons(){ document.querySelectorAll('.theme-card').forEach(c=>c.classList.toggle('active',c.dataset.theme===G.currentTheme)); }
+    function setTheme(n){G.currentTheme=n;applyTheme(n);updateThemeButtons();}
+    function goToMenu(){G.gameStarted=false;G.rerollMode=false;G.rerollMarks.clear();G.isAnimating=false;G.hand=[];G.activeWord=[];G.selectedGlyph=-1;document.getElementById('view-game').classList.add('hidden');document.getElementById('view-map').classList.add('hidden');document.getElementById('view-draft').classList.add('hidden');hideModal();document.getElementById('options-modal').classList.remove('show');document.getElementById('view-difficulty').classList.add('hidden');document.getElementById('view-themes').classList.add('hidden');document.getElementById('view-menu').classList.remove('hidden','slide-left');AudioEngine.stopMusic();}
+    async function boot(){try{G.currentTheme=localStorage.getItem('wordling-theme')||'orange-green';}catch(e){G.currentTheme='orange-green';}applyTheme(G.currentTheme);updateThemeButtons();bind();await initDict();}
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
+})();
+</script>
+</body>
+</html>
