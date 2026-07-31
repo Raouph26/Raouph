@@ -217,38 +217,34 @@
         }
         html[data-theme="cyber-arcade"] #game-container.bg-pulse::after { animation-duration: 1.6s; }
         html[data-theme="typewriter"] #game-container {
-            background-image:
-                radial-gradient(circle, rgba(230,161,0,0.5) 0%, transparent 70%),
-                radial-gradient(circle, rgba(217,56,58,0.45) 0%, transparent 70%),
-                radial-gradient(circle, rgba(255,255,255,0.35) 0%, transparent 70%),
-                radial-gradient(circle, rgba(46,155,130,0.42) 0%, transparent 70%),
-                var(--bg-vignette);
-            background-position: 10% 20%, 70% 55%, 40% 80%, 85% 15%, 50% 40%;
-            background-size: 260px 260px, 220px 220px, 300px 300px, 240px 240px, 160% 160%;
-            background-repeat: no-repeat;
-            animation: dustDrift 11s ease-in-out infinite;
+            background-image: linear-gradient(150deg, #1b1a17 0%, #141416 45%, #201e19 100%), var(--bg-vignette);
+            background-size: 240% 240%, 160% 160%;
+            background-position: 0% 0%, 50% 40%;
+            animation: typewriterBgDrift 20s ease-in-out infinite;
         }
         html[data-theme="typewriter"] #game-container::after {
-            background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.14) 0px, rgba(255,255,255,0.14) 3px, transparent 3px, transparent 22px),
-                               repeating-linear-gradient(-45deg, rgba(255,255,255,0.14) 0px, rgba(255,255,255,0.14) 3px, transparent 3px, transparent 22px);
-            animation: feltDrift 6s linear infinite;
+            background-image:
+                repeating-linear-gradient(0deg, rgba(237,232,208,0.13) 0px, rgba(237,232,208,0.13) 2px, transparent 2px, transparent 34px),
+                linear-gradient(90deg, transparent 0, transparent calc(14% - 1px), rgba(217,56,58,0.3) calc(14% - 1px), rgba(217,56,58,0.3) 14%, transparent calc(14% + 1px));
+            background-size: 100% 34px, 100% 100%;
+            animation: notebookDrift 26s linear infinite;
         }
         @keyframes arcadeWaveShift { 0% { background-position: 0% 0%, 50% 40%; } 50% { background-position: 100% 100%, 50% 40%; } 100% { background-position: 0% 0%, 50% 40%; } }
         @keyframes scanlineDrift { 0% { background-position: 0 0; } 100% { background-position: 30px 30px; } }
-        @keyframes dustDrift { 0% { background-position: 10% 20%, 70% 55%, 40% 80%, 85% 15%, 50% 40%; } 50% { background-position: 35% 65%, 45% 25%, 65% 45%, 55% 45%, 50% 40%; } 100% { background-position: 10% 20%, 70% 55%, 40% 80%, 85% 15%, 50% 40%; } }
-        @keyframes feltDrift { 0% { background-position: 0 0, 0 0; } 100% { background-position: 30px 30px, -30px 30px; } }
+        @keyframes typewriterBgDrift { 0% { background-position: 0% 0%, 50% 40%; } 50% { background-position: 100% 100%, 50% 40%; } 100% { background-position: 0% 0%, 50% 40%; } }
+        @keyframes notebookDrift { 0% { background-position: 0 0, 0 0; } 100% { background-position: 0 340px, 0 0; } }
         html[data-theme="wordling-light"] #game-container {
             background-image: linear-gradient(135deg, #FF5A5A 50%, #3B82F6 50%), var(--bg-vignette);
             background-size: 250% 250%, 160% 160%;
             animation: wordlingSplitShift 9s ease-in-out infinite alternate;
         }
         html[data-theme="wordling-light"] #game-container::after {
-            background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.16) 0px, rgba(255,255,255,0.16) 2px, transparent 2px, transparent 28px),
-                               repeating-linear-gradient(-45deg, rgba(255,255,255,0.16) 0px, rgba(255,255,255,0.16) 2px, transparent 2px, transparent 28px);
-            animation: wordlingDiamondDrift 7s linear infinite;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect x='20' y='20' width='20' height='20' fill='white' fill-opacity='0.3' transform='rotate(45 30 30)'/%3E%3C/svg%3E");
+            background-size: 60px 60px;
+            animation: wordlingDiamondDrift 24s linear infinite;
         }
         @keyframes wordlingSplitShift { 0% { background-position: 15% 15%, 50% 30%; } 100% { background-position: 85% 85%, 50% 30%; } }
-        @keyframes wordlingDiamondDrift { 0% { background-position: 0 0, 0 0; } 100% { background-position: 40px 40px, -40px 40px; } }
+        @keyframes wordlingDiamondDrift { 0% { background-position: 0 0; } 100% { background-position: 60px 60px; } }
         #bg-overlay {
             position: absolute; inset: 0; pointer-events: none; z-index: 0;
             background: transparent; transition: background 0.5s ease;
@@ -308,6 +304,29 @@
         }
         #view-draft.show .draft-panel { transform: scale(1) translateY(0); opacity: 1; }
         .draft-panel h2 { color: var(--text); text-shadow: none; font-size: 1.3rem; font-weight: 900; text-align: center; margin-bottom: 4px; font-family: var(--font-title); }
+        .draft-hint { color: var(--text-soft); font-size: 0.8rem; font-family: var(--font-main); text-align: center; margin: -6px 0 4px; }
+        .draft-grid { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin: 6px 0; }
+        .draft-card-wrap { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; width:74px; }
+        .draft-card {
+            width: 70px; height: 70px; border-radius: var(--panel-radius); background: var(--panel-bg);
+            border: var(--outline-w) solid var(--panel-border); box-shadow: var(--readout-shadow);
+            display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.1rem;
+            color: var(--glyph-color, var(--text)); font-family: var(--font-numeric);
+            transition: transform 0.1s ease;
+        }
+        .draft-card-wrap:active .draft-card { transform: translateY(3px) scale(0.96); }
+        .draft-card-label { font-size: 0.65rem; font-weight: 700; text-align:center; color: var(--text-soft); font-family: var(--font-main); line-height:1.2; }
+        .draft-detail { display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center; }
+        .draft-detail-icon {
+            width: 84px; height: 84px; border-radius: var(--panel-radius); background: var(--panel-bg);
+            border: var(--outline-w) solid var(--panel-border); box-shadow: var(--readout-shadow);
+            display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.4rem;
+            color: var(--glyph-color, var(--text)); font-family: var(--font-numeric);
+        }
+        .draft-detail-name { font-size: 1.05rem; font-weight: 900; color: var(--glyph-color, var(--text)); font-family: var(--font-title); }
+        .draft-detail-desc { font-size: 0.88rem; color: var(--text); font-family: var(--font-main); line-height: 1.4; max-width: 260px; }
+        .draft-detail-actions { display:flex; gap:12px; margin-top:4px; }
+        .draft-detail-actions .menu-btn, .draft-detail-actions .draft-btn { width: 118px; padding: 13px 0; font-size: 0.9rem; }
         #view-game { padding: 10px 16px 12px; gap:7px; display:flex; flex-direction:column; justify-content: flex-start; }
         .hidden { display: none !important; }
 
@@ -486,6 +505,13 @@
             z-index: 2; white-space: nowrap; line-height: 1.4; font-family: var(--font-main);
         }
         .glyph-stat { font-size: 0.85rem; font-weight: 900; letter-spacing: -0.3px; text-align: center; line-height: 1.1; font-family: var(--font-numeric); }
+        .glyph-slot.has-glyph, .draft-card.has-glyph, .draft-detail-icon.has-glyph { border-top: 3px solid var(--glyph-color, var(--panel-border)); }
+        html[data-theme="cyber-arcade"] .glyph-slot.has-glyph, html[data-theme="cyber-arcade"] .draft-card.has-glyph, html[data-theme="cyber-arcade"] .draft-detail-icon.has-glyph {
+            box-shadow: 0 0 10px 1px var(--glyph-color, transparent), var(--readout-shadow);
+        }
+        html[data-theme="typewriter"] .glyph-slot.has-glyph, html[data-theme="typewriter"] .draft-card.has-glyph, html[data-theme="typewriter"] .draft-detail-icon.has-glyph {
+            border: 2px dashed var(--glyph-color, var(--panel-border));
+        }
 
         #controls-row { display:flex; gap:10px; flex-shrink:0; }
         .btn-action {
@@ -867,9 +893,45 @@
         else render();
     }
 
-    function showDraft() { const draftDiv=document.getElementById('view-draft'); draftDiv.innerHTML=''; draftDiv.classList.remove('show'); const panel=document.createElement('div'); panel.className='draft-panel'; const choices=generateDraftChoices(); G.draftChoices=choices; const h2=document.createElement('h2'); h2.textContent='CHOOSE REWARD'; panel.appendChild(h2); choices.forEach((choice,i)=>{ const btn=document.createElement('button'); btn.className='draft-btn'; btn.textContent=choice.label; btn.addEventListener('click',()=>{ choice.apply(); draftDiv.classList.remove('show'); advanceStage(); }); panel.appendChild(btn); }); draftDiv.appendChild(panel); draftDiv.classList.remove('hidden'); requestAnimationFrame(()=>requestAnimationFrame(()=>draftDiv.classList.add('show'))); }
+    function showDraft() { const draftDiv=document.getElementById('view-draft'); draftDiv.innerHTML=''; draftDiv.classList.remove('show'); const panel=document.createElement('div'); panel.className='draft-panel'; const choices=generateDraftChoices(); G.draftChoices=choices; renderDraftGrid(panel, choices); draftDiv.appendChild(panel); draftDiv.classList.remove('hidden'); requestAnimationFrame(()=>requestAnimationFrame(()=>draftDiv.classList.add('show'))); }
+    function renderDraftGrid(panel, choices) {
+        panel.innerHTML='';
+        const h2=document.createElement('h2'); h2.textContent='CHOOSE REWARD'; panel.appendChild(h2);
+        const hint=document.createElement('p'); hint.className='draft-hint'; hint.textContent='Tap a card to inspect it'; panel.appendChild(hint);
+        const grid=document.createElement('div'); grid.className='draft-grid';
+        choices.forEach(choice=>{
+            const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
+            const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', choice.color); card.textContent=choice.abbrev;
+            const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=choice.name;
+            wrap.appendChild(card); wrap.appendChild(label);
+            wrap.addEventListener('click', ()=>{ AudioEngine.playTap(); renderDraftDetail(panel, choice, choices); });
+            grid.appendChild(wrap);
+        });
+        panel.appendChild(grid);
+    }
+    function renderDraftDetail(panel, choice, allChoices) {
+        panel.innerHTML='';
+        const wrap=document.createElement('div'); wrap.className='draft-detail';
+        const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', choice.color); icon.textContent=choice.abbrev;
+        const name=document.createElement('div'); name.className='draft-detail-name'; name.style.setProperty('--glyph-color', choice.color); name.textContent=choice.name;
+        const desc=document.createElement('div'); desc.className='draft-detail-desc'; desc.textContent=choice.desc;
+        const actions=document.createElement('div'); actions.className='draft-detail-actions';
+        const backBtn=document.createElement('button'); backBtn.className='menu-btn'; backBtn.textContent='BACK';
+        backBtn.addEventListener('click', ()=>{ AudioEngine.playTap(); renderDraftGrid(panel, allChoices); });
+        const takeBtn=document.createElement('button'); takeBtn.className='draft-btn'; takeBtn.textContent='TAKE';
+        takeBtn.addEventListener('click', ()=>{ choice.apply(); document.getElementById('view-draft').classList.remove('show'); advanceStage(); });
+        actions.appendChild(backBtn); actions.appendChild(takeBtn);
+        wrap.appendChild(icon); wrap.appendChild(name); wrap.appendChild(desc); wrap.appendChild(actions);
+        panel.appendChild(wrap);
+    }
     function advanceStage() { G.currentStage++; if(G.currentStage > G.totalStages) { showModal('victory'); return; } renderMap(); }
-    function generateDraftChoices() { const pool=[]; GLYPH_DATABASE.forEach(g=>{ const alreadyEquipped=G.equippedGlyphs.some(eg=>eg.id===g.id); if(!alreadyEquipped&&G.equippedGlyphs.length<MAX_GLYPH_SLOTS){ pool.push({label:'GLYPH: '+g.name+' — '+g.desc,apply:()=>{G.equippedGlyphs.push({id:g.id});}}); } }); pool.push({label:'Add 2 Special Tiles',apply:()=>{G.tileBag.push({id:'t_*_'+Date.now(),letter:'*',chips:0,type:'wildcard'});G.tileBag.push({id:'t_!_'+Date.now(),letter:'!',chips:0,type:'finisher'});}}); pool.push({label:'Remove 2 Bad Letters',apply:()=>{const c=['Q','Z','J','X','K','V','W','Y'];const s=[];for(let l of c){if(!G.removedLetters.has(l)){s.push(l);if(s.length===2) break;}}s.forEach(l=>G.removedLetters.add(l));}}); return shuffle(pool).slice(0,3); }
+    function generateDraftChoices() {
+        const pool=[];
+        GLYPH_DATABASE.forEach(g=>{ const alreadyEquipped=G.equippedGlyphs.some(eg=>eg.id===g.id); if(!alreadyEquipped&&G.equippedGlyphs.length<MAX_GLYPH_SLOTS){ pool.push({kind:'glyph', id:g.id, name:g.name, desc:g.desc, color:g.color, abbrev:GlyphManager.getAbbrev(g.name), apply:()=>{G.equippedGlyphs.push({id:g.id});}}); } });
+        pool.push({kind:'special', id:'tiles', name:'Special Tiles', desc:'Adds a Wildcard tile and a Finisher tile to your bag.', color:'var(--accent-3)', abbrev:'★', apply:()=>{G.tileBag.push({id:'t_*_'+Date.now(),letter:'*',chips:0,type:'wildcard'});G.tileBag.push({id:'t_!_'+Date.now(),letter:'!',chips:0,type:'finisher'});}});
+        pool.push({kind:'special', id:'cleanup', name:'Letter Cleanup', desc:'Removes 2 bad letters from your bag for the rest of this run.', color:'var(--accent-2)', abbrev:'✂', apply:()=>{const c=['Q','Z','J','X','K','V','W','Y'];const s=[];for(let l of c){if(!G.removedLetters.has(l)){s.push(l);if(s.length===2) break;}}s.forEach(l=>G.removedLetters.add(l));}});
+        return shuffle(pool).slice(0,3);
+    }
 
     function showModal(type) { G.modalType=type; const o=document.getElementById('modal-overlay'); const t=document.getElementById('modal-title'); const s=document.getElementById('modal-subtitle'); const b=document.getElementById('btn-modal-action'); const mb=document.getElementById('btn-modal-menu'); if(type==='game-over'){ t.textContent='GAME OVER'; s.textContent='Score: '+G.currentScore; b.textContent='Retry Run'; b.style.display='block'; mb.style.display='block'; } else { t.textContent='VICTORY!'; s.textContent='All stages conquered!'; b.textContent='New Game'; b.style.display='block'; mb.style.display='block'; } o.classList.add('show'); }
     function hideModal() { G.modalType=null; document.getElementById('modal-overlay').classList.remove('show'); }
@@ -887,7 +949,7 @@
             if (equipped) {
                 const data = GlyphManager.getGlyphData(equipped.id);
                 if (data) {
-                    slot.style.borderTopColor = data.color; slot.style.borderTopWidth = '3px';
+                    slot.classList.add('has-glyph'); slot.style.setProperty('--glyph-color', data.color);
                     slot.title = data.name + ' — ' + data.desc;
                     const badge = document.createElement('span'); badge.className = 'glyph-level-badge'; badge.style.background = data.color; badge.textContent = data.type.toUpperCase(); slot.appendChild(badge);
                     const stat = document.createElement('span'); stat.className = 'glyph-stat'; stat.style.color = data.color; stat.textContent = GlyphManager.getAbbrev(data.name); slot.appendChild(stat);
