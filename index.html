@@ -334,6 +334,7 @@
     <div id="modal-overlay"><div class="modal-inner" style="text-align:center;"><h2 id="modal-title">GAME OVER</h2><p id="modal-subtitle"></p><button id="btn-modal-action">Retry Run</button><button class="btn-main-menu" id="btn-modal-menu">Main Menu</button></div></div>
 </div>
 <script>
+window.addEventListener('error', function(e){ alert('JS ERROR: ' + e.message + '\nfile: ' + e.filename + '\nline: ' + e.lineno + ':' + e.colno); });
 (function() {
     const AudioEngine = {
         audioCtx: null, musicGain: null, musicOsc: null, musicLFO: null, sfxGain:0.65, musicVol:0.25,
