@@ -119,6 +119,8 @@
 
             --bg-solid: #FF5A5A;
             --bg-vignette: radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 55%);
+            --wl-split-1: #FF5A5A;
+            --wl-split-2: #3B82F6;
 
             --panel-bg: #FFFFFF;
             --panel-border: rgba(15,23,42,0.08);
@@ -234,10 +236,29 @@
         @keyframes typewriterBgDrift { 0% { background-position: 0% 0%, 50% 40%; } 50% { background-position: 100% 100%, 50% 40%; } 100% { background-position: 0% 0%, 50% 40%; } }
         @keyframes notebookDrift { 0% { background-position: 0 0, 0 0; } 100% { background-position: 0 340px, 0 0; } }
         html[data-theme="wordling-light"] #game-container {
-            background-image: linear-gradient(135deg, #FF5A5A 50%, #3B82F6 50%), var(--bg-vignette);
+            background-image: linear-gradient(135deg, var(--wl-split-1) 50%, var(--wl-split-2) 50%), var(--bg-vignette);
             background-size: 250% 250%, 160% 160%;
             animation: wordlingSplitShift 9s ease-in-out infinite alternate;
         }
+        html[data-theme="wordling-light"][data-palette="black-grey"] {
+            --wl-split-1: #27272A; --wl-split-2: #6B7280; --bg-solid: #27272A;
+            --accent-1: #6B7280; --accent-1-shadow: #4B5563; --accent-1-text: #ffffff;
+            --accent-2: #27272A; --accent-2-shadow: #000000; --accent-2-text: #ffffff;
+        }
+        html[data-theme="wordling-light"][data-palette="orange-green"] {
+            --wl-split-1: #FF8A3D; --wl-split-2: #22C55E; --bg-solid: #FF8A3D;
+            --accent-1: #22C55E; --accent-1-shadow: #15803D; --accent-1-text: #ffffff;
+            --accent-2: #FF8A3D; --accent-2-shadow: #C2540A; --accent-2-text: #ffffff;
+        }
+        html[data-theme="wordling-light"][data-palette="purple-yellow"] {
+            --wl-split-1: #8B5CF6; --wl-split-2: #FACC15; --bg-solid: #8B5CF6;
+            --accent-1: #8B5CF6; --accent-1-shadow: #6D28D9; --accent-1-text: #ffffff;
+            --accent-2: #FACC15; --accent-2-shadow: #A16207; --accent-2-text: #241a00;
+        }
+        :root { --card-wl-split-1: #FF5A5A; --card-wl-split-2: #3B82F6; }
+        :root[data-palette="black-grey"] { --card-wl-split-1: #27272A; --card-wl-split-2: #6B7280; }
+        :root[data-palette="orange-green"] { --card-wl-split-1: #FF8A3D; --card-wl-split-2: #22C55E; }
+        :root[data-palette="purple-yellow"] { --card-wl-split-1: #8B5CF6; --card-wl-split-2: #FACC15; }
         html[data-theme="wordling-light"] #game-container::after {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect x='28' y='28' width='34' height='34' fill='white' fill-opacity='0.32' transform='rotate(45 45 45)'/%3E%3Crect x='-6' y='-6' width='18' height='18' fill='white' fill-opacity='0.24' transform='rotate(45 3 3)'/%3E%3Crect x='84' y='-6' width='18' height='18' fill='white' fill-opacity='0.24' transform='rotate(45 93 3)'/%3E%3Crect x='-6' y='84' width='18' height='18' fill='white' fill-opacity='0.24' transform='rotate(45 3 93)'/%3E%3Crect x='84' y='84' width='18' height='18' fill='white' fill-opacity='0.24' transform='rotate(45 93 93)'/%3E%3C/svg%3E");
             background-size: 90px 90px;
@@ -307,15 +328,15 @@
         .stage-clear-label { font-size: 0.8rem; letter-spacing: 2px; font-weight: 900; color: var(--text-soft); font-family: var(--font-main); margin-top: 6px; }
         .stage-clear-score { font-size: 2.8rem; font-weight: 900; font-family: var(--font-numeric); color: var(--accent-3); text-shadow: var(--number-shadow); margin: 2px 0 12px; line-height: 1; }
         .stage-clear-score.pop { animation: hudPop 0.45s ease; }
-        .stage-clear-continue { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.3s ease, transform 0.3s ease; }
-        .stage-clear-continue.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        .stage-clear-reward { opacity: 0; transform: translateY(10px); transition: opacity 0.35s ease, transform 0.35s ease; width: 100%; }
+        .stage-clear-reward.show { opacity: 1; transform: translateY(0); }
         .draft-hint { color: var(--text-soft); font-size: 0.8rem; font-family: var(--font-main); text-align: center; margin: -6px 0 4px; }
         .draft-grid { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin: 6px 0; }
         .draft-card-wrap { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; width:74px; }
         .draft-card {
             width: 70px; height: 70px; border-radius: var(--panel-radius); background: var(--panel-bg);
             border: var(--outline-w) solid var(--panel-border); box-shadow: var(--readout-shadow);
-            display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.1rem;
+            display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.8rem;
             color: var(--glyph-color, var(--text)); font-family: var(--font-numeric);
             transition: transform 0.1s ease;
         }
@@ -325,7 +346,7 @@
         .draft-detail-icon {
             width: 84px; height: 84px; border-radius: var(--panel-radius); background: var(--panel-bg);
             border: var(--outline-w) solid var(--panel-border); box-shadow: var(--readout-shadow);
-            display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.4rem;
+            display:flex; align-items:center; justify-content:center; font-weight:900; font-size:2.4rem;
             color: var(--glyph-color, var(--text)); font-family: var(--font-numeric);
         }
         .draft-detail-name { font-size: 1.05rem; font-weight: 900; color: var(--glyph-color, var(--text)); font-family: var(--font-title); }
@@ -395,7 +416,10 @@
         .theme-preview-row { display: flex; gap: 6px; }
         .theme-preview-chip { width: 22px; height: 22px; border-radius: 5px; box-shadow: 0 2px 0 0 rgba(0,0,0,0.35); border: 2px solid rgba(255,255,255,0.7); }
 
-        .card-wordling-light { background: linear-gradient(135deg, #FF5A5A 50%, #3B82F6 50%); }
+        .card-wordling-light { background: linear-gradient(135deg, var(--card-wl-split-1) 50%, var(--card-wl-split-2) 50%); }
+        .palette-row { display:flex; gap:7px; justify-content:center; margin-top:6px; position:relative; z-index:2; }
+        .palette-swatch { width:18px; height:18px; border-radius:50%; border:2px solid rgba(255,255,255,0.75); box-shadow:0 1px 0 0 rgba(0,0,0,0.3); cursor:pointer; }
+        .palette-swatch.active { outline: 2px solid rgba(0,0,0,0.4); outline-offset: 1px; }
         .card-wordling-light .theme-name { color: #fff; font-family: 'Poppins', sans-serif; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.25); }
         .card-cyber-arcade { background: #1A2127; background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 3px); }
         .card-cyber-arcade .theme-name { color: #E8EDF0; font-family: 'Press Start 2P', monospace; font-size: 0.6rem; line-height: 1.6; }
@@ -464,12 +488,16 @@
         .tile-letter { line-height:1; pointer-events:none; z-index:1; text-shadow: 1px 1px 0 rgba(0,0,0,0.18); }
         .tile-chips { position:absolute; bottom:3px; right:6px; font-size:11px; color: var(--text-soft); font-weight:700; pointer-events:none; z-index:1; font-family: var(--font-main); }
         .tile-inner.marked-reroll {
-            border: var(--outline-w) solid var(--accent-2) !important;
-            box-shadow: 0 0 14px rgba(255,51,77,0.7) !important;
+            background: var(--accent-2) !important; border: var(--outline-w) solid var(--accent-2-shadow) !important;
+            box-shadow: 0 4px 0 0 var(--accent-2-shadow) !important;
         }
-        .tile-inner.aura-blue { border: var(--outline-w) solid var(--accent-1) !important; box-shadow: 0 0 12px var(--accent-1); }
-        .tile-inner.aura-red { border: var(--outline-w) solid var(--accent-2) !important; box-shadow: 0 0 12px var(--accent-2); }
-        .tile-inner.aura-gold { border: var(--outline-w) solid var(--accent-3) !important; box-shadow: 0 0 12px var(--accent-3); }
+        .tile-inner.marked-reroll .tile-letter, .tile-inner.marked-reroll .tile-chips { color: var(--accent-2-text) !important; }
+        .tile-inner.aura-blue { background: var(--accent-1) !important; border: var(--outline-w) solid var(--accent-1-shadow) !important; box-shadow: 0 4px 0 0 var(--accent-1-shadow) !important; }
+        .tile-inner.aura-blue .tile-letter, .tile-inner.aura-blue .tile-chips { color: var(--accent-1-text) !important; }
+        .tile-inner.aura-red { background: var(--accent-2) !important; border: var(--outline-w) solid var(--accent-2-shadow) !important; box-shadow: 0 4px 0 0 var(--accent-2-shadow) !important; }
+        .tile-inner.aura-red .tile-letter, .tile-inner.aura-red .tile-chips { color: var(--accent-2-text) !important; }
+        .tile-inner.aura-gold { background: var(--accent-3) !important; border: var(--outline-w) solid var(--accent-3-shadow) !important; box-shadow: 0 4px 0 0 var(--accent-3-shadow) !important; }
+        .tile-inner.aura-gold .tile-letter, .tile-inner.aura-gold .tile-chips { color: var(--accent-3-text) !important; }
         .tile-inner.wildcard { border: var(--outline-w) solid var(--accent-3) !important; box-shadow: 0 0 12px var(--accent-3); }
         .tile-inner.finisher { border: var(--outline-w) solid var(--accent-1) !important; box-shadow: 0 0 12px var(--accent-1); }
         .tile-inner.dragging {
@@ -509,7 +537,7 @@
             border-radius: 5px; color: #f1f1f5; background: rgba(0,0,0,0.5);
             z-index: 2; white-space: nowrap; line-height: 1.4; font-family: var(--font-main);
         }
-        .glyph-stat { font-size: 0.85rem; font-weight: 900; letter-spacing: -0.3px; text-align: center; line-height: 1.1; font-family: var(--font-numeric); }
+        .glyph-stat { font-size: 1.4rem; font-weight: 900; letter-spacing: -0.3px; text-align: center; line-height: 1.1; font-family: var(--font-numeric); }
         .glyph-slot.has-glyph, .draft-card.has-glyph, .draft-detail-icon.has-glyph { border-top: 3px solid var(--glyph-color, var(--panel-border)); }
         html[data-theme="cyber-arcade"] .glyph-slot.has-glyph, html[data-theme="cyber-arcade"] .draft-card.has-glyph, html[data-theme="cyber-arcade"] .draft-detail-icon.has-glyph {
             box-shadow: 0 0 10px 1px var(--glyph-color, transparent), var(--readout-shadow);
@@ -604,11 +632,17 @@
         <div class="theme-card card-wordling-light active" data-theme="wordling-light">
             <span class="theme-check">✓</span>
             <div class="theme-preview-row">
-                <span class="theme-preview-chip" style="background:#3B82F6;"></span>
-                <span class="theme-preview-chip" style="background:#FF5A5A;"></span>
+                <span class="theme-preview-chip" id="wl-chip-1" style="background:#3B82F6;"></span>
+                <span class="theme-preview-chip" id="wl-chip-2" style="background:#FF5A5A;"></span>
                 <span class="theme-preview-chip" style="background:#FFC107;"></span>
             </div>
             <span class="theme-name">Wordling<br>Light</span>
+            <div class="palette-row">
+                <span class="palette-swatch active" data-palette="coral-sky" style="background: linear-gradient(135deg, #3B82F6 50%, #FF5A5A 50%);"></span>
+                <span class="palette-swatch" data-palette="black-grey" style="background: linear-gradient(135deg, #6B7280 50%, #27272A 50%);"></span>
+                <span class="palette-swatch" data-palette="orange-green" style="background: linear-gradient(135deg, #22C55E 50%, #FF8A3D 50%);"></span>
+                <span class="palette-swatch" data-palette="purple-yellow" style="background: linear-gradient(135deg, #8B5CF6 50%, #FACC15 50%);"></span>
+            </div>
         </div>
         <div class="theme-card card-cyber-arcade" data-theme="cyber-arcade">
             <span class="theme-check">✓</span>
@@ -670,6 +704,22 @@
     };
     const THEMES = ['wordling-light', 'cyber-arcade', 'typewriter'];
     function applyTheme(n){ const name = THEMES.includes(n) ? n : 'wordling-light'; document.documentElement.setAttribute('data-theme', name); try{localStorage.setItem('wordling-theme',name);}catch(e){} }
+    const WORDLING_PALETTES = {
+        'coral-sky': { c1:'#3B82F6', c2:'#FF5A5A' },
+        'black-grey': { c1:'#6B7280', c2:'#27272A' },
+        'orange-green': { c1:'#22C55E', c2:'#FF8A3D' },
+        'purple-yellow': { c1:'#8B5CF6', c2:'#FACC15' }
+    };
+    function applyPalette(id){
+        const pal = WORDLING_PALETTES[id] ? id : 'coral-sky';
+        document.documentElement.setAttribute('data-palette', pal);
+        try{localStorage.setItem('wordling-palette',pal);}catch(e){}
+        document.querySelectorAll('.palette-swatch').forEach(s=>s.classList.toggle('active', s.dataset.palette===pal));
+        const p = WORDLING_PALETTES[pal];
+        const chip1=document.getElementById('wl-chip-1'), chip2=document.getElementById('wl-chip-2');
+        if(chip1) chip1.style.background = p.c1;
+        if(chip2) chip2.style.background = p.c2;
+    }
 
     const TILE_DIST = [
         {letter:'A',chips:1,qty:9},{letter:'B',chips:2,qty:2},{letter:'C',chips:2,qty:2},{letter:'D',chips:2,qty:4},{letter:'E',chips:1,qty:12},{letter:'F',chips:4,qty:2},{letter:'G',chips:2,qty:3},{letter:'H',chips:4,qty:2},{letter:'I',chips:1,qty:9},{letter:'J',chips:8,qty:1},{letter:'K',chips:4,qty:1},{letter:'L',chips:1,qty:4},{letter:'M',chips:2,qty:2},{letter:'N',chips:1,qty:6},{letter:'O',chips:1,qty:8},{letter:'P',chips:2,qty:2},{letter:'Q',chips:8,qty:1},{letter:'R',chips:1,qty:6},{letter:'S',chips:1,qty:4},{letter:'T',chips:1,qty:6},{letter:'U',chips:1,qty:4},{letter:'V',chips:4,qty:2},{letter:'W',chips:4,qty:2},{letter:'X',chips:8,qty:1},{letter:'Y',chips:4,qty:2},{letter:'Z',chips:8,qty:1}
@@ -685,22 +735,22 @@
         extreme: { name:'EXTREME', stages:12, targets:[0, 300, 800, 2000, 5000, 12000, 30000, 75000, 200000, 400000, 800000, 1500000, 3000000] }
     };
     const GLYPH_DATABASE = [
-        { id:"scavenger", name:"The Scavenger", type:"green", color:"#22C55E", desc:"+2 Discards per stage." },
-        { id:"perfectionist", name:"The Perfectionist", type:"green", color:"#22C55E", desc:"+1 Hand per stage." },
-        { id:"recycler", name:"The Recycler", type:"green", color:"#22C55E", desc:"Discarding 3 Vowels at once refunds 1 Discard (Max 1/round)." },
-        { id:"deep_pockets", name:"Deep Pockets", type:"green", color:"#22C55E", desc:"Start each round with +2 extra tiles in tray." },
-        { id:"vowel_anchor", name:"Vowel Anchor", type:"blue", color:"#3B82F6", desc:"+15 Base Points for every Vowel played." },
-        { id:"consonant_charge", name:"Consonant Charge", type:"blue", color:"#3B82F6", desc:"+10 Base Points for every Consonant played." },
-        { id:"scrabble_master", name:"Scrabble Master", type:"blue", color:"#3B82F6", desc:"+40 Base Points if word contains Q, X, Z, or J." },
-        { id:"long_form", name:"Long Form", type:"blue", color:"#3B82F6", desc:"+60 Base Points if played word is 6+ letters." },
-        { id:"grammarian", name:"The Grammarian", type:"red", color:"#EF4444", desc:"+3 MULT for every Vowel in played word." },
-        { id:"novelist", name:"The Novelist", type:"red", color:"#EF4444", desc:"x3 MULT if played word is 6+ letters." },
-        { id:"bookends", name:"Bookends", type:"red", color:"#EF4444", desc:"x4 MULT if first and last letters match." },
-        { id:"heavy_hitter", name:"Heavy Hitter", type:"red", color:"#EF4444", desc:"x2 MULT if word has 2+ rare letters (Q, X, Z, J, V)." },
-        { id:"wildcard_rune", name:"Wildcard Rune", type:"purple", color:"#A855F7", desc:"At round start, 1 random tile in active hand becomes Wild." },
-        { id:"duplicator", name:"Duplicator", type:"purple", color:"#A855F7", desc:"Playing a 5-letter word duplicates its highest-scoring letter into bag." },
-        { id:"vowel_shifter", name:"Vowel Shifter", type:"purple", color:"#A855F7", desc:"'Y' counts as both Vowel and Consonant for scoring." },
-        { id:"alchemy", name:"Golden Touch", type:"purple", color:"#A855F7", desc:"Scoring 100+ Points in a single hand grants +2 Bag Gold." }
+        { id:"scavenger", name:"The Scavenger", type:"green", color:"#22C55E", icon:"↺", desc:"+2 Discards per stage." },
+        { id:"perfectionist", name:"The Perfectionist", type:"green", color:"#22C55E", icon:"✓", desc:"+1 Hand per stage." },
+        { id:"recycler", name:"The Recycler", type:"green", color:"#22C55E", icon:"♻", desc:"Discarding 3 Vowels at once refunds 1 Discard (Max 1/round)." },
+        { id:"deep_pockets", name:"Deep Pockets", type:"green", color:"#22C55E", icon:"▦", desc:"Start each round with +2 extra tiles in tray." },
+        { id:"vowel_anchor", name:"Vowel Anchor", type:"blue", color:"#3B82F6", icon:"⚓", desc:"+15 Base Points for every Vowel played." },
+        { id:"consonant_charge", name:"Consonant Charge", type:"blue", color:"#3B82F6", icon:"⚡", desc:"+10 Base Points for every Consonant played." },
+        { id:"scrabble_master", name:"Scrabble Master", type:"blue", color:"#3B82F6", icon:"♛", desc:"+40 Base Points if word contains Q, X, Z, or J." },
+        { id:"long_form", name:"Long Form", type:"blue", color:"#3B82F6", icon:"☰", desc:"+60 Base Points if played word is 6+ letters." },
+        { id:"grammarian", name:"The Grammarian", type:"red", color:"#EF4444", icon:"✎", desc:"+3 MULT for every Vowel in played word." },
+        { id:"novelist", name:"The Novelist", type:"red", color:"#EF4444", icon:"✒", desc:"x3 MULT if played word is 6+ letters." },
+        { id:"bookends", name:"Bookends", type:"red", color:"#EF4444", icon:"↔", desc:"x4 MULT if first and last letters match." },
+        { id:"heavy_hitter", name:"Heavy Hitter", type:"red", color:"#EF4444", icon:"✹", desc:"x2 MULT if word has 2+ rare letters (Q, X, Z, J, V)." },
+        { id:"wildcard_rune", name:"Wildcard Rune", type:"purple", color:"#A855F7", icon:"✦", desc:"At round start, 1 random tile in active hand becomes Wild." },
+        { id:"duplicator", name:"Duplicator", type:"purple", color:"#A855F7", icon:"⧉", desc:"Playing a 5-letter word duplicates its highest-scoring letter into bag." },
+        { id:"vowel_shifter", name:"Vowel Shifter", type:"purple", color:"#A855F7", icon:"⇄", desc:"'Y' counts as both Vowel and Consonant for scoring." },
+        { id:"alchemy", name:"Golden Touch", type:"purple", color:"#A855F7", icon:"⚗", desc:"Scoring 100+ Points in a single hand grants +2 Bag Gold." }
     ];
     const MAX_GLYPH_SLOTS = 4;
     const BASE_HAND_SIZE = 10;
@@ -910,11 +960,14 @@
         const h2=document.createElement('h2'); h2.textContent='STAGE CLEARED!'; panel.appendChild(h2);
         const label=document.createElement('div'); label.className='stage-clear-label'; label.textContent='TOTAL SCORE'; panel.appendChild(label);
         const value=document.createElement('div'); value.className='stage-clear-score'; value.textContent='0'; panel.appendChild(value);
-        const continueBtn=document.createElement('button'); continueBtn.className='draft-btn stage-clear-continue'; continueBtn.textContent='CONTINUE';
-        continueBtn.addEventListener('click', ()=>{ const choices=generateDraftChoices(); G.draftChoices=choices; renderDraftGrid(panel, choices); });
-        panel.appendChild(continueBtn);
+        const rewardSection=document.createElement('div'); rewardSection.className='stage-clear-reward'; panel.appendChild(rewardSection);
         AudioEngine.playShuffle();
-        animateScoreCountUp(value, score, ()=>{ AudioEngine.playSubmit(); value.classList.add('pop'); continueBtn.classList.add('show'); });
+        animateScoreCountUp(value, score, ()=>{
+            AudioEngine.playSubmit(); value.classList.add('pop');
+            const choices=generateDraftChoices(); G.draftChoices=choices;
+            renderDraftGrid(rewardSection, choices);
+            requestAnimationFrame(()=>requestAnimationFrame(()=>rewardSection.classList.add('show')));
+        });
     }
     function animateScoreCountUp(el, target, onDone) {
         const duration = Math.min(1800, Math.max(600, target/3));
@@ -927,43 +980,41 @@
         }
         requestAnimationFrame(step);
     }
-    function showDraft() { const draftDiv=document.getElementById('view-draft'); draftDiv.innerHTML=''; draftDiv.classList.remove('show'); const panel=document.createElement('div'); panel.className='draft-panel'; const choices=generateDraftChoices(); G.draftChoices=choices; renderDraftGrid(panel, choices); draftDiv.appendChild(panel); draftDiv.classList.remove('hidden'); requestAnimationFrame(()=>requestAnimationFrame(()=>draftDiv.classList.add('show'))); }
-    function renderDraftGrid(panel, choices) {
-        panel.innerHTML='';
-        const h2=document.createElement('h2'); h2.textContent='CHOOSE REWARD'; panel.appendChild(h2);
-        const hint=document.createElement('p'); hint.className='draft-hint'; hint.textContent='Tap a card to inspect it'; panel.appendChild(hint);
+    function renderDraftGrid(container, choices) {
+        container.innerHTML='';
+        const hint=document.createElement('p'); hint.className='draft-hint'; hint.textContent='CHOOSE A REWARD — tap a card to inspect'; container.appendChild(hint);
         const grid=document.createElement('div'); grid.className='draft-grid';
         choices.forEach(choice=>{
             const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
-            const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', choice.color); card.textContent=choice.abbrev;
+            const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', choice.color); card.textContent=choice.icon;
             const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=choice.name;
             wrap.appendChild(card); wrap.appendChild(label);
-            wrap.addEventListener('click', ()=>{ AudioEngine.playTap(); renderDraftDetail(panel, choice, choices); });
+            wrap.addEventListener('click', ()=>{ AudioEngine.playTap(); renderDraftDetail(container, choice, choices); });
             grid.appendChild(wrap);
         });
-        panel.appendChild(grid);
+        container.appendChild(grid);
     }
-    function renderDraftDetail(panel, choice, allChoices) {
-        panel.innerHTML='';
+    function renderDraftDetail(container, choice, allChoices) {
+        container.innerHTML='';
         const wrap=document.createElement('div'); wrap.className='draft-detail';
-        const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', choice.color); icon.textContent=choice.abbrev;
+        const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', choice.color); icon.textContent=choice.icon;
         const name=document.createElement('div'); name.className='draft-detail-name'; name.style.setProperty('--glyph-color', choice.color); name.textContent=choice.name;
         const desc=document.createElement('div'); desc.className='draft-detail-desc'; desc.textContent=choice.desc;
         const actions=document.createElement('div'); actions.className='draft-detail-actions';
         const backBtn=document.createElement('button'); backBtn.className='menu-btn'; backBtn.textContent='BACK';
-        backBtn.addEventListener('click', ()=>{ AudioEngine.playTap(); renderDraftGrid(panel, allChoices); });
+        backBtn.addEventListener('click', ()=>{ AudioEngine.playTap(); renderDraftGrid(container, allChoices); });
         const takeBtn=document.createElement('button'); takeBtn.className='draft-btn'; takeBtn.textContent='TAKE';
         takeBtn.addEventListener('click', ()=>{ choice.apply(); document.getElementById('view-draft').classList.remove('show'); advanceStage(); });
         actions.appendChild(backBtn); actions.appendChild(takeBtn);
         wrap.appendChild(icon); wrap.appendChild(name); wrap.appendChild(desc); wrap.appendChild(actions);
-        panel.appendChild(wrap);
+        container.appendChild(wrap);
     }
     function advanceStage() { G.currentStage++; if(G.currentStage > G.totalStages) { showModal('victory'); return; } renderMap(); }
     function generateDraftChoices() {
         const pool=[];
-        GLYPH_DATABASE.forEach(g=>{ const alreadyEquipped=G.equippedGlyphs.some(eg=>eg.id===g.id); if(!alreadyEquipped&&G.equippedGlyphs.length<MAX_GLYPH_SLOTS){ pool.push({kind:'glyph', id:g.id, name:g.name, desc:g.desc, color:g.color, abbrev:GlyphManager.getAbbrev(g.name), apply:()=>{G.equippedGlyphs.push({id:g.id});}}); } });
-        pool.push({kind:'special', id:'tiles', name:'Special Tiles', desc:'Adds a Wildcard tile and a Finisher tile to your bag.', color:'var(--accent-3)', abbrev:'★', apply:()=>{G.tileBag.push({id:'t_*_'+Date.now(),letter:'*',chips:0,type:'wildcard'});G.tileBag.push({id:'t_!_'+Date.now(),letter:'!',chips:0,type:'finisher'});}});
-        pool.push({kind:'special', id:'cleanup', name:'Letter Cleanup', desc:'Removes 2 bad letters from your bag for the rest of this run.', color:'var(--accent-2)', abbrev:'✂', apply:()=>{const c=['Q','Z','J','X','K','V','W','Y'];const s=[];for(let l of c){if(!G.removedLetters.has(l)){s.push(l);if(s.length===2) break;}}s.forEach(l=>G.removedLetters.add(l));}});
+        GLYPH_DATABASE.forEach(g=>{ const alreadyEquipped=G.equippedGlyphs.some(eg=>eg.id===g.id); if(!alreadyEquipped&&G.equippedGlyphs.length<MAX_GLYPH_SLOTS){ pool.push({kind:'glyph', id:g.id, name:g.name, desc:g.desc, color:g.color, icon:g.icon, apply:()=>{G.equippedGlyphs.push({id:g.id});}}); } });
+        pool.push({kind:'special', id:'tiles', name:'Special Tiles', desc:'Adds a Wildcard tile and a Finisher tile to your bag.', color:'var(--accent-3)', icon:'★', apply:()=>{G.tileBag.push({id:'t_*_'+Date.now(),letter:'*',chips:0,type:'wildcard'});G.tileBag.push({id:'t_!_'+Date.now(),letter:'!',chips:0,type:'finisher'});}});
+        pool.push({kind:'special', id:'cleanup', name:'Letter Cleanup', desc:'Removes 2 bad letters from your bag for the rest of this run.', color:'var(--accent-2)', icon:'✂', apply:()=>{const c=['Q','Z','J','X','K','V','W','Y'];const s=[];for(let l of c){if(!G.removedLetters.has(l)){s.push(l);if(s.length===2) break;}}s.forEach(l=>G.removedLetters.add(l));}});
         return shuffle(pool).slice(0,3);
     }
 
@@ -986,7 +1037,7 @@
                     slot.classList.add('has-glyph'); slot.style.setProperty('--glyph-color', data.color);
                     slot.title = data.name + ' — ' + data.desc;
                     const badge = document.createElement('span'); badge.className = 'glyph-level-badge'; badge.style.background = data.color; badge.textContent = data.type.toUpperCase(); slot.appendChild(badge);
-                    const stat = document.createElement('span'); stat.className = 'glyph-stat'; stat.style.color = data.color; stat.textContent = GlyphManager.getAbbrev(data.name); slot.appendChild(stat);
+                    const stat = document.createElement('span'); stat.className = 'glyph-stat'; stat.style.color = data.color; stat.textContent = data.icon; slot.appendChild(stat);
                 }
             }
             slot.addEventListener('click', (e) => { e.stopPropagation(); if (G.selectedGlyph === -1) { if (!equipped) return; G.selectedGlyph = i; renderGlyphs(); } else if (G.selectedGlyph === i) { G.selectedGlyph = -1; renderGlyphs(); } else { const temp = G.equippedGlyphs[G.selectedGlyph]; G.equippedGlyphs[G.selectedGlyph] = G.equippedGlyphs[i]; G.equippedGlyphs[i] = temp; G.selectedGlyph = -1; AudioEngine.playTap(); renderGlyphs(); } });
@@ -1042,6 +1093,7 @@
         document.getElementById('btn-back-themes').addEventListener('click',()=>slideBack('view-menu','view-themes'));
         document.querySelectorAll('.diff-btn').forEach(b=>b.addEventListener('click',()=>{selectDifficulty(b.dataset.diff);}));
         document.querySelectorAll('.theme-card').forEach(c=>c.addEventListener('click',()=>{ applyTheme(c.dataset.theme); G.currentTheme=c.dataset.theme; document.querySelectorAll('.theme-card').forEach(x=>x.classList.toggle('active',x.dataset.theme===G.currentTheme)); }));
+        document.querySelectorAll('.palette-swatch').forEach(s=>s.addEventListener('click',(e)=>{ e.stopPropagation(); applyPalette(s.dataset.palette); applyTheme('wordling-light'); G.currentTheme='wordling-light'; updateThemeButtons(); AudioEngine.playTap(); }));
         document.getElementById('btn-back-menu').addEventListener('click', showConfirmModal);
         document.getElementById('btn-confirm-cancel').addEventListener('click', hideConfirmModal);
         document.getElementById('btn-confirm-quit').addEventListener('click', () => { hideConfirmModal(); goToMenu(); });
@@ -1067,7 +1119,7 @@
     function updateThemeButtons(){ document.querySelectorAll('.theme-card').forEach(c=>c.classList.toggle('active',c.dataset.theme===G.currentTheme)); }
     function setTheme(n){G.currentTheme=n;applyTheme(n);updateThemeButtons();}
     function goToMenu(){G.gameStarted=false;G.rerollMode=false;G.rerollMarks.clear();G.isAnimating=false;G.hand=[];G.activeWord=[];G.selectedGlyph=-1;document.getElementById('view-game').classList.add('hidden');document.getElementById('view-map').classList.add('hidden');document.getElementById('view-draft').classList.add('hidden');hideModal();document.getElementById('options-modal').classList.remove('show');document.getElementById('view-difficulty').classList.add('hidden');document.getElementById('view-themes').classList.add('hidden');document.getElementById('view-menu').classList.remove('hidden','slide-left');AudioEngine.stopMusic();}
-    function boot(){try{G.currentTheme=localStorage.getItem('wordling-theme')||'wordling-light';}catch(e){G.currentTheme='wordling-light';}applyTheme(G.currentTheme);updateThemeButtons();initDict();bind();}
+    function boot(){try{G.currentTheme=localStorage.getItem('wordling-theme')||'wordling-light';}catch(e){G.currentTheme='wordling-light';}applyTheme(G.currentTheme);updateThemeButtons();let savedPalette;try{savedPalette=localStorage.getItem('wordling-palette')||'coral-sky';}catch(e){savedPalette='coral-sky';}applyPalette(savedPalette);initDict();bind();}
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 })();
 </script>
