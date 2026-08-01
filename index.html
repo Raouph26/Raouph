@@ -112,6 +112,55 @@
             --number-shadow: 2px 2px 0px rgba(0,0,0,0.8);
             --readout-shadow: inset 0 3px 6px rgba(0,0,0,0.8);
         }
+        html[data-theme="phantom"] {
+            --font-main: 'Poppins', sans-serif;
+            --font-title: 'Poppins', sans-serif;
+            --font-numeric: 'Poppins', sans-serif;
+            --font-weight-ui: 900;
+            --letter-spacing-ui: -0.3px;
+
+            --bg-solid: #1B0E2B;
+            --bg-vignette: radial-gradient(ellipse at 50% 30%, rgba(255,16,83,0.24) 0%, rgba(0,0,0,0) 55%);
+
+            --panel-bg: #0A0A0C;
+            --panel-border: #FFFFFF;
+            --panel-shadow-color: #000000;
+            --panel-radius: 0px;
+
+            --text: #FFFFFF;
+            --text-soft: #C9BEDD;
+            --bg-text: #FFFFFF;
+
+            --accent-1: #00E5FF;
+            --accent-1-shadow: #007A87;
+            --accent-2: #FF1053;
+            --accent-2-shadow: #7A0526;
+            --accent-3: #F4FF3D;
+            --accent-3-rgb: 244,255,61;
+            --accent-3-shadow: #8C9400;
+            --accent-1-text: #0A0A0C;
+            --accent-2-text: #FFFFFF;
+            --accent-3-text: #0A0A0C;
+
+            --cap-bg: #0A0A0C;
+            --cap-color: #FFFFFF;
+            --cap-border: #FFFFFF;
+            --cap-shadow-color: #000000;
+            --cap-radius: 0px;
+
+            --tile-bg: #FFFFFF;
+            --tile-color: #0A0A0C;
+            --tile-border: #0A0A0C;
+            --tile-shadow-color: #000000;
+            --tile-radius: 0px;
+
+            --btn-radius: 0px;
+            --press-depth: 6px;
+            --outline-w: 3px;
+            --title-shadow: 3px 3px 0 #000000, 0 0 26px var(--accent-2);
+            --number-shadow: 2px 2px 0px #000000;
+            --readout-shadow: 4px 4px 0 0 #000000;
+        }
         :root, html[data-theme="wordling"] {
             --font-main: 'Poppins', sans-serif;
             --font-title: 'Poppins', sans-serif;
@@ -242,6 +291,22 @@
         @keyframes scanlineDrift { 0% { background-position: 0 0; } 100% { background-position: 30px 30px; } }
         @keyframes typewriterBgDrift { 0% { background-position: 0% 0%, 50% 40%; } 50% { background-position: 100% 100%, 50% 40%; } 100% { background-position: 0% 0%, 50% 40%; } }
         @keyframes notebookDrift { 0% { background-position: 0 0, 0 0; } 100% { background-position: 0 340px, 0 0; } }
+        html[data-theme="phantom"] #game-container {
+            background-image: radial-gradient(ellipse at 30% 20%, #4A0F5C 0%, transparent 55%), linear-gradient(155deg, #2B0A1F 0%, #1B0E2B 45%, #3A0F1F 100%), var(--bg-vignette);
+            background-size: 160% 160%, 260% 260%, 160% 160%;
+            background-position: 30% 20%, 0% 0%, 50% 30%;
+            animation: phantomBgShift 18s ease-in-out infinite;
+        }
+        html[data-theme="phantom"] #game-container.bg-pulse { animation-duration: 5s; }
+        html[data-theme="phantom"] #game-container::after {
+            background-image:
+                repeating-linear-gradient(-12deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 26px),
+                repeating-linear-gradient(72deg, rgba(0,0,0,0.2) 0px, rgba(0,0,0,0.2) 3px, transparent 3px, transparent 40px);
+            animation: phantomGrainDrift 9s linear infinite;
+            mix-blend-mode: overlay;
+        }
+        @keyframes phantomBgShift { 0% { background-position: 30% 20%, 0% 0%, 50% 30%; } 50% { background-position: 60% 40%, 100% 100%, 50% 30%; } 100% { background-position: 30% 20%, 0% 0%, 50% 30%; } }
+        @keyframes phantomGrainDrift { 0% { background-position: 0 0, 0 0; } 100% { background-position: 40px 26px, -50px 30px; } }
         @property --wl-angle { syntax: '<angle>'; inherits: false; initial-value: 135deg; }
         html[data-theme="wordling"] #game-container {
             background-image: linear-gradient(var(--wl-angle, 135deg), var(--wl-split-1) 50%, var(--wl-split-2) 50%), var(--bg-vignette);
@@ -295,6 +360,61 @@
         html[data-theme="wordling"] .daily-info-panel {
             background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.15);
         }
+        /* ===== PHANTOM THEME: chaotic punk-rock skin ===== */
+        @keyframes phantomTitleBounce { 0%,100% { transform: skewX(-8deg) rotate(-2deg) translateY(0); } 50% { transform: skewX(-8deg) rotate(-2deg) translateY(-6px); } }
+        html[data-theme="phantom"] #view-menu h1 { animation-name: phantomTitleBounce; letter-spacing: -1px; }
+        html[data-theme="phantom"] #header { gap: 8px; }
+        html[data-theme="phantom"] .header-pill,
+        html[data-theme="phantom"] .menu-btn,
+        html[data-theme="phantom"] .diff-btn,
+        html[data-theme="phantom"] .draft-btn,
+        html[data-theme="phantom"] .btn-action,
+        html[data-theme="phantom"] #btn-start-stage {
+            clip-path: polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%);
+            border-radius: 0 !important;
+            text-transform: uppercase;
+        }
+        html[data-theme="phantom"] #top-info { transform: skewX(-8deg); padding: 0 10px; }
+        html[data-theme="phantom"] #progress-wrap { border-radius: 0; border-width: 3px; }
+        html[data-theme="phantom"] #score-pill { border-radius: 0; clip-path: polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%); }
+        html[data-theme="phantom"] .hud-box { transform: skewX(-8deg) rotate(-1deg); clip-path: polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%); }
+        html[data-theme="phantom"] .hud-box:nth-child(3) { transform: skewX(-8deg) rotate(1deg); }
+        html[data-theme="phantom"] .resource-box { transform: skewX(-8deg); clip-path: polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%); background: rgba(0,0,0,0.55); }
+        html[data-theme="phantom"] .resource-label, html[data-theme="phantom"] .resource-value { display:inline-block; transform: skewX(8deg); }
+        html[data-theme="phantom"] #score-banner { transform: skewX(-8deg); font-weight: 900; letter-spacing: -0.3px; }
+        html[data-theme="phantom"] .run-info-band,
+        html[data-theme="phantom"] .modal-inner h3 {
+            transform: skewX(-8deg); letter-spacing: -0.5px;
+        }
+        html[data-theme="phantom"] .run-info-band { clip-path: polygon(0 0, 100% 0, 100% 78%, 96% 100%, 0 100%); }
+        html[data-theme="phantom"] #map-header .header-badge,
+        html[data-theme="phantom"] #view-difficulty h2 .header-badge,
+        html[data-theme="phantom"] #view-themes h2 .header-badge {
+            display: inline-block; background: #0A0A0C; color: #FFFFFF; text-shadow: none;
+            border: 3px solid #fff; clip-path: polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%);
+            transform: skewX(-8deg); padding: 8px 22px; text-transform: uppercase; letter-spacing: -0.3px;
+        }
+        html[data-theme="phantom"] .map-node-label {
+            background: #0A0A0C; color: #fff; text-shadow: none; border: 2px solid #fff;
+            clip-path: polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%); transform: skewX(-8deg);
+        }
+        html[data-theme="phantom"] .hand-tile-wrap:nth-child(odd),
+        html[data-theme="phantom"] .active-tile:nth-child(odd) { transform: rotate(-3deg); }
+        html[data-theme="phantom"] .hand-tile-wrap:nth-child(even),
+        html[data-theme="phantom"] .active-tile:nth-child(even) { transform: rotate(3deg); }
+        html[data-theme="phantom"] .draft-card-wrap:nth-child(odd) { transform: rotate(-2deg); }
+        html[data-theme="phantom"] .draft-card-wrap:nth-child(even) { transform: rotate(2deg); }
+        html[data-theme="phantom"] .draft-card, html[data-theme="phantom"] .draft-detail-icon { border-radius: 0; clip-path: polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%); }
+        html[data-theme="phantom"] .theme-card:nth-child(1) { transform: rotate(-2deg); }
+        html[data-theme="phantom"] .theme-card:nth-child(2) { transform: rotate(2deg); }
+        html[data-theme="phantom"] .theme-card:nth-child(3) { transform: rotate(1.5deg); }
+        html[data-theme="phantom"] .theme-card:nth-child(4) { transform: rotate(-1.5deg); }
+        html[data-theme="phantom"] .theme-card:nth-child(1):active { transform: rotate(-2deg) translateY(5px); }
+        html[data-theme="phantom"] .theme-card:nth-child(2):active { transform: rotate(2deg) translateY(5px); }
+        html[data-theme="phantom"] .theme-card:nth-child(3):active { transform: rotate(1.5deg) translateY(5px); }
+        html[data-theme="phantom"] .theme-card:nth-child(4):active { transform: rotate(-1.5deg) translateY(5px); }
+        html[data-theme="phantom"] .theme-card { border-radius: 0; clip-path: polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%); }
+        html[data-theme="phantom"] .modal-inner { border-radius: 0; clip-path: polygon(0 1%, 100% 0, 100% 99%, 0 100%); }
         #bg-overlay {
             position: absolute; inset: 0; pointer-events: none; z-index: 0;
             background: transparent; transition: background 0.5s ease;
@@ -472,6 +592,8 @@
         .card-cyber-arcade .theme-name { color: #E8EDF0; font-family: 'Press Start 2P', monospace; font-size: 0.6rem; line-height: 1.6; }
         .card-typewriter { background: #141416; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 5px); }
         .card-typewriter .theme-name { color: #EDE8D0; font-family: 'Special Elite', monospace; }
+        .card-phantom { background: radial-gradient(ellipse at 30% 20%, #4A0F5C 0%, transparent 60%), linear-gradient(155deg, #2B0A1F 0%, #1B0E2B 100%); border: 3px solid #fff !important; }
+        .card-phantom .theme-name { color: #F4FF3D; font-family: 'Poppins', sans-serif; font-weight: 900; letter-spacing: -0.5px; transform: skewX(-8deg); text-shadow: 2px 2px 0 #000, 0 0 14px #FF1053; }
 
         #header { display:flex; align-items:center; justify-content:center; gap:12px; flex-shrink:0; }
         .header-pill {
@@ -838,6 +960,15 @@
             </div>
             <span class="theme-name">Mechanical<br>Typewriter</span>
         </div>
+        <div class="theme-card card-phantom" data-theme="phantom">
+            <span class="theme-check">✓</span>
+            <div class="theme-preview-row">
+                <span class="theme-preview-chip" style="background:#00E5FF;"></span>
+                <span class="theme-preview-chip" style="background:#FF1053;"></span>
+                <span class="theme-preview-chip" style="background:#F4FF3D;"></span>
+            </div>
+            <span class="theme-name">PHANTOM</span>
+        </div>
         <button class="menu-btn" id="btn-back-themes" style="width:100%; margin-top:10px;">BACK</button>
     </div>
     <div id="view-difficulty" class="view-panel">
@@ -916,8 +1047,8 @@
         playPopup() { const g=this._sfxOut(); if(!g) return; const ctx=this.audioCtx; const t=ctx.currentTime; const o=ctx.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(660,t); o.frequency.exponentialRampToValueAtTime(440,t+0.07); const gn=ctx.createGain(); gn.gain.setValueAtTime(0.08,t); gn.gain.exponentialRampToValueAtTime(0.001,t+0.07); o.connect(gn); gn.connect(g); o.start(t); o.stop(t+0.08); },
         playSubmit() { const g=this._sfxOut(); if(!g) return; const ctx=this.audioCtx; const t=ctx.currentTime; const freqs=[261.63,329.63,392.0,523.25]; freqs.forEach((f,i)=>{ const o=ctx.createOscillator(); o.type='sine'; const st=t+i*0.04; o.frequency.setValueAtTime(f,st); const gn=ctx.createGain(); gn.gain.setValueAtTime(0,st); gn.gain.linearRampToValueAtTime(0.09,st+0.25); gn.gain.exponentialRampToValueAtTime(0.001,st+0.9); o.connect(gn); gn.connect(g); o.start(st); o.stop(st+1.0); }); }
     };
-    const THEMES = ['wordling', 'cyber-arcade', 'typewriter'];
-    function applyTheme(n){ const name = THEMES.includes(n) ? n : 'wordling'; document.documentElement.setAttribute('data-theme', name); try{localStorage.setItem('wordling-theme',name);}catch(e){} }
+    const THEMES = ['wordling', 'cyber-arcade', 'typewriter', 'phantom'];
+    function applyTheme(n){ const name = THEMES.includes(n) ? n : 'wordling'; document.documentElement.setAttribute('data-theme', name); document.body.classList.toggle('theme-phantom', name==='phantom'); try{localStorage.setItem('wordling-theme',name);}catch(e){} }
     const WORDLING_PALETTES = {
         'coral-sky': { c1:'#3B82F6', c2:'#FF5A5A' },
         'black-grey': { c1:'#6B7280', c2:'#27272A' },
