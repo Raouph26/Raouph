@@ -504,15 +504,18 @@
         .tile-inner.wildcard { border: var(--outline-w) solid var(--accent-3) !important; box-shadow: 0 0 12px var(--accent-3); }
         .tile-inner.finisher { border: var(--outline-w) solid var(--accent-1) !important; box-shadow: 0 0 12px var(--accent-1); }
         .tile-inner.dragging {
-            transform: scale(1.15);
+            animation: none !important;
+            transform: scale(1.15) !important;
             box-shadow: 0 12px 24px rgba(0,0,0,0.5) !important;
             z-index: 60; border: var(--outline-w) solid var(--accent-1) !important; opacity: 0.95;
         }
         .drag-clone {
-            position: fixed; pointer-events: none; z-index: 100;
-            transform: translate(-50%, -50%) scale(1.15);
+            animation: none !important;
+            position: fixed !important; pointer-events: none; z-index: 100;
+            transform: translate(-50%, -50%) scale(1.15) !important;
             box-shadow: 0 12px 24px rgba(0,0,0,0.5) !important;
-            border-radius: var(--tile-radius); opacity: 0.95; background: var(--tile-bg);
+            border-radius: var(--tile-radius); opacity: 0.95;
+            top: 0; left: 0; margin: 0;
         }
 
         #glyph-slots { display:flex; gap:10px; justify-content:center; padding:10px 0; flex-shrink:0; }
@@ -1070,9 +1073,10 @@
 
     function getTileClass(tile) { let cls='tile-inner'; if(tile.type==='wildcard') cls+=' wildcard'; else if(tile.type==='finisher') cls+=' finisher'; else if(tile.aura) cls+=' aura-'+tile.aura; if(G.rerollMode&&G.rerollMarks.has(tile.id)) cls+=' marked-reroll'; return cls; }
 
-    function cleanupDrag() { if(!G.dragData) return; const {el,clone,pointerId} = G.dragData; if(el){ el.classList.remove('dragging'); el.style.opacity='1'; try{ el.releasePointerCapture(pointerId); }catch(err){} } document.removeEventListener('pointermove',onDragMove); document.removeEventListener('pointerup',onDragEnd); document.removeEventListener('pointercancel',onDragEnd); if(clone && clone.parentNode) clone.remove(); G.dragData=null; }
-    function onDragStart(e, source, index) { if(G.isAnimating||G.dragData) return; const tile = source==='hand' ? G.hand[index] : (source==='word' ? G.activeWord[index] : G.equippedGlyphs[index]); if(!tile) return; const el=e.currentTarget; try{ el.setPointerCapture(e.pointerId); }catch(err){} G.dragData={source,index,tile,el,clone:null,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,hasMoved:false}; document.addEventListener('pointermove',onDragMove); document.addEventListener('pointerup',onDragEnd); document.addEventListener('pointercancel',onDragEnd); }
-    function onDragMove(e) { if(!G.dragData||e.pointerId!==G.dragData.pointerId) return; e.preventDefault(); const px=e.clientX, py=e.clientY; if(Math.abs(px-G.dragData.startX)>4||Math.abs(py-G.dragData.startY)>4) G.dragData.hasMoved=true; if(!G.dragData.clone&&G.dragData.hasMoved){ const clone=G.dragData.el.cloneNode(true); clone.className='drag-clone'; clone.style.width=G.dragData.el.offsetWidth+'px'; clone.style.height=G.dragData.el.offsetHeight+'px'; clone.innerHTML=G.dragData.el.innerHTML; document.body.appendChild(clone); G.dragData.clone=clone; G.dragData.el.classList.add('dragging'); G.dragData.el.style.opacity='0.35'; } if(G.dragData.clone){ G.dragData.clone.style.left=px+'px'; G.dragData.clone.style.top=py+'px'; } }
+    function cleanupDrag() { if(!G.dragData) return; const {el,clone,pointerId} = G.dragData; if(el){ el.classList.remove('dragging'); el.style.opacity='1'; try{ el.releasePointerCapture(pointerId); }catch(err){} el.removeEventListener('lostpointercapture',onDragLost); } document.removeEventListener('pointermove',onDragMove); document.removeEventListener('pointerup',onDragEnd); document.removeEventListener('pointercancel',onDragEnd); if(clone && clone.parentNode) clone.remove(); G.dragData=null; }
+    function onDragLost(e) { if(G.dragData && e.currentTarget===G.dragData.el){ cleanupDrag(); render(); } }
+    function onDragStart(e, source, index) { if(G.isAnimating||G.dragData) return; const tile = source==='hand' ? G.hand[index] : (source==='word' ? G.activeWord[index] : G.equippedGlyphs[index]); if(!tile) return; const el=e.currentTarget; try{ el.setPointerCapture(e.pointerId); }catch(err){} G.dragData={source,index,tile,el,clone:null,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,hasMoved:false}; el.addEventListener('lostpointercapture',onDragLost); document.addEventListener('pointermove',onDragMove); document.addEventListener('pointerup',onDragEnd); document.addEventListener('pointercancel',onDragEnd); }
+    function onDragMove(e) { if(!G.dragData||e.pointerId!==G.dragData.pointerId) return; e.preventDefault(); const px=e.clientX, py=e.clientY; if(Math.abs(px-G.dragData.startX)>4||Math.abs(py-G.dragData.startY)>4) G.dragData.hasMoved=true; if(!G.dragData.clone&&G.dragData.hasMoved){ const clone=G.dragData.el.cloneNode(true); clone.className=G.dragData.el.className+' drag-clone'; clone.style.width=G.dragData.el.offsetWidth+'px'; clone.style.height=G.dragData.el.offsetHeight+'px'; clone.innerHTML=G.dragData.el.innerHTML; document.body.appendChild(clone); G.dragData.clone=clone; G.dragData.el.classList.add('dragging'); G.dragData.el.style.opacity='0.35'; } if(G.dragData.clone){ G.dragData.clone.style.left=px+'px'; G.dragData.clone.style.top=py+'px'; } }
     function onDragEnd(e) {
         if(!G.dragData||e.pointerId!==G.dragData.pointerId) return;
         const {source,index,hasMoved}=G.dragData; const px=e.clientX, py=e.clientY;
@@ -1166,7 +1170,7 @@
     function setTheme(n){G.currentTheme=n;applyTheme(n);updateThemeButtons();}
     function goToMenu(){G.gameStarted=false;G.rerollMode=false;G.rerollMarks.clear();G.isAnimating=false;G.hand=[];G.activeWord=[];document.getElementById('view-game').classList.add('hidden');document.getElementById('view-map').classList.add('hidden');document.getElementById('view-draft').classList.add('hidden');hideModal();document.getElementById('options-modal').classList.remove('show');document.getElementById('view-difficulty').classList.add('hidden');document.getElementById('view-themes').classList.add('hidden');document.getElementById('view-menu').classList.remove('hidden','slide-left');AudioEngine.stopMusic();}
     function boot(){try{G.currentTheme=localStorage.getItem('wordling-theme')||'wordling-light';}catch(e){G.currentTheme='wordling-light';}applyTheme(G.currentTheme);updateThemeButtons();let savedPalette;try{savedPalette=localStorage.getItem('wordling-palette')||'coral-sky';}catch(e){savedPalette='coral-sky';}applyPalette(savedPalette);initDict();bind();}
-    document.addEventListener('visibilitychange', () => { if(!document.hidden){ const c=document.getElementById('game-container'); if(c){ c.classList.add('anim-kick'); void c.offsetHeight; c.classList.remove('anim-kick'); } } });
+    document.addEventListener('visibilitychange', () => { if(document.hidden){ if(G.dragData){ cleanupDrag(); render(); } } else { const c=document.getElementById('game-container'); if(c){ c.classList.add('anim-kick'); void c.offsetHeight; c.classList.remove('anim-kick'); } } });
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 })();
 </script>
