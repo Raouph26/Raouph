@@ -566,6 +566,15 @@
         .tile-inner.aura-red .tile-letter, .tile-inner.aura-red .tile-chips { color: var(--accent-2-text) !important; }
         .tile-inner.aura-gold { background: var(--accent-3) !important; border: var(--outline-w) solid var(--accent-3-shadow) !important; box-shadow: 0 4px 0 0 var(--accent-3-shadow) !important; }
         .tile-inner.aura-gold .tile-letter, .tile-inner.aura-gold .tile-chips { color: var(--accent-3-text) !important; }
+        .tile-badge {
+            position:absolute; top:2px; left:2px; font-size:8px; font-weight:900; line-height:1;
+            padding:2px 4px; border-radius:6px; background:rgba(255,255,255,0.95); color:#111;
+            z-index:2; pointer-events:none; white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,0.35);
+            font-family: var(--font-main); letter-spacing:-0.2px; max-width: calc(100% - 4px); overflow:hidden; text-overflow:ellipsis;
+        }
+        .active-tile .tile-badge { font-size:9px; padding:2px 5px; }
+        .tile-badge.badge-wild { background: var(--accent-3); color: var(--accent-3-text); }
+        .tile-badge.badge-finisher { background: var(--accent-1); color: var(--accent-1-text); }
         .tile-inner.wildcard { border: var(--outline-w) solid var(--accent-3) !important; box-shadow: 0 0 12px var(--accent-3); }
         .tile-inner.finisher { border: var(--outline-w) solid var(--accent-1) !important; box-shadow: 0 0 12px var(--accent-1); }
         .tile-inner.dragging {
@@ -762,7 +771,7 @@
         .info-btn:active { transform: translateY(2px); box-shadow: 0 0 0 0 var(--accent-3-shadow); }
         .howto-body { max-height:56vh; overflow-y:auto; }
         .howto-row { display:flex; gap:10px; align-items:flex-start; font-weight:600; font-size:0.8rem; color: var(--text); background: rgba(0,0,0,0.06); padding:10px 12px; border-radius: var(--radius-sm); font-family: var(--font-main); line-height:1.35; }
-        .howto-row .howto-icon { font-size:1.1rem; flex-shrink:0; }
+        .howto-num { width:22px; height:22px; border-radius:50%; background: var(--accent-1); color: var(--accent-1-text); font-size:0.75rem; font-weight:900; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-family: var(--font-main); margin-top:1px; }
         .modal-inner { background: var(--panel-bg); border: var(--outline-w) solid var(--panel-border); border-radius:var(--panel-radius); padding:26px 22px; width:100%; max-width:320px; box-shadow:0 12px 32px rgba(0,0,0,0.5); display:flex; flex-direction:column; gap:14px; }
         .modal-inner h3 { text-align:center; font-size:1.3rem; font-weight:900; color: var(--text); font-family: var(--font-title); }
         .modal-inner label { display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:0.85rem; color: var(--text); gap:10px; font-family: var(--font-main); }
@@ -878,12 +887,14 @@
     <div id="howto-modal"><div class="modal-inner run-info-inner">
         <div class="run-info-band">HOW TO PLAY</div>
         <div class="run-info-body howto-body">
-            <div class="howto-row"><span class="howto-icon">🔤</span><span>Tap or drag letter tiles from your hand up into the word line to build a word.</span></div>
-            <div class="howto-row"><span class="howto-icon">✅</span><span>Tap SUBMIT to play a valid word. Chips × Multiplier = the points you score.</span></div>
-            <div class="howto-row"><span class="howto-icon">🖐️</span><span>HANDS is how many words you can submit this stage — reach the target score before they run out.</span></div>
-            <div class="howto-row"><span class="howto-icon">🔁</span><span>REROLL: mark up to 3 tiles, then confirm to swap them for brand new letters. SHUFFLE just reorders your current hand.</span></div>
-            <div class="howto-row"><span class="howto-icon">☠️</span><span>Boss stages add a Boss Blind — a special twist on the board. Beat the stage to move on.</span></div>
-            <div class="howto-row"><span class="howto-icon">💎</span><span>Earn Diamonds between stages to buy Glyphs and Consumables in the shop.</span></div>
+            <div class="howto-row"><span class="howto-num">1</span><span>Tap or drag letter tiles from your hand up into the word line to build a word.</span></div>
+            <div class="howto-row"><span class="howto-num">2</span><span>Tap SUBMIT to play a valid word. Chips × Multiplier = the points you score.</span></div>
+            <div class="howto-row"><span class="howto-num">3</span><span>HANDS is how many words you can submit this stage — reach the target score before they run out.</span></div>
+            <div class="howto-row"><span class="howto-num">4</span><span>REROLL: mark up to 3 tiles, then confirm to swap them for brand new letters. SHUFFLE just reorders your current hand.</span></div>
+            <div class="howto-row"><span class="howto-num">5</span><span>Upgraded tiles show a small badge for their bonus — flat points, a chip multiplier, or extra MULT.</span></div>
+            <div class="howto-row"><span class="howto-num">6</span><span>Wildcard (*) tiles stand in for any letter. They're rare shop finds — never in your starting hand.</span></div>
+            <div class="howto-row"><span class="howto-num">7</span><span>Finisher (!) tiles trigger a x3 score boost — but only when played as the LAST letter of the word.</span></div>
+            <div class="howto-row"><span class="howto-num">8</span><span>Boss stages add a Boss Blind twist. Earn Diamonds between stages to buy Glyphs and Consumables in the shop.</span></div>
         </div>
         <div style="padding:0 20px 20px;"><button id="btn-close-howto" class="menu-btn" style="width:100%;">GOT IT</button></div>
     </div></div>
@@ -944,6 +955,8 @@
         { id:"novelist", name:"The Novelist", type:"red", color:"#EF4444", icon:"✒", desc:"x3 MULT if played word is 6+ letters." },
         { id:"bookends", name:"Bookends", type:"red", color:"#EF4444", icon:"↔", desc:"x4 MULT if first and last letters match." },
         { id:"heavy_hitter", name:"Heavy Hitter", type:"red", color:"#EF4444", icon:"✹", desc:"x2 MULT if word has 2+ rare letters (Q, X, Z, J, V)." },
+        { id:"double_down", name:"Double Down", type:"red", color:"#EF4444", icon:"⚔", desc:"+2 MULT for every repeated letter in the played word." },
+        { id:"underdog", name:"Underdog", type:"red", color:"#EF4444", icon:"▲", desc:"x3 MULT if the played word is exactly 3 letters long." },
         { id:"wildcard_rune", name:"Wildcard Rune", type:"purple", color:"#A855F7", icon:"✦", desc:"At round start, 1 random tile in active hand becomes Wild." },
         { id:"duplicator", name:"Duplicator", type:"purple", color:"#A855F7", icon:"⧉", desc:"Playing a 5-letter word duplicates its highest-scoring letter into bag." },
         { id:"vowel_shifter", name:"Vowel Shifter", type:"purple", color:"#A855F7", icon:"⇄", desc:"'Y' counts as both Vowel and Consonant for scoring." },
@@ -959,7 +972,13 @@
         { id:"cloner", name:"Cloner", icon:"⧉", color:CONSUMABLE_COLOR, desc:"Duplicate an existing tile in your bag." }
     ];
     const MAX_CONSUMABLES = 1;
-    const SHOP_PRICES = { glyph:6, void_seal:3, gold_ink:5, transmuter:4, cloner:5 };
+    const SPECIAL_TILE_COLOR_WILD = "#A855F7";
+    const SPECIAL_TILE_COLOR_FINISHER = "#F59E0B";
+    const SPECIAL_TILE_DATABASE = [
+        { id:"wild_tile", name:"Wildcard Tile", tileType:"wildcard", icon:"✦", color:SPECIAL_TILE_COLOR_WILD, desc:"Adds a Wildcard (*) tile to your bag. It can substitute for any letter in a word." },
+        { id:"finisher_tile", name:"Finisher Tile", tileType:"finisher", icon:"!", color:SPECIAL_TILE_COLOR_FINISHER, desc:"Adds a Finisher (!) tile to your bag. Play it as the LAST letter of a word for a x3 score boost." }
+    ];
+    const SHOP_PRICES = { glyph:6, void_seal:3, gold_ink:5, transmuter:4, cloner:5, wild_tile:7, finisher_tile:7 };
     const SHOP_REROLL_BASE_COST = 2;
     const CLASSIC_STAGE_TARGETS = [0, 300, 800, 2000, 5000, 12000, 30000, 75000, 200000];
     const DAILY_CHALLENGES = [
@@ -1011,14 +1030,17 @@
             if (this.hasGlyph('consonant_charge')) finalPoints += 10*consonantCount;
             if (this.hasGlyph('scrabble_master') && hasScrabbleLetter) finalPoints += 40;
             if (this.hasGlyph('long_form') && word.length>=6) finalPoints += 60;
+            const dupCount = letters.length - new Set(letters).size;
             if (this.hasGlyph('grammarian')) finalMult += 3*vowelCount;
             if (this.hasGlyph('novelist') && word.length>=6) finalMult *= 3;
             if (this.hasGlyph('bookends') && letters.length>1 && letters[0]===letters[letters.length-1]) finalMult *= 4;
             if (this.hasGlyph('heavy_hitter') && rareCount>=2) finalMult *= 2;
+            if (this.hasGlyph('double_down') && dupCount>0) finalMult += 2*dupCount;
+            if (this.hasGlyph('underdog') && word.length===3) finalMult *= 3;
             return { finalPoints, finalMult };
         },
         getGlyphEffectPreview(id, word) {
-            const letters=(word||'').split(''); const vowelCount=letters.filter(isVowelLetter).length; const consonantCount=letters.filter(isConsonantLetter).length; const rareCount=letters.filter(l=>RARE_LETTERS.has(l)).length; const hasScrabbleLetter=letters.some(l=>l==='Q'||l==='X'||l==='Z'||l==='J');
+            const letters=(word||'').split(''); const vowelCount=letters.filter(isVowelLetter).length; const consonantCount=letters.filter(isConsonantLetter).length; const rareCount=letters.filter(l=>RARE_LETTERS.has(l)).length; const hasScrabbleLetter=letters.some(l=>l==='Q'||l==='X'||l==='Z'||l==='J'); const dupCount=letters.length-new Set(letters).size;
             switch(id) {
                 case 'vowel_anchor': return vowelCount>0 ? {kind:'points', value:15*vowelCount, label:'+'+(15*vowelCount)+' PTS'} : null;
                 case 'consonant_charge': return consonantCount>0 ? {kind:'points', value:10*consonantCount, label:'+'+(10*consonantCount)+' PTS'} : null;
@@ -1028,6 +1050,8 @@
                 case 'novelist': return (word&&word.length>=6) ? {kind:'mult-mul', value:3, label:'x3 MULT'} : null;
                 case 'bookends': return (letters.length>1&&letters[0]===letters[letters.length-1]) ? {kind:'mult-mul', value:4, label:'x4 MULT'} : null;
                 case 'heavy_hitter': return rareCount>=2 ? {kind:'mult-mul', value:2, label:'x2 MULT'} : null;
+                case 'double_down': return dupCount>0 ? {kind:'mult-add', value:2*dupCount, label:'+'+(2*dupCount)+' MULT'} : null;
+                case 'underdog': return (word&&word.length===3) ? {kind:'mult-mul', value:3, label:'x3 MULT'} : null;
                 default: return null;
             }
         },
@@ -1058,12 +1082,12 @@
         draftChoices:null, dragData:null,
         gameMode:'classic', dailyChallenge:null, isEndless:false, consumables:[], activeHazard:null, anchorTileId:null, mutedTileId:null,
         leaderboard:[], records:{highestWord:null, totalGoldEarned:0, mostStagesCleared:0},
-        shopOffers:{glyphs:[], consumables:[]}, shopRerollCount:0
+        shopOffers:{glyphs:[], consumables:[], tiles:[]}, shopRerollCount:0
     };
 
     function assignRandomAura() { const r=Math.random(); if(r<0.15) return 'blue'; if(r<0.22) return 'red'; if(r<0.26) return 'gold'; return null; }
     function generateRandomTile() { const totalWeight=TILE_DIST.reduce((s,d)=>s+d.qty,0); let r=Math.random()*totalWeight; for(const d of TILE_DIST){ r-=d.qty; if(r<=0) return {id:'t_zen_'+Math.random().toString(36).slice(2,11)+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), letter:d.letter, chips:d.chips, type:'normal', aura:assignRandomAura()}; } const f=TILE_DIST[0]; return {id:'t_zen_fallback_'+Date.now(), letter:f.letter, chips:f.chips, type:'normal', aura:null}; }
-    function buildInitialBag() { const tiles=[]; TILE_DIST.forEach(({letter,chips,qty})=>{ if(G.removedLetters.has(letter)) return; for(let i=0;i<qty;i++) tiles.push({id:'t_'+Math.random().toString(36).slice(2,11)+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), letter, chips, type:'normal', aura: assignRandomAura()}); }); tiles.push({id:'t_*_1', letter:'*', chips:0, type:'wildcard'}); tiles.push({id:'t_!_1', letter:'!', chips:0, type:'finisher'}); return shuffle(tiles); }
+    function buildInitialBag() { const tiles=[]; TILE_DIST.forEach(({letter,chips,qty})=>{ if(G.removedLetters.has(letter)) return; for(let i=0;i<qty;i++) tiles.push({id:'t_'+Math.random().toString(36).slice(2,11)+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), letter, chips, type:'normal', aura: assignRandomAura()}); }); return shuffle(tiles); }
     function drawToHand() { while(G.hand.filter(t=>t!==null).length < getHandSize()){ let tile; if(G.gameMode==='zen'){ tile=generateRandomTile(); } else { if(G.tileBag.length===0) { if(G.discardPile.length===0) break; G.tileBag = shuffle(G.discardPile); G.discardPile = []; } tile = G.tileBag.pop(); } const emptyIdx = G.hand.indexOf(null); if(emptyIdx!==-1) G.hand[emptyIdx] = tile; else G.hand.push(tile); } ensureMutedTile(); }
     function resetStageState() { G.currentScore=0; G.playsLeft=(G.gameMode==='daily'&&G.dailyChallenge===4)?2:4; G.rerollsLeft=3; G.activeWord=[]; G.hand=[]; G.isAnimating=false; G.rerollMode=false; G.rerollMarks.clear(); G.anchorTileId=null; G.mutedTileId=null; drawToHand(); }
     function startRun() {
@@ -1071,7 +1095,7 @@
         G.removedLetters = new Set();
         if (G.gameMode==='daily' && G.dailyChallenge===1) G.removedLetters.add('E');
         G.equippedGlyphs = []; G.bank = 0; G.consumables = []; G.activeHazard = null; G.anchorTileId = null; G.mutedTileId = null; G.isEndless = false;
-        G.shopOffers = {glyphs:[], consumables:[]}; G.shopRerollCount = 0;
+        G.shopOffers = {glyphs:[], consumables:[], tiles:[]}; G.shopRerollCount = 0;
         G.stageScores = [];
         G.tileBag = buildInitialBag();
         if (G.gameMode==='daily' && G.dailyChallenge===6) {
@@ -1085,13 +1109,19 @@
     function getLengthBaseChips(l) { if(l>=7) return 300; if(l===6) return 150; if(l===5) return 80; if(l===4) return 40; if(l===3) return 20; return 0; }
     function getLengthBaseMult(l) { if(l>=7) return 8; if(l===6) return 5; if(l===5) return 3; if(l===4) return 2; if(l===3) return 1; return 1; }
     function calcScore() {
-        let totalChips=0, hasWildcard=false; const letters=[];
+        let totalChips=0, hasWildcard=false, redAuraBonus=0; const letters=[]; const pattern=[];
         const vowelDrought = G.gameMode==='daily' && G.dailyChallenge===2;
-        G.activeWord.forEach(t=>{ if(t.type==='wildcard'){ hasWildcard=true; return; } let chip = isMutedTile(t) ? 0 : ((vowelDrought && VOWEL_LETTERS.has(t.letter)) ? 0 : (t.chips||0)); if(!isMutedTile(t)){ if(t.aura==='blue') chip+=10; if(t.aura==='gold') chip*=2; if(t.goldInk) chip+=20; } totalChips+=chip; letters.push(t.letter); });
-        const length=G.activeWord.length; const baseChips=getLengthBaseChips(length); const baseMult=getLengthBaseMult(length);
+        G.activeWord.forEach(t=>{
+            if(t.type==='finisher') return;
+            if(t.type==='wildcard'){ hasWildcard=true; pattern.push('?'); return; }
+            let chip = isMutedTile(t) ? 0 : ((vowelDrought && VOWEL_LETTERS.has(t.letter)) ? 0 : (t.chips||0));
+            if(!isMutedTile(t)){ if(t.aura==='blue') chip+=10; if(t.aura==='gold') chip*=2; if(t.aura==='red') redAuraBonus+=2; if(t.goldInk) chip+=20; }
+            totalChips+=chip; letters.push(t.letter); pattern.push(t.letter);
+        });
+        const length=G.activeWord.length; const baseChips=getLengthBaseChips(length); const baseMult=getLengthBaseMult(length)+redAuraBonus;
         totalChips += baseChips;
         let word=letters.join(''), valid=false;
-        if(hasWildcard){ const pattern=G.activeWord.map(t=>t.type==='wildcard'?'?':t.letter).join(''); for(let c=65;c<=90;c++){ const tw=pattern.replace(/\?/g,String.fromCharCode(c)); if(G.dictSet.has(tw)){ valid=true; word=tw; break; } } }
+        if(hasWildcard){ const patStr=pattern.join(''); for(let c=65;c<=90;c++){ const tw=patStr.replace(/\?/g,String.fromCharCode(c)); if(G.dictSet.has(tw)){ valid=true; word=tw; break; } } }
         else if(letters.length>0) valid=G.dictSet.has(word);
         const mods = GlyphManager.calculateScoreModifiers(word, totalChips, baseMult);
         totalChips = mods.finalPoints; let totalMult = mods.finalMult;
@@ -1166,12 +1196,14 @@
         const glyphSlots = [...document.querySelectorAll('#glyph-slots .glyph-slot')];
 
         overlay.style.background = 'rgba(30,144,255,0.18)';
-        let runningChips = 0; pointsEl.textContent = '0';
+        let runningChips = 0, runningRedMult = 0; pointsEl.textContent = '0';
         for (let i = 0; i < tilesCopy.length; i++) {
             const tile = tilesCopy[i]; const el = tileEls[i];
             if (!tile || !el) continue;
             el.classList.add('scoring-pop');
-            let chip = isMutedTile(tile) ? 0 : ((G.gameMode==='daily' && G.dailyChallenge===2 && VOWEL_LETTERS.has(tile.letter)) ? 0 : (tile.chips || 0)); if (!isMutedTile(tile)) { if (tile.aura === 'blue') chip += 10; if (tile.aura === 'gold') chip *= 2; if (tile.goldInk) chip += 20; }
+            if (tile.type === 'wildcard') { spawnGlyphIndicator(el, 'WILD'); await sleep(220); el.classList.remove('scoring-pop'); continue; }
+            if (tile.type === 'finisher') { if (i === tilesCopy.length - 1) spawnPopup(el, 3, true); await sleep(220); el.classList.remove('scoring-pop'); continue; }
+            let chip = isMutedTile(tile) ? 0 : ((G.gameMode==='daily' && G.dailyChallenge===2 && VOWEL_LETTERS.has(tile.letter)) ? 0 : (tile.chips || 0)); if (!isMutedTile(tile)) { if (tile.aura === 'blue') chip += 10; if (tile.aura === 'gold') chip *= 2; if (tile.aura === 'red') runningRedMult += 2; if (tile.goldInk) chip += 20; }
             runningChips += chip; pointsEl.textContent = runningChips; pointsEl.classList.add('pop');
             spawnPopup(el, chip, false); if (tile.aura === 'red') setTimeout(() => spawnPopup(el, 2, true), 160);
             await sleep(220); el.classList.remove('scoring-pop'); pointsEl.classList.remove('pop');
@@ -1179,7 +1211,7 @@
 
         overlay.style.background = 'rgba(255,69,58,0.20)'; await sleep(250);
         let displayChips = runningChips + getLengthBaseChips(tilesCopy.length);
-        let displayMult = getLengthBaseMult(tilesCopy.length);
+        let displayMult = getLengthBaseMult(tilesCopy.length) + runningRedMult;
         pointsEl.textContent = displayChips; pointsEl.classList.add('pop'); await sleep(150); pointsEl.classList.remove('pop');
         multEl.textContent = displayMult.toFixed(1); multEl.classList.add('pop'); await sleep(150); multEl.classList.remove('pop');
 
@@ -1329,9 +1361,15 @@
         const pool = CONSUMABLE_DATABASE.map(def=>({ kind:'consumable', id:def.id, name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{ G.consumables.push({id:def.id}); } }));
         return shuffle(pool).slice(0,2);
     }
+    function generateShopTileOffers() {
+        return SPECIAL_TILE_DATABASE.map(def=>({ kind:'tile', id:def.id, name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{
+            G.tileBag.push({ id:'t_'+def.tileType+'_'+Math.random().toString(36).slice(2,11)+'_'+Date.now(), letter: def.tileType==='wildcard'?'*':'!', chips:0, type:def.tileType });
+        } }));
+    }
     function initShopOffers() {
         G.shopOffers.glyphs = generateShopGlyphOffers();
         G.shopOffers.consumables = generateShopConsumableOffers();
+        G.shopOffers.tiles = generateShopTileOffers();
         G.shopRerollCount = 0;
     }
     function getShopRerollCost() { return SHOP_REROLL_BASE_COST + G.shopRerollCount; }
@@ -1342,6 +1380,7 @@
         G.shopRerollCount++;
         G.shopOffers.glyphs = generateShopGlyphOffers();
         G.shopOffers.consumables = generateShopConsumableOffers();
+        G.shopOffers.tiles = generateShopTileOffers();
         AudioEngine.playSubmit();
         renderShop(container);
     }
@@ -1380,6 +1419,22 @@
             });
             container.appendChild(cGrid);
         }
+        const tileLabel = document.createElement('div'); tileLabel.className='shop-section-label'; tileLabel.textContent='SPECIAL TILES'; container.appendChild(tileLabel);
+        if (G.shopOffers.tiles.length===0) {
+            const p=document.createElement('p'); p.className='draft-hint'; p.textContent='None in stock.'; container.appendChild(p);
+        } else {
+            const tGrid = document.createElement('div'); tGrid.className='draft-grid';
+            G.shopOffers.tiles.forEach(item=>{
+                const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
+                const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); card.textContent=item.icon;
+                const price=document.createElement('span'); price.className='draft-card-price'; price.innerHTML='<span class="diamond-icon"></span>'+item.price; card.appendChild(price);
+                const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=item.name;
+                wrap.appendChild(card); wrap.appendChild(label);
+                wrap.addEventListener('click', ()=>{ AudioEngine.playTap(); renderShopDetail(container, item, 'tile'); });
+                tGrid.appendChild(wrap);
+            });
+            container.appendChild(tGrid);
+        }
         const rerollCost = getShopRerollCost();
         const rerollBtn = document.createElement('button'); rerollBtn.className='draft-btn reroll-btn'; rerollBtn.style.width='100%'; rerollBtn.style.marginTop='10px'; rerollBtn.innerHTML='REROLL (<span class="diamond-icon"></span>'+rerollCost+')';
         if (G.bank < rerollCost) rerollBtn.disabled = true;
@@ -1405,7 +1460,7 @@
         buyBtn.addEventListener('click', ()=>{
             if (G.bank < item.price || inventoryFull) return;
             G.bank -= item.price; item.apply(); AudioEngine.playSubmit();
-            const offers = kind==='glyph' ? G.shopOffers.glyphs : G.shopOffers.consumables;
+            const offers = kind==='glyph' ? G.shopOffers.glyphs : (kind==='tile' ? G.shopOffers.tiles : G.shopOffers.consumables);
             const idx = offers.findIndex(o=>o.id===item.id);
             if (idx!==-1) offers.splice(idx,1);
             renderShop(container);
@@ -1659,6 +1714,18 @@
     }
 
     function getTileClass(tile) { let cls='tile-inner'; if(tile.type==='wildcard') cls+=' wildcard'; else if(tile.type==='finisher') cls+=' finisher'; else if(tile.aura) cls+=' aura-'+tile.aura; if(G.rerollMode&&G.rerollMarks.has(tile.id)) cls+=' marked-reroll'; if(isAnchorLocked(tile.id)) cls+=' anchor-locked'; if(isMutedTile(tile)) cls+=' muted-tile'; return cls; }
+    function getTileBadge(tile) {
+        if (tile.type === 'wildcard') return '<span class="tile-badge badge-wild">ANY</span>';
+        if (tile.type === 'finisher') return '<span class="tile-badge badge-finisher">END x3</span>';
+        if (isMutedTile(tile)) return '';
+        const parts = [];
+        if (tile.aura === 'blue') parts.push('+10');
+        if (tile.aura === 'gold') parts.push('x2');
+        if (tile.aura === 'red') parts.push('+2✦');
+        if (tile.goldInk) parts.push('+20');
+        if (parts.length === 0) return '';
+        return '<span class="tile-badge badge-'+(tile.aura||'goldink')+'">'+parts.join(' ')+'</span>';
+    }
     function isMutedTile(tile) { return G.activeHazard==='mute' && !!tile && G.mutedTileId===tile.id; }
     function ensureMutedTile() {
         if (G.activeHazard !== 'mute') { G.mutedTileId = null; return; }
@@ -1772,14 +1839,14 @@
         sb.classList.toggle('invalid',p.occ>0&&!p.valid);
         const awl=document.getElementById('active-word-line');
         reconcileTileList(awl, G.activeWord, tile=>tile.id,
-            (tile,idx)=>{ const wrap=document.createElement('div'); wrap.className='active-tile'; wrap.dataset.tileId=tile.id; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.onpointerdown=(e)=>{e.stopPropagation();onDragStart(e,'word',idx);}; wrap.appendChild(inner); return wrap; },
-            (wrap,tile,idx)=>{ const inner=wrap.firstElementChild; inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.onpointerdown=(e)=>{e.stopPropagation();onDragStart(e,'word',idx);}; }
+            (tile,idx)=>{ const wrap=document.createElement('div'); wrap.className='active-tile'; wrap.dataset.tileId=tile.id; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>${getTileBadge(tile)}`; inner.onpointerdown=(e)=>{e.stopPropagation();onDragStart(e,'word',idx);}; wrap.appendChild(inner); return wrap; },
+            (wrap,tile,idx)=>{ const inner=wrap.firstElementChild; inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>${getTileBadge(tile)}`; inner.onpointerdown=(e)=>{e.stopPropagation();onDragStart(e,'word',idx);}; }
         );
         const hr=document.getElementById('hand-rack');
         const handSlots=[]; for(let i=0;i<getHandSize();i++) handSlots.push(G.hand[i]||null);
         reconcileTileList(hr, handSlots, tile=>tile&&tile.id,
-            (tile,idx)=>{ const wrap=document.createElement('div'); wrap.className='hand-tile-wrap'; if(tile){ wrap.dataset.tileId=tile.id; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.style.animationDelay=tileIdleDelay(tile.id); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.onpointerdown=(e)=>onDragStart(e,'hand',idx); wrap.appendChild(inner); } else { wrap.classList.add('empty-slot'); } return wrap; },
-            (wrap,tile,idx)=>{ const inner=wrap.firstElementChild; inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.onpointerdown=(e)=>onDragStart(e,'hand',idx); }
+            (tile,idx)=>{ const wrap=document.createElement('div'); wrap.className='hand-tile-wrap'; if(tile){ wrap.dataset.tileId=tile.id; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.style.animationDelay=tileIdleDelay(tile.id); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>${getTileBadge(tile)}`; inner.onpointerdown=(e)=>onDragStart(e,'hand',idx); wrap.appendChild(inner); } else { wrap.classList.add('empty-slot'); } return wrap; },
+            (wrap,tile,idx)=>{ const inner=wrap.firstElementChild; inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>${getTileBadge(tile)}`; inner.onpointerdown=(e)=>onDragStart(e,'hand',idx); }
         );
         renderGlyphs();
         renderConsumables();
