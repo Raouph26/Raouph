@@ -430,6 +430,13 @@
 
         #header { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-shrink:0; }
         #stage-text { font-weight:900; font-size:0.9rem; color: var(--text); background: var(--panel-bg); border: var(--outline-w) solid var(--panel-border); padding:5px 15px; border-radius:var(--radius-sm); font-family: var(--font-main); box-shadow: var(--readout-shadow); text-shadow: var(--number-shadow); }
+        #stage-group { display:flex; align-items:center; gap:6px; }
+        #challenge-icon {
+            display:flex; align-items:center; justify-content:center; width:22px; height:22px; flex-shrink:0;
+            border-radius:50%; background: var(--accent-2); color: var(--accent-2-text); font-size:0.75rem; font-weight:900;
+            cursor:pointer; box-shadow: 0 2px 0 0 var(--accent-2-shadow);
+        }
+        #challenge-icon:active { transform: translateY(2px); box-shadow: 0 0 0 0 var(--accent-2-shadow); }
         #bag-counter { font-weight:900; font-size:0.8rem; color: var(--text); background: var(--panel-bg); border: var(--outline-w) solid var(--panel-border); padding:3px 9px; border-radius:var(--radius-sm); margin-left:4px; font-family: var(--font-main); box-shadow: var(--readout-shadow); }
         #btn-settings, #btn-back-menu {
             background: var(--cap-bg); border-radius:var(--radius-sm); padding:8px 14px; font-weight:900; cursor:pointer;
@@ -577,6 +584,9 @@
             font-family: var(--font-numeric);
         }
         .draft-card { position: relative; }
+        .draft-btn:disabled, .menu-btn:disabled { opacity:0.45; cursor:not-allowed; }
+        .draft-btn.reroll-btn { background: var(--accent-2); border-color: var(--accent-2-shadow); color: var(--accent-2-text); box-shadow: 0 var(--press-depth) 0 0 var(--accent-2-shadow); }
+        .draft-btn.reroll-btn:active:not(:disabled) { box-shadow: 0 0 0 0 var(--accent-2-shadow); }
         .payout-list { width:100%; display:flex; flex-direction:column; gap:6px; }
         .payout-row {
             display:flex; justify-content:space-between; font-size:0.85rem; font-weight:700;
@@ -605,8 +615,15 @@
         }
         #stats-content { width:100%; }
         #stats-content h3 { font-size:0.85rem; font-weight:900; letter-spacing:1px; color: var(--text-soft); margin: 10px 0 6px; text-align:center; font-family: var(--font-main); }
-        #view-stats { align-items: center; justify-content: center; gap:10px; padding:30px 20px; z-index:9; background: rgba(0,0,0,0.1); transform: translateX(110%); opacity: 0; pointer-events: none; overflow-y:auto; }
+        #view-stats { align-items: center; justify-content: center; gap:10px; padding:30px 20px; z-index:9; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); transform: translateX(110%); opacity: 0; pointer-events: none; overflow-y:auto; }
         #view-stats.slide-in { transform: translateX(0); opacity: 1; pointer-events: auto; }
+        .stats-panel {
+            background: var(--panel-bg); border: var(--outline-w) solid var(--panel-border); border-radius: var(--panel-radius);
+            padding: 26px 22px; width: 100%; max-width: 340px; margin: auto;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+        .stats-panel h2 { color: var(--text); text-shadow: none; font-size: 1.3rem; font-weight: 900; text-align: center; margin-bottom: 4px; font-family: var(--font-title); }
         #game-container.zen-mode #resource-row, #game-container.zen-mode #progress-wrap, #game-container.zen-mode #glyph-slots, #game-container.zen-mode #consumable-slots, #game-container.zen-mode #hazard-banner, #game-container.zen-mode #bag-counter { display:none !important; }
 
         #controls-row { display:flex; gap:10px; flex-shrink:0; }
@@ -691,9 +708,11 @@
     <div id="bg-overlay"></div>
     <div id="view-menu" class="view-panel"><h1>WORDLING!</h1><button class="menu-btn play-btn" id="btn-play">▶ PLAY</button><button class="menu-btn themes-btn" id="btn-menu-themes">◆ THEMES</button><button class="menu-btn settings-btn" id="btn-menu-options">⚙ SETTINGS</button><button class="menu-btn settings-btn" id="btn-menu-stats">★ STATS</button><button class="menu-btn store-btn" disabled>STORE · SOON</button></div>
     <div id="view-stats" class="view-panel hidden">
-        <h2>STATS</h2>
-        <div id="stats-content"></div>
-        <button class="menu-btn" id="btn-back-stats" style="width:100%; margin-top:10px;">BACK</button>
+        <div class="stats-panel">
+            <h2>STATS</h2>
+            <div id="stats-content"></div>
+            <button class="menu-btn" id="btn-back-stats" style="width:100%; margin-top:10px;">BACK</button>
+        </div>
     </div>
     <div id="view-themes" class="view-panel">
         <h2>CHOOSE THEME</h2>
@@ -741,14 +760,14 @@
     </div>
     <div id="view-map" class="view-panel hidden"><div id="map-header"></div><div id="map-ladder"></div><button id="btn-start-stage">START STAGE</button></div>
     <div id="view-game" class="view-panel hidden">
-        <div id="header"><button id="btn-back-menu">BACK</button><span id="stage-text">Stage 1/4</span><span id="bag-counter">BAG: 98</span><button id="btn-settings">⚙</button></div>
+        <div id="header"><button id="btn-back-menu">BACK</button><span id="stage-group"><span id="stage-text">Stage 1/4</span><span id="challenge-icon" class="hidden" title="Today's Challenge">❗</span></span><span id="bag-counter">BAG: 98</span><button id="btn-settings">⚙</button></div>
         <div id="hazard-banner" class="hidden"></div>
         <div id="top-info"><div id="progress-wrap"><div id="progress-fill"></div></div><div id="score-pill">0 / 40</div></div>
         <div id="hud-row"><div class="hud-box" id="box-points"><div class="hud-label">POINTS</div><div class="hud-value" id="val-points">0</div></div><span id="hud-times">&times;</span><div class="hud-box" id="box-mults"><div class="hud-label">MULTIS</div><div class="hud-value" id="val-mults">1.0</div></div></div>
         <div id="resource-row">
             <div class="resource-box"><span class="resource-label">HANDS</span><span class="resource-value" id="val-hands">4</span></div>
             <div class="resource-box"><span class="resource-label">REROLLS</span><span class="resource-value" id="val-rerolls">3</span></div>
-            <div class="resource-box"><span class="resource-label">GOLD</span><span class="resource-value" id="val-gold">0</span></div>
+            <div class="resource-box"><span class="resource-label">DIAMONDS</span><span class="resource-value" id="val-gold">💎 0</span></div>
         </div>
         <div id="score-banner">—</div>
         <div id="active-word-line"></div>
@@ -820,7 +839,7 @@
         { id:"wildcard_rune", name:"Wildcard Rune", type:"purple", color:"#A855F7", icon:"✦", desc:"At round start, 1 random tile in active hand becomes Wild." },
         { id:"duplicator", name:"Duplicator", type:"purple", color:"#A855F7", icon:"⧉", desc:"Playing a 5-letter word duplicates its highest-scoring letter into bag." },
         { id:"vowel_shifter", name:"Vowel Shifter", type:"purple", color:"#A855F7", icon:"⇄", desc:"'Y' counts as both Vowel and Consonant for scoring." },
-        { id:"alchemy", name:"Golden Touch", type:"purple", color:"#A855F7", icon:"⚗", desc:"Scoring 100+ Points in a single hand grants +2 Bank Gold." }
+        { id:"alchemy", name:"Golden Touch", type:"purple", color:"#A855F7", icon:"⚗", desc:"Scoring 100+ Points in a single hand grants +2 💎 to your Bank." }
     ];
     const MAX_GLYPH_SLOTS = 4;
     const BASE_HAND_SIZE = 10;
@@ -833,11 +852,12 @@
     ];
     const MAX_CONSUMABLES = 2;
     const SHOP_PRICES = { glyph:6, void_seal:3, gold_ink:5, transmuter:4, cloner:5 };
+    const SHOP_REROLL_BASE_COST = 2;
     const CLASSIC_STAGE_TARGETS = [0, 300, 800, 2000, 5000, 12000, 30000, 75000, 200000];
     const DAILY_CHALLENGES = [
         { id:1, name:"The E-clipse", desc:"The letter 'E' is completely removed from the starting bag." },
         { id:2, name:"Vowel Drought", desc:"All vowels provide 0 base points." },
-        { id:3, name:"The Heavy Toll", desc:"Discarding tiles costs $2 from the bank." },
+        { id:3, name:"The Heavy Toll", desc:"Discarding tiles costs 💎2 from the bank." },
         { id:4, name:"Short Fuse", desc:"You are only given 2 Hands per stage." },
         { id:5, name:"The Sniper", desc:"You can only submit words that are exactly 5 letters long." },
         { id:6, name:"Junk Drawer", desc:"The starting bag is flooded with 5 extra 'Z', 'Q', and 'X' tiles." },
@@ -846,7 +866,7 @@
     function getTodaysChallenge() { return DAILY_CHALLENGES[new Date().getDay()]; }
     const HAZARD_DATABASE = {
         wall: { name:"The Wall", icon:"🧱", desc:"Words under 5 letters score 0 and are rejected." },
-        taxman: { name:"The Taxman", icon:"💰", desc:"Discarding costs $2 from the bank." },
+        taxman: { name:"The Taxman", icon:"💰", desc:"Discarding costs 💎2 from the bank." },
         phantom: { name:"The Phantom", icon:"👻", desc:"'E' and 'A' tiles are hidden until placed." },
         anchor: { name:"The Anchor", icon:"⚓", desc:"The first tile you place cannot be removed." }
     };
@@ -929,7 +949,8 @@
         equippedGlyphs:[], bank:0, recyclerUsedThisStage:false, dictSet:new Set(), modalType:null, isAnimating:false, rerollMode:false, rerollMarks:new Set(), gameStarted:false,
         draftChoices:null, dragData:null,
         gameMode:'classic', dailyChallenge:null, isEndless:false, consumables:[], activeHazard:null, anchorTileId:null,
-        leaderboard:[], records:{highestWord:null, totalGoldEarned:0, mostStagesCleared:0}
+        leaderboard:[], records:{highestWord:null, totalGoldEarned:0, mostStagesCleared:0},
+        shopOffers:{glyphs:[], consumables:[]}, shopRerollCount:0
     };
 
     function assignRandomAura() { const r=Math.random(); if(r<0.15) return 'blue'; if(r<0.22) return 'red'; if(r<0.26) return 'gold'; return null; }
@@ -941,6 +962,7 @@
         G.removedLetters = new Set();
         if (G.gameMode==='daily' && G.dailyChallenge===1) G.removedLetters.add('E');
         G.equippedGlyphs = []; G.bank = 0; G.consumables = []; G.activeHazard = null; G.anchorTileId = null; G.isEndless = false;
+        G.shopOffers = {glyphs:[], consumables:[]}; G.shopRerollCount = 0;
         G.stageScores = [];
         G.tileBag = buildInitialBag();
         if (G.gameMode==='daily' && G.dailyChallenge===6) {
@@ -1128,10 +1150,17 @@
         if (interest > 0) { G.bank += interest; lines.push(['Interest', interest]); }
         G.records.totalGoldEarned += (base + Math.max(0,G.playsLeft) + Math.max(0,G.rerollsLeft) + interest);
         saveRecords();
-        lines.forEach(([label,val]) => { const row=document.createElement('div'); row.className='payout-row'; row.innerHTML = `<span>${label}</span><span>+$${val}</span>`; list.appendChild(row); });
+        lines.forEach(([label,val]) => { const row=document.createElement('div'); row.className='payout-row'; row.innerHTML = `<span>${label}</span><span>+💎${val}</span>`; list.appendChild(row); });
         container.appendChild(list);
-        const total = document.createElement('div'); total.className='payout-total'; total.textContent='BANK: $'+G.bank; container.appendChild(total);
-        setTimeout(()=>{ renderShop(container); }, 1500);
+        const total = document.createElement('div'); total.className='payout-total'; total.textContent='BANK: 💎'+G.bank; container.appendChild(total);
+        setTimeout(()=>{
+            container.classList.remove('show');
+            setTimeout(()=>{
+                initShopOffers();
+                renderShop(container);
+                requestAnimationFrame(()=>requestAnimationFrame(()=>container.classList.add('show')));
+            }, 350);
+        }, 1500);
     }
     function shopPrice(id) { const inflated = G.gameMode==='daily' && G.dailyChallenge===7; const base = SHOP_PRICES[id]||0; return inflated ? base*2 : base; }
     function generateShopGlyphOffers() {
@@ -1139,19 +1168,38 @@
         GLYPH_DATABASE.forEach(g=>{ const alreadyEquipped=G.equippedGlyphs.some(eg=>eg.id===g.id); if(!alreadyEquipped && G.equippedGlyphs.length<MAX_GLYPH_SLOTS){ pool.push({ kind:'glyph', id:g.id, name:g.name, desc:g.desc, color:g.color, icon:g.icon, price:shopPrice('glyph'), apply:()=>{ G.equippedGlyphs.push({id:g.id}); } }); } });
         return shuffle(pool).slice(0,3);
     }
+    function generateShopConsumableOffers() {
+        const pool = CONSUMABLE_DATABASE.map(def=>({ kind:'consumable', id:def.id, name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{ G.consumables.push({id:def.id}); } }));
+        return shuffle(pool).slice(0,2);
+    }
+    function initShopOffers() {
+        G.shopOffers.glyphs = generateShopGlyphOffers();
+        G.shopOffers.consumables = generateShopConsumableOffers();
+        G.shopRerollCount = 0;
+    }
+    function getShopRerollCost() { return SHOP_REROLL_BASE_COST + G.shopRerollCount; }
+    function rerollShop(container) {
+        const cost = getShopRerollCost();
+        if (G.bank < cost) return;
+        G.bank -= cost;
+        G.shopRerollCount++;
+        G.shopOffers.glyphs = generateShopGlyphOffers();
+        G.shopOffers.consumables = generateShopConsumableOffers();
+        AudioEngine.playSubmit();
+        renderShop(container);
+    }
     function renderShop(container) {
         container.innerHTML = '';
-        const hint = document.createElement('p'); hint.className='draft-hint'; hint.textContent='SHOP — Bank: $'+G.bank; container.appendChild(hint);
-        const glyphOffers = generateShopGlyphOffers();
+        const hint = document.createElement('p'); hint.className='draft-hint'; hint.textContent='SHOP — Bank: 💎'+G.bank; container.appendChild(hint);
         const glyphLabel = document.createElement('div'); glyphLabel.className='shop-section-label'; glyphLabel.textContent='GLYPHS'; container.appendChild(glyphLabel);
-        if (glyphOffers.length===0) {
+        if (G.shopOffers.glyphs.length===0) {
             const p=document.createElement('p'); p.className='draft-hint'; p.textContent='All glyph slots full.'; container.appendChild(p);
         } else {
             const grid=document.createElement('div'); grid.className='draft-grid';
-            glyphOffers.forEach(item=>{
+            G.shopOffers.glyphs.forEach(item=>{
                 const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
                 const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); card.textContent=item.icon;
-                const price=document.createElement('span'); price.className='draft-card-price'; price.textContent='$'+item.price; card.appendChild(price);
+                const price=document.createElement('span'); price.className='draft-card-price'; price.textContent='💎'+item.price; card.appendChild(price);
                 const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=item.name;
                 wrap.appendChild(card); wrap.appendChild(label);
                 wrap.addEventListener('click', ()=>{ AudioEngine.playTap(); renderShopDetail(container, item, 'glyph'); });
@@ -1160,19 +1208,27 @@
             container.appendChild(grid);
         }
         const consLabel = document.createElement('div'); consLabel.className='shop-section-label'; consLabel.textContent='INK SEALS ('+G.consumables.length+'/'+MAX_CONSUMABLES+' held)'; container.appendChild(consLabel);
-        const cGrid = document.createElement('div'); cGrid.className='draft-grid';
-        CONSUMABLE_DATABASE.forEach(def=>{
-            const item = { kind:'consumable', id:def.id, name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{ G.consumables.push({id:def.id}); } };
-            const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
-            const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); card.textContent=item.icon;
-            const price=document.createElement('span'); price.className='draft-card-price'; price.textContent='$'+item.price; card.appendChild(price);
-            const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=item.name;
-            wrap.appendChild(card); wrap.appendChild(label);
-            wrap.addEventListener('click', ()=>{ AudioEngine.playTap(); renderShopDetail(container, item, 'consumable'); });
-            cGrid.appendChild(wrap);
-        });
-        container.appendChild(cGrid);
-        const continueBtn = document.createElement('button'); continueBtn.className='draft-btn'; continueBtn.style.width='100%'; continueBtn.style.marginTop='10px'; continueBtn.textContent='CONTINUE';
+        if (G.shopOffers.consumables.length===0) {
+            const p=document.createElement('p'); p.className='draft-hint'; p.textContent='No seals in stock.'; container.appendChild(p);
+        } else {
+            const cGrid = document.createElement('div'); cGrid.className='draft-grid';
+            G.shopOffers.consumables.forEach(item=>{
+                const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
+                const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); card.textContent=item.icon;
+                const price=document.createElement('span'); price.className='draft-card-price'; price.textContent='💎'+item.price; card.appendChild(price);
+                const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=item.name;
+                wrap.appendChild(card); wrap.appendChild(label);
+                wrap.addEventListener('click', ()=>{ AudioEngine.playTap(); renderShopDetail(container, item, 'consumable'); });
+                cGrid.appendChild(wrap);
+            });
+            container.appendChild(cGrid);
+        }
+        const rerollCost = getShopRerollCost();
+        const rerollBtn = document.createElement('button'); rerollBtn.className='draft-btn reroll-btn'; rerollBtn.style.width='100%'; rerollBtn.style.marginTop='10px'; rerollBtn.textContent='REROLL (💎'+rerollCost+')';
+        if (G.bank < rerollCost) rerollBtn.disabled = true;
+        rerollBtn.addEventListener('click', ()=>rerollShop(container));
+        container.appendChild(rerollBtn);
+        const continueBtn = document.createElement('button'); continueBtn.className='draft-btn'; continueBtn.style.width='100%'; continueBtn.style.marginTop='8px'; continueBtn.textContent='CONTINUE';
         continueBtn.addEventListener('click', ()=>{ document.getElementById('view-draft').classList.remove('show'); advanceStage(); });
         container.appendChild(continueBtn);
     }
@@ -1182,17 +1238,19 @@
         const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', item.color); icon.textContent=item.icon;
         const name=document.createElement('div'); name.className='draft-detail-name'; name.style.setProperty('--glyph-color', item.color); name.textContent=item.name;
         const desc=document.createElement('div'); desc.className='draft-detail-desc'; desc.textContent=item.desc;
-        const price=document.createElement('div'); price.className='shop-price'; price.textContent='$'+item.price;
+        const price=document.createElement('div'); price.className='shop-price'; price.textContent='💎'+item.price;
         const actions=document.createElement('div'); actions.className='draft-detail-actions';
         const backBtn=document.createElement('button'); backBtn.className='menu-btn'; backBtn.textContent='BACK';
         backBtn.addEventListener('click', ()=>{ AudioEngine.playTap(); renderShop(container); });
         const buyBtn=document.createElement('button'); buyBtn.className='draft-btn'; buyBtn.textContent='BUY';
-        const inventoryFull = kind==='consumable' && G.consumables.length>=MAX_CONSUMABLES;
+        const inventoryFull = (kind==='consumable' && G.consumables.length>=MAX_CONSUMABLES) || (kind==='glyph' && G.equippedGlyphs.length>=MAX_GLYPH_SLOTS);
         if (G.bank < item.price || inventoryFull) buyBtn.disabled = true;
         buyBtn.addEventListener('click', ()=>{
-            if (G.bank < item.price) return;
-            if (kind==='consumable' && G.consumables.length>=MAX_CONSUMABLES) return;
+            if (G.bank < item.price || inventoryFull) return;
             G.bank -= item.price; item.apply(); AudioEngine.playSubmit();
+            const offers = kind==='glyph' ? G.shopOffers.glyphs : G.shopOffers.consumables;
+            const idx = offers.findIndex(o=>o.id===item.id);
+            if (idx!==-1) offers.splice(idx,1);
             renderShop(container);
         });
         actions.appendChild(backBtn); actions.appendChild(buyBtn);
@@ -1275,6 +1333,22 @@
         const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', data.color); icon.textContent=data.icon;
         const name=document.createElement('div'); name.className='draft-detail-name'; name.style.setProperty('--glyph-color', data.color); name.textContent=data.name;
         const desc=document.createElement('div'); desc.className='draft-detail-desc'; desc.textContent=data.desc;
+        const closeBtn=document.createElement('button'); closeBtn.className='draft-btn'; closeBtn.style.width='100%'; closeBtn.textContent='CLOSE';
+        closeBtn.addEventListener('click', ()=>{ draftDiv.classList.remove('show'); });
+        wrap.appendChild(icon); wrap.appendChild(name); wrap.appendChild(desc); wrap.appendChild(closeBtn);
+        panel.appendChild(wrap);
+        draftDiv.appendChild(panel); draftDiv.classList.remove('hidden');
+        requestAnimationFrame(()=>requestAnimationFrame(()=>draftDiv.classList.add('show')));
+    }
+    function showChallengeInfo() {
+        if (G.gameMode !== 'daily') return;
+        const challenge = DAILY_CHALLENGES.find(c => c.id === G.dailyChallenge); if (!challenge) return;
+        const draftDiv=document.getElementById('view-draft'); draftDiv.innerHTML=''; draftDiv.classList.remove('show');
+        const panel=document.createElement('div'); panel.className='draft-panel';
+        const wrap=document.createElement('div'); wrap.className='draft-detail';
+        const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', 'var(--accent-2)'); icon.textContent='❗';
+        const name=document.createElement('div'); name.className='draft-detail-name'; name.style.setProperty('--glyph-color', 'var(--accent-2)'); name.textContent=challenge.name;
+        const desc=document.createElement('div'); desc.className='draft-detail-desc'; desc.textContent=challenge.desc;
         const closeBtn=document.createElement('button'); closeBtn.className='draft-btn'; closeBtn.style.width='100%'; closeBtn.textContent='CLOSE';
         closeBtn.addEventListener('click', ()=>{ draftDiv.classList.remove('show'); });
         wrap.appendChild(icon); wrap.appendChild(name); wrap.appendChild(desc); wrap.appendChild(closeBtn);
@@ -1460,9 +1534,11 @@
             hazardBanner.textContent = hz.icon+' BOSS BLIND: '+hz.name.toUpperCase()+' — '+hz.desc;
             hazardBanner.classList.remove('hidden');
         } else { hazardBanner.classList.add('hidden'); }
+        const challengeIcon = document.getElementById('challenge-icon');
+        if (G.gameMode==='daily') challengeIcon.classList.remove('hidden'); else challengeIcon.classList.add('hidden');
         const p=calcScore();
         document.getElementById('val-points').textContent=p.totalChips; document.getElementById('val-mults').textContent=p.totalMult.toFixed(1);
-        document.getElementById('val-hands').textContent=G.playsLeft; document.getElementById('val-rerolls').textContent=G.rerollsLeft; document.getElementById('val-gold').textContent=G.bank;
+        document.getElementById('val-hands').textContent=G.playsLeft; document.getElementById('val-rerolls').textContent=G.rerollsLeft; document.getElementById('val-gold').textContent='💎 '+G.bank;
         const sb=document.getElementById('score-banner'); if(p.occ===0) sb.textContent='—'; else if(!p.valid) sb.textContent='INVALID WORD'; else sb.textContent=p.totalChips+' × '+p.totalMult.toFixed(1)+' = '+p.totalScore+' PTS';
         sb.classList.toggle('invalid',p.occ>0&&!p.valid);
         const awl=document.getElementById('active-word-line'); awl.innerHTML='';
@@ -1505,7 +1581,8 @@
     function slideBack(showId, hideId) { const he=document.getElementById(hideId),se=document.getElementById(showId); if(he){he.classList.remove('slide-in');} if(se){se.classList.remove('hidden','slide-left');se.classList.add('slide-in');} setTimeout(()=>{if(he)he.classList.add('hidden');},400); }
 
     function bind() {
-        document.getElementById('btn-play').addEventListener('click',()=>{ document.getElementById('daily-mode-sub').textContent=getTodaysChallenge().name; slideToView('view-difficulty','view-menu'); });
+        document.getElementById('btn-play').addEventListener('click',()=>{ const c=getTodaysChallenge(); document.getElementById('daily-mode-sub').textContent=c.name+' — '+c.desc; slideToView('view-difficulty','view-menu'); });
+        document.getElementById('challenge-icon').addEventListener('click',(e)=>{ e.stopPropagation(); showChallengeInfo(); });
         document.getElementById('btn-menu-themes').addEventListener('click',()=>slideToView('view-themes','view-menu'));
         document.getElementById('btn-menu-options').addEventListener('click',()=>document.getElementById('options-modal').classList.add('show'));
         document.getElementById('btn-menu-stats').addEventListener('click',()=>{ renderStats(); slideToView('view-stats','view-menu'); });
@@ -1597,7 +1674,7 @@
         const hw = G.records.highestWord;
         const rows = [
             ['Highest Scoring Word', hw ? (hw.word+' — '+hw.score.toLocaleString()+' pts') : '—'],
-            ['Total Gold Earned', '$'+G.records.totalGoldEarned.toLocaleString()],
+            ['Total Diamonds Earned', '💎 '+G.records.totalGoldEarned.toLocaleString()],
             ['Most Stages Cleared', G.records.mostStagesCleared]
         ];
         rows.forEach(([label,val])=>{ const row=document.createElement('div'); row.className='stats-row'; row.innerHTML=`<span>${label}</span><span>${val}</span>`; c.appendChild(row); });
