@@ -287,7 +287,7 @@
         @keyframes tilePopIn { 0% { transform: scale(0.5); opacity: 0.4; } 60% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes tileScoringPop { 0% { transform: translateY(0) scale(1); } 50% { transform: translateY(-6px) scale(1.1); } 100% { transform: translateY(0) scale(1); } }
         @keyframes nodePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.6); } 50% { box-shadow: 0 0 0 14px rgba(255,255,255,0); } }
-        @keyframes nodeSlideIn { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+        @keyframes nodeSlideIn { 0% { opacity: 0; transform: translate(-50%,-50%) translateY(10px); } 100% { opacity: 1; transform: translate(-50%,-50%) translateY(0); } }
         @keyframes hudPop { 0% { transform: scale(1); } 50% { transform: scale(1.25); color: var(--accent-2); } 100% { transform: scale(1); } }
         @keyframes glyphGlow { 0% { box-shadow: 0 0 0 0 rgba(var(--accent-3-rgb),0.6); } 50% { box-shadow: 0 0 20px rgba(var(--accent-3-rgb),0.7); } 100% { box-shadow: 0 0 0 0 rgba(var(--accent-3-rgb),0); } }
         @keyframes indicatorRise { 0% { opacity: 1; transform: translateY(0) scale(0.6); } 100% { opacity: 0; transform: translateY(-60px) scale(1.1); } }
@@ -673,7 +673,7 @@
             display: flex; flex-direction: column; align-items: center; gap: 10px;
         }
         .stats-panel h2 { color: #fff; text-shadow: none; font-size: 1.3rem; font-weight: 900; text-align: center; margin-bottom: 4px; font-family: var(--font-title); }
-        #game-container.zen-mode #resource-row, #game-container.zen-mode #progress-wrap, #game-container.zen-mode #action-slots-row, #game-container.zen-mode #hazard-banner { display:none !important; }
+        #game-container.zen-mode #resource-row, #game-container.zen-mode #action-slots-row, #game-container.zen-mode #hazard-banner { display:none !important; }
 
         #controls-row { display:flex; gap:10px; flex-shrink:0; }
         .btn-action {
@@ -691,32 +691,33 @@
         #btn-reroll.reroll-mode:active:not(:disabled) { box-shadow: 0 0 0 0 var(--accent-2-shadow); }
 
         #view-map {
-            align-items: center; padding: 20px 16px 30px; gap: 12px; z-index: 8;
-            background: rgba(0,0,0,0.15); overflow-y: auto;
+            align-items: stretch; padding: 20px 0 14px; gap: 12px; z-index: 8;
+            background: rgba(0,0,0,0.15);
         }
-        #map-header { text-align:center; color: var(--bg-text); font-weight:900; font-size: clamp(0.75rem, 4.2vw, 1.05rem); text-shadow: 0 2px 6px rgba(0,0,0,0.4), 0 1px 0 rgba(0,0,0,0.3); font-family: var(--font-title); }
-        #map-ladder { display:flex; flex-direction:column; align-items:center; gap:0; width:100%; flex:1; justify-content:center; }
-        .map-node-wrap {
-            display:flex; align-items:center; justify-content: center; gap:12px; width:100%; max-width:360px;
-            animation: nodeSlideIn 0.5s ease-out forwards; opacity:0;
-            background: var(--panel-bg); border: var(--outline-w) solid var(--panel-border); border-radius: var(--panel-radius);
-            padding:10px 16px; box-shadow: var(--readout-shadow);
-        }
+        #map-header { flex-shrink:0; text-align:center; color: var(--bg-text); font-weight:900; font-size: clamp(0.75rem, 4.2vw, 1.05rem); text-shadow: 0 2px 6px rgba(0,0,0,0.4), 0 1px 0 rgba(0,0,0,0.3); font-family: var(--font-title); padding: 0 16px; }
+        #map-scroll { flex:1; min-height:0; overflow-y:auto; overflow-x:hidden; padding: 10px 16px; }
+        #map-ladder { position:relative; width:100%; }
+        .map-node-absolute { position:absolute; display:flex; flex-direction:column; align-items:center; gap:4px; transform:translate(-50%,-50%); animation: nodeSlideIn 0.4s ease-out forwards; opacity:0; }
         .map-node {
-            width:46px; height:46px; border-radius:50%; background: rgba(128,128,128,0.14);
+            width:50px; height:50px; border-radius:50%; background: rgba(128,128,128,0.14);
             box-shadow: var(--readout-shadow); display:flex; align-items:center; justify-content:center;
-            font-weight:900; font-size:1.1rem; color: var(--text); flex-shrink:0; position:relative;
+            font-weight:900; font-size:1.15rem; color: var(--text); flex-shrink:0; position:relative;
             border: var(--outline-w) solid var(--panel-border); font-family: var(--font-numeric);
         }
         .map-node.completed { background: var(--accent-1); color: var(--accent-1-text); border-color: var(--accent-1-shadow); }
         .map-node.current { background: var(--accent-3); color: var(--accent-3-text); border-color: var(--accent-3-shadow); animation: nodePulse 2s ease-in-out infinite; }
-        .map-node.upcoming { background: rgba(128,128,128,0.14); color: var(--text-soft); }
-        .map-node-info { flex:0 1 auto; color: var(--text); font-weight:700; font-size:0.85rem; font-family: var(--font-main); }
-        .map-connector { width:3px; height:20px; background: var(--panel-border); }
+        .map-node.upcoming { background: var(--panel-bg); color: var(--text-soft); opacity: 0.85; }
+        .map-node-label {
+            font-size:0.62rem; font-weight:900; color: var(--bg-text); text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+            font-family: var(--font-main); white-space:nowrap; text-align:center; background: rgba(0,0,0,0.35);
+            padding: 2px 7px; border-radius: 8px;
+        }
+        .map-path-line { position:absolute; height:4px; background: var(--panel-border); transform-origin: 0 50%; border-radius:2px; opacity:0.7; }
+        .map-path-line.done { background: var(--accent-1); opacity:0.9; }
         #btn-start-stage {
-            width:100%; max-width:320px; padding:15px; border-radius:var(--btn-radius); font-weight:900; font-size:1.05rem;
+            width:calc(100% - 32px); max-width:320px; margin: 0 auto; padding:16px; border-radius:var(--btn-radius); font-weight:900; font-size:1.05rem;
             cursor:pointer; text-align:center; background: var(--accent-1); border: var(--outline-w) solid var(--accent-1-shadow); color: var(--accent-1-text);
-            flex-shrink:0; margin-top: auto; margin-bottom: 10px; font-family: var(--font-main);
+            flex-shrink:0; font-family: var(--font-main);
             box-shadow: 0 5px 0 0 var(--accent-1-shadow);
             transition: transform 0.08s ease, box-shadow 0.08s ease;
         }
@@ -815,7 +816,7 @@
         <button class="diff-btn diff-hard" id="btn-mode-zen">ZEN<br><span class="mode-sub">Relaxed · Endless · No Economy</span></button>
         <button class="menu-btn" id="btn-back-diff">BACK</button>
     </div>
-    <div id="view-map" class="view-panel hidden"><div id="map-header"></div><div id="map-ladder"></div><button id="btn-start-stage">START STAGE</button></div>
+    <div id="view-map" class="view-panel hidden"><div id="map-header"></div><div id="map-scroll"><div id="map-ladder"></div></div><button id="btn-start-stage">START STAGE</button></div>
     <div id="view-game" class="view-panel hidden">
         <div id="header"><button id="btn-run-info" class="header-pill">RUN INFO</button><button id="btn-header-options" class="header-pill">OPTIONS</button></div>
         <div id="hazard-banner" class="hidden"></div>
@@ -847,7 +848,7 @@
             <button id="btn-close-run-info" class="menu-btn" style="width:100%; margin-top:4px;">CLOSE</button>
         </div>
     </div></div>
-    <div id="options-modal"><div class="modal-inner"><h3>PAUSED</h3><label>Music <input type="range" id="music-slider" min="0" max="100" value="25"><span class="slider-val" id="music-val">25%</span></label><label>Sounds <input type="range" id="sounds-slider" min="0" max="100" value="65"><span class="slider-val" id="sounds-val">65%</span></label><label>Vibration <input type="checkbox" id="vibration-toggle" checked></label><label>Screen Shake <input type="range" id="shake-slider" min="0" max="100" value="100"><span class="slider-val" id="shake-val">100%</span></label><label>Disable Ads <input type="checkbox" disabled><span style="font-size:0.65rem;">(soon)</span></label><button id="btn-close-settings">RESUME</button><button id="btn-abandon-run" class="menu-btn quit-run-btn" style="width:100%;">ABANDON RUN</button></div></div>
+    <div id="options-modal"><div class="modal-inner"><h3>PAUSED</h3><label>Music <input type="range" id="music-slider" min="0" max="100" value="25"><span class="slider-val" id="music-val">25%</span></label><label>Sounds <input type="range" id="sounds-slider" min="0" max="100" value="65"><span class="slider-val" id="sounds-val">65%</span></label><label>Vibration <input type="checkbox" id="vibration-toggle" checked></label><label>Screen Shake <input type="range" id="shake-slider" min="0" max="100" value="100"><span class="slider-val" id="shake-val">100%</span></label><label>Disable Ads <input type="checkbox" disabled><span style="font-size:0.65rem;">(soon)</span></label><button id="btn-close-settings">RESUME</button><button id="btn-exit-save" class="menu-btn themes-btn" style="width:100%;">EXIT TO MENU</button><button id="btn-abandon-run" class="menu-btn quit-run-btn" style="width:100%;">ABANDON RUN</button></div></div>
     <div id="modal-overlay"><div class="modal-inner" style="text-align:center;"><h2 id="modal-title">GAME OVER</h2><p id="modal-subtitle"></p><button id="btn-modal-action">Retry Run</button><button class="btn-main-menu" id="btn-modal-menu">Main Menu</button></div></div>
 </div>
 <script>
@@ -1082,6 +1083,7 @@
     function hideConfirmModal() { document.getElementById('confirm-modal').classList.remove('show'); }
     function openOptionsModal() {
         document.getElementById('btn-abandon-run').style.display = G.gameStarted ? 'block' : 'none';
+        document.getElementById('btn-exit-save').style.display = G.gameStarted ? 'block' : 'none';
         document.querySelector('#options-modal h3').textContent = G.gameStarted ? 'PAUSED' : 'SETTINGS';
         document.getElementById('options-modal').classList.add('show');
     }
@@ -1178,7 +1180,22 @@
         G.discardPile.push(...G.activeWord); G.activeWord = []; G.anchorTileId = null; drawToHand(); G.isAnimating = false;
         overlay.style.background = 'transparent';
 
-        if (G.gameMode==='zen') { render(); return; }
+        if (G.gameMode==='zen') {
+            if (G.currentScore >= G.stageTargets[G.currentStage]) {
+                const tgt = G.stageTargets[G.currentStage];
+                const prevScore = G.currentScore - payload.totalScore;
+                render();
+                const scorePill = document.getElementById('score-pill');
+                await new Promise(resolve => {
+                    animateValueCountUp(prevScore, G.currentScore, 500, (val)=>{ scorePill.textContent = val.toLocaleString()+' / '+tgt.toLocaleString(); }, resolve);
+                });
+                await sleep(250);
+                G.currentStage++;
+                ensureStageTarget(G.currentStage);
+                render();
+            } else render();
+            return;
+        }
         if (G.currentScore >= G.stageTargets[G.currentStage]) {
             G.stageScores[G.currentStage] = G.currentScore;
             const tgt = G.stageTargets[G.currentStage];
@@ -1446,10 +1463,10 @@
     }
     function renderRunInfo() {
         const isZen = G.gameMode === 'zen';
-        document.getElementById('ri-stage').textContent = isZen ? 'Zen Mode' : ('Stage '+G.currentStage+' / '+G.totalStages);
+        document.getElementById('ri-stage').textContent = isZen ? ('Stage '+G.currentStage+' (Zen)') : ('Stage '+G.currentStage+' / '+G.totalStages);
         document.getElementById('ri-bag').textContent = isZen ? '∞' : (G.tileBag.length+' tiles');
         const hz = HAZARD_DATABASE[G.activeHazard];
-        document.getElementById('ri-hazard').textContent = hz ? (hz.icon+' '+hz.name) : 'None';
+        document.getElementById('ri-hazard').textContent = isZen ? 'None (Zen)' : (hz ? (hz.icon+' '+hz.name) : 'None');
         const dailyRow = document.getElementById('ri-daily-row');
         if (G.gameMode === 'daily') {
             const challenge = DAILY_CHALLENGES.find(c => c.id === G.dailyChallenge);
@@ -1683,13 +1700,10 @@
     function render() {
         if(!G.gameStarted) return;
         const isZen = G.gameMode==='zen';
-        if (isZen) {
-            document.getElementById('progress-fill').style.width='100%';
-            document.getElementById('score-pill').textContent = G.currentScore.toLocaleString();
-        } else {
+        {
             const tgt=G.stageTargets[G.currentStage]; const pct=Math.min(100,(G.currentScore/tgt)*100);
             document.getElementById('progress-fill').style.width=pct+'%';
-            document.getElementById('score-pill').textContent=G.currentScore+' / '+tgt;
+            document.getElementById('score-pill').textContent=G.currentScore.toLocaleString()+' / '+tgt.toLocaleString();
         }
         const hazardBanner = document.getElementById('hazard-banner');
         if (G.activeHazard && HAZARD_DATABASE[G.activeHazard]) {
@@ -1716,22 +1730,65 @@
         saveActiveRun();
     }
 
+    function layoutWindingNodes(ladder, count, currentIndex, getNodeInfo) {
+        ladder.innerHTML = '';
+        const STEP_Y = 92, TOP_PAD = 50, AMPLITUDE = 26;
+        const containerWidth = ladder.parentElement.clientWidth || 320;
+        const positions = [];
+        for (let i = 1; i <= count; i++) {
+            const xPct = 50 + AMPLITUDE * Math.sin((i - 1) * 0.9);
+            const yPx = TOP_PAD + (i - 1) * STEP_Y;
+            positions.push({ x: (xPct / 100) * containerWidth, y: yPx });
+        }
+        ladder.style.height = (TOP_PAD + (count - 1) * STEP_Y + 50) + 'px';
+        for (let i = 0; i < count - 1; i++) {
+            const a = positions[i], b = positions[i + 1];
+            const dx = b.x - a.x, dy = b.y - a.y;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            const line = document.createElement('div');
+            line.className = 'map-path-line' + (i + 1 < currentIndex ? ' done' : '');
+            line.style.left = a.x + 'px'; line.style.top = a.y + 'px';
+            line.style.width = length + 'px';
+            line.style.transform = 'rotate(' + angle + 'deg)';
+            ladder.appendChild(line);
+        }
+        for (let i = 1; i <= count; i++) {
+            const pos = positions[i - 1];
+            const wrap = document.createElement('div'); wrap.className = 'map-node-absolute';
+            wrap.style.left = pos.x + 'px'; wrap.style.top = pos.y + 'px'; wrap.style.animationDelay = (i * 0.06) + 's';
+            const node = document.createElement('div'); node.className = 'map-node';
+            const info = getNodeInfo(i);
+            node.classList.add(info.state);
+            node.textContent = info.icon;
+            wrap.appendChild(node);
+            if (info.label) { const lbl = document.createElement('div'); lbl.className = 'map-node-label'; lbl.textContent = info.label; wrap.appendChild(lbl); }
+            ladder.appendChild(wrap);
+        }
+        requestAnimationFrame(() => {
+            const scroller = document.getElementById('map-scroll');
+            const target = positions[currentIndex - 1];
+            if (target && scroller) scroller.scrollTop = Math.max(0, target.y - scroller.clientHeight / 2);
+        });
+    }
     function renderMap() {
         if (G.isEndless) { renderEndlessMap(); return; }
         const modeName = G.gameMode==='daily' ? 'DAILY' : 'CLASSIC';
         document.getElementById('map-header').textContent=modeName+' RUN - STAGE '+G.currentStage+'/'+G.totalStages;
-        const ladder=document.getElementById('map-ladder'); ladder.innerHTML='';
-        for(let i=1;i<=G.totalStages;i++){ const wrap=document.createElement('div'); wrap.className='map-node-wrap'; wrap.style.animationDelay=(i*0.1)+'s'; const node=document.createElement('div'); node.className='map-node'; const info=document.createElement('div'); info.className='map-node-info'; const isBoss = i%4===0; if(i<G.currentStage){ node.classList.add('completed'); node.textContent='✓'; info.textContent='Stage '+i+' - Score: '+(G.stageScores[i]||0); } else if(i===G.currentStage){ node.classList.add('current'); node.textContent=isBoss?'☠':i; info.textContent='Stage '+i+(isBoss?' (BOSS)':'')+' - Target: '+G.stageTargets[i]; } else { node.classList.add('upcoming'); node.textContent=isBoss?'☠':i; info.textContent='Stage '+i+(isBoss?' (BOSS)':'')+' - Locked'; } wrap.appendChild(node); wrap.appendChild(info); ladder.appendChild(wrap); if(i<G.totalStages){ const conn=document.createElement('div'); conn.className='map-connector'; ladder.appendChild(conn); } }
+        const ladder=document.getElementById('map-ladder');
+        layoutWindingNodes(ladder, G.totalStages, G.currentStage, (i) => {
+            const isBoss = i % 4 === 0;
+            if (i < G.currentStage) return { state:'completed', icon:'✓', label:null };
+            if (i === G.currentStage) return { state:'current', icon: isBoss?'☠':String(i), label:'Target: '+G.stageTargets[i].toLocaleString() };
+            return { state:'upcoming', icon: isBoss?'☠':String(i), label:null };
+        });
         document.getElementById('btn-start-stage').textContent='START STAGE '+G.currentStage; document.getElementById('btn-start-stage').onclick=startStage; document.getElementById('view-map').classList.remove('hidden'); document.getElementById('view-game').classList.add('hidden'); document.getElementById('view-draft').classList.add('hidden');
         saveActiveRun();
     }
     function renderEndlessMap() {
         document.getElementById('map-header').textContent = 'ENDLESS — STAGE '+G.currentStage;
-        const ladder=document.getElementById('map-ladder'); ladder.innerHTML='';
-        const wrap=document.createElement('div'); wrap.className='map-node-wrap';
-        const node=document.createElement('div'); node.className='map-node current'; node.textContent=G.currentStage;
-        const info=document.createElement('div'); info.className='map-node-info'; info.textContent='Target: '+G.stageTargets[G.currentStage].toLocaleString();
-        wrap.appendChild(node); wrap.appendChild(info); ladder.appendChild(wrap);
+        const ladder=document.getElementById('map-ladder');
+        layoutWindingNodes(ladder, 1, 1, () => ({ state:'current', icon:String(G.currentStage), label:'Target: '+G.stageTargets[G.currentStage].toLocaleString() }));
         document.getElementById('btn-start-stage').textContent='START STAGE '+G.currentStage; document.getElementById('btn-start-stage').onclick=startStage; document.getElementById('view-map').classList.remove('hidden'); document.getElementById('view-game').classList.add('hidden'); document.getElementById('view-draft').classList.add('hidden');
         saveActiveRun();
     }
@@ -1766,6 +1823,7 @@
         document.getElementById('ri-daily-row').addEventListener('click',()=>{ if(G.gameMode!=='daily') return; document.getElementById('run-info-modal').classList.remove('show'); showChallengeInfo(); });
         document.getElementById('btn-header-options').addEventListener('click', openOptionsModal);
         document.getElementById('btn-close-settings').addEventListener('click',()=>document.getElementById('options-modal').classList.remove('show'));
+        document.getElementById('btn-exit-save').addEventListener('click', exitToMenuSaved);
         document.getElementById('btn-abandon-run').addEventListener('click',()=>{ document.getElementById('options-modal').classList.remove('show'); showConfirmModal(); });
         document.getElementById('options-modal').addEventListener('click',e=>{if(e.target===document.getElementById('options-modal'))document.getElementById('options-modal').classList.remove('show');});
         document.getElementById('music-slider').addEventListener('input',e=>{AudioEngine.setMusicVolume(parseInt(e.target.value)/100);document.getElementById('music-val').textContent=e.target.value+'%';});
@@ -1813,6 +1871,7 @@
         G.gameMode = 'zen';
         G.dailyChallenge = null; G.isEndless = false; G.activeHazard = null; G.anchorTileId = null; G.mutedTileId = null;
         G.currentScore = 0; G.playsLeft = 0; G.rerollsLeft = 0;
+        G.currentStage = 1; G.stageTargets = [...CLASSIC_STAGE_TARGETS];
         G.equippedGlyphs = []; G.consumables = []; G.bank = 0;
         G.removedLetters = new Set(); G.tileBag = []; G.discardPile = [];
         G.hand = []; G.activeWord = [];
@@ -1828,7 +1887,9 @@
     function showThemes(){document.getElementById('view-menu').classList.add('hidden');document.getElementById('view-themes').classList.remove('hidden');}
     function updateThemeButtons(){ document.querySelectorAll('.theme-card').forEach(c=>c.classList.toggle('active',c.dataset.theme===G.currentTheme)); }
     function setTheme(n){G.currentTheme=n;applyTheme(n);updateThemeButtons();}
-    function goToMenu(){clearActiveRun();G.gameStarted=false;G.rerollMode=false;G.rerollMarks.clear();G.isAnimating=false;G.hand=[];G.activeWord=[];document.getElementById('game-container').classList.remove('zen-mode');document.getElementById('view-game').classList.add('hidden');document.getElementById('view-map').classList.add('hidden');document.getElementById('view-draft').classList.add('hidden');document.getElementById('view-stats').classList.add('hidden');hideModal();document.getElementById('options-modal').classList.remove('show');document.getElementById('view-difficulty').classList.add('hidden');document.getElementById('view-themes').classList.add('hidden');document.getElementById('view-menu').classList.remove('hidden','slide-left');AudioEngine.stopMusic();updateContinueButtonVisibility();}
+    function returnToMenuUI(){G.gameStarted=false;G.rerollMode=false;G.rerollMarks.clear();G.isAnimating=false;G.hand=[];G.activeWord=[];document.getElementById('game-container').classList.remove('zen-mode');document.getElementById('view-game').classList.add('hidden');document.getElementById('view-map').classList.add('hidden');document.getElementById('view-draft').classList.add('hidden');document.getElementById('view-stats').classList.add('hidden');hideModal();document.getElementById('options-modal').classList.remove('show');document.getElementById('view-difficulty').classList.add('hidden');document.getElementById('view-themes').classList.add('hidden');document.getElementById('view-menu').classList.remove('hidden','slide-left');AudioEngine.stopMusic();updateContinueButtonVisibility();}
+    function goToMenu(){clearActiveRun();returnToMenuUI();}
+    function exitToMenuSaved(){saveActiveRun();returnToMenuUI();}
     function loadPersistence(){
         try{ G.leaderboard = JSON.parse(localStorage.getItem('wordling-leaderboard')||'[]'); }catch(e){ G.leaderboard=[]; }
         try{ G.records = JSON.parse(localStorage.getItem('wordling-records')||'null') || {highestWord:null,totalGoldEarned:0,mostStagesCleared:0}; }catch(e){ G.records={highestWord:null,totalGoldEarned:0,mostStagesCleared:0}; }
