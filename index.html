@@ -112,7 +112,7 @@
             --number-shadow: 2px 2px 0px rgba(0,0,0,0.8);
             --readout-shadow: inset 0 3px 6px rgba(0,0,0,0.8);
         }
-        :root, html[data-theme="wordling-light"] {
+        :root, html[data-theme="wordling"] {
             --font-main: 'Poppins', sans-serif;
             --font-title: 'Poppins', sans-serif;
             --font-numeric: 'Poppins', sans-serif;
@@ -243,23 +243,23 @@
         @keyframes typewriterBgDrift { 0% { background-position: 0% 0%, 50% 40%; } 50% { background-position: 100% 100%, 50% 40%; } 100% { background-position: 0% 0%, 50% 40%; } }
         @keyframes notebookDrift { 0% { background-position: 0 0, 0 0; } 100% { background-position: 0 340px, 0 0; } }
         @property --wl-angle { syntax: '<angle>'; inherits: false; initial-value: 135deg; }
-        html[data-theme="wordling-light"] #game-container {
+        html[data-theme="wordling"] #game-container {
             background-image: linear-gradient(var(--wl-angle, 135deg), var(--wl-split-1) 50%, var(--wl-split-2) 50%), var(--bg-vignette);
             background-size: 250% 250%, 160% 160%;
             animation: wordlingSplitShift 14s ease-in-out infinite, wordlingAngleDrift 22s ease-in-out infinite alternate;
         }
-        html[data-theme="wordling-light"][data-palette="black-grey"] {
+        html[data-theme="wordling"][data-palette="black-grey"] {
             --wl-split-1: #27272A; --wl-split-2: #6B7280; --bg-solid: #27272A;
             --accent-1: #6B7280; --accent-1-shadow: #4B5563; --accent-1-text: #ffffff;
             --accent-2: #27272A; --accent-2-shadow: #000000; --accent-2-text: #ffffff;
             --bg-text: #F4F4F5;
         }
-        html[data-theme="wordling-light"][data-palette="orange-green"] {
+        html[data-theme="wordling"][data-palette="orange-green"] {
             --wl-split-1: #FF8A3D; --wl-split-2: #22C55E; --bg-solid: #FF8A3D;
             --accent-1: #22C55E; --accent-1-shadow: #15803D; --accent-1-text: #ffffff;
             --accent-2: #FF8A3D; --accent-2-shadow: #C2540A; --accent-2-text: #ffffff;
         }
-        html[data-theme="wordling-light"][data-palette="purple-yellow"] {
+        html[data-theme="wordling"][data-palette="purple-yellow"] {
             --wl-split-1: #8B5CF6; --wl-split-2: #FACC15; --bg-solid: #8B5CF6;
             --accent-1: #8B5CF6; --accent-1-shadow: #6D28D9; --accent-1-text: #ffffff;
             --accent-2: #FACC15; --accent-2-shadow: #A16207; --accent-2-text: #241a00;
@@ -268,7 +268,7 @@
         :root[data-palette="black-grey"] { --card-wl-split-1: #27272A; --card-wl-split-2: #6B7280; }
         :root[data-palette="orange-green"] { --card-wl-split-1: #FF8A3D; --card-wl-split-2: #22C55E; }
         :root[data-palette="purple-yellow"] { --card-wl-split-1: #8B5CF6; --card-wl-split-2: #FACC15; }
-        html[data-theme="wordling-light"] #game-container::after {
+        html[data-theme="wordling"] #game-container::after {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect x='28' y='28' width='34' height='34' fill='white' fill-opacity='0.32' transform='rotate(45 45 45)'/%3E%3Crect x='-6' y='-6' width='18' height='18' fill='white' fill-opacity='0.24' transform='rotate(45 3 3)'/%3E%3Crect x='84' y='-6' width='18' height='18' fill='white' fill-opacity='0.24' transform='rotate(45 93 3)'/%3E%3Crect x='-6' y='84' width='18' height='18' fill='white' fill-opacity='0.24' transform='rotate(45 3 93)'/%3E%3Crect x='84' y='84' width='18' height='18' fill='white' fill-opacity='0.24' transform='rotate(45 93 93)'/%3E%3C/svg%3E");
             background-size: 90px 90px;
             animation: wordlingDiamondDrift 10s linear infinite;
@@ -276,6 +276,24 @@
         @keyframes wordlingSplitShift { 0% { background-position: 15% 25%, 50% 30%; } 25% { background-position: 65% 10%, 50% 30%; } 50% { background-position: 85% 75%, 50% 30%; } 75% { background-position: 35% 85%, 50% 30%; } 100% { background-position: 15% 25%, 50% 30%; } }
         @keyframes wordlingAngleDrift { 0% { --wl-angle: 118deg; } 50% { --wl-angle: 152deg; } 100% { --wl-angle: 118deg; } }
         @keyframes wordlingDiamondDrift { 0% { background-position: 0 0; } 100% { background-position: 90px 90px; } }
+        html[data-theme="wordling"] #map-header,
+        html[data-theme="wordling"] #view-difficulty h2,
+        html[data-theme="wordling"] #view-themes h2 {
+            background: var(--panel-bg);
+            color: var(--text);
+            text-shadow: none;
+            border: var(--outline-w) solid var(--panel-border);
+            border-radius: var(--radius-sm);
+            padding: 10px 16px;
+            box-shadow: var(--readout-shadow);
+        }
+        html[data-theme="wordling"] .map-node-label {
+            background: var(--panel-bg); color: var(--text); text-shadow: none;
+            border: 1px solid var(--panel-border);
+        }
+        html[data-theme="wordling"] .daily-info-panel {
+            background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.15);
+        }
         #bg-overlay {
             position: absolute; inset: 0; pointer-events: none; z-index: 0;
             background: transparent; transition: background 0.5s ease;
@@ -444,11 +462,11 @@
         .theme-preview-row { display: flex; gap: 6px; }
         .theme-preview-chip { width: 22px; height: 22px; border-radius: 5px; box-shadow: 0 2px 0 0 rgba(0,0,0,0.35); border: 2px solid rgba(255,255,255,0.7); }
 
-        .card-wordling-light { background: linear-gradient(135deg, var(--card-wl-split-1) 50%, var(--card-wl-split-2) 50%); }
+        .card-wordling { background: linear-gradient(135deg, var(--card-wl-split-1) 50%, var(--card-wl-split-2) 50%); }
         .palette-row { display:flex; gap:7px; justify-content:center; margin-top:6px; position:relative; z-index:2; }
         .palette-swatch { width:18px; height:18px; border-radius:50%; border:2px solid rgba(255,255,255,0.75); box-shadow:0 1px 0 0 rgba(0,0,0,0.3); cursor:pointer; }
         .palette-swatch.active { outline: 2px solid rgba(0,0,0,0.4); outline-offset: 1px; }
-        .card-wordling-light .theme-name { color: #fff; font-family: 'Poppins', sans-serif; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.25); }
+        .card-wordling .theme-name { color: #fff; font-family: 'Poppins', sans-serif; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.25); }
         .card-cyber-arcade { background: #1A2127; background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 3px); }
         .card-cyber-arcade .theme-name { color: #E8EDF0; font-family: 'Press Start 2P', monospace; font-size: 0.6rem; line-height: 1.6; }
         .card-typewriter { background: #141416; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 5px); }
@@ -770,14 +788,14 @@
     </div>
     <div id="view-themes" class="view-panel">
         <h2>CHOOSE THEME</h2>
-        <div class="theme-card card-wordling-light active" data-theme="wordling-light">
+        <div class="theme-card card-wordling active" data-theme="wordling">
             <span class="theme-check">✓</span>
             <div class="theme-preview-row">
                 <span class="theme-preview-chip" id="wl-chip-1" style="background:#3B82F6;"></span>
                 <span class="theme-preview-chip" id="wl-chip-2" style="background:#FF5A5A;"></span>
                 <span class="theme-preview-chip" style="background:#FFC107;"></span>
             </div>
-            <span class="theme-name">Wordling<br>Light</span>
+            <span class="theme-name">Wordling</span>
             <div class="palette-row">
                 <span class="palette-swatch active" data-palette="coral-sky" style="background: linear-gradient(135deg, #3B82F6 50%, #FF5A5A 50%);"></span>
                 <span class="palette-swatch" data-palette="black-grey" style="background: linear-gradient(135deg, #6B7280 50%, #27272A 50%);"></span>
@@ -867,8 +885,8 @@
         playPopup() { const g=this._sfxOut(); if(!g) return; const ctx=this.audioCtx; const t=ctx.currentTime; const o=ctx.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(660,t); o.frequency.exponentialRampToValueAtTime(440,t+0.07); const gn=ctx.createGain(); gn.gain.setValueAtTime(0.08,t); gn.gain.exponentialRampToValueAtTime(0.001,t+0.07); o.connect(gn); gn.connect(g); o.start(t); o.stop(t+0.08); },
         playSubmit() { const g=this._sfxOut(); if(!g) return; const ctx=this.audioCtx; const t=ctx.currentTime; const freqs=[261.63,329.63,392.0,523.25]; freqs.forEach((f,i)=>{ const o=ctx.createOscillator(); o.type='sine'; const st=t+i*0.04; o.frequency.setValueAtTime(f,st); const gn=ctx.createGain(); gn.gain.setValueAtTime(0,st); gn.gain.linearRampToValueAtTime(0.09,st+0.25); gn.gain.exponentialRampToValueAtTime(0.001,st+0.9); o.connect(gn); gn.connect(g); o.start(st); o.stop(st+1.0); }); }
     };
-    const THEMES = ['wordling-light', 'cyber-arcade', 'typewriter'];
-    function applyTheme(n){ const name = THEMES.includes(n) ? n : 'wordling-light'; document.documentElement.setAttribute('data-theme', name); try{localStorage.setItem('wordling-theme',name);}catch(e){} }
+    const THEMES = ['wordling', 'cyber-arcade', 'typewriter'];
+    function applyTheme(n){ const name = THEMES.includes(n) ? n : 'wordling'; document.documentElement.setAttribute('data-theme', name); try{localStorage.setItem('wordling-theme',name);}catch(e){} }
     const WORDLING_PALETTES = {
         'coral-sky': { c1:'#3B82F6', c2:'#FF5A5A' },
         'black-grey': { c1:'#6B7280', c2:'#27272A' },
@@ -1014,7 +1032,7 @@
 
     const G = {
         currentStage:1, stageTargets:[...CLASSIC_STAGE_TARGETS], totalStages:8,
-        currentScore:0, playsLeft:4, rerollsLeft:3, shakeStrength:100, currentTheme:'wordling-light',
+        currentScore:0, playsLeft:4, rerollsLeft:3, shakeStrength:100, currentTheme:'wordling',
         hand:[], activeWord:[], tileBag:[], discardPile:[], removedLetters:new Set(), stageScores:[],
         equippedGlyphs:[], bank:0, recyclerUsedThisStage:false, dictSet:new Set(), modalType:null, isAnimating:false, rerollMode:false, rerollMarks:new Set(), gameStarted:false,
         draftChoices:null, dragData:null,
@@ -1074,7 +1092,7 @@
     function toggleRerollMark(hi) { if(hi<0||hi>=getHandSize()||!G.hand[hi]) return; const id=G.hand[hi].id; if(G.rerollMarks.has(id)) G.rerollMarks.delete(id); else { if(G.rerollMarks.size>=3) return; G.rerollMarks.add(id); } AudioEngine.playTap(); render(); }
     function enterReroll() { if(G.isAnimating||(G.gameMode!=='zen'&&G.rerollsLeft<=0)||G.hand.every(t=>t===null)) return; G.rerollMode=true; G.rerollMarks.clear(); render(); }
     function exitReroll() { G.rerollMode=false; G.rerollMarks.clear(); render(); }
-    function drawIntoSlots(slots) { for(const idx of slots){ if(G.tileBag.length===0){ if(G.discardPile.length===0) break; G.tileBag=shuffle(G.discardPile); G.discardPile=[]; } G.hand[idx]=G.tileBag.pop(); } ensureMutedTile(); }
+    function drawIntoSlots(slots) { for(const idx of slots){ if(G.gameMode==='zen'){ G.hand[idx]=generateRandomTile(); continue; } if(G.tileBag.length===0){ if(G.discardPile.length===0) break; G.tileBag=shuffle(G.discardPile); G.discardPile=[]; } G.hand[idx]=G.tileBag.pop(); } ensureMutedTile(); }
     function isDiscardTaxed() { return G.activeHazard==='taxman' || (G.gameMode==='daily' && G.dailyChallenge===3); }
     function confirmReroll() { if(!G.rerollMode||G.rerollMarks.size===0){ exitReroll(); return; } if(G.gameMode!=='zen'&&G.rerollsLeft<=0) return; if(G.gameMode!=='zen') G.rerollsLeft--; const discarded=[]; const freedSlots=[]; for(let i=0;i<getHandSize();i++){ if(G.hand[i]&&G.rerollMarks.has(G.hand[i].id)){ discarded.push(G.hand[i]); G.discardPile.push(G.hand[i]); G.hand[i]=null; freedSlots.push(i); } } GlyphManager.onDiscardEvent(discarded); if(discarded.length>0&&isDiscardTaxed()) G.bank=Math.max(0,G.bank-2); drawIntoSlots(freedSlots); G.rerollMarks.clear(); G.rerollMode=false; AudioEngine.playShuffle(); vibrate(12); renderWithTileFlip(); }
     function toggleRerollBtn() { if(G.rerollMode) confirmReroll(); else enterReroll(); }
@@ -1697,6 +1715,22 @@
         renderGlyphs();
         playTileFlip(prevRects);
     }
+    function tileIdleDelay(id) { let h=0; for(let i=0;i<id.length;i++){ h=(h*31+id.charCodeAt(i))|0; } return ((Math.abs(h)%8)*0.08)+'s'; }
+    function reconcileTileList(container, items, keyFn, createFn, updateFn) {
+        const byKey = new Map();
+        Array.from(container.children).forEach(el => { if(el.dataset.tileId) byKey.set(el.dataset.tileId, el); });
+        const usedKeys = new Set();
+        let refNode = container.firstChild;
+        items.forEach((item, idx) => {
+            const key = item ? keyFn(item) : null;
+            let el = key ? byKey.get(key) : null;
+            if (el && !usedKeys.has(key)) { usedKeys.add(key); updateFn(el, item, idx); }
+            else { el = createFn(item, idx); }
+            if (el !== refNode) container.insertBefore(el, refNode);
+            else refNode = refNode.nextSibling;
+        });
+        while (refNode) { const next = refNode.nextSibling; container.removeChild(refNode); refNode = next; }
+    }
     function render() {
         if(!G.gameStarted) return;
         const isZen = G.gameMode==='zen';
@@ -1716,10 +1750,17 @@
         document.getElementById('val-hands').textContent=G.playsLeft; document.getElementById('val-rerolls').textContent=G.rerollsLeft; document.getElementById('val-gold').innerHTML='<span class="diamond-icon"></span> '+G.bank;
         const sb=document.getElementById('score-banner'); if(p.occ===0) sb.textContent='—'; else if(!p.valid) sb.textContent='INVALID WORD'; else sb.textContent=p.totalChips+' × '+p.totalMult.toFixed(1)+' = '+p.totalScore+' PTS';
         sb.classList.toggle('invalid',p.occ>0&&!p.valid);
-        const awl=document.getElementById('active-word-line'); awl.innerHTML='';
-        G.activeWord.forEach((tile,idx)=>{ const wrap=document.createElement('div'); wrap.className='active-tile'; wrap.dataset.tileId=tile.id; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.addEventListener('pointerdown',(e)=>{e.stopPropagation();onDragStart(e,'word',idx);}); wrap.appendChild(inner); awl.appendChild(wrap); });
-        const hr=document.getElementById('hand-rack'); hr.innerHTML='';
-        for(let i=0;i<getHandSize();i++){ const wrap=document.createElement('div'); wrap.className='hand-tile-wrap'; const tile=G.hand[i]; if(tile){ wrap.dataset.tileId=tile.id; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.style.animationDelay=(i*0.08)+'s'; inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.addEventListener('pointerdown',(e)=>onDragStart(e,'hand',i)); wrap.appendChild(inner); } else { wrap.classList.add('empty-slot'); } hr.appendChild(wrap); }
+        const awl=document.getElementById('active-word-line');
+        reconcileTileList(awl, G.activeWord, tile=>tile.id,
+            (tile,idx)=>{ const wrap=document.createElement('div'); wrap.className='active-tile'; wrap.dataset.tileId=tile.id; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.addEventListener('pointerdown',(e)=>{e.stopPropagation();onDragStart(e,'word',idx);}); wrap.appendChild(inner); return wrap; },
+            (wrap,tile,idx)=>{ const inner=wrap.firstElementChild; inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.onpointerdown=(e)=>{e.stopPropagation();onDragStart(e,'word',idx);}; }
+        );
+        const hr=document.getElementById('hand-rack');
+        const handSlots=[]; for(let i=0;i<getHandSize();i++) handSlots.push(G.hand[i]||null);
+        reconcileTileList(hr, handSlots, tile=>tile&&tile.id,
+            (tile,idx)=>{ const wrap=document.createElement('div'); wrap.className='hand-tile-wrap'; if(tile){ wrap.dataset.tileId=tile.id; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.style.animationDelay=tileIdleDelay(tile.id); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.addEventListener('pointerdown',(e)=>onDragStart(e,'hand',idx)); wrap.appendChild(inner); } else { wrap.classList.add('empty-slot'); } return wrap; },
+            (wrap,tile,idx)=>{ const inner=wrap.firstElementChild; inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.onpointerdown=(e)=>onDragStart(e,'hand',idx); }
+        );
         renderGlyphs();
         renderConsumables();
         document.getElementById('btn-submit').disabled=p.occ===0||!p.valid||(!isZen&&G.playsLeft<=0)||G.isAnimating||G.rerollMode;
@@ -1815,7 +1856,7 @@
         document.getElementById('btn-mode-daily').addEventListener('click',()=>startClassicLikeRun('daily'));
         document.getElementById('btn-mode-zen').addEventListener('click',()=>startZenRun());
         document.querySelectorAll('.theme-card').forEach(c=>c.addEventListener('click',()=>{ applyTheme(c.dataset.theme); G.currentTheme=c.dataset.theme; document.querySelectorAll('.theme-card').forEach(x=>x.classList.toggle('active',x.dataset.theme===G.currentTheme)); }));
-        document.querySelectorAll('.palette-swatch').forEach(s=>s.addEventListener('click',(e)=>{ e.stopPropagation(); applyPalette(s.dataset.palette); applyTheme('wordling-light'); G.currentTheme='wordling-light'; updateThemeButtons(); AudioEngine.playTap(); }));
+        document.querySelectorAll('.palette-swatch').forEach(s=>s.addEventListener('click',(e)=>{ e.stopPropagation(); applyPalette(s.dataset.palette); applyTheme('wordling'); G.currentTheme='wordling'; updateThemeButtons(); AudioEngine.playTap(); }));
         document.getElementById('btn-confirm-cancel').addEventListener('click', hideConfirmModal);
         document.getElementById('btn-confirm-quit').addEventListener('click', () => { hideConfirmModal(); goToMenu(); });
         document.getElementById('btn-run-info').addEventListener('click',()=>{ renderRunInfo(); document.getElementById('run-info-modal').classList.add('show'); });
@@ -1950,7 +1991,7 @@
         rows.forEach(([label,val])=>{ const row=document.createElement('div'); row.className='stats-row'; row.innerHTML=`<span>${label}</span><span>${val}</span>`; c.appendChild(row); });
     }
     function updateContinueButtonVisibility() { document.getElementById('btn-continue-run').classList.toggle('hidden', !hasActiveRun()); }
-    function boot(){try{G.currentTheme=localStorage.getItem('wordling-theme')||'wordling-light';}catch(e){G.currentTheme='wordling-light';}applyTheme(G.currentTheme);updateThemeButtons();let savedPalette;try{savedPalette=localStorage.getItem('wordling-palette')||'coral-sky';}catch(e){savedPalette='coral-sky';}applyPalette(savedPalette);loadPersistence();updateContinueButtonVisibility();initDict();bind();}
+    function boot(){try{G.currentTheme=localStorage.getItem('wordling-theme')||'wordling';}catch(e){G.currentTheme='wordling';}applyTheme(G.currentTheme);updateThemeButtons();let savedPalette;try{savedPalette=localStorage.getItem('wordling-palette')||'coral-sky';}catch(e){savedPalette='coral-sky';}applyPalette(savedPalette);loadPersistence();updateContinueButtonVisibility();initDict();bind();}
     document.addEventListener('visibilitychange', () => { if(document.hidden){ if(G.dragData){ cleanupDrag(); render(); } } else { const c=document.getElementById('game-container'); if(c){ c.classList.add('anim-kick'); void c.offsetHeight; c.classList.remove('anim-kick'); } } });
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 })();
