@@ -31,6 +31,7 @@
 
             --text: #E8EDF0;
             --text-soft: #8CA0AC;
+            --bg-text: #E8EDF0;
 
             --accent-1: #00A8FF;
             --accent-1-shadow: #06598A;
@@ -79,6 +80,7 @@
 
             --text: #EDE8D0;
             --text-soft: #A69C7C;
+            --bg-text: #EDE8D0;
 
             --accent-1: #D9383A;
             --accent-1-shadow: #7E1A1B;
@@ -129,6 +131,7 @@
 
             --text: #0F172A;
             --text-soft: #64748B;
+            --bg-text: #0F172A;
 
             --accent-1: #3B82F6;
             --accent-1-shadow: #1D4ED8;
@@ -167,6 +170,7 @@
             --radius-sm: 10px;
             --radius-md: 14px;
             --radius-lg: 20px;
+            --tile-idle-duration: 1.8s;
         }
         * {
             touch-action: manipulation;
@@ -238,15 +242,17 @@
         @keyframes scanlineDrift { 0% { background-position: 0 0; } 100% { background-position: 30px 30px; } }
         @keyframes typewriterBgDrift { 0% { background-position: 0% 0%, 50% 40%; } 50% { background-position: 100% 100%, 50% 40%; } 100% { background-position: 0% 0%, 50% 40%; } }
         @keyframes notebookDrift { 0% { background-position: 0 0, 0 0; } 100% { background-position: 0 340px, 0 0; } }
+        @property --wl-angle { syntax: '<angle>'; inherits: false; initial-value: 135deg; }
         html[data-theme="wordling-light"] #game-container {
-            background-image: linear-gradient(135deg, var(--wl-split-1) 50%, var(--wl-split-2) 50%), var(--bg-vignette);
+            background-image: linear-gradient(var(--wl-angle, 135deg), var(--wl-split-1) 50%, var(--wl-split-2) 50%), var(--bg-vignette);
             background-size: 250% 250%, 160% 160%;
-            animation: wordlingSplitShift 9s ease-in-out infinite alternate;
+            animation: wordlingSplitShift 14s ease-in-out infinite, wordlingAngleDrift 22s ease-in-out infinite alternate;
         }
         html[data-theme="wordling-light"][data-palette="black-grey"] {
             --wl-split-1: #27272A; --wl-split-2: #6B7280; --bg-solid: #27272A;
             --accent-1: #6B7280; --accent-1-shadow: #4B5563; --accent-1-text: #ffffff;
             --accent-2: #27272A; --accent-2-shadow: #000000; --accent-2-text: #ffffff;
+            --bg-text: #F4F4F5;
         }
         html[data-theme="wordling-light"][data-palette="orange-green"] {
             --wl-split-1: #FF8A3D; --wl-split-2: #22C55E; --bg-solid: #FF8A3D;
@@ -267,7 +273,8 @@
             background-size: 90px 90px;
             animation: wordlingDiamondDrift 10s linear infinite;
         }
-        @keyframes wordlingSplitShift { 0% { background-position: 15% 15%, 50% 30%; } 100% { background-position: 85% 85%, 50% 30%; } }
+        @keyframes wordlingSplitShift { 0% { background-position: 15% 25%, 50% 30%; } 25% { background-position: 65% 10%, 50% 30%; } 50% { background-position: 85% 75%, 50% 30%; } 75% { background-position: 35% 85%, 50% 30%; } 100% { background-position: 15% 25%, 50% 30%; } }
+        @keyframes wordlingAngleDrift { 0% { --wl-angle: 118deg; } 50% { --wl-angle: 152deg; } 100% { --wl-angle: 118deg; } }
         @keyframes wordlingDiamondDrift { 0% { background-position: 0 0; } 100% { background-position: 90px 90px; } }
         #bg-overlay {
             position: absolute; inset: 0; pointer-events: none; z-index: 0;
@@ -276,7 +283,7 @@
         @keyframes popupFloat { 0% { opacity: 1; transform: translateY(0) scale(0.3); } 25% { opacity: 1; transform: translateY(-16px) scale(1.25); } 100% { opacity: 0; transform: translateY(-50px) scale(0.7); } }
         @keyframes shake { 0%,100% { transform: translate(0,0); } 20% { transform: translate(calc(var(--shake-px, 5px) * -1), calc(var(--shake-px, 5px) * 0.6)); } 40% { transform: translate(calc(var(--shake-px, 5px) * 0.8), calc(var(--shake-px, 5px) * -0.4)); } 60% { transform: translate(calc(var(--shake-px, 5px) * -0.6), calc(var(--shake-px, 5px) * -0.2)); } 80% { transform: translate(calc(var(--shake-px, 5px) * 0.4), calc(var(--shake-px, 5px) * 0.8)); } }
         @keyframes titleBounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-        @keyframes tileIdle { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }
+        @keyframes tileIdle { 0%,100% { transform: translateY(0) rotate(0deg); } 25% { transform: translateY(-4px) rotate(-3deg); } 50% { transform: translateY(-6.5px) rotate(0deg); } 75% { transform: translateY(-4px) rotate(3deg); } }
         @keyframes tilePopIn { 0% { transform: scale(0.5); opacity: 0.4; } 60% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes tileScoringPop { 0% { transform: translateY(0) scale(1); } 50% { transform: translateY(-6px) scale(1.1); } 100% { transform: translateY(0) scale(1); } }
         @keyframes nodePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.6); } 50% { box-shadow: 0 0 0 14px rgba(255,255,255,0); } }
@@ -361,11 +368,13 @@
 
         #view-menu h1 {
             font-size: clamp(1.3rem, 8.2vw, 2.1rem); font-weight:900; color: var(--accent-1); letter-spacing:1px;
-            text-shadow: var(--title-shadow); white-space: nowrap; max-width: 100%;
+            text-shadow: var(--title-shadow), 0 0 20px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.4);
+            -webkit-text-stroke: 2px rgba(0,0,0,0.55); paint-order: stroke fill;
+            white-space: nowrap; max-width: 100%;
             animation: titleBounce 3s ease-in-out infinite; font-family: var(--font-title); text-align: center;
         }
         #view-difficulty h2, #view-themes h2, #view-map h2 {
-            color: var(--text); text-shadow: var(--number-shadow); font-size: 1.3rem; font-weight: 900;
+            color: var(--bg-text); text-shadow: 0 2px 6px rgba(0,0,0,0.4), 0 1px 0 rgba(0,0,0,0.3); font-size: 1.3rem; font-weight: 900;
             width: 100%; text-align: center; margin-bottom: 8px; font-family: var(--font-title); letter-spacing: 1px;
         }
 
@@ -395,6 +404,22 @@
         .diff-hard { background: var(--accent-2); border-color: var(--accent-2-shadow); color: var(--accent-2-text); box-shadow: 0 var(--press-depth) 0 0 var(--accent-2-shadow); }
         .diff-hard:active { box-shadow: 0 0 0 0 var(--accent-2-shadow); }
         .mode-sub { display:block; font-size:0.65rem; font-weight:700; letter-spacing:0.2px; opacity:0.85; margin-top:4px; }
+        .daily-card { position:relative; width:250px; }
+        .daily-card .diff-btn { width:100%; }
+        .daily-info-toggle {
+            position:absolute; top:8px; right:8px; width:24px; height:24px; border-radius:50%;
+            background: rgba(0,0,0,0.28); color:#fff; border:2px solid rgba(255,255,255,0.45); font-size:0.8rem; font-weight:900;
+            display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:3; padding:0; line-height:1;
+            font-family: var(--font-main); box-shadow: 0 2px 0 0 rgba(0,0,0,0.25);
+        }
+        .daily-info-toggle:active { transform: translateY(2px); box-shadow: 0 0 0 0 rgba(0,0,0,0.25); }
+        .daily-info-panel {
+            max-height:0; overflow:hidden; opacity:0; width:100%;
+            transition: max-height 0.35s ease, opacity 0.3s ease, margin-top 0.35s ease;
+            background: rgba(0,0,0,0.3); border-radius: var(--radius-sm);
+        }
+        .daily-info-panel.open { max-height:160px; opacity:1; margin-top:8px; }
+        .daily-info-panel p { padding:10px 12px; font-size:0.75rem; font-weight:700; color:#fff; text-align:center; font-family: var(--font-main); line-height:1.4; margin:0; }
 
         /* Theme picker: preview mini-mockup of each full reskin, not just a color swatch */
         .theme-card {
@@ -462,6 +487,15 @@
         }
         .resource-label { font-size:0.7rem; letter-spacing:1.5px; font-weight:900; color: var(--accent-3); font-family: var(--font-main); }
         .resource-value { font-size:1.1rem; font-weight:900; color: var(--text); font-family: var(--font-numeric); text-shadow: var(--number-shadow); }
+        .resource-box:nth-child(1) .resource-label, .resource-box:nth-child(1) .resource-value { color:#3b82f6; }
+        .resource-box:nth-child(2) .resource-label, .resource-box:nth-child(2) .resource-value { color:#ef4444; }
+        .resource-box:nth-child(3) .resource-label, .resource-box:nth-child(3) .resource-value { color:#eab308; }
+        .diamond-icon {
+            display:inline-block; width:0.82em; height:0.82em; vertical-align:-0.1em; margin:0 1px;
+            background: linear-gradient(135deg, #fef3c7 0%, #eab308 45%, #92600a 100%);
+            clip-path: polygon(50% 0%, 100% 38%, 50% 100%, 0% 38%);
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.7);
+        }
         #score-banner { text-align:center; font-weight:900; font-size:0.9rem; min-height:20px; color: var(--text); text-shadow: 0 1px 4px rgba(0,0,0,0.4); font-family: var(--font-main); }
         #score-banner.invalid { color: var(--accent-2); }
 
@@ -491,16 +525,19 @@
             line-height:1; margin:0; padding:0; transition: all 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             letter-spacing:-0.3px; overflow: hidden; pointer-events: auto; font-family: var(--font-main);
             border: var(--outline-w) solid var(--tile-border); touch-action: none;
-            animation: tileIdle 3s ease-in-out infinite;
+            animation: tileIdle var(--tile-idle-duration) ease-in-out infinite;
         }
         .tile-inner:active { transform:translateY(3px); box-shadow: 0 1px 0 0 var(--tile-shadow-color); }
         .tile-letter { line-height:1; pointer-events:none; z-index:1; text-shadow: 1px 1px 0 rgba(0,0,0,0.18); }
         .tile-chips { position:absolute; bottom:3px; right:6px; font-size:11px; color: var(--text-soft); font-weight:700; pointer-events:none; z-index:1; font-family: var(--font-main); }
         .tile-inner.marked-reroll {
-            background: var(--accent-2) !important; border: var(--outline-w) solid var(--accent-2-shadow) !important;
-            box-shadow: 0 4px 0 0 var(--accent-2-shadow) !important;
+            outline: 3px solid #ffffff; outline-offset: 3px;
+            animation: tileIdle var(--tile-idle-duration, 1.8s) ease-in-out infinite, rerollPulse 0.85s ease-in-out infinite;
         }
-        .tile-inner.marked-reroll .tile-letter, .tile-inner.marked-reroll .tile-chips { color: var(--accent-2-text) !important; }
+        @keyframes rerollPulse {
+            0%, 100% { outline-color: #ffffff; filter: drop-shadow(0 0 3px rgba(0,0,0,0.55)) drop-shadow(0 0 7px rgba(255,255,255,0.85)); }
+            50% { outline-color: #FFD700; filter: drop-shadow(0 0 5px rgba(0,0,0,0.6)) drop-shadow(0 0 13px rgba(255,215,0,0.95)); }
+        }
         .tile-inner.aura-blue { background: var(--accent-1) !important; border: var(--outline-w) solid var(--accent-1-shadow) !important; box-shadow: 0 4px 0 0 var(--accent-1-shadow) !important; }
         .tile-inner.aura-blue .tile-letter, .tile-inner.aura-blue .tile-chips { color: var(--accent-1-text) !important; }
         .tile-inner.aura-red { background: var(--accent-2) !important; border: var(--outline-w) solid var(--accent-2-shadow) !important; box-shadow: 0 4px 0 0 var(--accent-2-shadow) !important; }
@@ -610,20 +647,21 @@
         .letter-pick-count { font-size:0.6rem; color: var(--text-soft); font-weight:700; margin-top:2px; }
         .stats-row {
             display:flex; justify-content:space-between; gap:8px; font-size:0.82rem; font-weight:700;
-            color: var(--text); font-family: var(--font-main); background: rgba(0,0,0,0.06);
+            color: #fff; font-family: var(--font-main); background: rgba(255,255,255,0.1);
             padding:8px 12px; border-radius: var(--radius-sm); margin-bottom:6px;
         }
         #stats-content { width:100%; }
-        #stats-content h3 { font-size:0.85rem; font-weight:900; letter-spacing:1px; color: var(--text-soft); margin: 10px 0 6px; text-align:center; font-family: var(--font-main); }
+        #stats-content h3 { font-size:0.85rem; font-weight:900; letter-spacing:1px; color: rgba(255,255,255,0.6); margin: 10px 0 6px; text-align:center; font-family: var(--font-main); }
         #view-stats { align-items: center; justify-content: center; gap:10px; padding:30px 20px; z-index:9; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); transform: translateX(110%); opacity: 0; pointer-events: none; overflow-y:auto; }
         #view-stats.slide-in { transform: translateX(0); opacity: 1; pointer-events: auto; }
         .stats-panel {
-            background: var(--panel-bg); border: var(--outline-w) solid var(--panel-border); border-radius: var(--panel-radius);
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.18); border-radius: var(--panel-radius);
             padding: 26px 22px; width: 100%; max-width: 340px; margin: auto;
-            box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.6);
             display: flex; flex-direction: column; align-items: center; gap: 10px;
         }
-        .stats-panel h2 { color: var(--text); text-shadow: none; font-size: 1.3rem; font-weight: 900; text-align: center; margin-bottom: 4px; font-family: var(--font-title); }
+        .stats-panel h2 { color: #fff; text-shadow: none; font-size: 1.3rem; font-weight: 900; text-align: center; margin-bottom: 4px; font-family: var(--font-title); }
         #game-container.zen-mode #resource-row, #game-container.zen-mode #progress-wrap, #game-container.zen-mode #glyph-slots, #game-container.zen-mode #consumable-slots, #game-container.zen-mode #hazard-banner, #game-container.zen-mode #bag-counter { display:none !important; }
 
         #controls-row { display:flex; gap:10px; flex-shrink:0; }
@@ -645,20 +683,24 @@
             align-items: center; padding: 20px 16px 30px; gap: 12px; z-index: 8;
             background: rgba(0,0,0,0.15); overflow-y: auto;
         }
-        #map-header { text-align:center; color: var(--text); font-weight:900; font-size: clamp(0.75rem, 4.2vw, 1.05rem); text-shadow: var(--number-shadow); font-family: var(--font-title); }
+        #map-header { text-align:center; color: var(--bg-text); font-weight:900; font-size: clamp(0.75rem, 4.2vw, 1.05rem); text-shadow: 0 2px 6px rgba(0,0,0,0.4), 0 1px 0 rgba(0,0,0,0.3); font-family: var(--font-title); }
         #map-ladder { display:flex; flex-direction:column; align-items:center; gap:0; width:100%; flex:1; justify-content:center; }
-        .map-node-wrap { display:flex; align-items:center; justify-content: center; gap:12px; width:100%; animation: nodeSlideIn 0.5s ease-out forwards; opacity:0; }
+        .map-node-wrap {
+            display:flex; align-items:center; justify-content: center; gap:12px; width:100%; max-width:360px;
+            animation: nodeSlideIn 0.5s ease-out forwards; opacity:0;
+            background: var(--panel-bg); border: var(--outline-w) solid var(--panel-border); border-radius: var(--panel-radius);
+            padding:10px 16px; box-shadow: var(--readout-shadow);
+        }
         .map-node {
-            width:46px; height:46px; border-radius:50%; background: var(--panel-bg);
+            width:46px; height:46px; border-radius:50%; background: rgba(128,128,128,0.14);
             box-shadow: var(--readout-shadow); display:flex; align-items:center; justify-content:center;
             font-weight:900; font-size:1.1rem; color: var(--text); flex-shrink:0; position:relative;
             border: var(--outline-w) solid var(--panel-border); font-family: var(--font-numeric);
-            text-shadow: var(--number-shadow);
         }
         .map-node.completed { background: var(--accent-1); color: var(--accent-1-text); border-color: var(--accent-1-shadow); }
         .map-node.current { background: var(--accent-3); color: var(--accent-3-text); border-color: var(--accent-3-shadow); animation: nodePulse 2s ease-in-out infinite; }
-        .map-node.upcoming { background: rgba(0,0,0,0.2); color: var(--text-soft); }
-        .map-node-info { flex:0 1 auto; color: var(--text); font-weight:700; font-size:0.85rem; text-shadow:0 1px 4px rgba(0,0,0,0.4); font-family: var(--font-main); }
+        .map-node.upcoming { background: rgba(128,128,128,0.14); color: var(--text-soft); }
+        .map-node-info { flex:0 1 auto; color: var(--text); font-weight:700; font-size:0.85rem; font-family: var(--font-main); }
         .map-connector { width:3px; height:20px; background: var(--panel-border); }
         #btn-start-stage {
             width:100%; max-width:320px; padding:15px; border-radius:var(--btn-radius); font-weight:900; font-size:1.05rem;
@@ -754,7 +796,11 @@
     <div id="view-difficulty" class="view-panel">
         <h2>SELECT MODE</h2>
         <button class="diff-btn diff-easy" id="btn-mode-classic">CLASSIC<br><span class="mode-sub">8 Stages · Shop · Glyphs</span></button>
-        <button class="diff-btn diff-medium" id="btn-mode-daily">DAILY CHALLENGE<br><span class="mode-sub" id="daily-mode-sub">Loading…</span></button>
+        <div class="daily-card">
+            <button class="diff-btn diff-medium" id="btn-mode-daily">DAILY CHALLENGE<br><span class="mode-sub" id="daily-mode-sub">Loading…</span></button>
+            <button class="daily-info-toggle" id="btn-daily-info" type="button" aria-label="Challenge details">ⓘ</button>
+            <div class="daily-info-panel" id="daily-info-panel"><p id="daily-info-text"></p></div>
+        </div>
         <button class="diff-btn diff-hard" id="btn-mode-zen">ZEN<br><span class="mode-sub">Relaxed · Endless · No Economy</span></button>
         <button class="menu-btn" id="btn-back-diff">BACK</button>
     </div>
@@ -767,7 +813,7 @@
         <div id="resource-row">
             <div class="resource-box"><span class="resource-label">HANDS</span><span class="resource-value" id="val-hands">4</span></div>
             <div class="resource-box"><span class="resource-label">REROLLS</span><span class="resource-value" id="val-rerolls">3</span></div>
-            <div class="resource-box"><span class="resource-label">DIAMONDS</span><span class="resource-value" id="val-gold">💎 0</span></div>
+            <div class="resource-box"><span class="resource-label">DIAMONDS</span><span class="resource-value" id="val-gold"><span class="diamond-icon"></span> 0</span></div>
         </div>
         <div id="score-banner">—</div>
         <div id="active-word-line"></div>
@@ -839,7 +885,7 @@
         { id:"wildcard_rune", name:"Wildcard Rune", type:"purple", color:"#A855F7", icon:"✦", desc:"At round start, 1 random tile in active hand becomes Wild." },
         { id:"duplicator", name:"Duplicator", type:"purple", color:"#A855F7", icon:"⧉", desc:"Playing a 5-letter word duplicates its highest-scoring letter into bag." },
         { id:"vowel_shifter", name:"Vowel Shifter", type:"purple", color:"#A855F7", icon:"⇄", desc:"'Y' counts as both Vowel and Consonant for scoring." },
-        { id:"alchemy", name:"Golden Touch", type:"purple", color:"#A855F7", icon:"⚗", desc:"Scoring 100+ Points in a single hand grants +2 💎 to your Bank." }
+        { id:"alchemy", name:"Golden Touch", type:"purple", color:"#A855F7", icon:"⚗", desc:"Scoring 100+ Points in a single hand grants +2 Diamonds to your Bank." }
     ];
     const MAX_GLYPH_SLOTS = 4;
     const BASE_HAND_SIZE = 10;
@@ -857,7 +903,7 @@
     const DAILY_CHALLENGES = [
         { id:1, name:"The E-clipse", desc:"The letter 'E' is completely removed from the starting bag." },
         { id:2, name:"Vowel Drought", desc:"All vowels provide 0 base points." },
-        { id:3, name:"The Heavy Toll", desc:"Discarding tiles costs 💎2 from the bank." },
+        { id:3, name:"The Heavy Toll", desc:"Discarding tiles costs 2 Diamonds from the bank." },
         { id:4, name:"Short Fuse", desc:"You are only given 2 Hands per stage." },
         { id:5, name:"The Sniper", desc:"You can only submit words that are exactly 5 letters long." },
         { id:6, name:"Junk Drawer", desc:"The starting bag is flooded with 5 extra 'Z', 'Q', and 'X' tiles." },
@@ -866,7 +912,7 @@
     function getTodaysChallenge() { return DAILY_CHALLENGES[new Date().getDay()]; }
     const HAZARD_DATABASE = {
         wall: { name:"The Wall", icon:"🧱", desc:"Words under 5 letters score 0 and are rejected." },
-        taxman: { name:"The Taxman", icon:"💰", desc:"Discarding costs 💎2 from the bank." },
+        taxman: { name:"The Taxman", icon:"💰", desc:"Discarding costs 2 Diamonds from the bank." },
         phantom: { name:"The Phantom", icon:"👻", desc:"'E' and 'A' tiles are hidden until placed." },
         anchor: { name:"The Anchor", icon:"⚓", desc:"The first tile you place cannot be removed." }
     };
@@ -1150,9 +1196,9 @@
         if (interest > 0) { G.bank += interest; lines.push(['Interest', interest]); }
         G.records.totalGoldEarned += (base + Math.max(0,G.playsLeft) + Math.max(0,G.rerollsLeft) + interest);
         saveRecords();
-        lines.forEach(([label,val]) => { const row=document.createElement('div'); row.className='payout-row'; row.innerHTML = `<span>${label}</span><span>+💎${val}</span>`; list.appendChild(row); });
+        lines.forEach(([label,val]) => { const row=document.createElement('div'); row.className='payout-row'; row.innerHTML = `<span>${label}</span><span>+<span class="diamond-icon"></span>${val}</span>`; list.appendChild(row); });
         container.appendChild(list);
-        const total = document.createElement('div'); total.className='payout-total'; total.textContent='BANK: 💎'+G.bank; container.appendChild(total);
+        const total = document.createElement('div'); total.className='payout-total'; total.innerHTML='BANK: <span class="diamond-icon"></span>'+G.bank; container.appendChild(total);
         setTimeout(()=>{
             container.classList.remove('show');
             setTimeout(()=>{
@@ -1190,7 +1236,7 @@
     }
     function renderShop(container) {
         container.innerHTML = '';
-        const hint = document.createElement('p'); hint.className='draft-hint'; hint.textContent='SHOP — Bank: 💎'+G.bank; container.appendChild(hint);
+        const hint = document.createElement('p'); hint.className='draft-hint'; hint.innerHTML='SHOP — Bank: <span class="diamond-icon"></span>'+G.bank; container.appendChild(hint);
         const glyphLabel = document.createElement('div'); glyphLabel.className='shop-section-label'; glyphLabel.textContent='GLYPHS'; container.appendChild(glyphLabel);
         if (G.shopOffers.glyphs.length===0) {
             const p=document.createElement('p'); p.className='draft-hint'; p.textContent='All glyph slots full.'; container.appendChild(p);
@@ -1199,7 +1245,7 @@
             G.shopOffers.glyphs.forEach(item=>{
                 const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
                 const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); card.textContent=item.icon;
-                const price=document.createElement('span'); price.className='draft-card-price'; price.textContent='💎'+item.price; card.appendChild(price);
+                const price=document.createElement('span'); price.className='draft-card-price'; price.innerHTML='<span class="diamond-icon"></span>'+item.price; card.appendChild(price);
                 const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=item.name;
                 wrap.appendChild(card); wrap.appendChild(label);
                 wrap.addEventListener('click', ()=>{ AudioEngine.playTap(); renderShopDetail(container, item, 'glyph'); });
@@ -1215,7 +1261,7 @@
             G.shopOffers.consumables.forEach(item=>{
                 const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
                 const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); card.textContent=item.icon;
-                const price=document.createElement('span'); price.className='draft-card-price'; price.textContent='💎'+item.price; card.appendChild(price);
+                const price=document.createElement('span'); price.className='draft-card-price'; price.innerHTML='<span class="diamond-icon"></span>'+item.price; card.appendChild(price);
                 const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=item.name;
                 wrap.appendChild(card); wrap.appendChild(label);
                 wrap.addEventListener('click', ()=>{ AudioEngine.playTap(); renderShopDetail(container, item, 'consumable'); });
@@ -1224,7 +1270,7 @@
             container.appendChild(cGrid);
         }
         const rerollCost = getShopRerollCost();
-        const rerollBtn = document.createElement('button'); rerollBtn.className='draft-btn reroll-btn'; rerollBtn.style.width='100%'; rerollBtn.style.marginTop='10px'; rerollBtn.textContent='REROLL (💎'+rerollCost+')';
+        const rerollBtn = document.createElement('button'); rerollBtn.className='draft-btn reroll-btn'; rerollBtn.style.width='100%'; rerollBtn.style.marginTop='10px'; rerollBtn.innerHTML='REROLL (<span class="diamond-icon"></span>'+rerollCost+')';
         if (G.bank < rerollCost) rerollBtn.disabled = true;
         rerollBtn.addEventListener('click', ()=>rerollShop(container));
         container.appendChild(rerollBtn);
@@ -1238,7 +1284,7 @@
         const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', item.color); icon.textContent=item.icon;
         const name=document.createElement('div'); name.className='draft-detail-name'; name.style.setProperty('--glyph-color', item.color); name.textContent=item.name;
         const desc=document.createElement('div'); desc.className='draft-detail-desc'; desc.textContent=item.desc;
-        const price=document.createElement('div'); price.className='shop-price'; price.textContent='💎'+item.price;
+        const price=document.createElement('div'); price.className='shop-price'; price.innerHTML='<span class="diamond-icon"></span>'+item.price;
         const actions=document.createElement('div'); actions.className='draft-detail-actions';
         const backBtn=document.createElement('button'); backBtn.className='menu-btn'; backBtn.textContent='BACK';
         backBtn.addEventListener('click', ()=>{ AudioEngine.playTap(); renderShop(container); });
@@ -1538,7 +1584,7 @@
         if (G.gameMode==='daily') challengeIcon.classList.remove('hidden'); else challengeIcon.classList.add('hidden');
         const p=calcScore();
         document.getElementById('val-points').textContent=p.totalChips; document.getElementById('val-mults').textContent=p.totalMult.toFixed(1);
-        document.getElementById('val-hands').textContent=G.playsLeft; document.getElementById('val-rerolls').textContent=G.rerollsLeft; document.getElementById('val-gold').textContent='💎 '+G.bank;
+        document.getElementById('val-hands').textContent=G.playsLeft; document.getElementById('val-rerolls').textContent=G.rerollsLeft; document.getElementById('val-gold').innerHTML='<span class="diamond-icon"></span> '+G.bank;
         const sb=document.getElementById('score-banner'); if(p.occ===0) sb.textContent='—'; else if(!p.valid) sb.textContent='INVALID WORD'; else sb.textContent=p.totalChips+' × '+p.totalMult.toFixed(1)+' = '+p.totalScore+' PTS';
         sb.classList.toggle('invalid',p.occ>0&&!p.valid);
         const awl=document.getElementById('active-word-line'); awl.innerHTML='';
@@ -1581,7 +1627,8 @@
     function slideBack(showId, hideId) { const he=document.getElementById(hideId),se=document.getElementById(showId); if(he){he.classList.remove('slide-in');} if(se){se.classList.remove('hidden','slide-left');se.classList.add('slide-in');} setTimeout(()=>{if(he)he.classList.add('hidden');},400); }
 
     function bind() {
-        document.getElementById('btn-play').addEventListener('click',()=>{ const c=getTodaysChallenge(); document.getElementById('daily-mode-sub').textContent=c.name+' — '+c.desc; slideToView('view-difficulty','view-menu'); });
+        document.getElementById('btn-play').addEventListener('click',()=>{ const c=getTodaysChallenge(); document.getElementById('daily-mode-sub').textContent=c.name; document.getElementById('daily-info-text').textContent=c.desc; document.getElementById('daily-info-panel').classList.remove('open'); slideToView('view-difficulty','view-menu'); });
+        document.getElementById('btn-daily-info').addEventListener('click',(e)=>{ e.stopPropagation(); document.getElementById('daily-info-panel').classList.toggle('open'); });
         document.getElementById('challenge-icon').addEventListener('click',(e)=>{ e.stopPropagation(); showChallengeInfo(); });
         document.getElementById('btn-menu-themes').addEventListener('click',()=>slideToView('view-themes','view-menu'));
         document.getElementById('btn-menu-options').addEventListener('click',()=>document.getElementById('options-modal').classList.add('show'));
@@ -1674,7 +1721,7 @@
         const hw = G.records.highestWord;
         const rows = [
             ['Highest Scoring Word', hw ? (hw.word+' — '+hw.score.toLocaleString()+' pts') : '—'],
-            ['Total Diamonds Earned', '💎 '+G.records.totalGoldEarned.toLocaleString()],
+            ['Total Diamonds Earned', '<span class="diamond-icon"></span> '+G.records.totalGoldEarned.toLocaleString()],
             ['Most Stages Cleared', G.records.mostStagesCleared]
         ];
         rows.forEach(([label,val])=>{ const row=document.createElement('div'); row.className='stats-row'; row.innerHTML=`<span>${label}</span><span>${val}</span>`; c.appendChild(row); });
