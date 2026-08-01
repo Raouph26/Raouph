@@ -292,21 +292,28 @@
         @keyframes typewriterBgDrift { 0% { background-position: 0% 0%, 50% 40%; } 50% { background-position: 100% 100%, 50% 40%; } 100% { background-position: 0% 0%, 50% 40%; } }
         @keyframes notebookDrift { 0% { background-position: 0 0, 0 0; } 100% { background-position: 0 340px, 0 0; } }
         html[data-theme="phantom"] #game-container {
-            background-image: radial-gradient(ellipse at 30% 20%, #4A0F5C 0%, transparent 55%), linear-gradient(155deg, #2B0A1F 0%, #1B0E2B 45%, #3A0F1F 100%), var(--bg-vignette);
-            background-size: 160% 160%, 260% 260%, 160% 160%;
-            background-position: 30% 20%, 0% 0%, 50% 30%;
-            animation: phantomBgShift 18s ease-in-out infinite;
-        }
-        html[data-theme="phantom"] #game-container.bg-pulse { animation-duration: 5s; }
-        html[data-theme="phantom"] #game-container::after {
             background-image:
-                repeating-linear-gradient(-12deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 26px),
-                repeating-linear-gradient(72deg, rgba(0,0,0,0.2) 0px, rgba(0,0,0,0.2) 3px, transparent 3px, transparent 40px);
-            animation: phantomGrainDrift 9s linear infinite;
-            mix-blend-mode: overlay;
+                radial-gradient(circle at 18% 12%, rgba(120,30,140,0.65) 0%, transparent 42%),
+                radial-gradient(circle at 82% 22%, rgba(30,35,90,0.6) 0%, transparent 46%),
+                radial-gradient(circle at 25% 82%, rgba(140,15,70,0.5) 0%, transparent 50%),
+                radial-gradient(circle at 78% 88%, rgba(20,25,75,0.55) 0%, transparent 48%),
+                radial-gradient(circle at 50% 50%, rgba(60,15,80,0.4) 0%, transparent 60%),
+                linear-gradient(155deg, #24081C 0%, #190B26 45%, #150E22 100%),
+                var(--bg-vignette);
+            background-size: 130% 130%, 140% 140%, 150% 150%, 145% 145%, 160% 160%, 260% 260%, 160% 160%;
+            background-position: 18% 12%, 82% 22%, 25% 82%, 78% 88%, 50% 50%, 0% 0%, 50% 30%;
+            animation: phantomBgShift 24s ease-in-out infinite;
         }
-        @keyframes phantomBgShift { 0% { background-position: 30% 20%, 0% 0%, 50% 30%; } 50% { background-position: 60% 40%, 100% 100%, 50% 30%; } 100% { background-position: 30% 20%, 0% 0%, 50% 30%; } }
-        @keyframes phantomGrainDrift { 0% { background-position: 0 0, 0 0; } 100% { background-position: 40px 26px, -50px 30px; } }
+        html[data-theme="phantom"] #game-container.bg-pulse { animation-duration: 6s; }
+        html[data-theme="phantom"] #game-container::after {
+            background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScyMDAnIGhlaWdodD0nMjAwJz48ZmlsdGVyIGlkPSduJz48ZmVUdXJidWxlbmNlIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nMC44NScgbnVtT2N0YXZlcz0nMycgc3RpdGNoVGlsZXM9J3N0aXRjaCcgcmVzdWx0PSdub2lzZScvPjxmZUNvbG9yTWF0cml4IGluPSdub2lzZScgdHlwZT0nbWF0cml4JyB2YWx1ZXM9JzAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAuNTUgMCcvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPScxMDAlJyBoZWlnaHQ9JzEwMCUnIGZpbHRlcj0ndXJsKCNuKScvPjwvc3ZnPg==");
+            background-size: 180px 180px;
+            mix-blend-mode: overlay;
+            opacity: 0.95;
+            animation: phantomGrainDrift 1.2s steps(4) infinite;
+        }
+        @keyframes phantomBgShift { 0% { background-position: 18% 12%, 82% 22%, 25% 82%, 78% 88%, 50% 50%, 0% 0%, 50% 30%; } 50% { background-position: 28% 20%, 70% 32%, 35% 72%, 66% 78%, 55% 45%, 100% 100%, 50% 30%; } 100% { background-position: 18% 12%, 82% 22%, 25% 82%, 78% 88%, 50% 50%, 0% 0%, 50% 30%; } }
+        @keyframes phantomGrainDrift { 0% { background-position: 0 0; } 25% { background-position: 40px -20px; } 50% { background-position: -30px 35px; } 75% { background-position: 20px 50px; } 100% { background-position: 0 0; } }
         @property --wl-angle { syntax: '<angle>'; inherits: false; initial-value: 135deg; }
         html[data-theme="wordling"] #game-container {
             background-image: linear-gradient(var(--wl-angle, 135deg), var(--wl-split-1) 50%, var(--wl-split-2) 50%), var(--bg-vignette);
@@ -362,7 +369,23 @@
         }
         /* ===== PHANTOM THEME: chaotic punk-rock skin ===== */
         @keyframes phantomTitleBounce { 0%,100% { transform: skewX(-8deg) rotate(-2deg) translateY(0); } 50% { transform: skewX(-8deg) rotate(-2deg) translateY(-6px); } }
-        html[data-theme="phantom"] #view-menu h1 { animation-name: phantomTitleBounce; letter-spacing: -1px; }
+        html[data-theme="phantom"] #view-menu h1 {
+            animation-name: phantomTitleBounce; letter-spacing: -1px;
+            position: relative; z-index: 1; padding: 14px 26px; margin: 0 auto;
+            color: #FFFFFF; -webkit-text-stroke: 0; text-shadow: 4px 4px 0 #000, -3px 0 0 var(--accent-1), 3px 0 0 var(--accent-2), 0 0 30px rgba(244,255,61,0.5);
+        }
+        html[data-theme="phantom"] #view-menu h1::before {
+            content: ""; position: absolute; inset: -8px -22px -14px -22px; z-index: -1;
+            background: #0A0A0C; border: 3px solid #fff;
+            clip-path: polygon(3% 12%, 18% 0%, 58% 5%, 88% 0%, 100% 20%, 95% 52%, 100% 82%, 82% 100%, 46% 93%, 12% 100%, 0% 68%, 5% 34%);
+            transform: rotate(-2deg);
+            box-shadow: 7px 7px 0 0 rgba(0,0,0,0.7);
+        }
+        html[data-theme="phantom"] #view-menu h1 .title-letter { display: inline-block; }
+        html[data-theme="phantom"] #view-menu h1 .title-letter:nth-child(4n+1) { transform: translateY(-4px) rotate(-6deg); color: var(--accent-3); }
+        html[data-theme="phantom"] #view-menu h1 .title-letter:nth-child(4n+2) { transform: translateY(2px) rotate(5deg); }
+        html[data-theme="phantom"] #view-menu h1 .title-letter:nth-child(4n+3) { transform: translateY(-2px) rotate(-4deg); color: var(--accent-1); }
+        html[data-theme="phantom"] #view-menu h1 .title-letter:nth-child(4n+4) { transform: translateY(3px) rotate(6deg); }
         html[data-theme="phantom"] #header { gap: 8px; }
         html[data-theme="phantom"] .header-pill,
         html[data-theme="phantom"] .menu-btn,
@@ -379,8 +402,11 @@
         html[data-theme="phantom"] #score-pill { border-radius: 0; clip-path: polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%); }
         html[data-theme="phantom"] .hud-box { transform: skewX(-8deg) rotate(-1deg); clip-path: polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%); }
         html[data-theme="phantom"] .hud-box:nth-child(3) { transform: skewX(-8deg) rotate(1deg); }
-        html[data-theme="phantom"] .resource-box { transform: skewX(-8deg); clip-path: polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%); background: rgba(0,0,0,0.55); }
-        html[data-theme="phantom"] .resource-label, html[data-theme="phantom"] .resource-value { display:inline-block; transform: skewX(8deg); }
+        html[data-theme="phantom"] .resource-box { transform: skewX(-8deg); clip-path: polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%); background: #0A0A0C; border-width: 3px; }
+        html[data-theme="phantom"] .resource-label, html[data-theme="phantom"] .resource-value { display:inline-block; transform: skewX(8deg); font-weight: 900; }
+        html[data-theme="phantom"] .resource-box:nth-child(1) .resource-label, html[data-theme="phantom"] .resource-box:nth-child(1) .resource-value { color: var(--accent-1); }
+        html[data-theme="phantom"] .resource-box:nth-child(2) .resource-label, html[data-theme="phantom"] .resource-box:nth-child(2) .resource-value { color: var(--accent-2); }
+        html[data-theme="phantom"] .resource-box:nth-child(3) .resource-label, html[data-theme="phantom"] .resource-box:nth-child(3) .resource-value { color: var(--accent-3); }
         html[data-theme="phantom"] #score-banner { transform: skewX(-8deg); font-weight: 900; letter-spacing: -0.3px; }
         html[data-theme="phantom"] .run-info-band,
         html[data-theme="phantom"] .modal-inner h3 {
@@ -415,6 +441,10 @@
         html[data-theme="phantom"] .theme-card:nth-child(4):active { transform: rotate(-1.5deg) translateY(5px); }
         html[data-theme="phantom"] .theme-card { border-radius: 0; clip-path: polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%); }
         html[data-theme="phantom"] .modal-inner { border-radius: 0; clip-path: polygon(0 1%, 100% 0, 100% 99%, 0 100%); }
+        html[data-theme="phantom"] .daily-info-panel { background: #0A0A0C; border: 2px solid #fff; clip-path: polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%); }
+        html[data-theme="phantom"] .daily-info-toggle { background: #0A0A0C; border-color: #fff; }
+        html[data-theme="phantom"] .run-info-row { background: #0A0A0C; border: 2px solid #fff; }
+        html[data-theme="phantom"] .info-btn { border-radius: 0; clip-path: polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%); }
         #bg-overlay {
             position: absolute; inset: 0; pointer-events: none; z-index: 0;
             background: transparent; transition: background 0.5s ease;
@@ -2212,7 +2242,8 @@
         rows.forEach(([label,val])=>{ const row=document.createElement('div'); row.className='stats-row'; row.innerHTML=`<span>${label}</span><span>${val}</span>`; c.appendChild(row); });
     }
     function updateContinueButtonVisibility() { document.getElementById('btn-continue-run').classList.toggle('hidden', !hasActiveRun()); }
-    function boot(){try{G.currentTheme=localStorage.getItem('wordling-theme')||'wordling';}catch(e){G.currentTheme='wordling';}applyTheme(G.currentTheme);updateThemeButtons();let savedPalette;try{savedPalette=localStorage.getItem('wordling-palette')||'coral-sky';}catch(e){savedPalette='coral-sky';}applyPalette(savedPalette);loadPersistence();updateContinueButtonVisibility();initDict();bind();}
+    function wrapTitleLetters(){ const h1=document.querySelector('#view-menu h1'); if(!h1||h1.dataset.wrapped) return; const text=h1.textContent; h1.innerHTML=text.split('').map(ch=>ch===' '?' ':'<span class="title-letter">'+ch+'</span>').join(''); h1.dataset.wrapped='1'; }
+    function boot(){try{G.currentTheme=localStorage.getItem('wordling-theme')||'wordling';}catch(e){G.currentTheme='wordling';}applyTheme(G.currentTheme);updateThemeButtons();let savedPalette;try{savedPalette=localStorage.getItem('wordling-palette')||'coral-sky';}catch(e){savedPalette='coral-sky';}applyPalette(savedPalette);loadPersistence();updateContinueButtonVisibility();initDict();bind();wrapTitleLetters();}
     document.addEventListener('visibilitychange', () => { if(document.hidden){ if(G.dragData){ cleanupDrag(); render(); } } else { const c=document.getElementById('game-container'); if(c){ c.classList.add('anim-kick'); void c.offsetHeight; c.classList.remove('anim-kick'); } } });
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 })();
