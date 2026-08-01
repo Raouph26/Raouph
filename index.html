@@ -394,8 +394,7 @@
         .diff-medium:active { box-shadow: 0 0 0 0 var(--accent-3-shadow); }
         .diff-hard { background: var(--accent-2); border-color: var(--accent-2-shadow); color: var(--accent-2-text); box-shadow: 0 var(--press-depth) 0 0 var(--accent-2-shadow); }
         .diff-hard:active { box-shadow: 0 0 0 0 var(--accent-2-shadow); }
-        .diff-extreme { background: #0a0c0e; border-color: #000000; color: #f1f1f5; box-shadow: 0 var(--press-depth) 0 0 #000000; }
-        .diff-extreme:active { box-shadow: 0 0 0 0 #000000; }
+        .mode-sub { display:block; font-size:0.65rem; font-weight:700; letter-spacing:0.2px; opacity:0.85; margin-top:4px; }
 
         /* Theme picker: preview mini-mockup of each full reskin, not just a color swatch */
         .theme-card {
@@ -551,6 +550,64 @@
         html[data-theme="typewriter"] .glyph-slot.has-glyph, html[data-theme="typewriter"] .draft-card.has-glyph, html[data-theme="typewriter"] .draft-detail-icon.has-glyph {
             border: 2px dashed var(--glyph-color, var(--panel-border));
         }
+        #consumable-slots { display:flex; gap:10px; justify-content:center; padding:2px 0 8px; flex-shrink:0; }
+        #consumable-slots:empty { display:none; }
+        .tile-inner.anchor-locked::after {
+            content: '⚓'; position:absolute; top:2px; right:2px; font-size:0.6rem; line-height:1; z-index:2;
+        }
+        .tile-inner.phantom-hidden { background: var(--panel-bg) !important; border-style: dashed !important; }
+        .tile-inner.phantom-hidden .tile-letter { color: var(--text-soft); }
+        #hazard-banner {
+            display:flex; align-items:center; justify-content:center; gap:6px; flex-shrink:0;
+            background: var(--accent-2); color: var(--accent-2-text); border: var(--outline-w) solid var(--accent-2-shadow);
+            border-radius: var(--radius-sm); padding:6px 10px; font-size:0.7rem; font-weight:900;
+            letter-spacing:0.4px; margin-bottom:2px; box-shadow: 0 3px 0 0 var(--accent-2-shadow);
+            font-family: var(--font-main); text-align:center;
+        }
+        .shop-section-label {
+            font-size: 0.75rem; font-weight: 900; letter-spacing: 1.5px; color: var(--text-soft);
+            font-family: var(--font-main); text-align:center; margin: 10px 0 2px;
+        }
+        .shop-price {
+            font-size: 1.1rem; font-weight: 900; font-family: var(--font-numeric); color: var(--accent-3);
+            text-shadow: var(--number-shadow);
+        }
+        .draft-card-price {
+            position:absolute; bottom:2px; right:4px; font-size:0.6rem; font-weight:900; color: var(--text-soft);
+            font-family: var(--font-numeric);
+        }
+        .draft-card { position: relative; }
+        .payout-list { width:100%; display:flex; flex-direction:column; gap:6px; }
+        .payout-row {
+            display:flex; justify-content:space-between; font-size:0.85rem; font-weight:700;
+            color: var(--text); font-family: var(--font-main); background: rgba(0,0,0,0.06);
+            padding:6px 10px; border-radius: var(--radius-sm);
+        }
+        .payout-total {
+            margin-top:6px; text-align:center; font-size:1.2rem; font-weight:900; color: var(--accent-3);
+            font-family: var(--font-numeric); text-shadow: var(--number-shadow);
+        }
+        .letter-picker-grid { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-width:280px; }
+        .letter-pick-chip {
+            width:52px; height:52px; border-radius: var(--panel-radius); background: var(--panel-bg);
+            border: var(--outline-w) solid var(--panel-border); box-shadow: var(--readout-shadow);
+            display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer;
+            font-family: var(--font-numeric); color: var(--text); transition: transform 0.1s ease, border-color 0.1s ease;
+        }
+        .letter-pick-chip:active { transform: translateY(2px); }
+        .letter-pick-chip.selected { border-color: var(--accent-1); border-width:3px; box-shadow: 0 0 0 2px rgba(var(--accent-3-rgb),0.3), var(--readout-shadow); }
+        .letter-pick-letter { font-size:1.2rem; font-weight:900; line-height:1; }
+        .letter-pick-count { font-size:0.6rem; color: var(--text-soft); font-weight:700; margin-top:2px; }
+        .stats-row {
+            display:flex; justify-content:space-between; gap:8px; font-size:0.82rem; font-weight:700;
+            color: var(--text); font-family: var(--font-main); background: rgba(0,0,0,0.06);
+            padding:8px 12px; border-radius: var(--radius-sm); margin-bottom:6px;
+        }
+        #stats-content { width:100%; }
+        #stats-content h3 { font-size:0.85rem; font-weight:900; letter-spacing:1px; color: var(--text-soft); margin: 10px 0 6px; text-align:center; font-family: var(--font-main); }
+        #view-stats { align-items: center; justify-content: center; gap:10px; padding:30px 20px; z-index:9; background: rgba(0,0,0,0.1); transform: translateX(110%); opacity: 0; pointer-events: none; overflow-y:auto; }
+        #view-stats.slide-in { transform: translateX(0); opacity: 1; pointer-events: auto; }
+        #game-container.zen-mode #resource-row, #game-container.zen-mode #progress-wrap, #game-container.zen-mode #glyph-slots, #game-container.zen-mode #consumable-slots, #game-container.zen-mode #hazard-banner, #game-container.zen-mode #bag-counter { display:none !important; }
 
         #controls-row { display:flex; gap:10px; flex-shrink:0; }
         .btn-action {
@@ -632,7 +689,12 @@
 <body>
 <div id="game-container">
     <div id="bg-overlay"></div>
-    <div id="view-menu" class="view-panel"><h1>WORDLING!</h1><button class="menu-btn play-btn" id="btn-play">▶ PLAY</button><button class="menu-btn themes-btn" id="btn-menu-themes">◆ THEMES</button><button class="menu-btn settings-btn" id="btn-menu-options">⚙ SETTINGS</button><button class="menu-btn store-btn" disabled>STORE · SOON</button></div>
+    <div id="view-menu" class="view-panel"><h1>WORDLING!</h1><button class="menu-btn play-btn" id="btn-play">▶ PLAY</button><button class="menu-btn themes-btn" id="btn-menu-themes">◆ THEMES</button><button class="menu-btn settings-btn" id="btn-menu-options">⚙ SETTINGS</button><button class="menu-btn settings-btn" id="btn-menu-stats">★ STATS</button><button class="menu-btn store-btn" disabled>STORE · SOON</button></div>
+    <div id="view-stats" class="view-panel hidden">
+        <h2>STATS</h2>
+        <div id="stats-content"></div>
+        <button class="menu-btn" id="btn-back-stats" style="width:100%; margin-top:10px;">BACK</button>
+    </div>
     <div id="view-themes" class="view-panel">
         <h2>CHOOSE THEME</h2>
         <div class="theme-card card-wordling-light active" data-theme="wordling-light">
@@ -670,10 +732,17 @@
         </div>
         <button class="menu-btn" id="btn-back-themes" style="width:100%; margin-top:10px;">BACK</button>
     </div>
-    <div id="view-difficulty" class="view-panel"><h2>CHOOSE LEVEL</h2><button class="diff-btn diff-easy" data-diff="easy">EASY · 4 STAGES</button><button class="diff-btn diff-medium" data-diff="medium">MEDIUM · 8 STAGES</button><button class="diff-btn diff-hard" data-diff="hard">HARD · 8 STAGES</button><button class="diff-btn diff-extreme" data-diff="extreme">EXTREME · 12 STAGES</button><button class="menu-btn" id="btn-back-diff">BACK</button></div>
+    <div id="view-difficulty" class="view-panel">
+        <h2>SELECT MODE</h2>
+        <button class="diff-btn diff-easy" id="btn-mode-classic">CLASSIC<br><span class="mode-sub">8 Stages · Shop · Glyphs</span></button>
+        <button class="diff-btn diff-medium" id="btn-mode-daily">DAILY CHALLENGE<br><span class="mode-sub" id="daily-mode-sub">Loading…</span></button>
+        <button class="diff-btn diff-hard" id="btn-mode-zen">ZEN<br><span class="mode-sub">Relaxed · Endless · No Economy</span></button>
+        <button class="menu-btn" id="btn-back-diff">BACK</button>
+    </div>
     <div id="view-map" class="view-panel hidden"><div id="map-header"></div><div id="map-ladder"></div><button id="btn-start-stage">START STAGE</button></div>
     <div id="view-game" class="view-panel hidden">
         <div id="header"><button id="btn-back-menu">BACK</button><span id="stage-text">Stage 1/4</span><span id="bag-counter">BAG: 98</span><button id="btn-settings">⚙</button></div>
+        <div id="hazard-banner" class="hidden"></div>
         <div id="top-info"><div id="progress-wrap"><div id="progress-fill"></div></div><div id="score-pill">0 / 40</div></div>
         <div id="hud-row"><div class="hud-box" id="box-points"><div class="hud-label">POINTS</div><div class="hud-value" id="val-points">0</div></div><span id="hud-times">&times;</span><div class="hud-box" id="box-mults"><div class="hud-label">MULTIS</div><div class="hud-value" id="val-mults">1.0</div></div></div>
         <div id="resource-row">
@@ -685,6 +754,7 @@
         <div id="active-word-line"></div>
         <div id="hand-rack"></div>
         <div id="glyph-slots"></div>
+        <div id="consumable-slots"></div>
         <div id="controls-row"><button class="btn-action" id="btn-shuffle-hand">SHUFFLE</button><button class="btn-action" id="btn-clear">CLEAR</button><button class="btn-action" id="btn-reroll">REROLL</button><button class="btn-action" id="btn-submit">SUBMIT</button></div>
     </div>
     <div id="view-draft" class="view-panel hidden"></div>
@@ -734,12 +804,6 @@
     function shuffle(arr) { const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
     function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
-    const DIFFICULTIES = {
-        easy: { name:'EASY', stages:4, targets:[0, 300, 1200, 5000, 20000] },
-        medium: { name:'MEDIUM', stages:8, targets:[0, 300, 800, 2000, 5000, 12000, 30000, 75000, 200000] },
-        hard: { name:'HARD', stages:8, targets:[0, 300, 800, 2000, 5000, 12000, 30000, 75000, 200000] },
-        extreme: { name:'EXTREME', stages:12, targets:[0, 300, 800, 2000, 5000, 12000, 30000, 75000, 200000, 400000, 800000, 1500000, 3000000] }
-    };
     const GLYPH_DATABASE = [
         { id:"scavenger", name:"The Scavenger", type:"green", color:"#22C55E", icon:"↺", desc:"+2 Discards per stage." },
         { id:"perfectionist", name:"The Perfectionist", type:"green", color:"#22C55E", icon:"✓", desc:"+1 Hand per stage." },
@@ -756,10 +820,36 @@
         { id:"wildcard_rune", name:"Wildcard Rune", type:"purple", color:"#A855F7", icon:"✦", desc:"At round start, 1 random tile in active hand becomes Wild." },
         { id:"duplicator", name:"Duplicator", type:"purple", color:"#A855F7", icon:"⧉", desc:"Playing a 5-letter word duplicates its highest-scoring letter into bag." },
         { id:"vowel_shifter", name:"Vowel Shifter", type:"purple", color:"#A855F7", icon:"⇄", desc:"'Y' counts as both Vowel and Consonant for scoring." },
-        { id:"alchemy", name:"Golden Touch", type:"purple", color:"#A855F7", icon:"⚗", desc:"Scoring 100+ Points in a single hand grants +2 Bag Gold." }
+        { id:"alchemy", name:"Golden Touch", type:"purple", color:"#A855F7", icon:"⚗", desc:"Scoring 100+ Points in a single hand grants +2 Bank Gold." }
     ];
     const MAX_GLYPH_SLOTS = 4;
     const BASE_HAND_SIZE = 10;
+    const CONSUMABLE_COLOR = "#06B6D4";
+    const CONSUMABLE_DATABASE = [
+        { id:"void_seal", name:"Void Seal", icon:"⊘", color:CONSUMABLE_COLOR, desc:"Permanently remove up to 2 letter types from your bag." },
+        { id:"gold_ink", name:"Gold Ink", icon:"✪", color:CONSUMABLE_COLOR, desc:"Mark 1 letter type gold — that tile grants +20 Base Points whenever played." },
+        { id:"transmuter", name:"Transmuter", icon:"⇌", color:CONSUMABLE_COLOR, desc:"Convert 1 Consonant tile in your bag into a Vowel of your choice." },
+        { id:"cloner", name:"Cloner", icon:"⧉", color:CONSUMABLE_COLOR, desc:"Duplicate an existing tile in your bag." }
+    ];
+    const MAX_CONSUMABLES = 2;
+    const SHOP_PRICES = { glyph:6, void_seal:3, gold_ink:5, transmuter:4, cloner:5 };
+    const CLASSIC_STAGE_TARGETS = [0, 300, 800, 2000, 5000, 12000, 30000, 75000, 200000];
+    const DAILY_CHALLENGES = [
+        { id:1, name:"The E-clipse", desc:"The letter 'E' is completely removed from the starting bag." },
+        { id:2, name:"Vowel Drought", desc:"All vowels provide 0 base points." },
+        { id:3, name:"The Heavy Toll", desc:"Discarding tiles costs $2 from the bank." },
+        { id:4, name:"Short Fuse", desc:"You are only given 2 Hands per stage." },
+        { id:5, name:"The Sniper", desc:"You can only submit words that are exactly 5 letters long." },
+        { id:6, name:"Junk Drawer", desc:"The starting bag is flooded with 5 extra 'Z', 'Q', and 'X' tiles." },
+        { id:7, name:"Inflation", desc:"All items in the Shop cost double their normal price." }
+    ];
+    function getTodaysChallenge() { return DAILY_CHALLENGES[new Date().getDay()]; }
+    const HAZARD_DATABASE = {
+        wall: { name:"The Wall", icon:"🧱", desc:"Words under 5 letters score 0 and are rejected." },
+        taxman: { name:"The Taxman", icon:"💰", desc:"Discarding costs $2 from the bank." },
+        phantom: { name:"The Phantom", icon:"👻", desc:"'E' and 'A' tiles are hidden until placed." },
+        anchor: { name:"The Anchor", icon:"⚓", desc:"The first tile you place cannot be removed." }
+    };
     const VOWEL_LETTERS = new Set(['A','E','I','O','U']);
     const RARE_LETTERS = new Set(['Q','X','Z','J','V']);
     function isVowelLetter(letter) { if(letter==='Y'&&GlyphManager.hasGlyph('vowel_shifter')) return true; return VOWEL_LETTERS.has(letter); }
@@ -821,7 +911,7 @@
             }
         },
         onWordScored(word, finalScore, playedTiles) {
-            if (this.hasGlyph('alchemy') && finalScore>=100) G.bagGold += 2;
+            if (this.hasGlyph('alchemy') && finalScore>=100) G.bank += 2;
             if (this.hasGlyph('duplicator') && word && word.length===5 && playedTiles && playedTiles.length) {
                 const normalTiles = playedTiles.filter(t=>t&&t.type==='normal');
                 if (normalTiles.length) {
@@ -833,23 +923,40 @@
     };
 
     const G = {
-        difficulty:'medium', currentStage:1, stageTargets:DIFFICULTIES.medium.targets, totalStages:DIFFICULTIES.medium.stages,
+        currentStage:1, stageTargets:[...CLASSIC_STAGE_TARGETS], totalStages:8,
         currentScore:0, playsLeft:4, rerollsLeft:3, shakeStrength:100, currentTheme:'wordling-light',
         hand:[], activeWord:[], tileBag:[], discardPile:[], removedLetters:new Set(), stageScores:[],
-        equippedGlyphs:[], bagGold:0, recyclerUsedThisStage:false, dictSet:new Set(), modalType:null, isAnimating:false, rerollMode:false, rerollMarks:new Set(), gameStarted:false,
-        draftChoices:null, dragData:null
+        equippedGlyphs:[], bank:0, recyclerUsedThisStage:false, dictSet:new Set(), modalType:null, isAnimating:false, rerollMode:false, rerollMarks:new Set(), gameStarted:false,
+        draftChoices:null, dragData:null,
+        gameMode:'classic', dailyChallenge:null, isEndless:false, consumables:[], activeHazard:null, anchorTileId:null,
+        leaderboard:[], records:{highestWord:null, totalGoldEarned:0, mostStagesCleared:0}
     };
 
     function assignRandomAura() { const r=Math.random(); if(r<0.15) return 'blue'; if(r<0.22) return 'red'; if(r<0.26) return 'gold'; return null; }
+    function generateRandomTile() { const totalWeight=TILE_DIST.reduce((s,d)=>s+d.qty,0); let r=Math.random()*totalWeight; for(const d of TILE_DIST){ r-=d.qty; if(r<=0) return {id:'t_zen_'+Math.random().toString(36).slice(2,11)+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), letter:d.letter, chips:d.chips, type:'normal', aura:assignRandomAura()}; } const f=TILE_DIST[0]; return {id:'t_zen_fallback_'+Date.now(), letter:f.letter, chips:f.chips, type:'normal', aura:null}; }
     function buildInitialBag() { const tiles=[]; TILE_DIST.forEach(({letter,chips,qty})=>{ if(G.removedLetters.has(letter)) return; for(let i=0;i<qty;i++) tiles.push({id:'t_'+Math.random().toString(36).slice(2,11)+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), letter, chips, type:'normal', aura: assignRandomAura()}); }); tiles.push({id:'t_*_1', letter:'*', chips:0, type:'wildcard'}); tiles.push({id:'t_!_1', letter:'!', chips:0, type:'finisher'}); return shuffle(tiles); }
-    function drawToHand() { while(G.hand.filter(t=>t!==null).length < getHandSize()){ if(G.tileBag.length===0) { if(G.discardPile.length===0) break; G.tileBag = shuffle(G.discardPile); G.discardPile = []; } const tile = G.tileBag.pop(); const emptyIdx = G.hand.indexOf(null); if(emptyIdx!==-1) G.hand[emptyIdx] = tile; else G.hand.push(tile); } document.getElementById('bag-counter').textContent = 'BAG: '+G.tileBag.length; }
-    function resetStageState() { G.currentScore=0; G.playsLeft=4; G.rerollsLeft=3; G.activeWord=[]; G.hand=[]; G.isAnimating=false; G.rerollMode=false; G.rerollMarks.clear(); drawToHand(); }
-    function startRun() { G.removedLetters = new Set(); G.equippedGlyphs = []; G.bagGold = 0; G.stageScores = []; G.tileBag = buildInitialBag(); G.discardPile = []; G.currentStage = 1; resetStageState(); }
+    function drawToHand() { while(G.hand.filter(t=>t!==null).length < getHandSize()){ let tile; if(G.gameMode==='zen'){ tile=generateRandomTile(); } else { if(G.tileBag.length===0) { if(G.discardPile.length===0) break; G.tileBag = shuffle(G.discardPile); G.discardPile = []; } tile = G.tileBag.pop(); } const emptyIdx = G.hand.indexOf(null); if(emptyIdx!==-1) G.hand[emptyIdx] = tile; else G.hand.push(tile); } document.getElementById('bag-counter').textContent = G.gameMode==='zen' ? 'BAG: ∞' : 'BAG: '+G.tileBag.length; }
+    function resetStageState() { G.currentScore=0; G.playsLeft=(G.gameMode==='daily'&&G.dailyChallenge===4)?2:4; G.rerollsLeft=3; G.activeWord=[]; G.hand=[]; G.isAnimating=false; G.rerollMode=false; G.rerollMarks.clear(); G.anchorTileId=null; drawToHand(); }
+    function startRun() {
+        G.removedLetters = new Set();
+        if (G.gameMode==='daily' && G.dailyChallenge===1) G.removedLetters.add('E');
+        G.equippedGlyphs = []; G.bank = 0; G.consumables = []; G.activeHazard = null; G.anchorTileId = null; G.isEndless = false;
+        G.stageScores = [];
+        G.tileBag = buildInitialBag();
+        if (G.gameMode==='daily' && G.dailyChallenge===6) {
+            ['Z','Q','X'].forEach(l => { const dist=TILE_DIST.find(d=>d.letter===l); for(let i=0;i<5;i++) G.tileBag.push({id:'t_junk_'+Math.random().toString(36).slice(2,11)+'_'+Date.now()+'_'+i, letter:l, chips:dist.chips, type:'normal', aura:assignRandomAura()}); });
+            G.tileBag = shuffle(G.tileBag);
+        }
+        G.discardPile = [];
+        G.currentStage = 1;
+        resetStageState();
+    }
     function getLengthBaseChips(l) { if(l>=7) return 300; if(l===6) return 150; if(l===5) return 80; if(l===4) return 40; if(l===3) return 20; return 0; }
     function getLengthBaseMult(l) { if(l>=7) return 8; if(l===6) return 5; if(l===5) return 3; if(l===4) return 2; if(l===3) return 1; return 1; }
     function calcScore() {
         let totalChips=0, hasWildcard=false; const letters=[];
-        G.activeWord.forEach(t=>{ if(t.type==='wildcard'){ hasWildcard=true; return; } let chip=t.chips||0; if(t.aura==='blue') chip+=10; if(t.aura==='gold') chip*=2; totalChips+=chip; letters.push(t.letter); });
+        const vowelDrought = G.gameMode==='daily' && G.dailyChallenge===2;
+        G.activeWord.forEach(t=>{ if(t.type==='wildcard'){ hasWildcard=true; return; } let chip = (vowelDrought && VOWEL_LETTERS.has(t.letter)) ? 0 : (t.chips||0); if(t.aura==='blue') chip+=10; if(t.aura==='gold') chip*=2; if(t.goldInk) chip+=20; totalChips+=chip; letters.push(t.letter); });
         const length=G.activeWord.length; const baseChips=getLengthBaseChips(length); const baseMult=getLengthBaseMult(length);
         totalChips += baseChips;
         let word=letters.join(''), valid=false;
@@ -864,17 +971,19 @@
     }
     function vibrate(ms=8) { if(document.getElementById('vibration-toggle').checked&&navigator.vibrate){ try{navigator.vibrate(ms);}catch(e){} } }
     function getInsertIndexFromX(clientX) { const container=document.getElementById('active-word-line'); const tiles=container.querySelectorAll('.active-tile'); const cr=container.getBoundingClientRect(); const x=clientX-cr.left; for(let i=0;i<tiles.length;i++){ const tr=tiles[i].getBoundingClientRect(); const tc=tr.left-cr.left+tr.width/2; if(x<tc) return i; } return G.activeWord.length; }
-    function placeTileInSlot(handIndex, insertAt=null) { if(G.isAnimating||G.rerollMode) return; if(handIndex<0||handIndex>=getHandSize()||!G.hand[handIndex]) return; if(G.activeWord.length>=8) return; const tile=G.hand[handIndex]; G.hand[handIndex]=null; const idx=(insertAt!==null)?insertAt:G.activeWord.length; G.activeWord.splice(idx,0,tile); AudioEngine.playTap(); vibrate(6); render(); }
-    function removeTileFromWord(wordIndex) { if(G.isAnimating||G.rerollMode) return; if(wordIndex<0||wordIndex>=G.activeWord.length) return; const tile=G.activeWord[wordIndex]; const ei=G.hand.findIndex(t=>t===null); if(ei===-1) return; G.hand[ei]=tile; G.activeWord.splice(wordIndex,1); AudioEngine.playTap(); vibrate(6); render(); }
+    function placeTileInSlot(handIndex, insertAt=null) { if(G.isAnimating||G.rerollMode) return; if(handIndex<0||handIndex>=getHandSize()||!G.hand[handIndex]) return; if(G.activeWord.length>=8) return; const tile=G.hand[handIndex]; const wasEmpty=G.activeWord.length===0; G.hand[handIndex]=null; const idx=(insertAt!==null)?insertAt:G.activeWord.length; G.activeWord.splice(idx,0,tile); if(wasEmpty && G.activeHazard==='anchor') G.anchorTileId=tile.id; AudioEngine.playTap(); vibrate(6); render(); }
+    function isAnchorLocked(tileId) { return G.activeHazard==='anchor' && G.anchorTileId===tileId; }
+    function removeTileFromWord(wordIndex) { if(G.isAnimating||G.rerollMode) return; if(wordIndex<0||wordIndex>=G.activeWord.length) return; const tile=G.activeWord[wordIndex]; if(isAnchorLocked(tile.id)) return; const ei=G.hand.findIndex(t=>t===null); if(ei===-1) return; G.hand[ei]=tile; G.activeWord.splice(wordIndex,1); AudioEngine.playTap(); vibrate(6); render(); }
     function reorderActiveWord(fromIndex, toIndex) { if(G.isAnimating||G.rerollMode) return; if(fromIndex<0||fromIndex>=G.activeWord.length) return; const tile=G.activeWord[fromIndex]; G.activeWord.splice(fromIndex,1); let insertAt=toIndex; if(insertAt>fromIndex) insertAt--; if(insertAt<0) insertAt=0; if(insertAt>G.activeWord.length) insertAt=G.activeWord.length; G.activeWord.splice(insertAt,0,tile); AudioEngine.playTap(); render(); }
     function swapHandTiles(i1,i2) { if(i1===i2) return; const t=G.hand[i1]; G.hand[i1]=G.hand[i2]; G.hand[i2]=t; AudioEngine.playTap(); render(); }
-    function clearActiveWord() { if(G.isAnimating||G.rerollMode) return; while(G.activeWord.length>0){ const t=G.activeWord.pop(); const e=G.hand.findIndex(x=>x===null); if(e!==-1) G.hand[e]=t; } AudioEngine.playTap(); render(); }
+    function clearActiveWord() { if(G.isAnimating||G.rerollMode) return; const keep=[]; while(G.activeWord.length>0){ const t=G.activeWord.pop(); if(isAnchorLocked(t.id)){ keep.push(t); continue; } const e=G.hand.findIndex(x=>x===null); if(e!==-1) G.hand[e]=t; } G.activeWord=keep.reverse(); AudioEngine.playTap(); render(); }
     function shuffleHand() { if(G.isAnimating||G.hand.filter(t=>t).length<2||G.rerollMode) return; const tiles=G.hand.filter(t=>t!==null); const s=shuffle(tiles); let idx=0; for(let i=0;i<getHandSize();i++){ if(G.hand[i]!==null) G.hand[i]=s[idx++]; } AudioEngine.playShuffle(); vibrate(8); render(); }
     function toggleRerollMark(hi) { if(hi<0||hi>=getHandSize()||!G.hand[hi]) return; const id=G.hand[hi].id; if(G.rerollMarks.has(id)) G.rerollMarks.delete(id); else { if(G.rerollMarks.size>=3) return; G.rerollMarks.add(id); } AudioEngine.playTap(); render(); }
-    function enterReroll() { if(G.isAnimating||G.rerollsLeft<=0||G.hand.every(t=>t===null)) return; G.rerollMode=true; G.rerollMarks.clear(); render(); }
+    function enterReroll() { if(G.isAnimating||(G.gameMode!=='zen'&&G.rerollsLeft<=0)||G.hand.every(t=>t===null)) return; G.rerollMode=true; G.rerollMarks.clear(); render(); }
     function exitReroll() { G.rerollMode=false; G.rerollMarks.clear(); render(); }
     function drawIntoSlots(slots) { for(const idx of slots){ if(G.tileBag.length===0){ if(G.discardPile.length===0) break; G.tileBag=shuffle(G.discardPile); G.discardPile=[]; } G.hand[idx]=G.tileBag.pop(); } document.getElementById('bag-counter').textContent='BAG: '+G.tileBag.length; }
-    function confirmReroll() { if(!G.rerollMode||G.rerollMarks.size===0){ exitReroll(); return; } if(G.rerollsLeft<=0) return; G.rerollsLeft--; const discarded=[]; const freedSlots=[]; for(let i=0;i<getHandSize();i++){ if(G.hand[i]&&G.rerollMarks.has(G.hand[i].id)){ discarded.push(G.hand[i]); G.discardPile.push(G.hand[i]); G.hand[i]=null; freedSlots.push(i); } } GlyphManager.onDiscardEvent(discarded); drawIntoSlots(freedSlots); G.rerollMarks.clear(); G.rerollMode=false; AudioEngine.playShuffle(); vibrate(12); render(); }
+    function isDiscardTaxed() { return G.activeHazard==='taxman' || (G.gameMode==='daily' && G.dailyChallenge===3); }
+    function confirmReroll() { if(!G.rerollMode||G.rerollMarks.size===0){ exitReroll(); return; } if(G.gameMode!=='zen'&&G.rerollsLeft<=0) return; if(G.gameMode!=='zen') G.rerollsLeft--; const discarded=[]; const freedSlots=[]; for(let i=0;i<getHandSize();i++){ if(G.hand[i]&&G.rerollMarks.has(G.hand[i].id)){ discarded.push(G.hand[i]); G.discardPile.push(G.hand[i]); G.hand[i]=null; freedSlots.push(i); } } GlyphManager.onDiscardEvent(discarded); if(discarded.length>0&&isDiscardTaxed()) G.bank=Math.max(0,G.bank-2); drawIntoSlots(freedSlots); G.rerollMarks.clear(); G.rerollMode=false; AudioEngine.playShuffle(); vibrate(12); render(); }
     function toggleRerollBtn() { if(G.rerollMode) confirmReroll(); else enterReroll(); }
 
     function showConfirmModal() { document.getElementById('confirm-modal').classList.add('show'); }
@@ -883,10 +992,23 @@
     function spawnPopup(el,value,isMult) { if(!el) return; const container=document.getElementById('game-container'); const rect=el.getBoundingClientRect(), cr=container.getBoundingClientRect(); const popup=document.createElement('span'); popup.className='score-popup '+(isMult?'mult-popup':'chip-popup'); popup.textContent=(isMult?'×':'+')+value; popup.style.left=(rect.left-cr.left+rect.width/2-(isMult?24:22))+'px'; popup.style.top=(rect.top-cr.top-(isMult?18:8))+'px'; container.appendChild(popup); AudioEngine.playPopup(); setTimeout(()=>{ if(popup.parentNode) popup.remove(); },980); }
     function spawnGlyphIndicator(glyphEl, text) { const container = document.getElementById('game-container'); const rect = glyphEl.getBoundingClientRect(); const cr = container.getBoundingClientRect(); const indicator = document.createElement('span'); indicator.className = 'glyph-indicator'; indicator.textContent = text; indicator.style.left = (rect.left - cr.left + rect.width/2 - 30) + 'px'; indicator.style.top = (rect.top - cr.top - 10) + 'px'; container.appendChild(indicator); AudioEngine.playPopup(); setTimeout(() => { if(indicator.parentNode) indicator.remove(); }, 850); }
 
+    function getWordLengthWarning(occ) {
+        if (occ === 0) return null;
+        if (G.activeHazard === 'wall' && occ < 5) return 'The Wall requires 5+ letters!';
+        if (G.gameMode==='daily' && G.dailyChallenge===5 && occ !== 5) return 'The Sniper requires EXACTLY 5 letters!';
+        return null;
+    }
+    function showHazardWarning(msg) {
+        const b=document.getElementById('score-banner'); const prev=b.textContent;
+        b.textContent = msg; b.classList.add('invalid');
+        setTimeout(()=>{ b.classList.remove('invalid'); render(); }, 1100);
+    }
     async function submitWord() {
         if(G.isAnimating||G.rerollMode){ if(G.rerollMode) exitReroll(); return; }
-        if(G.playsLeft<=0) return;
+        if(G.gameMode!=='zen' && G.playsLeft<=0) return;
         const payload = calcScore();
+        const lengthWarning = getWordLengthWarning(payload.occ);
+        if (lengthWarning) { AudioEngine.playError(); vibrate(25); showHazardWarning(lengthWarning); return; }
         if(!payload.valid||payload.occ===0){ AudioEngine.playError(); vibrate(25); const b=document.getElementById('score-banner'); b.classList.add('invalid'); setTimeout(()=>b.classList.remove('invalid'),400); return; }
 
         G.isAnimating = true;
@@ -912,7 +1034,7 @@
             const tile = tilesCopy[i]; const el = tileEls[i];
             if (!tile || !el) continue;
             el.classList.add('scoring-pop');
-            let chip = tile.chips || 0; if (tile.aura === 'blue') chip += 10; if (tile.aura === 'gold') chip *= 2;
+            let chip = (G.gameMode==='daily' && G.dailyChallenge===2 && VOWEL_LETTERS.has(tile.letter)) ? 0 : (tile.chips || 0); if (tile.aura === 'blue') chip += 10; if (tile.aura === 'gold') chip *= 2; if (tile.goldInk) chip += 20;
             runningChips += chip; pointsEl.textContent = runningChips; pointsEl.classList.add('pop');
             spawnPopup(el, chip, false); if (tile.aura === 'red') setTimeout(() => spawnPopup(el, 2, true), 160);
             await sleep(220); el.classList.remove('scoring-pop'); pointsEl.classList.remove('pop');
@@ -940,7 +1062,9 @@
         bannerEl.textContent = payload.totalChips + ' × ' + payload.totalMult.toFixed(1) + ' = ' + payload.totalScore + ' PTS';
         await sleep(400); timesEl.classList.remove('highlight');
 
-        G.playsLeft--; G.currentScore += payload.totalScore;
+        if (G.gameMode!=='zen') G.playsLeft--;
+        G.currentScore += payload.totalScore;
+        updateHighestWord(payload.word, payload.totalScore);
         GlyphManager.onWordScored(payload.word, payload.totalScore, tilesCopy);
         AudioEngine.playSubmit(); vibrate(18);
         const sp = Math.min(14, Math.max(3, payload.totalScore / 10)) * (G.shakeStrength / 100);
@@ -948,9 +1072,10 @@
         c.style.setProperty('--shake-px', sp + 'px'); c.classList.add('shake-active');
         setTimeout(() => c.classList.remove('shake-active'), 250);
         setTimeout(() => c.classList.remove('bg-pulse'), 1200);
-        G.discardPile.push(...G.activeWord); G.activeWord = []; drawToHand(); G.isAnimating = false;
+        G.discardPile.push(...G.activeWord); G.activeWord = []; G.anchorTileId = null; drawToHand(); G.isAnimating = false;
         overlay.style.background = 'transparent';
 
+        if (G.gameMode==='zen') { render(); return; }
         if (G.currentScore >= G.stageTargets[G.currentStage]) { G.stageScores[G.currentStage] = G.currentScore; showStageClear(G.currentScore); }
         else if (G.playsLeft <= 0) showModal('game-over');
         else render();
@@ -976,8 +1101,7 @@
             const c = document.getElementById('game-container');
             c.style.setProperty('--shake-px', sp + 'px'); c.classList.add('shake-active');
             setTimeout(() => c.classList.remove('shake-active'), 250);
-            const choices=generateDraftChoices(); G.draftChoices=choices;
-            renderDraftGrid(rewardSection, choices);
+            renderPayout(rewardSection);
             requestAnimationFrame(()=>requestAnimationFrame(()=>rewardSection.classList.add('show')));
         });
     }
@@ -992,45 +1116,133 @@
         }
         requestAnimationFrame(step);
     }
-    function renderDraftGrid(container, choices) {
-        container.innerHTML='';
-        const hint=document.createElement('p'); hint.className='draft-hint'; hint.textContent='CHOOSE A REWARD — tap a card to inspect'; container.appendChild(hint);
-        const grid=document.createElement('div'); grid.className='draft-grid';
-        choices.forEach(choice=>{
-            const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
-            const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', choice.color); card.textContent=choice.icon;
-            const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=choice.name;
-            wrap.appendChild(card); wrap.appendChild(label);
-            wrap.addEventListener('click', ()=>{ AudioEngine.playTap(); renderDraftDetail(container, choice, choices); });
-            grid.appendChild(wrap);
-        });
-        container.appendChild(grid);
+    function renderPayout(container) {
+        container.innerHTML = '';
+        const hint = document.createElement('p'); hint.className='draft-hint'; hint.textContent='STAGE PAYOUT'; container.appendChild(hint);
+        const list = document.createElement('div'); list.className='payout-list';
+        const lines = [];
+        const base = 3; G.bank += base; lines.push(['Base Win', base]);
+        if (G.playsLeft > 0) { G.bank += G.playsLeft; lines.push(['Unused Hands ×'+G.playsLeft, G.playsLeft]); }
+        if (G.rerollsLeft > 0) { G.bank += G.rerollsLeft; lines.push(['Unused Discards ×'+G.rerollsLeft, G.rerollsLeft]); }
+        const interest = Math.min(5, Math.floor(G.bank/5));
+        if (interest > 0) { G.bank += interest; lines.push(['Interest', interest]); }
+        G.records.totalGoldEarned += (base + Math.max(0,G.playsLeft) + Math.max(0,G.rerollsLeft) + interest);
+        saveRecords();
+        lines.forEach(([label,val]) => { const row=document.createElement('div'); row.className='payout-row'; row.innerHTML = `<span>${label}</span><span>+$${val}</span>`; list.appendChild(row); });
+        container.appendChild(list);
+        const total = document.createElement('div'); total.className='payout-total'; total.textContent='BANK: $'+G.bank; container.appendChild(total);
+        setTimeout(()=>{ renderShop(container); }, 1500);
     }
-    function renderDraftDetail(container, choice, allChoices) {
-        container.innerHTML='';
-        const wrap=document.createElement('div'); wrap.className='draft-detail';
-        const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', choice.color); icon.textContent=choice.icon;
-        const name=document.createElement('div'); name.className='draft-detail-name'; name.style.setProperty('--glyph-color', choice.color); name.textContent=choice.name;
-        const desc=document.createElement('div'); desc.className='draft-detail-desc'; desc.textContent=choice.desc;
-        const actions=document.createElement('div'); actions.className='draft-detail-actions';
-        const backBtn=document.createElement('button'); backBtn.className='menu-btn'; backBtn.textContent='BACK';
-        backBtn.addEventListener('click', ()=>{ AudioEngine.playTap(); renderDraftGrid(container, allChoices); });
-        const takeBtn=document.createElement('button'); takeBtn.className='draft-btn'; takeBtn.textContent='TAKE';
-        takeBtn.addEventListener('click', ()=>{ choice.apply(); document.getElementById('view-draft').classList.remove('show'); advanceStage(); });
-        actions.appendChild(backBtn); actions.appendChild(takeBtn);
-        wrap.appendChild(icon); wrap.appendChild(name); wrap.appendChild(desc); wrap.appendChild(actions);
-        container.appendChild(wrap);
-    }
-    function advanceStage() { G.currentStage++; if(G.currentStage > G.totalStages) { showModal('victory'); return; } renderMap(); }
-    function generateDraftChoices() {
-        const pool=[];
-        GLYPH_DATABASE.forEach(g=>{ const alreadyEquipped=G.equippedGlyphs.some(eg=>eg.id===g.id); if(!alreadyEquipped&&G.equippedGlyphs.length<MAX_GLYPH_SLOTS){ pool.push({kind:'glyph', id:g.id, name:g.name, desc:g.desc, color:g.color, icon:g.icon, apply:()=>{G.equippedGlyphs.push({id:g.id});}}); } });
-        pool.push({kind:'special', id:'tiles', name:'Special Tiles', desc:'Adds a Wildcard tile and a Finisher tile to your bag.', color:'var(--accent-3)', icon:'★', apply:()=>{G.tileBag.push({id:'t_*_'+Date.now(),letter:'*',chips:0,type:'wildcard'});G.tileBag.push({id:'t_!_'+Date.now(),letter:'!',chips:0,type:'finisher'});}});
-        pool.push({kind:'special', id:'cleanup', name:'Letter Cleanup', desc:'Removes 2 bad letters from your bag for the rest of this run.', color:'var(--accent-2)', icon:'✂', apply:()=>{const c=['Q','Z','J','X','K','V','W','Y'];const s=[];for(let l of c){if(!G.removedLetters.has(l)){s.push(l);if(s.length===2) break;}}s.forEach(l=>G.removedLetters.add(l));}});
+    function shopPrice(id) { const inflated = G.gameMode==='daily' && G.dailyChallenge===7; const base = SHOP_PRICES[id]||0; return inflated ? base*2 : base; }
+    function generateShopGlyphOffers() {
+        const pool = [];
+        GLYPH_DATABASE.forEach(g=>{ const alreadyEquipped=G.equippedGlyphs.some(eg=>eg.id===g.id); if(!alreadyEquipped && G.equippedGlyphs.length<MAX_GLYPH_SLOTS){ pool.push({ kind:'glyph', id:g.id, name:g.name, desc:g.desc, color:g.color, icon:g.icon, price:shopPrice('glyph'), apply:()=>{ G.equippedGlyphs.push({id:g.id}); } }); } });
         return shuffle(pool).slice(0,3);
     }
+    function renderShop(container) {
+        container.innerHTML = '';
+        const hint = document.createElement('p'); hint.className='draft-hint'; hint.textContent='SHOP — Bank: $'+G.bank; container.appendChild(hint);
+        const glyphOffers = generateShopGlyphOffers();
+        const glyphLabel = document.createElement('div'); glyphLabel.className='shop-section-label'; glyphLabel.textContent='GLYPHS'; container.appendChild(glyphLabel);
+        if (glyphOffers.length===0) {
+            const p=document.createElement('p'); p.className='draft-hint'; p.textContent='All glyph slots full.'; container.appendChild(p);
+        } else {
+            const grid=document.createElement('div'); grid.className='draft-grid';
+            glyphOffers.forEach(item=>{
+                const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
+                const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); card.textContent=item.icon;
+                const price=document.createElement('span'); price.className='draft-card-price'; price.textContent='$'+item.price; card.appendChild(price);
+                const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=item.name;
+                wrap.appendChild(card); wrap.appendChild(label);
+                wrap.addEventListener('click', ()=>{ AudioEngine.playTap(); renderShopDetail(container, item, 'glyph'); });
+                grid.appendChild(wrap);
+            });
+            container.appendChild(grid);
+        }
+        const consLabel = document.createElement('div'); consLabel.className='shop-section-label'; consLabel.textContent='INK SEALS ('+G.consumables.length+'/'+MAX_CONSUMABLES+' held)'; container.appendChild(consLabel);
+        const cGrid = document.createElement('div'); cGrid.className='draft-grid';
+        CONSUMABLE_DATABASE.forEach(def=>{
+            const item = { kind:'consumable', id:def.id, name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{ G.consumables.push({id:def.id}); } };
+            const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
+            const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); card.textContent=item.icon;
+            const price=document.createElement('span'); price.className='draft-card-price'; price.textContent='$'+item.price; card.appendChild(price);
+            const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=item.name;
+            wrap.appendChild(card); wrap.appendChild(label);
+            wrap.addEventListener('click', ()=>{ AudioEngine.playTap(); renderShopDetail(container, item, 'consumable'); });
+            cGrid.appendChild(wrap);
+        });
+        container.appendChild(cGrid);
+        const continueBtn = document.createElement('button'); continueBtn.className='draft-btn'; continueBtn.style.width='100%'; continueBtn.style.marginTop='10px'; continueBtn.textContent='CONTINUE';
+        continueBtn.addEventListener('click', ()=>{ document.getElementById('view-draft').classList.remove('show'); advanceStage(); });
+        container.appendChild(continueBtn);
+    }
+    function renderShopDetail(container, item, kind) {
+        container.innerHTML = '';
+        const wrap=document.createElement('div'); wrap.className='draft-detail';
+        const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', item.color); icon.textContent=item.icon;
+        const name=document.createElement('div'); name.className='draft-detail-name'; name.style.setProperty('--glyph-color', item.color); name.textContent=item.name;
+        const desc=document.createElement('div'); desc.className='draft-detail-desc'; desc.textContent=item.desc;
+        const price=document.createElement('div'); price.className='shop-price'; price.textContent='$'+item.price;
+        const actions=document.createElement('div'); actions.className='draft-detail-actions';
+        const backBtn=document.createElement('button'); backBtn.className='menu-btn'; backBtn.textContent='BACK';
+        backBtn.addEventListener('click', ()=>{ AudioEngine.playTap(); renderShop(container); });
+        const buyBtn=document.createElement('button'); buyBtn.className='draft-btn'; buyBtn.textContent='BUY';
+        const inventoryFull = kind==='consumable' && G.consumables.length>=MAX_CONSUMABLES;
+        if (G.bank < item.price || inventoryFull) buyBtn.disabled = true;
+        buyBtn.addEventListener('click', ()=>{
+            if (G.bank < item.price) return;
+            if (kind==='consumable' && G.consumables.length>=MAX_CONSUMABLES) return;
+            G.bank -= item.price; item.apply(); AudioEngine.playSubmit();
+            renderShop(container);
+        });
+        actions.appendChild(backBtn); actions.appendChild(buyBtn);
+        wrap.appendChild(icon); wrap.appendChild(name); wrap.appendChild(desc); wrap.appendChild(price); wrap.appendChild(actions);
+        container.appendChild(wrap);
+    }
+    function advanceStage() {
+        G.currentStage++;
+        if (G.currentStage > G.totalStages) {
+            if (G.isEndless) { ensureStageTarget(G.currentStage); renderMap(); return; }
+            showVictoryChoice();
+            return;
+        }
+        renderMap();
+    }
+    function ensureStageTarget(stage) {
+        if (G.stageTargets[stage] === undefined) { const prev = G.stageTargets[stage-1] || G.stageTargets[G.stageTargets.length-1]; G.stageTargets[stage] = Math.floor(prev * 1.6); }
+    }
+    function showVictoryChoice() {
+        const draftDiv=document.getElementById('view-draft'); draftDiv.innerHTML=''; draftDiv.classList.remove('show');
+        const panel=document.createElement('div'); panel.className='draft-panel';
+        const h2=document.createElement('h2'); h2.textContent='BOSS DEFEATED!'; panel.appendChild(h2);
+        const label=document.createElement('div'); label.className='stage-clear-label'; label.textContent='FINAL SCORE'; panel.appendChild(label);
+        const value=document.createElement('div'); value.className='stage-clear-score'; value.textContent=G.currentScore.toLocaleString(); panel.appendChild(value);
+        const desc=document.createElement('div'); desc.className='draft-detail-desc'; desc.style.marginTop='8px'; desc.textContent="You've cleared all 8 stages. Claim your victory, or push your luck into Endless Mode where targets keep climbing until you fall."; panel.appendChild(desc);
+        const actions=document.createElement('div'); actions.className='draft-detail-actions'; actions.style.marginTop='10px';
+        const claimBtn=document.createElement('button'); claimBtn.className='menu-btn'; claimBtn.textContent='CLAIM VICTORY';
+        claimBtn.addEventListener('click', ()=>{ document.getElementById('view-draft').classList.remove('show'); claimVictory(); });
+        const endlessBtn=document.createElement('button'); endlessBtn.className='draft-btn'; endlessBtn.textContent='GO ENDLESS';
+        endlessBtn.addEventListener('click', ()=>{ document.getElementById('view-draft').classList.remove('show'); goEndless(); });
+        actions.appendChild(claimBtn); actions.appendChild(endlessBtn);
+        panel.appendChild(actions);
+        draftDiv.appendChild(panel); draftDiv.classList.remove('hidden');
+        requestAnimationFrame(()=>requestAnimationFrame(()=>draftDiv.classList.add('show')));
+    }
+    function claimVictory() {
+        recordLeaderboardScore(G.currentScore);
+        updateMostStagesCleared(G.totalStages);
+        showModal('victory');
+    }
+    function goEndless() {
+        G.isEndless = true;
+        ensureStageTarget(G.currentStage);
+        renderMap();
+    }
 
-    function showModal(type) { G.modalType=type; const o=document.getElementById('modal-overlay'); const t=document.getElementById('modal-title'); const s=document.getElementById('modal-subtitle'); const b=document.getElementById('btn-modal-action'); const mb=document.getElementById('btn-modal-menu'); if(type==='game-over'){ t.textContent='GAME OVER'; s.textContent='Score: '+G.currentScore; b.textContent='Retry Run'; b.style.display='block'; mb.style.display='block'; } else { t.textContent='VICTORY!'; s.textContent='All stages conquered!'; b.textContent='New Game'; b.style.display='block'; mb.style.display='block'; } o.classList.add('show'); }
+    function showModal(type) {
+        if (type==='game-over' && G.gameMode!=='zen') { recordLeaderboardScore(G.currentScore); updateMostStagesCleared(Math.max(0,G.currentStage-1)); }
+        G.modalType=type; const o=document.getElementById('modal-overlay'); const t=document.getElementById('modal-title'); const s=document.getElementById('modal-subtitle'); const b=document.getElementById('btn-modal-action'); const mb=document.getElementById('btn-modal-menu'); if(type==='game-over'){ t.textContent='GAME OVER'; s.textContent='Score: '+G.currentScore; b.textContent='Retry Run'; b.style.display='block'; mb.style.display='block'; } else { t.textContent='VICTORY!'; s.textContent='All stages conquered!'; b.textContent='New Game'; b.style.display='block'; mb.style.display='block'; } o.classList.add('show');
+    }
     function hideModal() { G.modalType=null; document.getElementById('modal-overlay').classList.remove('show'); }
     function handleModalAction() { if(G.modalType==='game-over') resetRun(); else if(G.modalType==='victory') resetRun(); hideModal(); }
     function handleModalMenu() { goToMenu(); hideModal(); }
@@ -1070,8 +1282,135 @@
         draftDiv.appendChild(panel); draftDiv.classList.remove('hidden');
         requestAnimationFrame(()=>requestAnimationFrame(()=>draftDiv.classList.add('show')));
     }
+    function renderConsumables() {
+        const container = document.getElementById('consumable-slots');
+        if (!container) return;
+        container.innerHTML = '';
+        if (G.gameMode==='zen') return;
+        G.consumables.forEach((held,i) => {
+            const def = CONSUMABLE_DATABASE.find(c=>c.id===held.id); if(!def) return;
+            const slot = document.createElement('div'); slot.className='glyph-slot has-glyph';
+            slot.style.setProperty('--glyph-color', def.color);
+            slot.title = def.name+' — '+def.desc;
+            const stat = document.createElement('span'); stat.className='glyph-stat'; stat.style.color=def.color; stat.textContent=def.icon;
+            slot.appendChild(stat);
+            slot.addEventListener('click', (e) => { e.stopPropagation(); useConsumable(i); });
+            container.appendChild(slot);
+        });
+    }
+    function getLetterCounts(filter) {
+        const counts = {};
+        [...G.tileBag, ...G.discardPile].forEach(t => {
+            if (t.type !== 'normal') return;
+            if (filter==='vowel' && !VOWEL_LETTERS.has(t.letter)) return;
+            if (filter==='consonant' && VOWEL_LETTERS.has(t.letter)) return;
+            counts[t.letter] = (counts[t.letter]||0) + 1;
+        });
+        return counts;
+    }
+    function showLetterPicker(options) {
+        const draftDiv=document.getElementById('view-draft'); draftDiv.innerHTML=''; draftDiv.classList.remove('show');
+        const panel=document.createElement('div'); panel.className='draft-panel';
+        renderLetterPicker(panel, options, []);
+        draftDiv.appendChild(panel); draftDiv.classList.remove('hidden');
+        requestAnimationFrame(()=>requestAnimationFrame(()=>draftDiv.classList.add('show')));
+    }
+    function renderLetterPicker(panel, options, selected) {
+        panel.innerHTML='';
+        const h2=document.createElement('h2'); h2.textContent=options.title; panel.appendChild(h2);
+        const hint=document.createElement('p'); hint.className='draft-hint'; hint.textContent=options.hint; panel.appendChild(hint);
+        const counts=getLetterCounts(options.filter);
+        const letters=Object.keys(counts).sort();
+        if (letters.length===0) {
+            const empty=document.createElement('p'); empty.className='draft-hint'; empty.textContent='No matching letters in your bag.'; panel.appendChild(empty);
+        } else {
+            const grid=document.createElement('div'); grid.className='letter-picker-grid';
+            letters.forEach(letter=>{
+                const chip=document.createElement('div'); chip.className='letter-pick-chip'+(selected.includes(letter)?' selected':'');
+                chip.innerHTML=`<span class="letter-pick-letter">${letter}</span><span class="letter-pick-count">×${counts[letter]}</span>`;
+                chip.addEventListener('click', ()=>{
+                    let next=[...selected];
+                    if (next.includes(letter)) next=next.filter(l=>l!==letter);
+                    else if (options.maxPicks===1) next=[letter];
+                    else if (next.length<options.maxPicks) next.push(letter);
+                    renderLetterPicker(panel, options, next);
+                });
+                grid.appendChild(chip);
+            });
+            panel.appendChild(grid);
+        }
+        const actions=document.createElement('div'); actions.className='draft-detail-actions';
+        const cancelBtn=document.createElement('button'); cancelBtn.className='menu-btn'; cancelBtn.textContent='CANCEL';
+        cancelBtn.addEventListener('click', ()=>{ document.getElementById('view-draft').classList.remove('show'); });
+        const confirmBtn=document.createElement('button'); confirmBtn.className='draft-btn'; confirmBtn.textContent='CONFIRM';
+        confirmBtn.disabled = selected.length===0;
+        confirmBtn.addEventListener('click', ()=>{ if(selected.length===0) return; document.getElementById('view-draft').classList.remove('show'); options.onConfirm(selected); });
+        actions.appendChild(cancelBtn); actions.appendChild(confirmBtn);
+        panel.appendChild(actions);
+    }
+    function showVowelPicker(onConfirm) {
+        const draftDiv=document.getElementById('view-draft'); draftDiv.innerHTML=''; draftDiv.classList.remove('show');
+        const panel=document.createElement('div'); panel.className='draft-panel';
+        const h2=document.createElement('h2'); h2.textContent='TRANSMUTER'; panel.appendChild(h2);
+        const hint=document.createElement('p'); hint.className='draft-hint'; hint.textContent='Convert into which Vowel?'; panel.appendChild(hint);
+        const grid=document.createElement('div'); grid.className='letter-picker-grid';
+        ['A','E','I','O','U'].forEach(v=>{
+            const chip=document.createElement('div'); chip.className='letter-pick-chip';
+            chip.innerHTML=`<span class="letter-pick-letter">${v}</span>`;
+            chip.addEventListener('click', ()=>{ draftDiv.classList.remove('show'); onConfirm(v); });
+            grid.appendChild(chip);
+        });
+        panel.appendChild(grid);
+        const actions=document.createElement('div'); actions.className='draft-detail-actions';
+        const cancelBtn=document.createElement('button'); cancelBtn.className='menu-btn'; cancelBtn.style.width='100%'; cancelBtn.textContent='CANCEL';
+        cancelBtn.addEventListener('click', ()=>{ draftDiv.classList.remove('show'); });
+        actions.appendChild(cancelBtn);
+        panel.appendChild(actions);
+        draftDiv.appendChild(panel); draftDiv.classList.remove('hidden');
+        requestAnimationFrame(()=>requestAnimationFrame(()=>draftDiv.classList.add('show')));
+    }
+    function useConsumable(invIndex) {
+        if (G.isAnimating) return;
+        const held = G.consumables[invIndex]; if (!held) return;
+        if (held.id === 'void_seal') {
+            showLetterPicker({ title:'VOID SEAL', hint:'Pick up to 2 letter types to remove', filter:'all', maxPicks:2, onConfirm:(letters)=>{
+                letters.forEach(l => { G.removedLetters.add(l); G.tileBag = G.tileBag.filter(t => !(t.letter===l && t.type==='normal')); G.discardPile = G.discardPile.filter(t => !(t.letter===l && t.type==='normal')); });
+                G.consumables.splice(invIndex,1);
+                document.getElementById('bag-counter').textContent = G.gameMode==='zen' ? 'BAG: ∞' : 'BAG: '+G.tileBag.length;
+                render();
+            }});
+        } else if (held.id === 'gold_ink') {
+            showLetterPicker({ title:'GOLD INK', hint:'Pick 1 letter type to mark gold', filter:'all', maxPicks:1, onConfirm:(letters)=>{
+                const letter=letters[0];
+                const target = G.tileBag.find(t=>t.letter===letter && t.type==='normal') || G.discardPile.find(t=>t.letter===letter && t.type==='normal');
+                if (target) target.goldInk = true;
+                G.consumables.splice(invIndex,1);
+                render();
+            }});
+        } else if (held.id === 'transmuter') {
+            showLetterPicker({ title:'TRANSMUTER', hint:'Pick 1 Consonant to convert', filter:'consonant', maxPicks:1, onConfirm:(letters)=>{
+                const fromLetter=letters[0];
+                showVowelPicker((vowel)=>{
+                    const target = G.tileBag.find(t=>t.letter===fromLetter && t.type==='normal') || G.discardPile.find(t=>t.letter===fromLetter && t.type==='normal');
+                    if (target) { target.letter=vowel; const dist=TILE_DIST.find(d=>d.letter===vowel); target.chips=dist?dist.chips:1; }
+                    G.consumables.splice(invIndex,1);
+                    render();
+                });
+            }});
+        } else if (held.id === 'cloner') {
+            showLetterPicker({ title:'CLONER', hint:'Pick 1 letter type to duplicate', filter:'all', maxPicks:1, onConfirm:(letters)=>{
+                const letter=letters[0];
+                const target = G.tileBag.find(t=>t.letter===letter && t.type==='normal') || G.discardPile.find(t=>t.letter===letter && t.type==='normal');
+                if (target) G.tileBag.push({id:'t_clone_'+Math.random().toString(36).slice(2,11)+'_'+Date.now(), letter:target.letter, chips:target.chips, type:'normal', aura:assignRandomAura()});
+                G.consumables.splice(invIndex,1);
+                document.getElementById('bag-counter').textContent = G.gameMode==='zen' ? 'BAG: ∞' : 'BAG: '+G.tileBag.length;
+                render();
+            }});
+        }
+    }
 
-    function getTileClass(tile) { let cls='tile-inner'; if(tile.type==='wildcard') cls+=' wildcard'; else if(tile.type==='finisher') cls+=' finisher'; else if(tile.aura) cls+=' aura-'+tile.aura; if(G.rerollMode&&G.rerollMarks.has(tile.id)) cls+=' marked-reroll'; return cls; }
+    function getTileClass(tile) { let cls='tile-inner'; if(tile.type==='wildcard') cls+=' wildcard'; else if(tile.type==='finisher') cls+=' finisher'; else if(tile.aura) cls+=' aura-'+tile.aura; if(G.rerollMode&&G.rerollMarks.has(tile.id)) cls+=' marked-reroll'; if(isAnchorLocked(tile.id)) cls+=' anchor-locked'; return cls; }
+    function isPhantomHidden(tile) { return G.activeHazard==='phantom' && tile.type==='normal' && (tile.letter==='E'||tile.letter==='A'); }
 
     function cleanupDrag() { if(!G.dragData) return; const {el,clone,pointerId} = G.dragData; if(el){ el.classList.remove('dragging'); el.style.opacity='1'; try{ el.releasePointerCapture(pointerId); }catch(err){} el.removeEventListener('lostpointercapture',onDragLost); } document.removeEventListener('pointermove',onDragMove); document.removeEventListener('pointerup',onDragEnd); document.removeEventListener('pointercancel',onDragEnd); if(clone && clone.parentNode) clone.remove(); G.dragData=null; }
     function onDragLost(e) { if(G.dragData && e.currentTarget===G.dragData.el){ cleanupDrag(); render(); } }
@@ -1104,31 +1443,61 @@
 
     function render() {
         if(!G.gameStarted) return;
-        document.getElementById('stage-text').textContent='Stage '+G.currentStage+'/'+G.totalStages;
-        const tgt=G.stageTargets[G.currentStage]; const pct=Math.min(100,(G.currentScore/tgt)*100);
-        document.getElementById('progress-fill').style.width=pct+'%';
-        document.getElementById('score-pill').textContent=G.currentScore+' / '+tgt;
-        document.getElementById('bag-counter').textContent='BAG: '+G.tileBag.length;
+        const isZen = G.gameMode==='zen';
+        document.getElementById('stage-text').textContent = isZen ? 'ZEN MODE' : ('Stage '+G.currentStage+'/'+G.totalStages);
+        if (isZen) {
+            document.getElementById('progress-fill').style.width='100%';
+            document.getElementById('score-pill').textContent = G.currentScore.toLocaleString();
+        } else {
+            const tgt=G.stageTargets[G.currentStage]; const pct=Math.min(100,(G.currentScore/tgt)*100);
+            document.getElementById('progress-fill').style.width=pct+'%';
+            document.getElementById('score-pill').textContent=G.currentScore+' / '+tgt;
+            document.getElementById('bag-counter').textContent='BAG: '+G.tileBag.length;
+        }
+        const hazardBanner = document.getElementById('hazard-banner');
+        if (G.activeHazard && HAZARD_DATABASE[G.activeHazard]) {
+            const hz = HAZARD_DATABASE[G.activeHazard];
+            hazardBanner.textContent = hz.icon+' BOSS BLIND: '+hz.name.toUpperCase()+' — '+hz.desc;
+            hazardBanner.classList.remove('hidden');
+        } else { hazardBanner.classList.add('hidden'); }
         const p=calcScore();
         document.getElementById('val-points').textContent=p.totalChips; document.getElementById('val-mults').textContent=p.totalMult.toFixed(1);
-        document.getElementById('val-hands').textContent=G.playsLeft; document.getElementById('val-rerolls').textContent=G.rerollsLeft; document.getElementById('val-gold').textContent=G.bagGold;
+        document.getElementById('val-hands').textContent=G.playsLeft; document.getElementById('val-rerolls').textContent=G.rerollsLeft; document.getElementById('val-gold').textContent=G.bank;
         const sb=document.getElementById('score-banner'); if(p.occ===0) sb.textContent='—'; else if(!p.valid) sb.textContent='INVALID WORD'; else sb.textContent=p.totalChips+' × '+p.totalMult.toFixed(1)+' = '+p.totalScore+' PTS';
         sb.classList.toggle('invalid',p.occ>0&&!p.valid);
         const awl=document.getElementById('active-word-line'); awl.innerHTML='';
         G.activeWord.forEach((tile,idx)=>{ const wrap=document.createElement('div'); wrap.className='active-tile'; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.addEventListener('pointerdown',(e)=>{e.stopPropagation();onDragStart(e,'word',idx);}); wrap.appendChild(inner); awl.appendChild(wrap); });
         const hr=document.getElementById('hand-rack'); hr.innerHTML='';
-        for(let i=0;i<getHandSize();i++){ const wrap=document.createElement('div'); wrap.className='hand-tile-wrap'; const tile=G.hand[i]; if(tile){ const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.style.animationDelay=(i*0.08)+'s'; inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.addEventListener('pointerdown',(e)=>onDragStart(e,'hand',i)); wrap.appendChild(inner); } else { wrap.classList.add('empty-slot'); } hr.appendChild(wrap); }
+        for(let i=0;i<getHandSize();i++){ const wrap=document.createElement('div'); wrap.className='hand-tile-wrap'; const tile=G.hand[i]; if(tile){ const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.style.animationDelay=(i*0.08)+'s'; const hidden=isPhantomHidden(tile); if(hidden){ inner.classList.add('phantom-hidden'); inner.innerHTML=`<span class="tile-letter">?</span>`; } else { inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; } inner.addEventListener('pointerdown',(e)=>onDragStart(e,'hand',i)); wrap.appendChild(inner); } else { wrap.classList.add('empty-slot'); } hr.appendChild(wrap); }
         renderGlyphs();
-        document.getElementById('btn-submit').disabled=p.occ===0||!p.valid||G.playsLeft<=0||G.isAnimating||G.rerollMode;
-        document.getElementById('btn-reroll').disabled=G.rerollsLeft<=0||G.isAnimating;
+        renderConsumables();
+        document.getElementById('btn-submit').disabled=p.occ===0||!p.valid||(!isZen&&G.playsLeft<=0)||G.isAnimating||G.rerollMode;
+        document.getElementById('btn-reroll').disabled=(!isZen&&G.rerollsLeft<=0)||G.isAnimating;
         document.getElementById('btn-clear').disabled=(p.occ===0&&!G.rerollMode)||G.isAnimating;
         document.getElementById('btn-shuffle-hand').disabled=G.hand.filter(t=>t).length<2||G.isAnimating||G.rerollMode;
         const rb=document.getElementById('btn-reroll'); if(G.rerollMode){ rb.classList.add('reroll-mode'); rb.textContent='CONFIRM ('+G.rerollMarks.size+'/3)'; } else { rb.classList.remove('reroll-mode'); rb.textContent='REROLL'; }
     }
 
-    function renderMap() { const diff=DIFFICULTIES[G.difficulty]; document.getElementById('map-header').textContent=diff.name+' RUN - STAGE '+G.currentStage+'/'+G.totalStages; const ladder=document.getElementById('map-ladder'); ladder.innerHTML=''; for(let i=1;i<=G.totalStages;i++){ const wrap=document.createElement('div'); wrap.className='map-node-wrap'; wrap.style.animationDelay=(i*0.1)+'s'; const node=document.createElement('div'); node.className='map-node'; const info=document.createElement('div'); info.className='map-node-info'; if(i<G.currentStage){ node.classList.add('completed'); node.textContent='✓'; info.textContent='Stage '+i+' - Score: '+(G.stageScores[i]||0); } else if(i===G.currentStage){ node.classList.add('current'); node.textContent=i; info.textContent='Stage '+i+' - Target: '+G.stageTargets[i]; } else { node.classList.add('upcoming'); node.textContent=i; info.textContent='Stage '+i+' - Locked'; } wrap.appendChild(node); wrap.appendChild(info); ladder.appendChild(wrap); if(i<G.totalStages){ const conn=document.createElement('div'); conn.className='map-connector'; ladder.appendChild(conn); } } document.getElementById('btn-start-stage').textContent='START STAGE '+G.currentStage; document.getElementById('btn-start-stage').onclick=startStage; document.getElementById('view-map').classList.remove('hidden'); document.getElementById('view-game').classList.add('hidden'); document.getElementById('view-draft').classList.add('hidden'); }
+    function renderMap() {
+        if (G.isEndless) { renderEndlessMap(); return; }
+        const modeName = G.gameMode==='daily' ? 'DAILY' : 'CLASSIC';
+        document.getElementById('map-header').textContent=modeName+' RUN - STAGE '+G.currentStage+'/'+G.totalStages;
+        const ladder=document.getElementById('map-ladder'); ladder.innerHTML='';
+        for(let i=1;i<=G.totalStages;i++){ const wrap=document.createElement('div'); wrap.className='map-node-wrap'; wrap.style.animationDelay=(i*0.1)+'s'; const node=document.createElement('div'); node.className='map-node'; const info=document.createElement('div'); info.className='map-node-info'; const isBoss = i%4===0; if(i<G.currentStage){ node.classList.add('completed'); node.textContent='✓'; info.textContent='Stage '+i+' - Score: '+(G.stageScores[i]||0); } else if(i===G.currentStage){ node.classList.add('current'); node.textContent=isBoss?'☠':i; info.textContent='Stage '+i+(isBoss?' (BOSS)':'')+' - Target: '+G.stageTargets[i]; } else { node.classList.add('upcoming'); node.textContent=isBoss?'☠':i; info.textContent='Stage '+i+(isBoss?' (BOSS)':'')+' - Locked'; } wrap.appendChild(node); wrap.appendChild(info); ladder.appendChild(wrap); if(i<G.totalStages){ const conn=document.createElement('div'); conn.className='map-connector'; ladder.appendChild(conn); } }
+        document.getElementById('btn-start-stage').textContent='START STAGE '+G.currentStage; document.getElementById('btn-start-stage').onclick=startStage; document.getElementById('view-map').classList.remove('hidden'); document.getElementById('view-game').classList.add('hidden'); document.getElementById('view-draft').classList.add('hidden');
+    }
+    function renderEndlessMap() {
+        document.getElementById('map-header').textContent = 'ENDLESS — STAGE '+G.currentStage;
+        const ladder=document.getElementById('map-ladder'); ladder.innerHTML='';
+        const wrap=document.createElement('div'); wrap.className='map-node-wrap';
+        const node=document.createElement('div'); node.className='map-node current'; node.textContent=G.currentStage;
+        const info=document.createElement('div'); info.className='map-node-info'; info.textContent='Target: '+G.stageTargets[G.currentStage].toLocaleString();
+        wrap.appendChild(node); wrap.appendChild(info); ladder.appendChild(wrap);
+        document.getElementById('btn-start-stage').textContent='START STAGE '+G.currentStage; document.getElementById('btn-start-stage').onclick=startStage; document.getElementById('view-map').classList.remove('hidden'); document.getElementById('view-game').classList.add('hidden'); document.getElementById('view-draft').classList.add('hidden');
+    }
     function showMap() { resetStageState(); renderMap(); }
-    function startStage() { document.getElementById('view-map').classList.add('hidden'); document.getElementById('view-game').classList.remove('hidden'); resetStageState(); GlyphManager.onStageStart(); GlyphManager.onRoundStart(G.hand); AudioEngine.startMusic(); render(); }
+    function rollStageHazard() { G.activeHazard = null; if (G.gameMode==='zen') return; if (G.currentStage % 4 === 0) { const hazards=['wall','taxman','phantom','anchor']; G.activeHazard = hazards[Math.floor(Math.random()*hazards.length)]; } }
+    function startStage() { document.getElementById('view-map').classList.add('hidden'); document.getElementById('view-game').classList.remove('hidden'); resetStageState(); rollStageHazard(); GlyphManager.onStageStart(); GlyphManager.onRoundStart(G.hand); AudioEngine.startMusic(); render(); }
 
     function initDict() { G.dictSet=new Set(DICTIONARY_WORDS.split(' ')); }
 
@@ -1136,12 +1505,16 @@
     function slideBack(showId, hideId) { const he=document.getElementById(hideId),se=document.getElementById(showId); if(he){he.classList.remove('slide-in');} if(se){se.classList.remove('hidden','slide-left');se.classList.add('slide-in');} setTimeout(()=>{if(he)he.classList.add('hidden');},400); }
 
     function bind() {
-        document.getElementById('btn-play').addEventListener('click',()=>slideToView('view-difficulty','view-menu'));
+        document.getElementById('btn-play').addEventListener('click',()=>{ document.getElementById('daily-mode-sub').textContent=getTodaysChallenge().name; slideToView('view-difficulty','view-menu'); });
         document.getElementById('btn-menu-themes').addEventListener('click',()=>slideToView('view-themes','view-menu'));
         document.getElementById('btn-menu-options').addEventListener('click',()=>document.getElementById('options-modal').classList.add('show'));
+        document.getElementById('btn-menu-stats').addEventListener('click',()=>{ renderStats(); slideToView('view-stats','view-menu'); });
+        document.getElementById('btn-back-stats').addEventListener('click',()=>slideBack('view-menu','view-stats'));
         document.getElementById('btn-back-diff').addEventListener('click',()=>slideBack('view-menu','view-difficulty'));
         document.getElementById('btn-back-themes').addEventListener('click',()=>slideBack('view-menu','view-themes'));
-        document.querySelectorAll('.diff-btn').forEach(b=>b.addEventListener('click',()=>{selectDifficulty(b.dataset.diff);}));
+        document.getElementById('btn-mode-classic').addEventListener('click',()=>startClassicLikeRun('classic'));
+        document.getElementById('btn-mode-daily').addEventListener('click',()=>startClassicLikeRun('daily'));
+        document.getElementById('btn-mode-zen').addEventListener('click',()=>startZenRun());
         document.querySelectorAll('.theme-card').forEach(c=>c.addEventListener('click',()=>{ applyTheme(c.dataset.theme); G.currentTheme=c.dataset.theme; document.querySelectorAll('.theme-card').forEach(x=>x.classList.toggle('active',x.dataset.theme===G.currentTheme)); }));
         document.querySelectorAll('.palette-swatch').forEach(s=>s.addEventListener('click',(e)=>{ e.stopPropagation(); applyPalette(s.dataset.palette); applyTheme('wordling-light'); G.currentTheme='wordling-light'; updateThemeButtons(); AudioEngine.playTap(); }));
         document.getElementById('btn-back-menu').addEventListener('click', showConfirmModal);
@@ -1163,13 +1536,73 @@
         const ia=()=>{AudioEngine._ensureContext();document.removeEventListener('touchstart',ia);document.removeEventListener('click',ia);};
         document.addEventListener('touchstart',ia,{once:false});document.addEventListener('click',ia,{once:false});
     }
-    function selectDifficulty(d){G.difficulty=d;G.stageTargets=DIFFICULTIES[d].targets;G.totalStages=DIFFICULTIES[d].stages;G.gameStarted=true;startRun();document.getElementById('view-difficulty').classList.add('hidden');renderMap();}
-    function showDifficulty(){document.getElementById('view-menu').classList.add('hidden');document.getElementById('view-difficulty').classList.remove('hidden');}
+    function startClassicLikeRun(mode) {
+        G.gameMode = mode;
+        G.dailyChallenge = mode==='daily' ? getTodaysChallenge().id : null;
+        G.stageTargets = [...CLASSIC_STAGE_TARGETS];
+        G.totalStages = 8;
+        G.isEndless = false;
+        G.gameStarted = true;
+        document.getElementById('game-container').classList.remove('zen-mode');
+        startRun();
+        document.getElementById('view-difficulty').classList.add('hidden');
+        renderMap();
+    }
+    function startZenRun() {
+        G.gameMode = 'zen';
+        G.dailyChallenge = null; G.isEndless = false; G.activeHazard = null; G.anchorTileId = null;
+        G.currentScore = 0; G.playsLeft = 0; G.rerollsLeft = 0;
+        G.equippedGlyphs = []; G.consumables = []; G.bank = 0;
+        G.removedLetters = new Set(); G.tileBag = []; G.discardPile = [];
+        G.hand = []; G.activeWord = [];
+        G.rerollMarks.clear(); G.rerollMode = false; G.isAnimating = false;
+        G.gameStarted = true;
+        document.getElementById('game-container').classList.add('zen-mode');
+        drawToHand();
+        document.getElementById('view-difficulty').classList.add('hidden');
+        document.getElementById('view-game').classList.remove('hidden');
+        AudioEngine.startMusic();
+        render();
+    }
     function showThemes(){document.getElementById('view-menu').classList.add('hidden');document.getElementById('view-themes').classList.remove('hidden');}
     function updateThemeButtons(){ document.querySelectorAll('.theme-card').forEach(c=>c.classList.toggle('active',c.dataset.theme===G.currentTheme)); }
     function setTheme(n){G.currentTheme=n;applyTheme(n);updateThemeButtons();}
-    function goToMenu(){G.gameStarted=false;G.rerollMode=false;G.rerollMarks.clear();G.isAnimating=false;G.hand=[];G.activeWord=[];document.getElementById('view-game').classList.add('hidden');document.getElementById('view-map').classList.add('hidden');document.getElementById('view-draft').classList.add('hidden');hideModal();document.getElementById('options-modal').classList.remove('show');document.getElementById('view-difficulty').classList.add('hidden');document.getElementById('view-themes').classList.add('hidden');document.getElementById('view-menu').classList.remove('hidden','slide-left');AudioEngine.stopMusic();}
-    function boot(){try{G.currentTheme=localStorage.getItem('wordling-theme')||'wordling-light';}catch(e){G.currentTheme='wordling-light';}applyTheme(G.currentTheme);updateThemeButtons();let savedPalette;try{savedPalette=localStorage.getItem('wordling-palette')||'coral-sky';}catch(e){savedPalette='coral-sky';}applyPalette(savedPalette);initDict();bind();}
+    function goToMenu(){G.gameStarted=false;G.rerollMode=false;G.rerollMarks.clear();G.isAnimating=false;G.hand=[];G.activeWord=[];document.getElementById('game-container').classList.remove('zen-mode');document.getElementById('view-game').classList.add('hidden');document.getElementById('view-map').classList.add('hidden');document.getElementById('view-draft').classList.add('hidden');document.getElementById('view-stats').classList.add('hidden');hideModal();document.getElementById('options-modal').classList.remove('show');document.getElementById('view-difficulty').classList.add('hidden');document.getElementById('view-themes').classList.add('hidden');document.getElementById('view-menu').classList.remove('hidden','slide-left');AudioEngine.stopMusic();}
+    function loadPersistence(){
+        try{ G.leaderboard = JSON.parse(localStorage.getItem('wordling-leaderboard')||'[]'); }catch(e){ G.leaderboard=[]; }
+        try{ G.records = JSON.parse(localStorage.getItem('wordling-records')||'null') || {highestWord:null,totalGoldEarned:0,mostStagesCleared:0}; }catch(e){ G.records={highestWord:null,totalGoldEarned:0,mostStagesCleared:0}; }
+    }
+    function saveLeaderboard(){ try{ localStorage.setItem('wordling-leaderboard', JSON.stringify(G.leaderboard)); }catch(e){} }
+    function saveRecords(){ try{ localStorage.setItem('wordling-records', JSON.stringify(G.records)); }catch(e){} }
+    function recordLeaderboardScore(score){
+        if (G.gameMode==='zen') return;
+        G.leaderboard.push({score, date:new Date().toISOString().slice(0,10)});
+        G.leaderboard.sort((a,b)=>b.score-a.score);
+        G.leaderboard = G.leaderboard.slice(0,5);
+        saveLeaderboard();
+    }
+    function updateHighestWord(word, score){
+        if (!word || score<=0) return;
+        if (!G.records.highestWord || score > G.records.highestWord.score) { G.records.highestWord = {word, score}; saveRecords(); }
+    }
+    function updateMostStagesCleared(stages){
+        if (stages > G.records.mostStagesCleared) { G.records.mostStagesCleared = stages; saveRecords(); }
+    }
+    function renderStats(){
+        const c = document.getElementById('stats-content'); c.innerHTML='';
+        const lbTitle=document.createElement('h3'); lbTitle.textContent='TOP 5 SCORES'; c.appendChild(lbTitle);
+        if (G.leaderboard.length===0) { const p=document.createElement('p'); p.className='draft-hint'; p.textContent='No runs yet — play Classic Mode!'; c.appendChild(p); }
+        else { G.leaderboard.forEach((entry,i)=>{ const row=document.createElement('div'); row.className='stats-row'; row.innerHTML=`<span>#${i+1}</span><span>${entry.score.toLocaleString()}</span><span>${entry.date}</span>`; c.appendChild(row); }); }
+        const recTitle=document.createElement('h3'); recTitle.textContent='RECORDS'; c.appendChild(recTitle);
+        const hw = G.records.highestWord;
+        const rows = [
+            ['Highest Scoring Word', hw ? (hw.word+' — '+hw.score.toLocaleString()+' pts') : '—'],
+            ['Total Gold Earned', '$'+G.records.totalGoldEarned.toLocaleString()],
+            ['Most Stages Cleared', G.records.mostStagesCleared]
+        ];
+        rows.forEach(([label,val])=>{ const row=document.createElement('div'); row.className='stats-row'; row.innerHTML=`<span>${label}</span><span>${val}</span>`; c.appendChild(row); });
+    }
+    function boot(){try{G.currentTheme=localStorage.getItem('wordling-theme')||'wordling-light';}catch(e){G.currentTheme='wordling-light';}applyTheme(G.currentTheme);updateThemeButtons();let savedPalette;try{savedPalette=localStorage.getItem('wordling-palette')||'coral-sky';}catch(e){savedPalette='coral-sky';}applyPalette(savedPalette);loadPersistence();initDict();bind();}
     document.addEventListener('visibilitychange', () => { if(document.hidden){ if(G.dragData){ cleanupDrag(); render(); } } else { const c=document.getElementById('game-container'); if(c){ c.classList.add('anim-kick'); void c.offsetHeight; c.classList.remove('anim-kick'); } } });
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 })();
