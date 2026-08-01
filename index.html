@@ -276,15 +276,16 @@
         @keyframes wordlingSplitShift { 0% { background-position: 15% 25%, 50% 30%; } 25% { background-position: 65% 10%, 50% 30%; } 50% { background-position: 85% 75%, 50% 30%; } 75% { background-position: 35% 85%, 50% 30%; } 100% { background-position: 15% 25%, 50% 30%; } }
         @keyframes wordlingAngleDrift { 0% { --wl-angle: 118deg; } 50% { --wl-angle: 152deg; } 100% { --wl-angle: 118deg; } }
         @keyframes wordlingDiamondDrift { 0% { background-position: 0 0; } 100% { background-position: 90px 90px; } }
-        html[data-theme="wordling"] #map-header,
-        html[data-theme="wordling"] #view-difficulty h2,
-        html[data-theme="wordling"] #view-themes h2 {
+        html[data-theme="wordling"] #map-header .header-badge,
+        html[data-theme="wordling"] #view-difficulty h2 .header-badge,
+        html[data-theme="wordling"] #view-themes h2 .header-badge {
+            display: inline-block;
             background: var(--panel-bg);
             color: var(--text);
             text-shadow: none;
             border: var(--outline-w) solid var(--panel-border);
-            border-radius: var(--radius-sm);
-            padding: 10px 16px;
+            border-radius: 999px;
+            padding: 8px 22px;
             box-shadow: var(--readout-shadow);
         }
         html[data-theme="wordling"] .map-node-label {
@@ -753,8 +754,15 @@
         .confirm-btns .btn-quit { background: var(--accent-2); border-color: var(--accent-2-shadow); color: var(--accent-2-text); box-shadow: 0 5px 0 0 var(--accent-2-shadow); }
         .confirm-btns .btn-quit:active { box-shadow: 0 0 0 0 var(--accent-2-shadow); }
 
-        #options-modal, #modal-overlay, #run-info-modal { position:absolute; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; z-index:80; }
-        #options-modal.show, #modal-overlay.show, #run-info-modal.show { display:flex; }
+        #options-modal, #modal-overlay, #run-info-modal, #howto-modal { position:absolute; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; z-index:80; }
+        #options-modal.show, #modal-overlay.show, #run-info-modal.show, #howto-modal.show { display:flex; }
+        #howto-modal { z-index:90; }
+        .options-title-row { display:flex; align-items:center; justify-content:center; gap:10px; }
+        .info-btn { width:26px; height:26px; flex-shrink:0; border-radius:50%; background: var(--accent-3); color: var(--accent-3-text); border: var(--outline-w) solid var(--accent-3-shadow); font-weight:900; font-size:0.85rem; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; line-height:1; box-shadow: 0 2px 0 0 var(--accent-3-shadow); font-family: var(--font-main); }
+        .info-btn:active { transform: translateY(2px); box-shadow: 0 0 0 0 var(--accent-3-shadow); }
+        .howto-body { max-height:56vh; overflow-y:auto; }
+        .howto-row { display:flex; gap:10px; align-items:flex-start; font-weight:600; font-size:0.8rem; color: var(--text); background: rgba(0,0,0,0.06); padding:10px 12px; border-radius: var(--radius-sm); font-family: var(--font-main); line-height:1.35; }
+        .howto-row .howto-icon { font-size:1.1rem; flex-shrink:0; }
         .modal-inner { background: var(--panel-bg); border: var(--outline-w) solid var(--panel-border); border-radius:var(--panel-radius); padding:26px 22px; width:100%; max-width:320px; box-shadow:0 12px 32px rgba(0,0,0,0.5); display:flex; flex-direction:column; gap:14px; }
         .modal-inner h3 { text-align:center; font-size:1.3rem; font-weight:900; color: var(--text); font-family: var(--font-title); }
         .modal-inner label { display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:0.85rem; color: var(--text); gap:10px; font-family: var(--font-main); }
@@ -787,7 +795,7 @@
         </div>
     </div>
     <div id="view-themes" class="view-panel">
-        <h2>CHOOSE THEME</h2>
+        <h2><span class="header-badge">CHOOSE THEME</span></h2>
         <div class="theme-card card-wordling active" data-theme="wordling">
             <span class="theme-check">✓</span>
             <div class="theme-preview-row">
@@ -824,7 +832,7 @@
         <button class="menu-btn" id="btn-back-themes" style="width:100%; margin-top:10px;">BACK</button>
     </div>
     <div id="view-difficulty" class="view-panel">
-        <h2>SELECT MODE</h2>
+        <h2><span class="header-badge">SELECT MODE</span></h2>
         <button class="diff-btn diff-easy" id="btn-mode-classic">CLASSIC<br><span class="mode-sub">8 Stages · Shop · Glyphs</span></button>
         <div class="daily-card">
             <button class="diff-btn diff-medium" id="btn-mode-daily">DAILY CHALLENGE<br><span class="mode-sub" id="daily-mode-sub">Loading…</span></button>
@@ -866,7 +874,19 @@
             <button id="btn-close-run-info" class="menu-btn" style="width:100%; margin-top:4px;">CLOSE</button>
         </div>
     </div></div>
-    <div id="options-modal"><div class="modal-inner"><h3>PAUSED</h3><label>Music <input type="range" id="music-slider" min="0" max="100" value="25"><span class="slider-val" id="music-val">25%</span></label><label>Sounds <input type="range" id="sounds-slider" min="0" max="100" value="65"><span class="slider-val" id="sounds-val">65%</span></label><label>Vibration <input type="checkbox" id="vibration-toggle" checked></label><label>Screen Shake <input type="range" id="shake-slider" min="0" max="100" value="100"><span class="slider-val" id="shake-val">100%</span></label><label>Disable Ads <input type="checkbox" disabled><span style="font-size:0.65rem;">(soon)</span></label><button id="btn-close-settings">RESUME</button><button id="btn-exit-save" class="menu-btn themes-btn" style="width:100%;">EXIT TO MENU</button><button id="btn-abandon-run" class="menu-btn quit-run-btn" style="width:100%;">ABANDON RUN</button></div></div>
+    <div id="options-modal"><div class="modal-inner"><div class="options-title-row"><h3>PAUSED</h3><button id="btn-howto" class="info-btn" type="button" aria-label="How to play">ⓘ</button></div><label>Music <input type="range" id="music-slider" min="0" max="100" value="25"><span class="slider-val" id="music-val">25%</span></label><label>Sounds <input type="range" id="sounds-slider" min="0" max="100" value="65"><span class="slider-val" id="sounds-val">65%</span></label><label>Vibration <input type="checkbox" id="vibration-toggle" checked></label><label>Screen Shake <input type="range" id="shake-slider" min="0" max="100" value="100"><span class="slider-val" id="shake-val">100%</span></label><label>Disable Ads <input type="checkbox" disabled><span style="font-size:0.65rem;">(soon)</span></label><button id="btn-close-settings">RESUME</button><button id="btn-exit-save" class="menu-btn themes-btn" style="width:100%;">EXIT TO MENU</button><button id="btn-abandon-run" class="menu-btn quit-run-btn" style="width:100%;">ABANDON RUN</button></div></div>
+    <div id="howto-modal"><div class="modal-inner run-info-inner">
+        <div class="run-info-band">HOW TO PLAY</div>
+        <div class="run-info-body howto-body">
+            <div class="howto-row"><span class="howto-icon">🔤</span><span>Tap or drag letter tiles from your hand up into the word line to build a word.</span></div>
+            <div class="howto-row"><span class="howto-icon">✅</span><span>Tap SUBMIT to play a valid word. Chips × Multiplier = the points you score.</span></div>
+            <div class="howto-row"><span class="howto-icon">🖐️</span><span>HANDS is how many words you can submit this stage — reach the target score before they run out.</span></div>
+            <div class="howto-row"><span class="howto-icon">🔁</span><span>REROLL: mark up to 3 tiles, then confirm to swap them for brand new letters. SHUFFLE just reorders your current hand.</span></div>
+            <div class="howto-row"><span class="howto-icon">☠️</span><span>Boss stages add a Boss Blind — a special twist on the board. Beat the stage to move on.</span></div>
+            <div class="howto-row"><span class="howto-icon">💎</span><span>Earn Diamonds between stages to buy Glyphs and Consumables in the shop.</span></div>
+        </div>
+        <div style="padding:0 20px 20px;"><button id="btn-close-howto" class="menu-btn" style="width:100%;">GOT IT</button></div>
+    </div></div>
     <div id="modal-overlay"><div class="modal-inner" style="text-align:center;"><h2 id="modal-title">GAME OVER</h2><p id="modal-subtitle"></p><button id="btn-modal-action">Retry Run</button><button class="btn-main-menu" id="btn-modal-menu">Main Menu</button></div></div>
 </div>
 <script>
@@ -1752,13 +1772,13 @@
         sb.classList.toggle('invalid',p.occ>0&&!p.valid);
         const awl=document.getElementById('active-word-line');
         reconcileTileList(awl, G.activeWord, tile=>tile.id,
-            (tile,idx)=>{ const wrap=document.createElement('div'); wrap.className='active-tile'; wrap.dataset.tileId=tile.id; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.addEventListener('pointerdown',(e)=>{e.stopPropagation();onDragStart(e,'word',idx);}); wrap.appendChild(inner); return wrap; },
+            (tile,idx)=>{ const wrap=document.createElement('div'); wrap.className='active-tile'; wrap.dataset.tileId=tile.id; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.onpointerdown=(e)=>{e.stopPropagation();onDragStart(e,'word',idx);}; wrap.appendChild(inner); return wrap; },
             (wrap,tile,idx)=>{ const inner=wrap.firstElementChild; inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.onpointerdown=(e)=>{e.stopPropagation();onDragStart(e,'word',idx);}; }
         );
         const hr=document.getElementById('hand-rack');
         const handSlots=[]; for(let i=0;i<getHandSize();i++) handSlots.push(G.hand[i]||null);
         reconcileTileList(hr, handSlots, tile=>tile&&tile.id,
-            (tile,idx)=>{ const wrap=document.createElement('div'); wrap.className='hand-tile-wrap'; if(tile){ wrap.dataset.tileId=tile.id; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.style.animationDelay=tileIdleDelay(tile.id); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.addEventListener('pointerdown',(e)=>onDragStart(e,'hand',idx)); wrap.appendChild(inner); } else { wrap.classList.add('empty-slot'); } return wrap; },
+            (tile,idx)=>{ const wrap=document.createElement('div'); wrap.className='hand-tile-wrap'; if(tile){ wrap.dataset.tileId=tile.id; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.style.animationDelay=tileIdleDelay(tile.id); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.onpointerdown=(e)=>onDragStart(e,'hand',idx); wrap.appendChild(inner); } else { wrap.classList.add('empty-slot'); } return wrap; },
             (wrap,tile,idx)=>{ const inner=wrap.firstElementChild; inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>`; inner.onpointerdown=(e)=>onDragStart(e,'hand',idx); }
         );
         renderGlyphs();
@@ -1815,7 +1835,7 @@
     function renderMap() {
         if (G.isEndless) { renderEndlessMap(); return; }
         const modeName = G.gameMode==='daily' ? 'DAILY' : 'CLASSIC';
-        document.getElementById('map-header').textContent=modeName+' RUN - STAGE '+G.currentStage+'/'+G.totalStages;
+        document.getElementById('map-header').innerHTML='<span class="header-badge">'+modeName+' RUN - STAGE '+G.currentStage+'/'+G.totalStages+'</span>';
         const ladder=document.getElementById('map-ladder');
         layoutWindingNodes(ladder, G.totalStages, G.currentStage, (i) => {
             const isBoss = i % 4 === 0;
@@ -1827,7 +1847,7 @@
         saveActiveRun();
     }
     function renderEndlessMap() {
-        document.getElementById('map-header').textContent = 'ENDLESS — STAGE '+G.currentStage;
+        document.getElementById('map-header').innerHTML = '<span class="header-badge">ENDLESS — STAGE '+G.currentStage+'</span>';
         const ladder=document.getElementById('map-ladder');
         layoutWindingNodes(ladder, 1, 1, () => ({ state:'current', icon:String(G.currentStage), label:'Target: '+G.stageTargets[G.currentStage].toLocaleString() }));
         document.getElementById('btn-start-stage').textContent='START STAGE '+G.currentStage; document.getElementById('btn-start-stage').onclick=startStage; document.getElementById('view-map').classList.remove('hidden'); document.getElementById('view-game').classList.add('hidden'); document.getElementById('view-draft').classList.add('hidden');
@@ -1867,6 +1887,9 @@
         document.getElementById('btn-exit-save').addEventListener('click', exitToMenuSaved);
         document.getElementById('btn-abandon-run').addEventListener('click',()=>{ document.getElementById('options-modal').classList.remove('show'); showConfirmModal(); });
         document.getElementById('options-modal').addEventListener('click',e=>{if(e.target===document.getElementById('options-modal'))document.getElementById('options-modal').classList.remove('show');});
+        document.getElementById('btn-howto').addEventListener('click',()=>document.getElementById('howto-modal').classList.add('show'));
+        document.getElementById('btn-close-howto').addEventListener('click',()=>document.getElementById('howto-modal').classList.remove('show'));
+        document.getElementById('howto-modal').addEventListener('click',e=>{if(e.target===document.getElementById('howto-modal'))document.getElementById('howto-modal').classList.remove('show');});
         document.getElementById('music-slider').addEventListener('input',e=>{AudioEngine.setMusicVolume(parseInt(e.target.value)/100);document.getElementById('music-val').textContent=e.target.value+'%';});
         document.getElementById('sounds-slider').addEventListener('input',e=>{AudioEngine.setSfxVolume(parseInt(e.target.value)/100);document.getElementById('sounds-val').textContent=e.target.value+'%';});
         document.getElementById('shake-slider').addEventListener('input',e=>{G.shakeStrength=parseInt(e.target.value);document.getElementById('shake-val').textContent=e.target.value+'%';});
