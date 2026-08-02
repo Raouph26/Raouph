@@ -116,7 +116,7 @@
             --number-shadow: 2px 2px 0px rgba(0,0,0,0.8);
             --readout-shadow: inset 0 3px 6px rgba(0,0,0,0.8);
         }
-        html[data-theme="phantom"] {
+        html[data-theme="renegade-crimson"] {
             --font-main: 'Poppins', sans-serif;
             --font-title: 'Poppins', sans-serif;
             --font-numeric: 'Poppins', sans-serif;
@@ -302,7 +302,7 @@
         @keyframes scanlineDrift { 0% { background-position: 0 0; } 100% { background-position: 30px 30px; } }
         @keyframes typewriterBgDrift { 0% { background-position: 0% 0%, 50% 40%; } 50% { background-position: 100% 100%, 50% 40%; } 100% { background-position: 0% 0%, 50% 40%; } }
         @keyframes notebookDrift { 0% { background-position: 0 0, 0 0; } 100% { background-position: 0 340px, 0 0; } }
-        html[data-theme="phantom"] #game-container {
+        html[data-theme="renegade-crimson"] #game-container {
             background-image:
                 radial-gradient(circle at 18% 12%, rgba(120,30,140,0.65) 0%, transparent 42%),
                 radial-gradient(circle at 82% 22%, rgba(30,35,90,0.6) 0%, transparent 46%),
@@ -313,18 +313,18 @@
                 var(--bg-vignette);
             background-size: 130% 130%, 140% 140%, 150% 150%, 145% 145%, 160% 160%, 260% 260%, 160% 160%;
             background-position: 18% 12%, 82% 22%, 25% 82%, 78% 88%, 50% 50%, 0% 0%, 50% 30%;
-            animation: phantomBgShift 24s ease-in-out infinite;
+            animation: renegadeBgShift 24s ease-in-out infinite;
         }
-        html[data-theme="phantom"] #game-container.bg-pulse { animation-duration: 6s; }
-        html[data-theme="phantom"] #game-container::after {
+        html[data-theme="renegade-crimson"] #game-container.bg-pulse { animation-duration: 6s; }
+        html[data-theme="renegade-crimson"] #game-container::after {
             background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScyMDAnIGhlaWdodD0nMjAwJz48ZmlsdGVyIGlkPSduJz48ZmVUdXJidWxlbmNlIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nMC44NScgbnVtT2N0YXZlcz0nMycgc3RpdGNoVGlsZXM9J3N0aXRjaCcgcmVzdWx0PSdub2lzZScvPjxmZUNvbG9yTWF0cml4IGluPSdub2lzZScgdHlwZT0nbWF0cml4JyB2YWx1ZXM9JzAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAuNTUgMCcvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPScxMDAlJyBoZWlnaHQ9JzEwMCUnIGZpbHRlcj0ndXJsKCNuKScvPjwvc3ZnPg==");
             background-size: 180px 180px;
             mix-blend-mode: overlay;
             opacity: 0.95;
-            animation: phantomGrainDrift 1.2s steps(4) infinite;
+            animation: renegadeGrainDrift 1.2s steps(4) infinite;
         }
-        @keyframes phantomBgShift { 0% { background-position: 18% 12%, 82% 22%, 25% 82%, 78% 88%, 50% 50%, 0% 0%, 50% 30%; } 50% { background-position: 28% 20%, 70% 32%, 35% 72%, 66% 78%, 55% 45%, 100% 100%, 50% 30%; } 100% { background-position: 18% 12%, 82% 22%, 25% 82%, 78% 88%, 50% 50%, 0% 0%, 50% 30%; } }
-        @keyframes phantomGrainDrift { 0% { background-position: 0 0; } 25% { background-position: 40px -20px; } 50% { background-position: -30px 35px; } 75% { background-position: 20px 50px; } 100% { background-position: 0 0; } }
+        @keyframes renegadeBgShift { 0% { background-position: 18% 12%, 82% 22%, 25% 82%, 78% 88%, 50% 50%, 0% 0%, 50% 30%; } 50% { background-position: 28% 20%, 70% 32%, 35% 72%, 66% 78%, 55% 45%, 100% 100%, 50% 30%; } 100% { background-position: 18% 12%, 82% 22%, 25% 82%, 78% 88%, 50% 50%, 0% 0%, 50% 30%; } }
+        @keyframes renegadeGrainDrift { 0% { background-position: 0 0; } 25% { background-position: 40px -20px; } 50% { background-position: -30px 35px; } 75% { background-position: 20px 50px; } 100% { background-position: 0 0; } }
         @property --wl-angle { syntax: '<angle>'; inherits: false; initial-value: 135deg; }
         html[data-theme="wordling"] #game-container {
             background-image: linear-gradient(var(--wl-angle, 135deg), var(--wl-split-1) 50%, var(--wl-split-2) 50%), var(--bg-vignette);
@@ -376,88 +376,88 @@
             background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.15);
         }
         /* ===== PHANTOM THEME: chaotic punk-rock skin ===== */
-        @keyframes phantomTitleBounce { 0%,100% { transform: skewX(-8deg) rotate(-2deg) translateY(0); } 50% { transform: skewX(-8deg) rotate(-2deg) translateY(-6px); } }
-        html[data-theme="phantom"] #view-menu h1 {
-            animation-name: phantomTitleBounce; letter-spacing: -1px;
+        @keyframes renegadeTitleBounce { 0%,100% { transform: skewX(-8deg) rotate(-2deg) translateY(0); } 50% { transform: skewX(-8deg) rotate(-2deg) translateY(-6px); } }
+        html[data-theme="renegade-crimson"] #view-menu h1 {
+            animation-name: renegadeTitleBounce; letter-spacing: -1px;
             position: relative; z-index: 1; padding: 14px 26px; margin: 0 auto;
             color: #FFFFFF; -webkit-text-stroke: 0; text-shadow: 4px 4px 0 #000, -3px 0 0 var(--accent-1), 3px 0 0 var(--accent-2), 0 0 30px rgba(244,255,61,0.5);
         }
-        html[data-theme="phantom"] #view-menu h1::before {
+        html[data-theme="renegade-crimson"] #view-menu h1::before {
             content: ""; position: absolute; inset: -8px -22px -14px -22px; z-index: -1;
             background: #0A0A0C; border: 3px solid #fff;
             clip-path: polygon(3% 12%, 18% 0%, 58% 5%, 88% 0%, 100% 20%, 95% 52%, 100% 82%, 82% 100%, 46% 93%, 12% 100%, 0% 68%, 5% 34%);
             transform: rotate(-2deg);
             box-shadow: 7px 7px 0 0 rgba(0,0,0,0.7);
         }
-        html[data-theme="phantom"] #view-menu h1 .title-letter { display: inline-block; }
-        html[data-theme="phantom"] #view-menu h1 .title-letter:nth-child(4n+1) { transform: translateY(-4px) rotate(-6deg); color: var(--accent-3); }
-        html[data-theme="phantom"] #view-menu h1 .title-letter:nth-child(4n+2) { transform: translateY(2px) rotate(5deg); }
-        html[data-theme="phantom"] #view-menu h1 .title-letter:nth-child(4n+3) { transform: translateY(-2px) rotate(-4deg); color: var(--accent-1); }
-        html[data-theme="phantom"] #view-menu h1 .title-letter:nth-child(4n+4) { transform: translateY(3px) rotate(6deg); }
-        html[data-theme="phantom"] #header { gap: 8px; }
-        html[data-theme="phantom"] .header-pill,
-        html[data-theme="phantom"] .menu-btn,
-        html[data-theme="phantom"] .diff-btn,
-        html[data-theme="phantom"] .draft-btn,
-        html[data-theme="phantom"] .btn-action,
-        html[data-theme="phantom"] #btn-start-stage {
+        html[data-theme="renegade-crimson"] #view-menu h1 .title-letter { display: inline-block; }
+        html[data-theme="renegade-crimson"] #view-menu h1 .title-letter:nth-child(4n+1) { transform: translateY(-4px) rotate(-6deg); color: var(--accent-3); }
+        html[data-theme="renegade-crimson"] #view-menu h1 .title-letter:nth-child(4n+2) { transform: translateY(2px) rotate(5deg); }
+        html[data-theme="renegade-crimson"] #view-menu h1 .title-letter:nth-child(4n+3) { transform: translateY(-2px) rotate(-4deg); color: var(--accent-1); }
+        html[data-theme="renegade-crimson"] #view-menu h1 .title-letter:nth-child(4n+4) { transform: translateY(3px) rotate(6deg); }
+        html[data-theme="renegade-crimson"] #header { gap: 8px; }
+        html[data-theme="renegade-crimson"] .header-pill,
+        html[data-theme="renegade-crimson"] .menu-btn,
+        html[data-theme="renegade-crimson"] .diff-btn,
+        html[data-theme="renegade-crimson"] .draft-btn,
+        html[data-theme="renegade-crimson"] .btn-action,
+        html[data-theme="renegade-crimson"] #btn-start-stage {
             clip-path: polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%);
             border-radius: 0 !important;
             text-transform: uppercase;
         }
-        html[data-theme="phantom"] #top-info { transform: skewX(-8deg); padding: 0 10px; }
-        html[data-theme="phantom"] #progress-wrap { border-radius: 0; border-width: 3px; }
-        html[data-theme="phantom"] #score-pill { border-radius: 0; clip-path: polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%); }
-        html[data-theme="phantom"] .hud-box { transform: skewX(-8deg) rotate(-1deg); clip-path: polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%); }
-        html[data-theme="phantom"] .hud-box:nth-child(3) { transform: skewX(-8deg) rotate(1deg); }
-        html[data-theme="phantom"] .resource-box { transform: skewX(-8deg); clip-path: polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%); background: #0A0A0C; border-width: 3px; }
-        html[data-theme="phantom"] .resource-label, html[data-theme="phantom"] .resource-value { display:inline-block; transform: skewX(8deg); font-weight: 900; }
-        @keyframes phantomResourceTick { 0% { transform: skewX(8deg) translateY(0) scale(1); } 35% { transform: skewX(8deg) translateY(-7px) scale(1.2); } 62% { transform: skewX(8deg) translateY(1px) scale(0.94); } 100% { transform: skewX(8deg) translateY(0) scale(1); } }
-        html[data-theme="phantom"] .resource-value.tick { animation: phantomResourceTick 0.38s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        html[data-theme="phantom"] .resource-box:nth-child(1) .resource-label, html[data-theme="phantom"] .resource-box:nth-child(1) .resource-value { color: var(--accent-1); }
-        html[data-theme="phantom"] .resource-box:nth-child(2) .resource-label, html[data-theme="phantom"] .resource-box:nth-child(2) .resource-value { color: var(--accent-2); }
-        html[data-theme="phantom"] .resource-box:nth-child(3) .resource-label, html[data-theme="phantom"] .resource-box:nth-child(3) .resource-value { color: var(--accent-3); }
-        html[data-theme="phantom"] #score-banner { transform: skewX(-8deg); font-weight: 900; letter-spacing: -0.3px; }
-        html[data-theme="phantom"] .modal-inner h3 {
+        html[data-theme="renegade-crimson"] #top-info { transform: skewX(-8deg); padding: 0 10px; }
+        html[data-theme="renegade-crimson"] #progress-wrap { border-radius: 0; border-width: 3px; }
+        html[data-theme="renegade-crimson"] #score-pill { border-radius: 0; clip-path: polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%); }
+        html[data-theme="renegade-crimson"] .hud-box { transform: skewX(-8deg) rotate(-1deg); clip-path: polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%); }
+        html[data-theme="renegade-crimson"] .hud-box:nth-child(3) { transform: skewX(-8deg) rotate(1deg); }
+        html[data-theme="renegade-crimson"] .resource-box { transform: skewX(-8deg); clip-path: polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%); background: #0A0A0C; border-width: 3px; }
+        html[data-theme="renegade-crimson"] .resource-label, html[data-theme="renegade-crimson"] .resource-value { display:inline-block; transform: skewX(8deg); font-weight: 900; }
+        @keyframes renegadeResourceTick { 0% { transform: skewX(8deg) translateY(0) scale(1); } 35% { transform: skewX(8deg) translateY(-7px) scale(1.2); } 62% { transform: skewX(8deg) translateY(1px) scale(0.94); } 100% { transform: skewX(8deg) translateY(0) scale(1); } }
+        html[data-theme="renegade-crimson"] .resource-value.tick { animation: renegadeResourceTick 0.38s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        html[data-theme="renegade-crimson"] .resource-box:nth-child(1) .resource-label, html[data-theme="renegade-crimson"] .resource-box:nth-child(1) .resource-value { color: var(--accent-1); }
+        html[data-theme="renegade-crimson"] .resource-box:nth-child(2) .resource-label, html[data-theme="renegade-crimson"] .resource-box:nth-child(2) .resource-value { color: var(--accent-2); }
+        html[data-theme="renegade-crimson"] .resource-box:nth-child(3) .resource-label, html[data-theme="renegade-crimson"] .resource-box:nth-child(3) .resource-value { color: var(--accent-3); }
+        html[data-theme="renegade-crimson"] #score-banner { transform: skewX(-8deg); font-weight: 900; letter-spacing: -0.3px; }
+        html[data-theme="renegade-crimson"] .modal-inner h3 {
             transform: skewX(-8deg); letter-spacing: -0.5px;
         }
-        html[data-theme="phantom"] .run-info-band,
-        html[data-theme="phantom"] #modal-title {
+        html[data-theme="renegade-crimson"] .run-info-band,
+        html[data-theme="renegade-crimson"] #modal-title {
             transform: translateX(-50%) skewX(-8deg); letter-spacing: -0.5px;
             border-radius: 0; clip-path: polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%);
         }
-        html[data-theme="phantom"] #map-header .header-badge,
-        html[data-theme="phantom"] #view-difficulty h2 .header-badge,
-        html[data-theme="phantom"] #view-themes h2 .header-badge {
+        html[data-theme="renegade-crimson"] #map-header .header-badge,
+        html[data-theme="renegade-crimson"] #view-difficulty h2 .header-badge,
+        html[data-theme="renegade-crimson"] #view-themes h2 .header-badge {
             display: inline-block; background: #0A0A0C; color: #FFFFFF; text-shadow: none;
             border: 3px solid #fff; clip-path: polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%);
             transform: skewX(-8deg); padding: 8px 22px; text-transform: uppercase; letter-spacing: -0.3px;
         }
-        html[data-theme="phantom"] .map-node-label {
+        html[data-theme="renegade-crimson"] .map-node-label {
             background: #0A0A0C; color: #fff; text-shadow: none; border: 2px solid #fff;
             clip-path: polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%); transform: skewX(-8deg);
         }
-        html[data-theme="phantom"] .hand-tile-wrap:nth-child(odd),
-        html[data-theme="phantom"] .active-tile:nth-child(odd) { transform: rotate(-3deg); }
-        html[data-theme="phantom"] .hand-tile-wrap:nth-child(even),
-        html[data-theme="phantom"] .active-tile:nth-child(even) { transform: rotate(3deg); }
-        html[data-theme="phantom"] .draft-card-wrap:nth-child(odd) { transform: rotate(-2deg); }
-        html[data-theme="phantom"] .draft-card-wrap:nth-child(even) { transform: rotate(2deg); }
-        html[data-theme="phantom"] .draft-card, html[data-theme="phantom"] .draft-detail-icon { border-radius: 0; clip-path: polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%); }
-        html[data-theme="phantom"] .theme-card:nth-child(1) { transform: rotate(-2deg); }
-        html[data-theme="phantom"] .theme-card:nth-child(2) { transform: rotate(2deg); }
-        html[data-theme="phantom"] .theme-card:nth-child(3) { transform: rotate(1.5deg); }
-        html[data-theme="phantom"] .theme-card:nth-child(4) { transform: rotate(-1.5deg); }
-        html[data-theme="phantom"] .theme-card:nth-child(1):active { transform: rotate(-2deg) translateY(5px); }
-        html[data-theme="phantom"] .theme-card:nth-child(2):active { transform: rotate(2deg) translateY(5px); }
-        html[data-theme="phantom"] .theme-card:nth-child(3):active { transform: rotate(1.5deg) translateY(5px); }
-        html[data-theme="phantom"] .theme-card:nth-child(4):active { transform: rotate(-1.5deg) translateY(5px); }
-        html[data-theme="phantom"] .theme-card { border-radius: 0; clip-path: polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%); }
-        html[data-theme="phantom"] .modal-inner { border-radius: 0; clip-path: polygon(0 1%, 100% 0, 100% 99%, 0 100%); }
-        html[data-theme="phantom"] .daily-info-panel { background: #0A0A0C; border: 2px solid #fff; clip-path: polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%); }
-        html[data-theme="phantom"] .daily-info-toggle { background: #0A0A0C; border-color: #fff; }
-        html[data-theme="phantom"] .run-info-row { background: #0A0A0C; border: 2px solid #fff; }
-        html[data-theme="phantom"] .info-btn { border-radius: 0; clip-path: polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%); }
+        html[data-theme="renegade-crimson"] .hand-tile-wrap:nth-child(odd),
+        html[data-theme="renegade-crimson"] .active-tile:nth-child(odd) { transform: rotate(-3deg); }
+        html[data-theme="renegade-crimson"] .hand-tile-wrap:nth-child(even),
+        html[data-theme="renegade-crimson"] .active-tile:nth-child(even) { transform: rotate(3deg); }
+        html[data-theme="renegade-crimson"] .draft-card-wrap:nth-child(odd) { transform: rotate(-2deg); }
+        html[data-theme="renegade-crimson"] .draft-card-wrap:nth-child(even) { transform: rotate(2deg); }
+        html[data-theme="renegade-crimson"] .draft-card, html[data-theme="renegade-crimson"] .draft-detail-icon { border-radius: 0; clip-path: polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%); }
+        html[data-theme="renegade-crimson"] .theme-card:nth-child(1) { transform: rotate(-2deg); }
+        html[data-theme="renegade-crimson"] .theme-card:nth-child(2) { transform: rotate(2deg); }
+        html[data-theme="renegade-crimson"] .theme-card:nth-child(3) { transform: rotate(1.5deg); }
+        html[data-theme="renegade-crimson"] .theme-card:nth-child(4) { transform: rotate(-1.5deg); }
+        html[data-theme="renegade-crimson"] .theme-card:nth-child(1):active { transform: rotate(-2deg) translateY(5px); }
+        html[data-theme="renegade-crimson"] .theme-card:nth-child(2):active { transform: rotate(2deg) translateY(5px); }
+        html[data-theme="renegade-crimson"] .theme-card:nth-child(3):active { transform: rotate(1.5deg) translateY(5px); }
+        html[data-theme="renegade-crimson"] .theme-card:nth-child(4):active { transform: rotate(-1.5deg) translateY(5px); }
+        html[data-theme="renegade-crimson"] .theme-card { border-radius: 0; clip-path: polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%); }
+        html[data-theme="renegade-crimson"] .modal-inner { border-radius: 0; clip-path: polygon(0 1%, 100% 0, 100% 99%, 0 100%); }
+        html[data-theme="renegade-crimson"] .daily-info-panel { background: #0A0A0C; border: 2px solid #fff; clip-path: polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%); }
+        html[data-theme="renegade-crimson"] .daily-info-toggle { background: #0A0A0C; border-color: #fff; }
+        html[data-theme="renegade-crimson"] .run-info-row { background: #0A0A0C; border: 2px solid #fff; }
+        html[data-theme="renegade-crimson"] .info-btn { border-radius: 0; clip-path: polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%); }
         #bg-overlay {
             position: absolute; inset: 0; pointer-events: none; z-index: 0;
             background: transparent; transition: background 0.5s ease;
@@ -742,8 +742,8 @@
         .card-cyber-arcade .theme-name { color: #E8EDF0; font-family: 'Press Start 2P', monospace; font-size: 0.6rem; line-height: 1.6; }
         .card-typewriter { background: #141416; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 5px); }
         .card-typewriter .theme-name { color: #EDE8D0; font-family: 'Special Elite', monospace; }
-        .card-phantom { background: radial-gradient(ellipse at 30% 20%, #4A0F5C 0%, transparent 60%), linear-gradient(155deg, #2B0A1F 0%, #1B0E2B 100%); border: 3px solid #fff !important; }
-        .card-phantom .theme-name { color: #F4FF3D; font-family: 'Poppins', sans-serif; font-weight: 900; letter-spacing: -0.5px; transform: skewX(-8deg); text-shadow: 2px 2px 0 #000, 0 0 14px #FF1053; }
+        .card-renegade-crimson { background: radial-gradient(ellipse at 30% 20%, #4A0F5C 0%, transparent 60%), linear-gradient(155deg, #2B0A1F 0%, #1B0E2B 100%); border: 3px solid #fff !important; }
+        .card-renegade-crimson .theme-name { color: #F4FF3D; font-family: 'Poppins', sans-serif; font-weight: 900; letter-spacing: -0.5px; transform: skewX(-8deg); text-shadow: 2px 2px 0 #000, 0 0 14px #FF1053; }
 
         #header { display:flex; align-items:center; justify-content:center; gap:12px; flex-shrink:0; }
         .header-pill {
@@ -1164,6 +1164,186 @@
         .btn-main-menu { margin-top:8px; padding:12px; border-radius:var(--btn-radius); font-weight:700; font-size:0.78rem; cursor:pointer; border: var(--outline-w) solid var(--cap-border); background: var(--cap-bg); color: var(--cap-color); letter-spacing:0.4px; box-shadow: 0 5px 0 0 var(--cap-shadow-color); font-family: var(--font-main); transition: transform 0.08s ease, box-shadow 0.08s ease; }
         .btn-main-menu:active { transform:translateY(5px); box-shadow: 0 0 0 0 var(--cap-shadow-color); }
         #game-container.shake-active { animation: shake var(--shake-duration, 0.25s) ease-out; }
+
+        /* ============================================================
+           RENEGADE CRIMSON — comic/punk: crimson on obsidian, stark white
+           cards, hard zero-blur block shadows, heavy outlines, angled geometry.
+           Declared last so these win over the inherited theme rules above.
+           ============================================================ */
+        html[data-theme="renegade-crimson"] {
+            --bg-solid: #111113;
+            --bg-vignette: radial-gradient(ellipse at 50% 28%, rgba(230,0,18,0.26) 0%, rgba(0,0,0,0) 60%);
+            --panel-bg: #ffffff; --panel-border: #111111; --panel-shadow-color: #000000; --panel-radius: 0px;
+            --text: #111111; --text-soft: #55555c; --bg-text: #ffffff;
+            --accent-1: #e60012; --accent-1-shadow: #000000; --accent-1-text: #ffffff;
+            --accent-2: #ffffff; --accent-2-shadow: #000000; --accent-2-text: #111111;
+            --accent-3: #e60012; --accent-3-rgb: 230,0,18; --accent-3-shadow: #000000; --accent-3-text: #ffffff;
+            --cap-bg: #ffffff; --cap-color: #111111; --cap-border: #111111; --cap-shadow-color: #000000; --cap-radius: 0px;
+            --tile-bg: #ffffff; --tile-color: #111111; --tile-border: #111111; --tile-shadow-color: #000000; --tile-radius: 0px;
+            --btn-radius: 0px; --outline-w: 3px; --press-depth: 5px;
+            --title-shadow: 5px 5px 0 #000000;
+            --number-shadow: none;
+            --readout-shadow: 5px 5px 0 0 #000000;
+        }
+        html[data-theme="renegade-crimson"] #game-container {
+            background-color: #111113;
+            background-image:
+                repeating-linear-gradient(45deg, #111113 0px, #111113 10px, #1a1a1e 10px, #1a1a1e 20px),
+                var(--bg-vignette);
+            background-size: auto, 170% 170%;
+            background-position: 0 0, 50% 28%;
+            animation: none;
+        }
+        html[data-theme="renegade-crimson"] #game-container::after { background-image: none; animation: none; }
+        html[data-theme="renegade-crimson"] .menu-btn,
+        html[data-theme="renegade-crimson"] .diff-btn,
+        html[data-theme="renegade-crimson"] .draft-btn,
+        html[data-theme="renegade-crimson"] .btn-action,
+        html[data-theme="renegade-crimson"] #btn-start-stage,
+        html[data-theme="renegade-crimson"] .press-arrow,
+        html[data-theme="renegade-crimson"] .draft-card,
+        html[data-theme="renegade-crimson"] .draft-panel,
+        html[data-theme="renegade-crimson"] .modal-inner,
+        html[data-theme="renegade-crimson"] .glyph-slot,
+        html[data-theme="renegade-crimson"] .resource-box,
+        html[data-theme="renegade-crimson"] .hud-box {
+            border-radius: 0; border: 3px solid #111111;
+            box-shadow: 5px 5px 0 0 #000000;
+        }
+        html[data-theme="renegade-crimson"] .press-arrow { box-shadow: 3px 3px 0 0 #000000; }
+        html[data-theme="renegade-crimson"] .tile-inner {
+            border-radius: 0; border: 3px solid #111111 !important; box-shadow: 4px 4px 0 0 #000000 !important;
+        }
+        html[data-theme="renegade-crimson"] .tile-inner.aura-blue { background: #e60012 !important; }
+        html[data-theme="renegade-crimson"] .tile-inner.aura-blue .tile-letter,
+        html[data-theme="renegade-crimson"] .tile-inner.aura-blue .tile-chips { color: #ffffff !important; }
+        html[data-theme="renegade-crimson"] .tile-inner.aura-red { background: #111113 !important; }
+        html[data-theme="renegade-crimson"] .tile-inner.aura-red .tile-letter,
+        html[data-theme="renegade-crimson"] .tile-inner.aura-red .tile-chips { color: #ffffff !important; }
+        /* angled containers; the inner unskew keeps the text upright */
+        html[data-theme="renegade-crimson"] .press-card { transform: skewX(-4deg); border-radius: 0; border: 3px solid #111111; box-shadow: 5px 5px 0 0 #000000; }
+        html[data-theme="renegade-crimson"] .press-card:active { transform: skewX(-4deg) translateY(3px); }
+        html[data-theme="renegade-crimson"] .press-card > *:not(.press-lock) { transform: skewX(4deg); }
+        html[data-theme="renegade-crimson"] .press-card .press-lock { transform: skewX(4deg); }
+        html[data-theme="renegade-crimson"] .press-card.selected::after { border-radius: 0; box-shadow: 3px 3px 0 0 #000000; }
+        html[data-theme="renegade-crimson"] .stage-word-row,
+        html[data-theme="renegade-crimson"] .payout-row { border-radius: 0; border: 2px solid #111111; }
+        html[data-theme="renegade-crimson"] .resource-box { background: #111113; }
+        html[data-theme="renegade-crimson"] .resource-box:nth-child(1) { --res-color: #e60012; }
+        html[data-theme="renegade-crimson"] .resource-box:nth-child(2) { --res-color: #ffffff; }
+        html[data-theme="renegade-crimson"] .resource-box:nth-child(3) { --res-color: #e60012; }
+        html[data-theme="renegade-crimson"] .resource-box:nth-child(1) .resource-value,
+        html[data-theme="renegade-crimson"] .resource-box:nth-child(2) .resource-value,
+        html[data-theme="renegade-crimson"] .resource-box:nth-child(3) .resource-value { color: #ffffff; }
+        html[data-theme="renegade-crimson"] .resource-box:nth-child(1) .resource-label { color: #e60012; }
+        html[data-theme="renegade-crimson"] .resource-box:nth-child(2) .resource-label { color: #ffffff; }
+        html[data-theme="renegade-crimson"] .resource-box:nth-child(3) .resource-label { color: #e60012; }
+        html[data-theme="renegade-crimson"] #unlock-banner { border-radius: 0; border: 3px solid #111111; box-shadow: 5px 5px 0 0 #000000; background: #e60012; color: #ffffff; }
+        html[data-theme="renegade-crimson"] .map-node { border-radius: 0; border: 3px solid #111111; box-shadow: 4px 4px 0 0 #000000; }
+        html[data-theme="renegade-crimson"] .map-path-dot { border-radius: 0; }
+        html[data-theme="renegade-crimson"] .sell-banner { border-radius: 0; box-shadow: 4px 4px 0 0 #000000; }
+
+        /* ============================================================
+           PALE TERMINAL — desaturated tactical HUD: sand ground, 1px charcoal
+           frames, zero radius, bracketed headers, monospace throughout.
+           ============================================================ */
+        html[data-theme="pale-terminal"] {
+            --font-main: 'Courier New', Consolas, monospace;
+            --font-title: 'Courier New', Consolas, monospace;
+            --font-numeric: 'Courier New', Consolas, monospace;
+            --font-weight-ui: 700; --letter-spacing-ui: 1px;
+            --bg-solid: #c8c5b5;
+            --bg-vignette: none;
+            --panel-bg: #d2cfc0; --panel-border: #383732; --panel-shadow-color: #a8a495; --panel-radius: 0px;
+            --text: #383732; --text-soft: #6b6a61; --bg-text: #383732;
+            --accent-1: #7f7c6d; --accent-1-shadow: #4d4b43; --accent-1-text: #efece0;
+            --accent-2: #8c403e; --accent-2-shadow: #5c2a29; --accent-2-text: #f2e9e6;
+            --accent-3: #a89f81; --accent-3-rgb: 168,159,129; --accent-3-shadow: #6f6853; --accent-3-text: #2c2b26;
+            --cap-bg: #b8b5a5; --cap-color: #383732; --cap-border: #383732; --cap-shadow-color: #9a9788; --cap-radius: 0px;
+            --tile-bg: #d8d5c6; --tile-color: #383732; --tile-border: #383732; --tile-shadow-color: #9a9788; --tile-radius: 0px;
+            --btn-radius: 0px; --outline-w: 1px; --press-depth: 2px;
+            --title-shadow: none;
+            --number-shadow: none;
+            --readout-shadow: 2px 2px 0 0 #9a9788;
+        }
+        html[data-theme="pale-terminal"] #game-container {
+            background-color: #c8c5b5;
+            background-image:
+                linear-gradient(rgba(56,55,50,0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(56,55,50,0.08) 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-position: 0 0;
+            animation: none;
+        }
+        html[data-theme="pale-terminal"] #game-container::after { background-image: none; animation: none; }
+        html[data-theme="pale-terminal"] .menu-btn,
+        html[data-theme="pale-terminal"] .diff-btn,
+        html[data-theme="pale-terminal"] .draft-btn,
+        html[data-theme="pale-terminal"] .btn-action,
+        html[data-theme="pale-terminal"] #btn-start-stage,
+        html[data-theme="pale-terminal"] .press-arrow,
+        html[data-theme="pale-terminal"] .press-card,
+        html[data-theme="pale-terminal"] .draft-card,
+        html[data-theme="pale-terminal"] .draft-panel,
+        html[data-theme="pale-terminal"] .modal-inner,
+        html[data-theme="pale-terminal"] .glyph-slot,
+        html[data-theme="pale-terminal"] .resource-box,
+        html[data-theme="pale-terminal"] .hud-box,
+        html[data-theme="pale-terminal"] .stage-word-row,
+        html[data-theme="pale-terminal"] .payout-row,
+        html[data-theme="pale-terminal"] #unlock-banner,
+        html[data-theme="pale-terminal"] .sell-banner,
+        html[data-theme="pale-terminal"] .map-node {
+            border-radius: 0; border: 1px solid #383732; box-shadow: 2px 2px 0 0 #9a9788;
+        }
+        html[data-theme="pale-terminal"] .tile-inner {
+            border-radius: 0; border: 1px solid #383732 !important; box-shadow: 2px 2px 0 0 #9a9788 !important;
+        }
+        html[data-theme="pale-terminal"] .tile-inner.aura-blue { background: #b8b5a5 !important; }
+        html[data-theme="pale-terminal"] .tile-inner.aura-red { background: #8c403e !important; }
+        html[data-theme="pale-terminal"] .tile-inner.aura-gold { background: #a89f81 !important; }
+        html[data-theme="pale-terminal"] .tile-inner.aura-blue .tile-letter,
+        html[data-theme="pale-terminal"] .tile-inner.aura-blue .tile-chips { color: #383732 !important; }
+        html[data-theme="pale-terminal"] .resource-box { background: #3b3a34; border-color: #383732; }
+        html[data-theme="pale-terminal"] .resource-box:nth-child(1) { --res-color: #b8b5a5; }
+        html[data-theme="pale-terminal"] .resource-box:nth-child(2) { --res-color: #c67f7c; }
+        html[data-theme="pale-terminal"] .resource-box:nth-child(3) { --res-color: #a89f81; }
+        html[data-theme="pale-terminal"] .map-path-dot { border-radius: 0; }
+        html[data-theme="pale-terminal"] #score-pill,
+        html[data-theme="pale-terminal"] #progress-wrap,
+        html[data-theme="pale-terminal"] #progress-fill,
+        html[data-theme="pale-terminal"] .header-pill,
+        html[data-theme="pale-terminal"] .header-badge,
+        html[data-theme="pale-terminal"] .tile-badge,
+        html[data-theme="pale-terminal"] .glyph-level-badge { border-radius: 0; }
+        html[data-theme="pale-terminal"] #score-pill { border: 1px solid #383732; box-shadow: 2px 2px 0 0 #9a9788; }
+        html[data-theme="pale-terminal"] #progress-wrap { border: 1px solid #383732; }
+        html[data-theme="pale-terminal"] #unlock-banner { background: #b8b5a5; color: #383732; }
+        /* bracketed technical headers */
+        html[data-theme="pale-terminal"] .header-badge::before,
+        html[data-theme="pale-terminal"] .press-title::before,
+        html[data-theme="pale-terminal"] .shop-section-label::before,
+        html[data-theme="pale-terminal"] .stage-clear-label::before,
+        html[data-theme="pale-terminal"] .stage-clear-words-label::before { content: '[ '; }
+        html[data-theme="pale-terminal"] .header-badge::after,
+        html[data-theme="pale-terminal"] .press-title::after,
+        html[data-theme="pale-terminal"] .shop-section-label::after,
+        html[data-theme="pale-terminal"] .stage-clear-label::after,
+        html[data-theme="pale-terminal"] .stage-clear-words-label::after { content: ' ]'; }
+        html[data-theme="pale-terminal"] .draft-panel h2 span::before { content: '[ '; }
+        html[data-theme="pale-terminal"] .draft-panel h2 span::after { content: ' ]'; }
+        html[data-theme="pale-terminal"] #view-menu h1 { text-shadow: none; letter-spacing: 2px; }
+        .card-pale-terminal {
+            background: #c8c5b5;
+            background-image: linear-gradient(rgba(56,55,50,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(56,55,50,0.12) 1px, transparent 1px);
+            background-size: 12px 12px; border-radius: 0;
+        }
+        .card-pale-terminal .theme-name { color: #383732; font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 1px; }
+        .card-renegade-crimson {
+            background: repeating-linear-gradient(45deg, #111113 0px, #111113 8px, #1a1a1e 8px, #1a1a1e 16px);
+            border-radius: 0;
+        }
+        .card-renegade-crimson .theme-name { color: #e60012; font-family: 'Poppins', sans-serif; font-weight: 900; letter-spacing: -0.5px; }
     </style>
 </head>
 <body>
@@ -1234,14 +1414,23 @@
             </div>
             <span class="theme-name">Mechanical<br>Typewriter</span>
         </div>
-        <div class="theme-card card-phantom" data-theme="phantom">
+        <div class="theme-card card-renegade-crimson" data-theme="renegade-crimson">
             <span class="theme-check">✓</span>
             <div class="theme-preview-row">
-                <span class="theme-preview-chip" style="background:#00E5FF;"></span>
-                <span class="theme-preview-chip" style="background:#FF1053;"></span>
-                <span class="theme-preview-chip" style="background:#F4FF3D;"></span>
+                <span class="theme-preview-chip" style="background:#e60012;"></span>
+                <span class="theme-preview-chip" style="background:#ffffff;"></span>
+                <span class="theme-preview-chip" style="background:#111113;"></span>
             </div>
-            <span class="theme-name">PHANTOM</span>
+            <span class="theme-name">RENEGADE</span>
+        </div>
+        <div class="theme-card card-pale-terminal" data-theme="pale-terminal">
+            <span class="theme-check">✓</span>
+            <div class="theme-preview-row">
+                <span class="theme-preview-chip" style="background:#c8c5b5;"></span>
+                <span class="theme-preview-chip" style="background:#383732;"></span>
+                <span class="theme-preview-chip" style="background:#8c403e;"></span>
+            </div>
+            <span class="theme-name">PALE TERMINAL</span>
         </div>
         <button class="menu-btn" id="btn-back-themes" style="width:100%; margin-top:10px;">BACK</button>
     </div>
@@ -1344,9 +1533,9 @@
         playSubmit() { const g=this._sfxOut(); if(!g) return; const ctx=this.audioCtx; const t=ctx.currentTime; const freqs=[261.63,329.63,392.0,523.25]; freqs.forEach((f,i)=>{ const o=ctx.createOscillator(); o.type='sine'; const st=t+i*0.04; o.frequency.setValueAtTime(f,st); const gn=ctx.createGain(); gn.gain.setValueAtTime(0,st); gn.gain.linearRampToValueAtTime(0.09,st+0.25); gn.gain.exponentialRampToValueAtTime(0.001,st+0.9); o.connect(gn); gn.connect(g); o.start(st); o.stop(st+1.0); }); },
         playWin() { const g=this._sfxOut(); if(!g) return; const ctx=this.audioCtx; const t=ctx.currentTime; const freqs=[392.0,523.25,659.25,783.99,1046.5]; freqs.forEach((f,i)=>{ const o=ctx.createOscillator(); o.type='triangle'; const st=t+i*0.075; o.frequency.setValueAtTime(f,st); const gn=ctx.createGain(); gn.gain.setValueAtTime(0,st); gn.gain.linearRampToValueAtTime(0.13,st+0.05); gn.gain.exponentialRampToValueAtTime(0.001,st+1.1); o.connect(gn); gn.connect(g); o.start(st); o.stop(st+1.2); }); }
     };
-    const THEMES = ['wordling', 'cyber-arcade', 'typewriter', 'phantom'];
+    const THEMES = ['wordling', 'cyber-arcade', 'typewriter', 'renegade-crimson', 'pale-terminal'];
     let activeTheme = 'wordling';
-    function applyTheme(n){ const name = THEMES.includes(n) ? n : 'wordling'; activeTheme = name; document.documentElement.setAttribute('data-theme', name); document.body.classList.toggle('theme-phantom', name==='phantom'); try{localStorage.setItem('wordling-theme',name);}catch(e){} }
+    function applyTheme(n){ const name = THEMES.includes(n) ? n : 'wordling'; activeTheme = name; document.documentElement.setAttribute('data-theme', name); THEMES.forEach(t=>document.body.classList.toggle('theme-'+t, t===name)); try{localStorage.setItem('wordling-theme',name);}catch(e){} }
     // A host page that embeds this file may stamp its own light/dark value onto the
     // root data-theme attribute, which would drop every html[data-theme=...] rule.
     new MutationObserver(function(){ if (document.documentElement.getAttribute('data-theme') !== activeTheme) applyTheme(activeTheme); })
