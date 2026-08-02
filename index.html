@@ -174,7 +174,7 @@
             --wl-split-2: #3B82F6;
 
             --panel-bg: #FFFFFF;
-            --panel-border: rgba(15,23,42,0.08);
+            --panel-border: rgba(15,23,42,0.14);
             --panel-shadow-color: rgba(15,23,42,0.18);
             --panel-radius: 14px;
 
@@ -193,21 +193,21 @@
             --accent-2-text: #ffffff;
             --accent-3-text: #241a00;
 
-            --cap-bg: #FFFFFF;
+            --cap-bg: #E9EEF6;
             --cap-color: #0F172A;
-            --cap-border: rgba(15,23,42,0.06);
-            --cap-shadow-color: rgba(15,23,42,0.18);
+            --cap-border: rgba(15,23,42,0.32);
+            --cap-shadow-color: rgba(15,23,42,0.22);
             --cap-radius: 20px;
 
             --tile-bg: #FFFFFF;
             --tile-color: #0F172A;
-            --tile-border: rgba(15,23,42,0.08);
+            --tile-border: rgba(15,23,42,0.14);
             --tile-shadow-color: rgba(15,23,42,0.18);
             --tile-radius: 14px;
 
             --btn-radius: 20px;
             --press-depth: 5px;
-            --outline-w: 0px;
+            --outline-w: 2px;
             --title-shadow: 0 3px 0 rgba(15,23,42,0.18);
             --number-shadow: none;
             --readout-shadow: 0 4px 0 0 rgba(15,23,42,0.15);
@@ -404,6 +404,8 @@
         html[data-theme="phantom"] .hud-box:nth-child(3) { transform: skewX(-8deg) rotate(1deg); }
         html[data-theme="phantom"] .resource-box { transform: skewX(-8deg); clip-path: polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%); background: #0A0A0C; border-width: 3px; }
         html[data-theme="phantom"] .resource-label, html[data-theme="phantom"] .resource-value { display:inline-block; transform: skewX(8deg); font-weight: 900; }
+        @keyframes phantomResourceTick { 0% { transform: skewX(8deg) translateY(0) scale(1); } 35% { transform: skewX(8deg) translateY(-7px) scale(1.2); } 62% { transform: skewX(8deg) translateY(1px) scale(0.94); } 100% { transform: skewX(8deg) translateY(0) scale(1); } }
+        html[data-theme="phantom"] .resource-value.tick { animation: phantomResourceTick 0.38s cubic-bezier(0.34, 1.56, 0.64, 1); }
         html[data-theme="phantom"] .resource-box:nth-child(1) .resource-label, html[data-theme="phantom"] .resource-box:nth-child(1) .resource-value { color: var(--accent-1); }
         html[data-theme="phantom"] .resource-box:nth-child(2) .resource-label, html[data-theme="phantom"] .resource-box:nth-child(2) .resource-value { color: var(--accent-2); }
         html[data-theme="phantom"] .resource-box:nth-child(3) .resource-label, html[data-theme="phantom"] .resource-box:nth-child(3) .resource-value { color: var(--accent-3); }
@@ -461,6 +463,7 @@
         @keyframes nodePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.6); } 50% { box-shadow: 0 0 0 14px rgba(255,255,255,0); } }
         @keyframes nodeSlideIn { 0% { opacity: 0; transform: translate(-50%,-50%) translateY(10px); } 100% { opacity: 1; transform: translate(-50%,-50%) translateY(0); } }
         @keyframes hudPop { 0% { transform: scale(1); } 50% { transform: scale(1.25); color: var(--accent-2); } 100% { transform: scale(1); } }
+        @keyframes resourceTick { 0% { transform: translateY(0) scale(1); } 35% { transform: translateY(-7px) scale(1.2); } 62% { transform: translateY(1px) scale(0.94); } 100% { transform: translateY(0) scale(1); } }
         @keyframes glyphGlow { 0% { box-shadow: 0 0 0 0 rgba(var(--accent-3-rgb),0.6); } 50% { box-shadow: 0 0 20px rgba(var(--accent-3-rgb),0.7); } 100% { box-shadow: 0 0 0 0 rgba(var(--accent-3-rgb),0); } }
         @keyframes indicatorRise { 0% { opacity: 1; transform: translateY(0) scale(0.6); } 100% { opacity: 0; transform: translateY(-60px) scale(1.1); } }
 
@@ -698,6 +701,7 @@
         .resource-box:nth-child(1) .resource-label, .resource-box:nth-child(1) .resource-value { color:#3b82f6; }
         .resource-box:nth-child(2) .resource-label, .resource-box:nth-child(2) .resource-value { color:#ef4444; }
         .resource-box:nth-child(3) .resource-label, .resource-box:nth-child(3) .resource-value { color:#eab308; }
+        .resource-value.tick { animation: resourceTick 0.38s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .diamond-icon {
             display:inline-block; width:0.82em; height:0.82em; vertical-align:-0.1em; margin:0 1px;
             background: linear-gradient(135deg, #fef3c7 0%, #eab308 45%, #92600a 100%);
@@ -2086,6 +2090,12 @@
         });
         while (refNode) { const next = refNode.nextSibling; container.removeChild(refNode); refNode = next; }
     }
+    function tickResourceValue(el, value, html) {
+        if (el.dataset.val === String(value)) return;
+        el.dataset.val = String(value);
+        if (html !== undefined) el.innerHTML = html; else el.textContent = value;
+        el.classList.remove('tick'); void el.offsetWidth; el.classList.add('tick');
+    }
     function render() {
         if(!G.gameStarted) return;
         const isZen = G.gameMode==='zen';
@@ -2102,7 +2112,9 @@
         } else { hazardBanner.classList.add('hidden'); }
         const p=calcScore();
         document.getElementById('val-points').textContent=p.totalChips; document.getElementById('val-mults').textContent=p.totalMult.toFixed(1);
-        document.getElementById('val-hands').textContent=G.playsLeft; document.getElementById('val-rerolls').textContent=G.rerollsLeft; document.getElementById('val-gold').innerHTML='<span class="diamond-icon"></span> '+G.bank;
+        tickResourceValue(document.getElementById('val-hands'), G.playsLeft);
+        tickResourceValue(document.getElementById('val-rerolls'), G.rerollsLeft);
+        tickResourceValue(document.getElementById('val-gold'), G.bank, '<span class="diamond-icon"></span> '+G.bank);
         const sb=document.getElementById('score-banner'); if(p.occ===0) sb.textContent='—'; else if(!p.valid) sb.textContent='INVALID WORD'; else sb.textContent=p.totalChips+' × '+p.totalMult.toFixed(1)+' = '+p.totalScore+' PTS';
         sb.classList.toggle('invalid',p.occ>0&&!p.valid);
         const awl=document.getElementById('active-word-line');
