@@ -985,9 +985,9 @@
         #map-ladder { position:relative; width:100%; }
         .map-node-absolute { position:absolute; display:flex; flex-direction:column; align-items:center; gap:4px; transform:translate(-50%,-50%); animation: nodeSlideIn 0.4s ease-out forwards; opacity:0; }
         .map-node {
-            width:50px; height:50px; border-radius:50%; background: var(--panel-bg);
-            box-shadow: 0 4px 0 0 rgba(0,0,0,0.25), 0 6px 12px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center;
-            font-weight:900; font-size:1.15rem; color: var(--text); flex-shrink:0; position:relative;
+            width:66px; height:66px; border-radius:50%; background: var(--panel-bg);
+            box-shadow: 0 5px 0 0 rgba(0,0,0,0.25), 0 8px 16px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center;
+            font-weight:900; font-size:1.5rem; color: var(--text); flex-shrink:0; position:relative;
             border: 3px solid rgba(0,0,0,0.4); font-family: var(--font-numeric);
         }
         .map-node.completed { background: var(--accent-1); color: var(--accent-1-text); border-color: var(--accent-1-shadow); }
@@ -998,8 +998,13 @@
             font-family: var(--font-main); white-space:nowrap; text-align:center; background: rgba(0,0,0,0.35);
             padding: 2px 7px; border-radius: 8px;
         }
-        .map-path-line { position:absolute; height:4px; background: var(--panel-border); transform-origin: 0 50%; border-radius:2px; opacity:0.7; }
-        .map-path-line.done { background: var(--accent-1); opacity:0.9; }
+        .map-path-dot {
+            position:absolute; width:9px; height:9px; border-radius:50%; background: var(--panel-border);
+            transform: translate(-50%,-50%); opacity:0.5; box-shadow: 0 1px 2px rgba(0,0,0,0.35);
+            animation: mapDotPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+        }
+        .map-path-dot.done { background: var(--accent-1); opacity:0.95; }
+        @keyframes mapDotPop { from { transform: translate(-50%,-50%) scale(0.2); } to { transform: translate(-50%,-50%) scale(1); } }
         #btn-start-stage {
             width:calc(100% - 32px); max-width:320px; margin: 0 auto; padding:16px; border-radius:var(--btn-radius); font-weight:900; font-size:1.05rem;
             cursor:pointer; text-align:center; background: var(--accent-1); border: var(--outline-w) solid var(--accent-1-shadow); color: var(--accent-1-text);
@@ -1307,7 +1312,11 @@
         { id:"wildcard_rune", name:"Wildcard Rune", type:"purple", color:"#A855F7", icon:"✦", desc:"At round start, 1 random tile in active hand becomes Wild." },
         { id:"duplicator", name:"Duplicator", type:"purple", color:"#A855F7", icon:"⧉", desc:"Playing a 5-letter word duplicates its highest-scoring letter into bag." },
         { id:"vowel_shifter", name:"Vowel Shifter", type:"purple", color:"#A855F7", icon:"⇄", desc:"'Y' counts as both Vowel and Consonant for scoring." },
-        { id:"alchemy", name:"Golden Touch", type:"purple", color:"#A855F7", icon:"⚗", desc:"Scoring 100+ Points in a single hand grants +2 Diamonds to your Bank." }
+        { id:"alchemy", name:"Golden Touch", type:"purple", color:"#A855F7", icon:"⚗", desc:"Scoring 100+ Points in a single hand grants +2 Diamonds to your Bank." },
+        { id:"insurance_policy", name:"Insurance Policy", type:"green", color:"#22C55E", icon:"☂", desc:"Fall short by 15% or less and the stage clears anyway. Consumed when it saves you." },
+        { id:"piggy_bank", name:"Piggy Bank", type:"green", color:"#22C55E", icon:"◉", desc:"Earn a second helping of interest at the end of every stage." },
+        { id:"double_trouble", name:"Double Trouble", type:"red", color:"#EF4444", icon:"‼", desc:"+15 MULT if the played word has two identical letters side by side." },
+        { id:"middle_child", name:"Middle Child", type:"blue", color:"#3B82F6", icon:"◈", desc:"Odd words of 5+ letters score their middle tile at x1.5." }
     ];
     const MAX_GLYPH_SLOTS = 4;
     const BASE_HAND_SIZE = 10;
@@ -1347,6 +1356,13 @@
     };
     const VOWEL_LETTERS = new Set(['A','E','I','O','U']);
     const RARE_LETTERS = new Set(['Q','X','Z','J','V']);
+    function hasDoubledLetter(word) { return /([A-Za-z])\1/.test(word||''); }
+    // Middle Child boosts one tile, so it is applied per tile rather than in the
+    // shared modifier pass. Both the scorer and the score animation ask for the index.
+    function getMiddleChildIndex(len) {
+        if (!GlyphManager.hasGlyph('middle_child')) return -1;
+        return (len >= 5 && len % 2 !== 0) ? Math.floor(len / 2) : -1;
+    }
     function isVowelLetter(letter) { if(letter==='Y'&&GlyphManager.hasGlyph('vowel_shifter')) return true; return VOWEL_LETTERS.has(letter); }
     function isConsonantLetter(letter) { return /[A-Z]/.test(letter) && !VOWEL_LETTERS.has(letter); }
     function getHandSize() { return BASE_HAND_SIZE + (GlyphManager.hasGlyph('deep_pockets') ? 2 : 0); }
@@ -1385,6 +1401,7 @@
             if (this.hasGlyph('heavy_hitter') && rareCount>=2) finalMult *= 2;
             if (this.hasGlyph('double_down') && dupCount>0) finalMult += 2*dupCount;
             if (this.hasGlyph('underdog') && word.length===3) finalMult *= 3;
+            if (this.hasGlyph('double_trouble') && hasDoubledLetter(word)) finalMult += 15;
             return { finalPoints, finalMult };
         },
         getGlyphEffectPreview(id, word) {
@@ -1399,6 +1416,7 @@
                 case 'bookends': return (letters.length>1&&letters[0]===letters[letters.length-1]) ? {kind:'mult-mul', value:4, label:'x4 MULT'} : null;
                 case 'heavy_hitter': return rareCount>=2 ? {kind:'mult-mul', value:2, label:'x2 MULT'} : null;
                 case 'double_down': return dupCount>0 ? {kind:'mult-add', value:2*dupCount, label:'+'+(2*dupCount)+' MULT'} : null;
+                case 'double_trouble': return hasDoubledLetter(word) ? {kind:'mult-add', value:15, label:'+15 MULT'} : null;
                 case 'underdog': return (word&&word.length===3) ? {kind:'mult-mul', value:3, label:'x3 MULT'} : null;
                 default: return null;
             }
@@ -1464,11 +1482,13 @@
     function calcScore() {
         let totalChips=0, hasWildcard=false, redAuraBonus=0; const letters=[]; const pattern=[];
         const vowelDrought = G.gameMode==='daily' && G.dailyChallenge===2;
-        G.activeWord.forEach(t=>{
+        const midIdx = getMiddleChildIndex(G.activeWord.length);
+        G.activeWord.forEach((t,ti)=>{
             if(t.type==='finisher') return;
             if(t.type==='wildcard'){ hasWildcard=true; pattern.push('?'); return; }
             let chip = isMutedTile(t) ? 0 : ((vowelDrought && VOWEL_LETTERS.has(t.letter)) ? 0 : (t.chips||0));
             if(!isMutedTile(t)){ if(t.aura==='blue') chip+=10; if(t.aura==='gold') chip*=2; if(t.aura==='red') redAuraBonus+=2; if(t.goldInk) chip+=20; }
+            if(ti===midIdx) chip = Math.floor(chip*1.5);
             totalChips+=chip; letters.push(t.letter); pattern.push(t.letter);
         });
         const length=G.activeWord.length; const baseChips=getLengthBaseChips(length); const baseMult=getLengthBaseMult(length)+redAuraBonus;
@@ -1565,6 +1585,7 @@
 
         overlay.style.background = 'rgba(30,144,255,0.18)';
         let runningChips = 0, runningRedMult = 0; pointsEl.textContent = '0';
+        const animMidIdx = getMiddleChildIndex(tilesCopy.length);
         for (let i = 0; i < tilesCopy.length; i++) {
             const tile = tilesCopy[i]; const el = tileEls[i];
             if (!tile || !el) continue;
@@ -1572,6 +1593,7 @@
             if (tile.type === 'wildcard') { spawnGlyphIndicator(el, 'WILD'); await sleep(220); el.classList.remove('scoring-pop'); continue; }
             if (tile.type === 'finisher') { if (i === tilesCopy.length - 1) spawnPopup(el, 3, true); await sleep(220); el.classList.remove('scoring-pop'); continue; }
             let chip = isMutedTile(tile) ? 0 : ((G.gameMode==='daily' && G.dailyChallenge===2 && VOWEL_LETTERS.has(tile.letter)) ? 0 : (tile.chips || 0)); if (!isMutedTile(tile)) { if (tile.aura === 'blue') chip += 10; if (tile.aura === 'gold') chip *= 2; if (tile.aura === 'red') runningRedMult += 2; if (tile.goldInk) chip += 20; }
+            if (i === animMidIdx) { chip = Math.floor(chip * 1.5); setTimeout(() => spawnGlyphIndicator(el, 'x1.5'), 80); }
             runningChips += chip; pointsEl.textContent = runningChips; pointsEl.classList.add('pop');
             spawnPopup(el, chip, false);
             if (!isMutedTile(tile)) {
@@ -1663,7 +1685,22 @@
             c.classList.remove('shake-active');
             showStageClear(G.currentScore);
         }
-        else if (G.playsLeft <= 0) showModal('game-over');
+        else if (G.playsLeft <= 0) {
+            const tgt = G.stageTargets[G.currentStage];
+            const shortfall = tgt - G.currentScore;
+            if (GlyphManager.hasGlyph('insurance_policy') && shortfall <= tgt * 0.15) {
+                const at = G.equippedGlyphs.findIndex(g=>g.id==='insurance_policy');
+                if (at !== -1) G.equippedGlyphs.splice(at,1);
+                G.stageScores[G.currentStage] = G.currentScore;
+                AudioEngine.playWin(); vibrate([30,40,60]);
+                render();
+                const sb = document.getElementById('score-banner');
+                if (sb) { sb.textContent = '☂ INSURANCE POLICY — STAGE SAVED'; sb.classList.remove('invalid'); }
+                await sleep(1100);
+                showStageClear(G.currentScore);
+            }
+            else showModal('game-over');
+        }
         else render();
     }
 
@@ -1733,7 +1770,9 @@
         if (G.rerollsLeft > 0) { G.bank += G.rerollsLeft; lines.push(['Unused Discards ×'+G.rerollsLeft, G.rerollsLeft]); }
         const interest = Math.min(5, Math.floor(G.bank/5));
         if (interest > 0) { G.bank += interest; lines.push(['Interest', interest]); }
-        G.records.totalGoldEarned += (base + Math.max(0,G.playsLeft) + Math.max(0,G.rerollsLeft) + interest);
+        let piggy = 0;
+        if (GlyphManager.hasGlyph('piggy_bank')) { piggy = Math.min(5, Math.floor(G.bank/5)); if (piggy > 0) { G.bank += piggy; lines.push(['Piggy Bank', piggy]); } }
+        G.records.totalGoldEarned += (base + Math.max(0,G.playsLeft) + Math.max(0,G.rerollsLeft) + interest + piggy);
         saveRecords();
         // payout is banked from here on, so a resume must land on the shop, not replay it
         G.phase='shop'; saveActiveRun();
@@ -2301,11 +2340,13 @@
             hazardBanner.classList.remove('hidden');
         } else { hazardBanner.classList.add('hidden'); }
         const p=calcScore();
-        document.getElementById('val-points').textContent=p.totalChips; document.getElementById('val-mults').textContent=p.totalMult.toFixed(1);
+        // The staged word's math stays hidden until it is actually played. Showing
+        // chips x mult up front turns the decision into arithmetic instead of a read.
+        document.getElementById('val-points').textContent='0'; document.getElementById('val-mults').textContent='1.0';
         tickResourceValue(document.getElementById('val-hands'), G.playsLeft);
         tickResourceValue(document.getElementById('val-rerolls'), G.rerollsLeft);
         tickResourceValue(document.getElementById('val-gold'), G.bank, '<span class="diamond-icon"></span> '+G.bank);
-        const sb=document.getElementById('score-banner'); if(p.occ===0) sb.textContent='—'; else if(!p.valid) sb.textContent='INVALID WORD'; else sb.textContent=p.totalChips+' × '+p.totalMult.toFixed(1)+' = '+p.totalScore+' PTS';
+        const sb=document.getElementById('score-banner'); if(p.occ===0) sb.textContent='—'; else if(!p.valid) sb.textContent='INVALID WORD'; else sb.textContent='READY';
         sb.classList.toggle('invalid',p.occ>0&&!p.valid);
         const awl=document.getElementById('active-word-line');
         reconcileTileList(awl, G.activeWord, tile=>tile.id,
@@ -2330,7 +2371,11 @@
 
     function layoutWindingNodes(ladder, count, currentIndex, getNodeInfo) {
         ladder.innerHTML = '';
-        const STEP_Y = 92, TOP_PAD = 50, AMPLITUDE = 26;
+        // Space the nodes so at most three fit on screen at once, which turns the map
+        // into a zoomed-in view the camera pans across rather than a full ladder.
+        const viewH = Math.max(260, (window.innerHeight || 660) - 150);
+        const STEP_Y = Math.max(130, Math.round((viewH - 80) / 2));
+        const TOP_PAD = Math.round(viewH / 2), AMPLITUDE = 30;
         const containerWidth = ladder.parentElement.clientWidth || 320;
         const positions = [];
         for (let i = 1; i <= count; i++) {
@@ -2338,18 +2383,22 @@
             const yPx = TOP_PAD + (i - 1) * STEP_Y;
             positions.push({ x: (xPct / 100) * containerWidth, y: yPx });
         }
-        ladder.style.height = (TOP_PAD + (count - 1) * STEP_Y + 50) + 'px';
+        ladder.style.height = (TOP_PAD * 2 + (count - 1) * STEP_Y) + 'px';
         for (let i = 0; i < count - 1; i++) {
             const a = positions[i], b = positions[i + 1];
             const dx = b.x - a.x, dy = b.y - a.y;
             const length = Math.sqrt(dx * dx + dy * dy);
-            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-            const line = document.createElement('div');
-            line.className = 'map-path-line' + (i + 1 < currentIndex ? ' done' : '');
-            line.style.left = a.x + 'px'; line.style.top = a.y + 'px';
-            line.style.width = length + 'px';
-            line.style.transform = 'rotate(' + angle + 'deg)';
-            ladder.appendChild(line);
+            const done = i + 1 < currentIndex;
+            const steps = Math.max(4, Math.round(length / 30));
+            for (let d = 1; d < steps; d++) {
+                const t = d / steps;
+                const dot = document.createElement('div');
+                dot.className = 'map-path-dot' + (done ? ' done' : '');
+                dot.style.left = (a.x + dx * t) + 'px';
+                dot.style.top = (a.y + dy * t) + 'px';
+                dot.style.animationDelay = (i * 0.09 + d * 0.035) + 's';
+                ladder.appendChild(dot);
+            }
         }
         for (let i = 1; i <= count; i++) {
             const pos = positions[i - 1];
@@ -2363,11 +2412,25 @@
             if (info.label) { const lbl = document.createElement('div'); lbl.className = 'map-node-label'; lbl.textContent = info.label; wrap.appendChild(lbl); }
             ladder.appendChild(wrap);
         }
-        requestAnimationFrame(() => {
+        const placeCamera = (tries) => {
             const scroller = document.getElementById('map-scroll');
-            const target = positions[currentIndex - 1];
-            if (target && scroller) scroller.scrollTop = Math.max(0, target.y - scroller.clientHeight / 2);
-        });
+            const to = positions[currentIndex - 1];
+            if (!to || !scroller) return;
+            if (scroller.clientHeight === 0 && tries > 0) { requestAnimationFrame(() => placeCamera(tries - 1)); return; }
+            const centerOn = pos => Math.max(0, pos.y - scroller.clientHeight / 2);
+            const from = positions[currentIndex - 2];
+            const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (!from || reduce) { scroller.scrollTop = centerOn(to); return; }
+            // open on the stage just cleared, then glide the camera onto the next one
+            scroller.scrollTop = centerOn(from);
+            requestAnimationFrame(() => {
+                if (typeof scroller.scrollTo === 'function') {
+                    try { scroller.scrollTo({ top: centerOn(to), behavior: 'smooth' }); return; } catch (e) {}
+                }
+                scroller.scrollTop = centerOn(to);
+            });
+        };
+        requestAnimationFrame(() => placeCamera(20));
     }
     function renderMap() {
         if (G.isEndless) { renderEndlessMap(); return; }
