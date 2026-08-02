@@ -258,7 +258,8 @@
             display: flex;
             flex-direction: column;
             position: relative;
-            overflow: hidden;
+            overflow: clip;
+            overflow-anchor: none;
             will-change: background-position;
         }
         #game-container.anim-kick, #game-container.anim-kick::after { animation: none !important; }
@@ -494,6 +495,7 @@
 
         .view-panel {
             position: absolute; inset: 0; display: flex; flex-direction: column; z-index: 5;
+            overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
         }
         #view-menu { align-items: center; justify-content: center; gap:14px; padding:30px; z-index:10; background: rgba(0,0,0,0.1); transform: translateX(0); }
@@ -533,17 +535,17 @@
         .stage-clear-reward.show { opacity: 1; transform: translateY(0); }
         .draft-panel.shop-mode .stage-clear-label, .draft-panel.shop-mode .stage-clear-score { display: none; }
         .draft-hint { color: var(--text-soft); font-size: 0.8rem; font-family: var(--font-main); text-align: center; margin: -6px 0 4px; }
-        .draft-grid { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin: 6px 0; }
-        .draft-card-wrap { display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; width:86px; }
+        .draft-grid { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); gap:10px; justify-content:center; margin: 6px 0; width:100%; max-width:100%; overflow-x:clip; }
+        .draft-card-wrap { display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; width:100%; min-width:0; }
         .draft-card {
-            width: 82px; height: 82px; border-radius: var(--panel-radius); background: var(--cap-bg);
+            width: 100%; max-width: 86px; aspect-ratio: 1 / 1; height: auto; border-radius: var(--panel-radius); background: var(--cap-bg);
             border: var(--outline-w) solid var(--cap-border); box-shadow: 0 4px 0 0 var(--cap-shadow-color);
             display:flex; align-items:center; justify-content:center; font-weight:900; font-size:2.1rem;
             color: var(--glyph-color, var(--text)); font-family: var(--font-numeric);
             transition: transform 0.1s ease;
         }
         .draft-card-wrap:active .draft-card { transform: translateY(3px) scale(0.96); }
-        .draft-card-label { font-size: 0.7rem; font-weight: 700; text-align:center; color: var(--text-soft); font-family: var(--font-main); line-height:1.2; }
+        .draft-card-label { font-size: 0.7rem; font-weight: 700; text-align:center; color: var(--text-soft); font-family: var(--font-main); line-height:1.2; overflow-wrap: anywhere; max-width: 100%; }
         .draft-detail { display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center; }
         .draft-detail-icon {
             width: 96px; height: 96px; border-radius: var(--panel-radius); background: var(--cap-bg);
@@ -894,6 +896,11 @@
             font-size: 0.75rem; font-weight: 900; letter-spacing: 1.5px; color: var(--text-soft);
             font-family: var(--font-main); text-align:center; margin: 10px 0 2px;
         }
+        .shop-section-label.sec-buy { color: #A855F7; }
+        .shop-section-label.sec-seals { color: #22D3EE; }
+        .shop-section-label.sec-sell { color: #FF4D4D; }
+        .shop-sell-zone { border: 2px dashed #FF4D4D; background: rgba(255,77,77,0.10); border-radius: var(--panel-radius); padding: 2px 8px 10px; margin-top: 12px; width: 100%; }
+        .sell-banner { width:100%; background:#FF4D4D; color:#ffffff; font-family:var(--font-main); font-weight:900; letter-spacing:1.5px; font-size:0.78rem; text-align:center; padding:9px 10px; border-radius: calc(var(--panel-radius) * 0.6); box-shadow: 0 3px 0 0 #A3111F; }
         .shop-price {
             font-size: 1.1rem; font-weight: 900; font-family: var(--font-numeric); color: var(--accent-3);
             text-shadow: var(--number-shadow);
@@ -1417,7 +1424,7 @@
     const G = {
         currentStage:1, stageTargets:[...CLASSIC_STAGE_TARGETS], totalStages:8,
         currentScore:0, playsLeft:4, rerollsLeft:3, shakeStrength:100, currentTheme:'wordling',
-        hand:[], activeWord:[], tileBag:[], discardPile:[], removedLetters:new Set(), stageScores:[], stageWords:[],
+        hand:[], activeWord:[], tileBag:[], discardPile:[], removedLetters:new Set(), stageScores:[], stageWords:[], phase:'playing',
         equippedGlyphs:[], bank:0, recyclerUsedThisStage:false, dictSet:new Set(), modalType:null, isAnimating:false, rerollMode:false, rerollMarks:new Set(), gameStarted:false,
         draftChoices:null, dragData:null,
         gameMode:'classic', dailyChallenge:null, isEndless:false, consumables:[], activeHazard:null, anchorTileId:null, mutedTileId:null,
@@ -1660,6 +1667,7 @@
     }
 
     function showStageClear(score) {
+        G.phase='stageclear'; saveActiveRun();
         const draftDiv=document.getElementById('view-draft'); draftDiv.innerHTML=''; draftDiv.classList.remove('show');
         const panel=document.createElement('div'); panel.className='draft-panel';
         renderStageClear(panel, score);
@@ -1726,6 +1734,8 @@
         if (interest > 0) { G.bank += interest; lines.push(['Interest', interest]); }
         G.records.totalGoldEarned += (base + Math.max(0,G.playsLeft) + Math.max(0,G.rerollsLeft) + interest);
         saveRecords();
+        // payout is banked from here on, so a resume must land on the shop, not replay it
+        G.phase='shop'; saveActiveRun();
         lines.forEach(([label,val]) => { const row=document.createElement('div'); row.className='payout-row'; row.innerHTML = `<span>${label}</span><span>+<span class="diamond-icon"></span>${val}</span>`; list.appendChild(row); });
         container.appendChild(list);
         const total = document.createElement('div'); total.className='payout-total'; total.innerHTML='BANK: <span class="diamond-icon"></span>'+G.bank; container.appendChild(total);
@@ -1749,17 +1759,41 @@
         }, 1500);
     }
     function shopPrice(id) { const inflated = G.gameMode==='daily' && G.dailyChallenge===7; const base = SHOP_PRICES[id]||0; return inflated ? base*2 : base; }
+    function makeGlyphOffer(g) { return { kind:'glyph', id:g.id, name:g.name, desc:g.desc, color:g.color, icon:g.icon, price:shopPrice('glyph'), apply:()=>{ G.equippedGlyphs.push({id:g.id}); } }; }
+    function makeTileOffer(def) { return { kind:'tile', id:def.id, name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{
+        G.tileBag.push({ id:'t_'+def.tileType+'_'+Math.random().toString(36).slice(2,11)+'_'+Date.now(), letter: def.tileType==='wildcard'?'*':'!', chips:0, type:def.tileType });
+    } }; }
+    function makeConsumableOffer(def) { return { kind:'consumable', id:def.id, name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{ G.consumables.push({id:def.id}); } }; }
     function generateShopGlyphOffers() {
         const pool = [];
-        GLYPH_DATABASE.forEach(g=>{ const alreadyEquipped=G.equippedGlyphs.some(eg=>eg.id===g.id); if(!alreadyEquipped && G.equippedGlyphs.length<MAX_GLYPH_SLOTS){ pool.push({ kind:'glyph', id:g.id, name:g.name, desc:g.desc, color:g.color, icon:g.icon, price:shopPrice('glyph'), apply:()=>{ G.equippedGlyphs.push({id:g.id}); } }); } });
-        SPECIAL_TILE_DATABASE.forEach(def=>{ pool.push({ kind:'tile', id:def.id, name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{
-            G.tileBag.push({ id:'t_'+def.tileType+'_'+Math.random().toString(36).slice(2,11)+'_'+Date.now(), letter: def.tileType==='wildcard'?'*':'!', chips:0, type:def.tileType });
-        } }); });
+        GLYPH_DATABASE.forEach(g=>{ const alreadyEquipped=G.equippedGlyphs.some(eg=>eg.id===g.id); if(!alreadyEquipped && G.equippedGlyphs.length<MAX_GLYPH_SLOTS){ pool.push(makeGlyphOffer(g)); } });
+        SPECIAL_TILE_DATABASE.forEach(def=>{ pool.push(makeTileOffer(def)); });
         return shuffle(pool).slice(0,3);
     }
     function generateShopConsumableOffers() {
-        const pool = CONSUMABLE_DATABASE.map(def=>({ kind:'consumable', id:def.id, name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{ G.consumables.push({id:def.id}); } }));
-        return shuffle(pool).slice(0,2);
+        return shuffle(CONSUMABLE_DATABASE.map(def=>makeConsumableOffer(def))).slice(0,2);
+    }
+    // localStorage keeps the offer data but drops every apply() closure, so a restored
+    // shop would render cards that do nothing when bought. Rebuild them from the ids.
+    function rehydrateShopOffers() {
+        const savedG = (G.shopOffers && G.shopOffers.glyphs) || [];
+        const savedC = (G.shopOffers && G.shopOffers.consumables) || [];
+        const glyphs = savedG.map(o=>{
+            const g = GLYPH_DATABASE.find(x=>x.id===o.id); if (g) return makeGlyphOffer(g);
+            const t = SPECIAL_TILE_DATABASE.find(x=>x.id===o.id); return t ? makeTileOffer(t) : null;
+        }).filter(Boolean);
+        const cons = savedC.map(o=>{ const c = CONSUMABLE_DATABASE.find(x=>x.id===o.id); return c ? makeConsumableOffer(c) : null; }).filter(Boolean);
+        G.shopOffers = { glyphs, consumables: cons };
+        if (!glyphs.length && !cons.length) initShopOffers();
+    }
+    function showResumedShop() {
+        const draftDiv=document.getElementById('view-draft'); draftDiv.innerHTML=''; draftDiv.classList.remove('show');
+        const panel=document.createElement('div'); panel.className='draft-panel shop-mode';
+        const h2=document.createElement('h2'); h2.textContent='SHOP'; panel.appendChild(h2);
+        const section=document.createElement('div'); section.className='stage-clear-reward show'; panel.appendChild(section);
+        draftDiv.appendChild(panel); draftDiv.classList.remove('hidden');
+        renderShop(section);
+        requestAnimationFrame(()=>requestAnimationFrame(()=>draftDiv.classList.add('show')));
     }
     function initShopOffers() {
         G.shopOffers.glyphs = generateShopGlyphOffers();
@@ -1779,8 +1813,8 @@
     }
     function renderShop(container) {
         container.innerHTML = '';
-        const hint = document.createElement('p'); hint.className='draft-hint'; hint.innerHTML='SHOP — Bank: <span class="diamond-icon"></span>'+G.bank; container.appendChild(hint);
-        const glyphLabel = document.createElement('div'); glyphLabel.className='shop-section-label'; glyphLabel.textContent='GLYPHS'; container.appendChild(glyphLabel);
+        const hint = document.createElement('p'); hint.className='draft-hint'; hint.innerHTML='Bank: <span class="diamond-icon"></span>'+G.bank; container.appendChild(hint);
+        const glyphLabel = document.createElement('div'); glyphLabel.className='shop-section-label sec-buy'; glyphLabel.textContent='◆ BUY GLYPHS'; container.appendChild(glyphLabel);
         if (G.shopOffers.glyphs.length===0) {
             const p=document.createElement('p'); p.className='draft-hint'; p.textContent='All glyph slots full.'; container.appendChild(p);
         } else {
@@ -1797,7 +1831,8 @@
             container.appendChild(grid);
         }
         if (G.equippedGlyphs.length > 0) {
-            const ownedLabel = document.createElement('div'); ownedLabel.className='shop-section-label'; ownedLabel.textContent='YOUR GLYPHS ('+G.equippedGlyphs.length+'/'+MAX_GLYPH_SLOTS+') — TAP TO SELL'; container.appendChild(ownedLabel);
+            const zone = document.createElement('div'); zone.className='shop-sell-zone';
+            const ownedLabel = document.createElement('div'); ownedLabel.className='shop-section-label sec-sell'; ownedLabel.textContent='● SELL YOUR GLYPHS ('+G.equippedGlyphs.length+'/'+MAX_GLYPH_SLOTS+')'; zone.appendChild(ownedLabel);
             const oGrid = document.createElement('div'); oGrid.className='draft-grid';
             G.equippedGlyphs.forEach((eq, i)=>{
                 const data = GlyphManager.getGlyphData(eq.id); if(!data) return;
@@ -1809,9 +1844,9 @@
                 wrap.addEventListener('click', ()=>{ AudioEngine.playTap(); renderSellDetail(container, eq, i); });
                 oGrid.appendChild(wrap);
             });
-            container.appendChild(oGrid);
+            zone.appendChild(oGrid); container.appendChild(zone);
         }
-        const consLabel = document.createElement('div'); consLabel.className='shop-section-label'; consLabel.textContent='INK SEALS ('+G.consumables.length+'/'+MAX_CONSUMABLES+' held)'; container.appendChild(consLabel);
+        const consLabel = document.createElement('div'); consLabel.className='shop-section-label sec-seals'; consLabel.textContent='✦ INK SEALS ('+G.consumables.length+'/'+MAX_CONSUMABLES+' held)'; container.appendChild(consLabel);
         if (G.shopOffers.consumables.length===0) {
             const p=document.createElement('p'); p.className='draft-hint'; p.textContent='No seals in stock.'; container.appendChild(p);
         } else {
@@ -1835,6 +1870,9 @@
         const continueBtn = document.createElement('button'); continueBtn.className='draft-btn'; continueBtn.style.width='100%'; continueBtn.style.marginTop='8px'; continueBtn.textContent='CONTINUE';
         continueBtn.addEventListener('click', ()=>{ document.getElementById('view-draft').classList.remove('show'); advanceStage(); });
         container.appendChild(continueBtn);
+        // buys, sells and rerolls all re-render the shop, so persisting here keeps what
+        // the player just spent if they close the app without pressing CONTINUE
+        saveActiveRun();
     }
     function getGlyphSellValue() { return Math.max(1, Math.floor(shopPrice('glyph')/2)); }
     function renderSellDetail(container, equipped, index) {
@@ -1843,6 +1881,7 @@
         container.innerHTML = '';
         const value = getGlyphSellValue();
         const wrap=document.createElement('div'); wrap.className='draft-detail';
+        const banner=document.createElement('div'); banner.className='sell-banner'; banner.textContent='● SELLING — THIS REMOVES THE GLYPH';
         const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', data.color); icon.textContent=data.icon;
         const name=document.createElement('div'); name.className='draft-detail-name'; name.style.setProperty('--glyph-color', data.color); name.textContent=data.name;
         const desc=document.createElement('div'); desc.className='draft-detail-desc'; desc.textContent=data.desc;
@@ -1862,7 +1901,7 @@
             renderShop(container);
         });
         actions.appendChild(backBtn); actions.appendChild(sellBtn);
-        wrap.appendChild(icon); wrap.appendChild(name); wrap.appendChild(desc); wrap.appendChild(price); wrap.appendChild(actions);
+        wrap.appendChild(banner); wrap.appendChild(icon); wrap.appendChild(name); wrap.appendChild(desc); wrap.appendChild(price); wrap.appendChild(actions);
         container.appendChild(wrap);
     }
     function renderShopDetail(container, item, kind) {
@@ -2341,18 +2380,18 @@
             return { state:'upcoming', icon: isBoss?'☠':String(i), label:null };
         });
         document.getElementById('btn-start-stage').textContent='START STAGE '+G.currentStage; document.getElementById('btn-start-stage').onclick=startStage; document.getElementById('view-map').classList.remove('hidden'); document.getElementById('view-game').classList.add('hidden'); document.getElementById('view-draft').classList.add('hidden');
-        saveActiveRun();
+        G.phase='map'; saveActiveRun();
     }
     function renderEndlessMap() {
         document.getElementById('map-header').innerHTML = '<span class="header-badge">ENDLESS — STAGE '+G.currentStage+'</span>';
         const ladder=document.getElementById('map-ladder');
         layoutWindingNodes(ladder, 1, 1, () => ({ state:'current', icon:String(G.currentStage), label:'Target: '+G.stageTargets[G.currentStage].toLocaleString() }));
         document.getElementById('btn-start-stage').textContent='START STAGE '+G.currentStage; document.getElementById('btn-start-stage').onclick=startStage; document.getElementById('view-map').classList.remove('hidden'); document.getElementById('view-game').classList.add('hidden'); document.getElementById('view-draft').classList.add('hidden');
-        saveActiveRun();
+        G.phase='map'; saveActiveRun();
     }
     function showMap() { resetStageState(); renderMap(); }
     function rollStageHazard() { G.activeHazard = null; if (G.gameMode==='zen') return; if (G.currentStage % 4 === 0) { const hazards=['wall','taxman','mute','anchor']; G.activeHazard = hazards[Math.floor(Math.random()*hazards.length)]; } }
-    function startStage() { document.getElementById('view-map').classList.add('hidden'); document.getElementById('view-game').classList.remove('hidden'); resetStageState(); rollStageHazard(); GlyphManager.onStageStart(); GlyphManager.onRoundStart(G.hand); AudioEngine.startMusic(); render(); }
+    function startStage() { G.phase='playing'; document.getElementById('view-map').classList.add('hidden'); document.getElementById('view-game').classList.remove('hidden'); resetStageState(); rollStageHazard(); GlyphManager.onStageStart(); GlyphManager.onRoundStart(G.hand); AudioEngine.startMusic(); render(); }
 
     function initDict() { G.dictSet=new Set(DICTIONARY_WORDS.split(' ')); }
 
@@ -2426,11 +2465,16 @@
         document.getElementById('game-container').classList.remove('zen-mode');
         document.getElementById('view-menu').classList.add('slide-left');
         setTimeout(()=>{ document.getElementById('view-menu').classList.add('hidden'); }, 400);
+        G.phase = saved.phase || 'playing';
         document.getElementById('view-map').classList.add('hidden');
         document.getElementById('view-draft').classList.add('hidden');
         document.getElementById('view-game').classList.remove('hidden');
         AudioEngine.startMusic();
         render();
+        // a run saved between stages must not resume onto a board that is already won
+        if (G.phase === 'map') renderMap();
+        else if (G.phase === 'shop') { rehydrateShopOffers(); showResumedShop(); }
+        else if (G.phase === 'stageclear') showStageClear(G.currentScore);
     }
     function startClassicLikeRun(mode) {
         G.gameMode = mode;
@@ -2484,7 +2528,7 @@
             removedLetters: [...G.removedLetters],
             equippedGlyphs: G.equippedGlyphs, bank: G.bank, consumables: G.consumables,
             activeHazard: G.activeHazard, anchorTileId: G.anchorTileId, mutedTileId: G.mutedTileId,
-            shopOffers: G.shopOffers, shopRerollCount: G.shopRerollCount
+            shopOffers: G.shopOffers, shopRerollCount: G.shopRerollCount, phase: G.phase
         };
     }
     function saveActiveRun() {
