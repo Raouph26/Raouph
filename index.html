@@ -568,7 +568,27 @@
         .draft-detail-desc { font-size: 0.88rem; color: var(--text); font-family: var(--font-main); line-height: 1.4; max-width: 260px; }
         #press-picker { width:100%; flex-shrink:0; }
         .press-title { font-size:0.68rem; font-weight:900; letter-spacing:2px; color: var(--bg-text); text-align:center; font-family: var(--font-main); margin-bottom:6px; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
-        #press-rail { display:flex; gap:10px; overflow-x:auto; overflow-y:hidden; padding:4px 2px 8px; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; }
+        .press-rail-wrap { position:relative; width:100%; }
+        /* side padding of half the leftover width lets the first and last card sit
+           dead centre; the top padding is what the selected tick needs so it is not
+           sheared off by the rail's own overflow */
+        #press-rail {
+            display:flex; gap:10px; overflow-x:auto; overflow-y:hidden;
+            padding:15px calc(50% - 73px) 12px; scroll-snap-type:x mandatory;
+            -webkit-overflow-scrolling:touch; scroll-behavior:smooth; scrollbar-width:none;
+        }
+        #press-rail::-webkit-scrollbar { display:none; }
+        .press-arrow {
+            position:absolute; top:50%; transform:translateY(-50%); z-index:6; padding:0;
+            width:34px; height:34px; border-radius:50%; cursor:pointer;
+            border: var(--outline-w) solid var(--cap-border); background: var(--cap-bg); color: var(--cap-color);
+            font-size:1.35rem; font-weight:900; line-height:0; font-family: var(--font-main);
+            display:flex; align-items:center; justify-content:center;
+            box-shadow: 0 3px 0 0 var(--cap-shadow-color); transition: opacity 0.2s ease;
+        }
+        .press-arrow:active { transform:translateY(-50%) translateY(3px); box-shadow:0 0 0 0 var(--cap-shadow-color); }
+        #press-prev { left:0; } #press-next { right:0; }
+        .press-arrow.arrow-off { opacity:0; pointer-events:none; }
         .press-card {
             flex:0 0 auto; width:146px; scroll-snap-align:center; cursor:pointer;
             background: var(--panel-bg); border: var(--outline-w) solid var(--panel-border);
@@ -783,17 +803,30 @@
         .hud-value { font-size:1.9rem; line-height:1.1; color: var(--text); font-weight:900; letter-spacing:-0.5px; transition: color 0.2s; font-family: var(--font-numeric); text-shadow: var(--number-shadow); }
         #hud-times { font-size:1.9rem; font-weight:900; color: var(--text); text-shadow: var(--number-shadow); transition: all 0.3s ease; font-family: var(--font-numeric); }
         #resource-row { display:flex; align-items:stretch; gap:10px; justify-content:center; flex-shrink:0; }
+        /* Stacked rather than side by side: the label and the number stopped fighting
+           for the same row, which is what made DIAMONDS ◆15 spill past its border. */
         .resource-box {
-            flex:1 1 0; min-width:0; display:flex; align-items:center; justify-content:center; gap:5px;
-            background: rgba(0,0,0,0.62); border-radius: var(--radius-sm);
-            padding: 8px 4px; border: var(--outline-w) solid rgba(255,255,255,0.18); box-shadow: 0 4px 0 0 rgba(0,0,0,0.35), 0 6px 12px rgba(0,0,0,0.3);
-            box-sizing: border-box; text-align:center;
+            flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0px;
+            background: rgba(8,10,14,0.86); border-radius: var(--radius-sm);
+            padding: 7px 3px 6px; border: var(--outline-w) solid rgba(255,255,255,0.30);
+            box-shadow: 0 4px 0 0 rgba(0,0,0,0.5), 0 7px 14px rgba(0,0,0,0.4);
+            box-sizing: border-box; text-align:center; position:relative; overflow:hidden;
         }
-        .resource-label { font-size:0.65rem; letter-spacing:1px; font-weight:900; color: var(--accent-3); font-family: var(--font-main); white-space:nowrap; }
-        .resource-value { font-size:1.1rem; font-weight:900; color: var(--text); font-family: var(--font-numeric); text-shadow: var(--number-shadow); white-space:nowrap; display:flex; align-items:center; gap:2px; }
-        .resource-box:nth-child(1) .resource-label, .resource-box:nth-child(1) .resource-value { color:#3b82f6; }
-        .resource-box:nth-child(2) .resource-label, .resource-box:nth-child(2) .resource-value { color:#ef4444; }
-        .resource-box:nth-child(3) .resource-label, .resource-box:nth-child(3) .resource-value { color:#eab308; }
+        .resource-box::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background: var(--res-color, #fff); }
+        .resource-label {
+            font-size:0.54rem; letter-spacing:1.1px; font-weight:900; color: var(--res-color, #fff);
+            font-family: var(--font-main); white-space:nowrap; line-height:1.1; opacity:0.95;
+            max-width:100%; overflow:hidden; text-overflow:ellipsis;
+        }
+        .resource-value {
+            font-size:1.22rem; font-weight:900; color:#ffffff; font-family: var(--font-numeric);
+            text-shadow: 0 2px 0 rgba(0,0,0,0.85), 0 0 10px var(--res-color, #fff);
+            white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:3px; line-height:1.15;
+            max-width:100%; font-variant-numeric: tabular-nums;
+        }
+        .resource-box:nth-child(1) { --res-color:#60A5FA; }
+        .resource-box:nth-child(2) { --res-color:#F87171; }
+        .resource-box:nth-child(3) { --res-color:#FBBF24; }
         .resource-value.tick { animation: resourceTick 0.38s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .diamond-icon {
             display:inline-block; width:0.82em; height:0.82em; vertical-align:-0.1em; margin:0 1px;
@@ -1214,7 +1247,7 @@
     </div>
     <div id="view-difficulty" class="view-panel">
         <h2><span class="header-badge">SELECT MODE</span></h2>
-        <div id="press-picker"><div class="press-title">RUN LOADOUT</div><div id="press-rail"></div></div>
+        <div id="press-picker"><div class="press-title">RUN LOADOUT</div><div class="press-rail-wrap"><button type="button" class="press-arrow" id="press-prev" aria-label="Previous loadout">‹</button><div id="press-rail"></div><button type="button" class="press-arrow" id="press-next" aria-label="Next loadout">›</button></div></div>
         <button class="diff-btn diff-easy" id="btn-mode-classic">CLASSIC<br><span class="mode-sub">8 Stages · Shop · Glyphs</span></button>
         <div class="daily-card">
             <button class="diff-btn diff-medium" id="btn-mode-daily">DAILY CHALLENGE<br><span class="mode-sub" id="daily-mode-sub">Loading…</span></button>
@@ -1445,6 +1478,23 @@
     }
     function saveProgress() { try { localStorage.setItem('wordling-progress', JSON.stringify(G.progress)); } catch(e) {} }
     function getPress(id) { return PRESSES.find(p=>p.id===id) || null; }
+    function bindPressArrows() {
+        const prev = document.getElementById('press-prev'), next = document.getElementById('press-next');
+        if (prev) prev.onclick = ()=>stepPress(-1);
+        if (next) next.onclick = ()=>stepPress(1);
+        const rail = document.getElementById('press-rail');
+        if (rail) rail.addEventListener('scroll', ()=>{
+            // a swipe moves focus too, so the arrows keep telling the truth
+            const mid = rail.scrollLeft + rail.clientWidth/2;
+            let best = 0, bestD = Infinity;
+            for (let i = 0; i < rail.children.length; i++) {
+                const c = rail.children[i];
+                const d = Math.abs((c.offsetLeft + c.offsetWidth/2) - mid);
+                if (d < bestD) { bestD = d; best = i; }
+            }
+            if (best !== G.pressFocus) { G.pressFocus = best; updatePressArrows(); }
+        }, { passive: true });
+    }
     function renderPresses() {
         const rail = document.getElementById('press-rail');
         if (!rail || !G.progress) return;
@@ -1461,7 +1511,7 @@
                 const perk = document.createElement('div'); perk.className='press-perk'; perk.textContent = press.perk;
                 const cost = document.createElement('div'); cost.className='press-cost'; cost.textContent = press.tradeoff;
                 card.appendChild(perk); card.appendChild(cost);
-                card.addEventListener('click', ()=>{ G.progress.selectedPress = press.id; saveProgress(); AudioEngine.playTap(); renderPresses(); });
+                card.addEventListener('click', ()=>{ G.progress.selectedPress = press.id; G.pressFocus = PRESSES.indexOf(press); saveProgress(); AudioEngine.playTap(); renderPresses(); });
             } else {
                 const prev = getPress(press.unlockedBy);
                 const lock = document.createElement('div'); lock.className='press-lock';
@@ -1470,8 +1520,38 @@
             }
             rail.appendChild(card);
         });
-        const sel = rail.querySelector('.press-card.selected');
-        if (sel) rail.scrollLeft = Math.max(0, sel.offsetLeft - rail.clientWidth/2 + sel.offsetWidth/2);
+        if (G.pressFocus === undefined || G.pressFocus < 0 || G.pressFocus >= PRESSES.length) {
+            G.pressFocus = Math.max(0, PRESSES.findIndex(p=>p.id===G.progress.selectedPress));
+        }
+        centerPress(G.pressFocus, false);
+        updatePressArrows();
+    }
+    function centerPress(index, smooth) {
+        const rail = document.getElementById('press-rail');
+        if (!rail) return;
+        const card = rail.children[index];
+        if (!card) return;
+        const to = Math.max(0, card.offsetLeft - rail.clientWidth/2 + card.offsetWidth/2);
+        const prevBehavior = rail.style.scrollBehavior;
+        if (!smooth) rail.style.scrollBehavior = 'auto';
+        rail.scrollLeft = to;
+        if (!smooth) requestAnimationFrame(()=>{ rail.style.scrollBehavior = prevBehavior || ''; });
+    }
+    function updatePressArrows() {
+        const prev = document.getElementById('press-prev'), next = document.getElementById('press-next');
+        if (!prev || !next) return;
+        prev.classList.toggle('arrow-off', G.pressFocus <= 0);
+        next.classList.toggle('arrow-off', G.pressFocus >= PRESSES.length - 1);
+    }
+    function stepPress(dir) {
+        const at = Math.min(PRESSES.length - 1, Math.max(0, (G.pressFocus||0) + dir));
+        if (at === G.pressFocus) return;
+        G.pressFocus = at;
+        const press = PRESSES[at];
+        if (press && G.progress.unlockedPresses.includes(press.id)) { G.progress.selectedPress = press.id; saveProgress(); }
+        AudioEngine.playTap();
+        renderPresses();
+        centerPress(at, true);
     }
     function getActivePress() { return G.gameMode==='zen' ? null : getPress(G.activePressId); }
     function pressValue(key, fallback) { const p = getActivePress(); return (p && p[key] !== undefined) ? p[key] : fallback; }
@@ -2878,7 +2958,7 @@
     }
     function updateContinueButtonVisibility() { document.getElementById('btn-continue-run').classList.toggle('hidden', !hasActiveRun()); }
     function wrapTitleLetters(){ const h1=document.querySelector('#view-menu h1'); if(!h1||h1.dataset.wrapped) return; const text=h1.textContent; h1.innerHTML=text.split('').map((ch,idx)=>ch===' '?' ':'<span class="title-letter" style="--i:'+idx+'">'+ch+'</span>').join(''); h1.dataset.wrapped='1'; }
-    function boot(){try{G.currentTheme=localStorage.getItem('wordling-theme')||'wordling';}catch(e){G.currentTheme='wordling';}loadProgress();applyTheme(G.currentTheme);let savedPalette;try{savedPalette=localStorage.getItem('wordling-palette')||'coral-sky';}catch(e){savedPalette='coral-sky';}applyPalette(savedPalette);updateThemeButtons();loadPersistence();renderPresses();updateContinueButtonVisibility();initDict();bind();wrapTitleLetters();}
+    function boot(){try{G.currentTheme=localStorage.getItem('wordling-theme')||'wordling';}catch(e){G.currentTheme='wordling';}loadProgress();applyTheme(G.currentTheme);let savedPalette;try{savedPalette=localStorage.getItem('wordling-palette')||'coral-sky';}catch(e){savedPalette='coral-sky';}applyPalette(savedPalette);updateThemeButtons();loadPersistence();renderPresses();bindPressArrows();updateContinueButtonVisibility();initDict();bind();wrapTitleLetters();}
     document.addEventListener('visibilitychange', () => { if(document.hidden){ if(G.dragData){ cleanupDrag(); render(); } } else { const c=document.getElementById('game-container'); if(c){ c.classList.add('anim-kick'); void c.offsetHeight; c.classList.remove('anim-kick'); } } });
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 })();
