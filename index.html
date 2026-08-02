@@ -621,7 +621,7 @@
         .draft-btn.sell-btn { background: var(--accent-2); border-color: var(--accent-2-shadow); color: var(--accent-2-text); box-shadow: 0 5px 0 0 var(--accent-2-shadow); }
         .draft-btn.sell-btn:active { box-shadow: 0 0 0 0 var(--accent-2-shadow); }
         .draft-detail-actions .menu-btn, .draft-detail-actions .draft-btn { width: 118px; padding: 13px 0; font-size: 0.9rem; }
-        #view-game { padding: 10px 16px 12px; gap:6px; display:flex; flex-direction:column; justify-content: flex-start; }
+        #view-game { padding: 10px 16px 12px; gap:4px; display:flex; flex-direction:column; justify-content: flex-start; }
         .hidden { display: none !important; }
 
         #view-menu h1 {
@@ -834,6 +834,20 @@
             clip-path: polygon(50% 0%, 100% 38%, 50% 100%, 0% 38%);
             box-shadow: inset 0 1px 1px rgba(255,255,255,0.7);
         }
+        #bench-bar { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-shrink:0; width:100%; min-height:22px; }
+        .bench-chip {
+            flex-shrink:0; padding:3px 9px; font-size:0.56rem; font-weight:900; letter-spacing:0.8px;
+            font-family: var(--font-main); color: var(--cap-color); background: var(--cap-bg);
+            border: var(--outline-w) solid var(--cap-border); border-radius: var(--cap-radius);
+            cursor:pointer; line-height:1.3; white-space:nowrap;
+        }
+        .bench-chip:active { transform: translateY(2px); }
+        #score-preview {
+            flex:1 1 auto; min-width:0; text-align:right; font-family: var(--font-numeric);
+            font-weight:900; font-size:0.78rem; color: var(--bg-text);
+            text-shadow: 0 1px 4px rgba(0,0,0,0.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+            font-variant-numeric: tabular-nums;
+        }
         #score-banner { text-align:center; font-weight:900; font-size:0.9rem; min-height:20px; color: var(--text); text-shadow: 0 1px 4px rgba(0,0,0,0.4); font-family: var(--font-main); }
         #score-banner.invalid { color: var(--accent-2); }
 
@@ -852,7 +866,7 @@
         }
         .active-tile .tile-chips { font-size: 10px; bottom: 2px; right: 4px; }
 
-        #hand-rack { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 10px 6px; width: 100%; flex-shrink: 0; min-height: 142px; }
+        #hand-rack { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 10px 6px; width: 100%; flex-shrink: 0; min-height: 136px; }
         .hand-tile-wrap { width: clamp(52px, 13vw, 68px); height: clamp(52px, 13vw, 68px); flex-shrink: 0; }
         /* Deep Pockets deals 12 tiles; at phone widths only 5 fit per flex row, which
            spills a third row over the controls. Lock it to a 2x6 grid instead. */
@@ -897,6 +911,9 @@
         .tile-badge.badge-finisher { background: var(--accent-1); color: var(--accent-1-text); }
         .tile-inner.wildcard { border: var(--outline-w) solid var(--accent-3) !important; box-shadow: 0 0 12px var(--accent-3); }
         .tile-inner.finisher { border: var(--outline-w) solid var(--accent-1) !important; box-shadow: 0 0 12px var(--accent-1); }
+        .tile-inner.italic-tile { border: var(--outline-w) solid #F59E0B !important; box-shadow: 0 0 12px rgba(245,158,11,0.75); }
+        .tile-inner.italic-tile .tile-letter { font-style: italic; font-weight: 800; transform: skewX(-12deg); display: inline-block; }
+        .tile-badge.badge-italic { background: #F59E0B; color: #241a00; }
         .tile-inner.dragging {
             animation: none !important;
             transform: scale(1.15) !important;
@@ -912,7 +929,7 @@
             top: 0; left: 0; margin: 0;
         }
 
-        #action-slots-row { display:flex; align-items:center; justify-content:center; padding:10px 0; flex-shrink:0; }
+        #action-slots-row { padding-top:6px !important; padding-bottom:6px !important; display:flex; align-items:center; justify-content:center; padding:10px 0; flex-shrink:0; }
         #glyph-slots { display:flex; gap:10px; transition: margin 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .glyph-slot {
             width: 60px; height: 60px; border-radius: var(--panel-radius);
@@ -927,6 +944,9 @@
         }
         .glyph-slot:active { transform: translateY(3px); }
         .glyph-slot.active { animation: glyphGlow 0.5s ease; }
+        .glyph-order-hint { font-size:0.66rem; font-weight:900; letter-spacing:0.6px; color: var(--accent-3); font-family: var(--font-main); text-align:center; }
+        .draft-detail-actions .glyph-move-btn { width:118px; padding:11px 0; font-size:0.8rem; }
+        .draft-detail-actions .glyph-move-btn:disabled { opacity:0.4; }
         .glyph-slot.empty { background: rgba(0,0,0,0.2); border-style: dashed; border-color: var(--text-soft); box-shadow: none; opacity: 0.6; }
         .glyph-slot.empty:active { transform: none; }
         .glyph-slot.level-2 { border-color: var(--accent-3); }
@@ -1464,7 +1484,8 @@
             <div id="glyph-slots"></div>
             <div id="consumable-slot"></div>
         </div>
-        <div id="controls-row"><button class="btn-action" id="btn-shuffle-hand">SHUFFLE</button><button class="btn-action" id="btn-clear">CLEAR</button><button class="btn-action" id="btn-reroll">REROLL</button><button class="btn-action" id="btn-submit">SUBMIT</button></div>
+        <div id="bench-bar"><button class="bench-chip" id="btn-sort-bench" type="button">SORT: DRAW</button><span id="score-preview">—</span></div>
+        <div id="controls-row"><button class="btn-action" id="btn-shuffle-hand">SHUFFLE</button><button class="btn-action" id="btn-clear">RECALL</button><button class="btn-action" id="btn-reroll">REROLL</button><button class="btn-action" id="btn-submit">SUBMIT</button></div>
     </div>
     <div id="view-draft" class="view-panel hidden"></div>
     <div id="confirm-modal"><div class="confirm-inner"><p>Quit Run? Your progress will be lost.</p><div class="confirm-btns"><button class="btn-cancel" id="btn-confirm-cancel">Cancel</button><button class="btn-quit" id="btn-confirm-quit">Quit</button></div></div></div>
@@ -1501,6 +1522,15 @@
                 <div class="howto-glyph-chip" style="--glyph-color:#EF4444;"><span class="howto-glyph-icon">⚔</span><span class="howto-glyph-text"><b>Red</b> — MULT boosts for word length, patterns, repeats.</span></div>
                 <div class="howto-glyph-chip" style="--glyph-color:#A855F7;"><span class="howto-glyph-icon">✦</span><span class="howto-glyph-text"><b>Purple</b> — Wildcards, duplication, and other synergy tricks.</span></div>
             </div>
+            <div class="howto-section-label">Glyph Order Matters</div>
+            <div class="howto-row"><span class="howto-num">★</span><span>Glyphs fire strictly <b>left to right</b>. Drag a glyph onto another slot, or tap one then tap a second, to swap their order.</span></div>
+            <div class="howto-row"><span class="howto-num">★</span><span>Put <b>+MULT</b> glyphs to the LEFT of <b>xMULT</b> glyphs. On 100 points: <b>+15 then x3 = 4,800</b>, but <b>x3 then +15 = 1,800</b>. Same glyphs, same word — order alone nearly triples it.</span></div>
+            <div class="howto-section-label">Italic Tiles</div>
+            <div class="howto-showcase">
+                <div class="howto-tile-demo"><div class="tile-inner italic-tile"><span class="tile-letter">E</span><span class="tile-chips">1</span><span class="tile-badge badge-italic">HOLD x1.5</span></div></div>
+            </div>
+            <div class="howto-row"><span class="howto-num">★</span><span>Italic tiles are built to be <b>kept, not played</b>. Every Italic still sitting on your bench gives <b>x1.5 MULT</b> to the word you submit.</span></div>
+            <div class="howto-row"><span class="howto-num">★</span><span><b>Do NOT play these letters on the board unless necessary</b> — holding them on your bench gives a 1.5x Multiplier to every played word!</span></div>
             <div class="howto-row"><span class="howto-num">5</span><span>Boss stages add a Boss Blind twist. Earn Diamonds between stages to buy Glyphs and Consumables in the shop.</span></div>
         </div>
         <div style="padding:0 20px 20px;"><button id="btn-close-howto" class="menu-btn" style="width:100%;">GOT IT</button></div>
@@ -1598,9 +1628,10 @@
     const SPECIAL_TILE_COLOR_FINISHER = "#F59E0B";
     const SPECIAL_TILE_DATABASE = [
         { id:"wild_tile", name:"Wildcard Tile", tileType:"wildcard", icon:"✦", color:SPECIAL_TILE_COLOR_WILD, desc:"Adds a Wildcard (*) tile to your bag. It can substitute for any letter in a word." },
-        { id:"finisher_tile", name:"Finisher Tile", tileType:"finisher", icon:"!", color:SPECIAL_TILE_COLOR_FINISHER, desc:"Adds a Finisher (!) tile to your bag. Play it as the LAST letter of a word for a x3 score boost." }
+        { id:"finisher_tile", name:"Finisher Tile", tileType:"finisher", icon:"!", color:SPECIAL_TILE_COLOR_FINISHER, desc:"Adds a Finisher (!) tile to your bag. Play it as the LAST letter of a word for a x3 score boost." },
+        { id:"italic_tile", name:"Italic Tile", tileType:"italic", icon:"/", color:"#F59E0B", desc:"Adds an Italic tile to your bag. HOLD it on your bench: every Italic you keep gives x1.5 MULT to the word you play." }
     ];
-    const SHOP_PRICES = { glyph:6, void_seal:3, gold_ink:5, transmuter:4, cloner:5, wild_tile:7, finisher_tile:7 };
+    const SHOP_PRICES = { glyph:6, void_seal:3, gold_ink:5, transmuter:4, cloner:5, wild_tile:7, finisher_tile:7, italic_tile:7 };
     const SHOP_REROLL_BASE_COST = 2;
     const NO_ADS_PRICE = 500;
     const CLASSIC_STAGE_TARGETS = [0, 300, 800, 2000, 5000, 12000, 30000, 75000, 200000];
@@ -1807,6 +1838,7 @@
     };
     const VOWEL_LETTERS = new Set(['A','E','I','O','U']);
     const RARE_LETTERS = new Set(['Q','X','Z','J','V']);
+    function countBenchItalics() { return (G.hand||[]).filter(t => t && t.type === 'italic').length; }
     function hasDoubledLetter(word) { return /([A-Za-z])\1/.test(word||''); }
     // Middle Child boosts one tile, so it is applied per tile rather than in the
     // shared modifier pass. Both the scorer and the score animation ask for the index.
@@ -1842,23 +1874,17 @@
         calculateScoreModifiers(word, basePoints, baseMult) {
             let finalPoints = basePoints||0, finalMult = baseMult||1;
             if (!G.equippedGlyphs || G.equippedGlyphs.length===0 || !word) return { finalPoints, finalMult };
-            const letters = word.split('');
-            const vowelCount = letters.filter(isVowelLetter).length;
-            const consonantCount = letters.filter(isConsonantLetter).length;
-            const rareCount = letters.filter(l=>RARE_LETTERS.has(l)).length;
-            const hasScrabbleLetter = letters.some(l=>l==='Q'||l==='X'||l==='Z'||l==='J');
-            if (this.hasGlyph('vowel_anchor')) finalPoints += 15*vowelCount;
-            if (this.hasGlyph('consonant_charge')) finalPoints += 10*consonantCount;
-            if (this.hasGlyph('scrabble_master') && hasScrabbleLetter) finalPoints += 40;
-            if (this.hasGlyph('long_form') && word.length>=6) finalPoints += 60;
-            const dupCount = letters.length - new Set(letters).size;
-            if (this.hasGlyph('grammarian')) finalMult += 3*vowelCount;
-            if (this.hasGlyph('novelist') && word.length>=6) finalMult *= 3;
-            if (this.hasGlyph('bookends') && letters.length>1 && letters[0]===letters[letters.length-1]) finalMult *= 4;
-            if (this.hasGlyph('heavy_hitter') && rareCount>=2) finalMult *= 2;
-            if (this.hasGlyph('double_down') && dupCount>0) finalMult += 2*dupCount;
-            if (this.hasGlyph('underdog') && word.length===3) finalMult *= 3;
-            if (this.hasGlyph('double_trouble') && hasDoubledLetter(word)) finalMult += 15;
+            // Strictly left to right: every glyph resolves in the slot order the player
+            // arranged, so a +MULT sitting left of an xMULT is worth far more than the
+            // reverse. Driven by the same effect table the scoring animation reads, so
+            // the animated tally and the real score cannot drift apart.
+            G.equippedGlyphs.forEach(g => {
+                const e = this.getGlyphEffectPreview(g.id, word);
+                if (!e) return;
+                if (e.kind === 'points') finalPoints += e.value;
+                else if (e.kind === 'mult-add') finalMult += e.value;
+                else if (e.kind === 'mult-mul') finalMult *= e.value;
+            });
             return { finalPoints, finalMult };
         },
         getGlyphEffectPreview(id, word) {
@@ -1901,6 +1927,7 @@
         currentStage:1, stageTargets:[...CLASSIC_STAGE_TARGETS], totalStages:8,
         currentScore:0, playsLeft:4, rerollsLeft:3, shakeStrength:100, currentTheme:'wordling',
         hand:[], activeWord:[], tileBag:[], discardPile:[], removedLetters:new Set(), stageScores:[], stageWords:[], phase:'playing',
+        benchSort:'draw', drawSeq:0, glyphSwapFrom:null,
         equippedGlyphs:[], bank:0, recyclerUsedThisStage:false, dictSet:new Set(), modalType:null, isAnimating:false, rerollMode:false, rerollMarks:new Set(), gameStarted:false,
         draftChoices:null, dragData:null,
         gameMode:'classic', dailyChallenge:null, isEndless:false, consumables:[], activeHazard:null, anchorTileId:null, mutedTileId:null,
@@ -1911,7 +1938,7 @@
     function assignRandomAura() { const r=Math.random(); if(r<0.15) return 'blue'; if(r<0.22) return 'red'; if(r<0.26) return 'gold'; return null; }
     function generateRandomTile() { const totalWeight=TILE_DIST.reduce((s,d)=>s+d.qty,0); let r=Math.random()*totalWeight; for(const d of TILE_DIST){ r-=d.qty; if(r<=0) return {id:'t_zen_'+Math.random().toString(36).slice(2,11)+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), letter:d.letter, chips:d.chips, type:'normal', aura:assignRandomAura()}; } const f=TILE_DIST[0]; return {id:'t_zen_fallback_'+Date.now(), letter:f.letter, chips:f.chips, type:'normal', aura:null}; }
     function buildInitialBag() { const tiles=[]; TILE_DIST.forEach(({letter,chips,qty})=>{ if(G.removedLetters.has(letter)) return; for(let i=0;i<qty;i++) tiles.push({id:'t_'+Math.random().toString(36).slice(2,11)+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), letter, chips, type:'normal', aura: assignRandomAura()}); }); return shuffle(tiles); }
-    function drawToHand() { while(G.hand.filter(t=>t!==null).length < getHandSize()){ let tile; if(G.gameMode==='zen'){ tile=generateRandomTile(); } else { if(G.tileBag.length===0) { if(G.discardPile.length===0) break; G.tileBag = shuffle(G.discardPile); G.discardPile = []; } tile = G.tileBag.pop(); } const emptyIdx = G.hand.indexOf(null); if(emptyIdx!==-1) G.hand[emptyIdx] = tile; else G.hand.push(tile); } ensureMutedTile(); }
+    function drawToHand() { while(G.hand.filter(t=>t!==null).length < getHandSize()){ let tile; if(G.gameMode==='zen'){ tile=generateRandomTile(); } else { if(G.tileBag.length===0) { if(G.discardPile.length===0) break; G.tileBag = shuffle(G.discardPile); G.discardPile = []; } tile = G.tileBag.pop(); } const emptyIdx = G.hand.indexOf(null); tile.drawSeq = ++G.drawSeq; if(emptyIdx!==-1) G.hand[emptyIdx] = tile; else G.hand.push(tile); } if((G.benchSort||'draw')!=='draw') applyBenchSort(); ensureMutedTile(); }
     function resetStageState() {
         // The hand and any staged word belong to the bag, not to the stage. Returning
         // them to the discard pile keeps the 98-tile pool whole; dropping them cost the
@@ -1962,6 +1989,9 @@
         else if(letters.length>0) valid=G.dictSet.has(word);
         const mods = GlyphManager.calculateScoreModifiers(word, totalChips, baseMult);
         totalChips = mods.finalPoints; let totalMult = mods.finalMult;
+        // Italic tiles pay only while they are still sitting on the bench
+        const benchItalics = countBenchItalics();
+        if (benchItalics > 0) totalMult *= Math.pow(1.5, benchItalics);
         let subtotal = Math.floor(totalChips * totalMult);
         let finisherMult = 1; if(length>0 && G.activeWord[length-1].type==='finisher') finisherMult = 3;
         const finalScore = Math.floor(subtotal * finisherMult);
@@ -1975,6 +2005,24 @@
     function reorderActiveWord(fromIndex, toIndex) { if(G.isAnimating||G.rerollMode) return; if(fromIndex<0||fromIndex>=G.activeWord.length) return; const tile=G.activeWord[fromIndex]; G.activeWord.splice(fromIndex,1); let insertAt=toIndex; if(insertAt>fromIndex) insertAt--; if(insertAt<0) insertAt=0; if(insertAt>G.activeWord.length) insertAt=G.activeWord.length; G.activeWord.splice(insertAt,0,tile); AudioEngine.playTap(); renderWithTileFlip(); }
     function swapHandTiles(i1,i2) { if(i1===i2) return; const t=G.hand[i1]; G.hand[i1]=G.hand[i2]; G.hand[i2]=t; AudioEngine.playTap(); renderWithTileFlip(); }
     function clearActiveWord() { if(G.isAnimating||G.rerollMode) return; const keep=[]; while(G.activeWord.length>0){ const t=G.activeWord.pop(); if(isAnchorLocked(t.id)){ keep.push(t); continue; } const e=G.hand.findIndex(x=>x===null); if(e!==-1) G.hand[e]=t; } G.activeWord=keep.reverse(); AudioEngine.playTap(); renderWithTileFlip(); }
+    const BENCH_SORTS = ['draw','alpha','vowel'];
+    const BENCH_SORT_LABELS = { draw:'SORT: DRAW', alpha:'SORT: A→Z', vowel:'SORT: VOWELS' };
+    function applyBenchSort() {
+        const mode = G.benchSort || 'draw';
+        const tiles = G.hand.filter(t => t);
+        if (mode === 'alpha') tiles.sort((a,b)=>a.letter.localeCompare(b.letter));
+        else if (mode === 'vowel') tiles.sort((a,b)=>{ const av=isVowelLetter(a.letter)?0:1, bv=isVowelLetter(b.letter)?0:1; return av-bv || a.letter.localeCompare(b.letter); });
+        else tiles.sort((a,b)=>(a.drawSeq||0)-(b.drawSeq||0));
+        const size = getHandSize();
+        for (let i = 0; i < size; i++) G.hand[i] = i < tiles.length ? tiles[i] : null;
+        if (G.hand.length > size) G.hand.length = size;
+    }
+    function cycleBenchSort() {
+        if (G.isAnimating || G.rerollMode) return;
+        const i = BENCH_SORTS.indexOf(G.benchSort || 'draw');
+        G.benchSort = BENCH_SORTS[(i + 1) % BENCH_SORTS.length];
+        applyBenchSort(); AudioEngine.playTap(); vibrate(6); renderWithTileFlip();
+    }
     function shuffleHand() { if(G.isAnimating||G.hand.filter(t=>t).length<2||G.rerollMode) return; const tiles=G.hand.filter(t=>t!==null); const s=shuffle(tiles); let idx=0; for(let i=0;i<getHandSize();i++){ if(G.hand[i]!==null) G.hand[i]=s[idx++]; } AudioEngine.playShuffle(); vibrate(8); renderWithTileFlip(); }
     function toggleRerollMark(hi) { if(hi<0||hi>=getHandSize()||!G.hand[hi]) return; const id=G.hand[hi].id; if(G.rerollMarks.has(id)) G.rerollMarks.delete(id); else { if(G.rerollMarks.size>=3) return; G.rerollMarks.add(id); } AudioEngine.playTap(); render(); }
     function enterReroll() { if(G.isAnimating||(G.gameMode!=='zen'&&G.rerollsLeft<=0)||G.hand.every(t=>t===null)) return; G.rerollMode=true; G.rerollMarks.clear(); render(); }
@@ -2109,6 +2157,14 @@
             else if (effect.kind === 'mult-mul') { displayMult *= effect.value; multEl.textContent = displayMult.toFixed(1); multEl.classList.add('pop'); }
             spawnGlyphIndicator(slotEl, effect.label); await sleep(350);
             slotEl.classList.remove('active'); pointsEl.classList.remove('pop'); multEl.classList.remove('pop');
+        }
+
+        const heldItalics = countBenchItalics();
+        for (let i = 0; i < heldItalics; i++) {
+            displayMult *= 1.5; multEl.textContent = displayMult.toFixed(1); multEl.classList.add('pop');
+            const held = document.querySelectorAll('#hand-rack .tile-inner.italic-tile')[i];
+            if (held) spawnGlyphIndicator(held, 'HELD x1.5');
+            await sleep(320); multEl.classList.remove('pop');
         }
 
         await sleep(300); timesEl.classList.add('highlight');
@@ -2291,7 +2347,12 @@
     function shopPrice(id) { const inflated = G.gameMode==='daily' && G.dailyChallenge===7; const base = SHOP_PRICES[id]||0; return inflated ? base*2 : base; }
     function makeGlyphOffer(g) { return { kind:'glyph', id:g.id, name:g.name, desc:g.desc, color:g.color, icon:g.icon, price:shopPrice('glyph'), apply:()=>{ G.equippedGlyphs.push({id:g.id}); } }; }
     function makeTileOffer(def) { return { kind:'tile', id:def.id, name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{
-        G.tileBag.push({ id:'t_'+def.tileType+'_'+Math.random().toString(36).slice(2,11)+'_'+Date.now(), letter: def.tileType==='wildcard'?'*':'!', chips:0, type:def.tileType });
+        if (def.tileType === 'italic') {
+            const pick = TILE_DIST[Math.floor(Math.random()*TILE_DIST.length)];
+            G.tileBag.push({ id:'t_italic_'+Math.random().toString(36).slice(2,11)+'_'+Date.now(), letter:pick.letter, chips:pick.chips, type:'italic', aura:null });
+        } else {
+            G.tileBag.push({ id:'t_'+def.tileType+'_'+Math.random().toString(36).slice(2,11)+'_'+Date.now(), letter: def.tileType==='wildcard'?'*':'!', chips:0, type:def.tileType });
+        }
     } }; }
     function makeConsumableOffer(def) { return { kind:'consumable', id:def.id, name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{ G.consumables.push({id:def.id}); } }; }
     function isGlyphUnlocked(id) { return !G.progress || G.progress.unlockedGlyphs.includes(id); }
@@ -2534,7 +2595,7 @@
             container.appendChild(slot);
         }
     }
-    function showGlyphInfo(id) {
+    function showGlyphInfo(id, index) {
         const data = GlyphManager.getGlyphData(id); if (!data) return;
         const draftDiv=document.getElementById('view-draft'); draftDiv.innerHTML=''; draftDiv.classList.remove('show');
         const panel=document.createElement('div'); panel.className='draft-panel';
@@ -2544,7 +2605,29 @@
         const desc=document.createElement('div'); desc.className='draft-detail-desc'; desc.textContent=data.desc;
         const closeBtn=document.createElement('button'); closeBtn.className='draft-btn'; closeBtn.style.width='100%'; closeBtn.textContent='CLOSE';
         closeBtn.addEventListener('click', ()=>{ draftDiv.classList.remove('show'); });
-        wrap.appendChild(icon); wrap.appendChild(name); wrap.appendChild(desc); wrap.appendChild(closeBtn);
+        wrap.appendChild(icon); wrap.appendChild(name); wrap.appendChild(desc);
+        if (typeof index === 'number' && G.equippedGlyphs.length > 1) {
+            const hint=document.createElement('div'); hint.className='glyph-order-hint';
+            hint.textContent='Glyphs fire LEFT to RIGHT — slot ' + (index+1) + ' of ' + G.equippedGlyphs.length;
+            wrap.appendChild(hint);
+            const row=document.createElement('div'); row.className='draft-detail-actions';
+            const mkMove=(label,dir)=>{
+                const b=document.createElement('button'); b.className='menu-btn glyph-move-btn'; b.textContent=label;
+                const to=index+dir;
+                if (to < 0 || to >= G.equippedGlyphs.length) b.disabled = true;
+                b.addEventListener('click', ()=>{
+                    if (to < 0 || to >= G.equippedGlyphs.length) return;
+                    const moved=G.equippedGlyphs[index];
+                    G.equippedGlyphs[index]=G.equippedGlyphs[to]; G.equippedGlyphs[to]=moved;
+                    AudioEngine.playTap(); vibrate(8); renderGlyphsWithFlip(); saveActiveRun();
+                    showGlyphInfo(moved.id, to);
+                });
+                return b;
+            };
+            row.appendChild(mkMove('◀ LEFT', -1)); row.appendChild(mkMove('RIGHT ▶', 1));
+            wrap.appendChild(row);
+        }
+        wrap.appendChild(closeBtn);
         panel.appendChild(wrap);
         draftDiv.appendChild(panel); draftDiv.classList.remove('hidden');
         requestAnimationFrame(()=>requestAnimationFrame(()=>draftDiv.classList.add('show')));
@@ -2709,10 +2792,11 @@
         }
     }
 
-    function getTileClass(tile) { let cls='tile-inner'; if(tile.type==='wildcard') cls+=' wildcard'; else if(tile.type==='finisher') cls+=' finisher'; else if(tile.aura) cls+=' aura-'+tile.aura; if(G.rerollMode&&G.rerollMarks.has(tile.id)) cls+=' marked-reroll'; if(isAnchorLocked(tile.id)) cls+=' anchor-locked'; if(isMutedTile(tile)) cls+=' muted-tile'; return cls; }
+    function getTileClass(tile) { let cls='tile-inner'; if(tile.type==='wildcard') cls+=' wildcard'; else if(tile.type==='finisher') cls+=' finisher'; else if(tile.type==='italic') cls+=' italic-tile'+(tile.aura?' aura-'+tile.aura:''); else if(tile.aura) cls+=' aura-'+tile.aura; if(G.rerollMode&&G.rerollMarks.has(tile.id)) cls+=' marked-reroll'; if(isAnchorLocked(tile.id)) cls+=' anchor-locked'; if(isMutedTile(tile)) cls+=' muted-tile'; return cls; }
     function getTileBadge(tile) {
         if (tile.type === 'wildcard') return '<span class="tile-badge badge-wild">ANY</span>';
         if (tile.type === 'finisher') return '<span class="tile-badge badge-finisher">END x3</span>';
+        if (tile.type === 'italic') return '<span class="tile-badge badge-italic">HOLD x1.5</span>';
         if (isMutedTile(tile)) return '';
         const parts = [];
         if (tile.aura === 'blue') parts.push('+10');
@@ -2739,7 +2823,7 @@
         const {source,index,hasMoved}=G.dragData; const px=e.clientX, py=e.clientY;
         cleanupDrag();
         if(source==='glyph') {
-            if(!hasMoved){ showGlyphInfo(G.equippedGlyphs[index].id); return; }
+            if(!hasMoved){ showGlyphInfo(G.equippedGlyphs[index].id, index); return; }
             const targetEl=document.elementFromPoint(px,py); const targetSlot = targetEl ? targetEl.closest('.glyph-slot') : null;
             if(targetSlot){ const allSlots=[...document.querySelectorAll('#glyph-slots .glyph-slot')]; const ti=allSlots.indexOf(targetSlot); if(ti>=0&&ti!==index){ const temp=G.equippedGlyphs[index]; G.equippedGlyphs[index]=G.equippedGlyphs[ti]; G.equippedGlyphs[ti]=temp; AudioEngine.playTap(); } }
             renderGlyphsWithFlip();
@@ -2843,6 +2927,9 @@
         tickResourceValue(document.getElementById('val-rerolls'), G.rerollsLeft);
         tickResourceValue(document.getElementById('val-gold'), G.bank, '<span class="diamond-icon"></span> '+G.bank);
         const sb=document.getElementById('score-banner'); if(p.occ===0) sb.textContent='—'; else if(!p.valid) sb.textContent='INVALID WORD'; else sb.textContent='READY';
+        const sortBtn=document.getElementById('btn-sort-bench'); if(sortBtn) sortBtn.textContent = BENCH_SORT_LABELS[G.benchSort||'draw'];
+        const sp=document.getElementById('score-preview');
+        if(sp) sp.textContent = (p.occ===0||!p.valid) ? '—' : (p.totalChips + ' × ' + p.totalMult.toFixed(1) + ' = ' + p.totalScore);
         sb.classList.toggle('invalid',p.occ>0&&!p.valid);
         const awl=document.getElementById('active-word-line');
         reconcileTileList(awl, G.activeWord, tile=>tile.id,
@@ -2987,6 +3074,7 @@
         document.getElementById('btn-back-stats').addEventListener('click',()=>slideBack('view-menu','view-stats'));
         document.getElementById('btn-back-diff').addEventListener('click',()=>slideBack('view-menu','view-difficulty'));
         document.getElementById('btn-back-themes').addEventListener('click',()=>slideBack('view-menu','view-themes'));
+        document.getElementById('btn-sort-bench').addEventListener('click', cycleBenchSort);
         document.getElementById('btn-mode-classic').addEventListener('click',()=>startClassicLikeRun('classic'));
         document.getElementById('btn-mode-daily').addEventListener('click',()=>startClassicLikeRun('daily'));
         document.getElementById('btn-mode-zen').addEventListener('click',()=>startZenRun());
@@ -3027,6 +3115,7 @@
         Object.assign(G, saved);
         G.removedLetters = new Set(saved.removedLetters || []);
         G.stageWords = saved.stageWords || [];
+        G.benchSort = saved.benchSort || 'draw'; G.drawSeq = saved.drawSeq || 0; G.glyphSwapFrom = null;
         G.activePressId = saved.activePressId || (G.progress && G.progress.selectedPress) || 'merchant_press';
         G.shopRerollsUsedThisRun = saved.shopRerollsUsedThisRun || 0;
         G.rerollMode = false; G.rerollMarks = new Set(); G.isAnimating = false; G.modalType = null; G.dragData = null;
@@ -3100,7 +3189,7 @@
             removedLetters: [...G.removedLetters],
             equippedGlyphs: G.equippedGlyphs, bank: G.bank, consumables: G.consumables,
             activeHazard: G.activeHazard, anchorTileId: G.anchorTileId, mutedTileId: G.mutedTileId,
-            shopOffers: G.shopOffers, shopRerollCount: G.shopRerollCount, phase: G.phase,
+            shopOffers: G.shopOffers, shopRerollCount: G.shopRerollCount, phase: G.phase, benchSort: G.benchSort, drawSeq: G.drawSeq,
             activePressId: G.activePressId, shopRerollsUsedThisRun: G.shopRerollsUsedThisRun
         };
     }
