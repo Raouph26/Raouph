@@ -197,7 +197,7 @@
             --cap-color: #0F172A;
             --cap-border: rgba(15,23,42,0.06);
             --cap-shadow-color: rgba(15,23,42,0.18);
-            --cap-radius: 14px;
+            --cap-radius: 20px;
 
             --tile-bg: #FFFFFF;
             --tile-color: #0F172A;
@@ -205,8 +205,8 @@
             --tile-shadow-color: rgba(15,23,42,0.18);
             --tile-radius: 14px;
 
-            --btn-radius: 14px;
-            --press-depth: 4px;
+            --btn-radius: 20px;
+            --press-depth: 5px;
             --outline-w: 0px;
             --title-shadow: 0 3px 0 rgba(15,23,42,0.18);
             --number-shadow: none;
@@ -408,11 +408,14 @@
         html[data-theme="phantom"] .resource-box:nth-child(2) .resource-label, html[data-theme="phantom"] .resource-box:nth-child(2) .resource-value { color: var(--accent-2); }
         html[data-theme="phantom"] .resource-box:nth-child(3) .resource-label, html[data-theme="phantom"] .resource-box:nth-child(3) .resource-value { color: var(--accent-3); }
         html[data-theme="phantom"] #score-banner { transform: skewX(-8deg); font-weight: 900; letter-spacing: -0.3px; }
-        html[data-theme="phantom"] .run-info-band,
         html[data-theme="phantom"] .modal-inner h3 {
             transform: skewX(-8deg); letter-spacing: -0.5px;
         }
-        html[data-theme="phantom"] .run-info-band { clip-path: polygon(0 0, 100% 0, 100% 78%, 96% 100%, 0 100%); }
+        html[data-theme="phantom"] .run-info-band,
+        html[data-theme="phantom"] #modal-title {
+            transform: translateX(-50%) skewX(-8deg); letter-spacing: -0.5px;
+            border-radius: 0; clip-path: polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%);
+        }
         html[data-theme="phantom"] #map-header .header-badge,
         html[data-theme="phantom"] #view-difficulty h2 .header-badge,
         html[data-theme="phantom"] #view-themes h2 .header-badge {
@@ -553,11 +556,12 @@
             cursor:pointer; text-align:center; background: var(--cap-bg); color: var(--cap-color); font-family: var(--font-main);
             border: var(--outline-w) solid var(--cap-border);
             box-shadow: 0 var(--press-depth) 0 0 var(--cap-shadow-color);
-            transition: transform 0.08s ease, box-shadow 0.08s ease;
+            transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.16s ease;
         }
         .menu-btn:active, .diff-btn:active, .draft-btn:active {
-            transform: translateY(var(--press-depth));
+            transform: translateY(var(--press-depth)) scale(0.97);
             box-shadow: 0 0 0 0 var(--cap-shadow-color);
+            transition: transform 0.06s ease-out, box-shadow 0.06s ease-out;
         }
         .menu-btn.play-btn { background: var(--accent-1); border-color: var(--accent-1-shadow); color: var(--accent-1-text); font-size:1.2rem; box-shadow: 0 var(--press-depth) 0 0 var(--accent-1-shadow); }
         .menu-btn.play-btn:active { box-shadow: 0 0 0 0 var(--accent-1-shadow); }
@@ -629,15 +633,45 @@
         .header-pill {
             flex:1; max-width:170px; padding:10px 4px; border-radius:var(--btn-radius); font-weight:900;
             font-size:0.8rem; letter-spacing:0.5px; cursor:pointer; text-align:center; font-family: var(--font-main);
-            transition: transform 0.08s ease, box-shadow 0.08s ease;
+            transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.16s ease;
         }
+        .header-pill:active { transition: transform 0.06s ease-out, box-shadow 0.06s ease-out; }
         #btn-run-info { background: var(--accent-1); border: var(--outline-w) solid var(--accent-1-shadow); color: var(--accent-1-text); box-shadow: 0 4px 0 0 var(--accent-1-shadow); }
-        #btn-run-info:active { transform: translateY(4px); box-shadow: 0 0 0 0 var(--accent-1-shadow); }
+        #btn-run-info:active { transform: translateY(4px) scale(0.97); box-shadow: 0 0 0 0 var(--accent-1-shadow); }
         #btn-header-options { background: var(--accent-3); border: var(--outline-w) solid var(--accent-3-shadow); color: var(--accent-3-text); box-shadow: 0 4px 0 0 var(--accent-3-shadow); }
-        #btn-header-options:active { transform: translateY(4px); box-shadow: 0 0 0 0 var(--accent-3-shadow); }
-        .run-info-inner { padding:0; overflow:hidden; }
-        .run-info-band { background: var(--accent-1); color: var(--accent-1-text); font-weight:900; font-size:1.1rem; text-align:center; padding:16px; letter-spacing:1px; font-family: var(--font-title); }
+        #btn-header-options:active { transform: translateY(4px) scale(0.97); box-shadow: 0 0 0 0 var(--accent-3-shadow); }
+        .run-info-inner { padding-top:34px; overflow:visible; position:relative; }
+        .run-info-band {
+            position:absolute; top:-20px; left:50%; transform:translateX(-50%);
+            background: var(--accent-1); color: var(--accent-1-text); font-weight:900; font-size:1rem;
+            text-align:center; padding:12px 28px; letter-spacing:1px; font-family: var(--font-title);
+            border-radius: 999px; white-space:nowrap; z-index:3;
+            box-shadow: 0 5px 0 0 var(--accent-1-shadow), 0 10px 20px rgba(0,0,0,0.35);
+        }
         .run-info-body { padding:18px 20px 20px; display:flex; flex-direction:column; gap:10px; }
+        .noads-band { background: var(--accent-2); color: var(--accent-2-text); box-shadow: 0 5px 0 0 var(--accent-2-shadow), 0 10px 20px rgba(0,0,0,0.35); }
+        .noads-copy { font-size:0.85rem; color: var(--text); text-align:center; line-height:1.45; margin:0; font-family: var(--font-main); font-weight:600; }
+        .noads-bank-row { display:flex; align-items:center; justify-content:center; gap:5px; font-weight:800; color: var(--text); font-size:0.9rem; font-family: var(--font-main); }
+        .menu-btn.noads-buy-btn { background: var(--accent-1); border-color: var(--accent-1-shadow); color: var(--accent-1-text); box-shadow: 0 var(--press-depth) 0 0 var(--accent-1-shadow); display:flex; align-items:center; justify-content:center; gap:6px; }
+        .menu-btn.noads-buy-btn:active:not(:disabled) { box-shadow: 0 0 0 0 var(--accent-1-shadow); }
+        .menu-btn.noads-buy-btn:disabled { opacity:0.5; cursor:not-allowed; }
+        .ads-pill {
+            padding:8px 16px; border-radius:999px; font-weight:900; font-size:0.72rem; cursor:pointer;
+            background: var(--accent-2); color: var(--accent-2-text); border: var(--outline-w) solid var(--accent-2-shadow);
+            box-shadow: 0 3px 0 0 var(--accent-2-shadow); font-family: var(--font-main); letter-spacing:0.3px;
+            transition: transform 0.16s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.16s ease;
+        }
+        .ads-pill:active:not(:disabled) { transform: translateY(3px) scale(0.96); box-shadow:0 0 0 0 var(--accent-2-shadow); transition: transform 0.06s ease-out, box-shadow 0.06s ease-out; }
+        .ads-pill.unlocked, .ads-pill:disabled { background: var(--accent-1); color: var(--accent-1-text); border-color: var(--accent-1-shadow); box-shadow: 0 3px 0 0 var(--accent-1-shadow); cursor:default; }
+        #modal-overlay .modal-inner { position:relative; padding-top:34px; overflow:visible; }
+        #modal-title {
+            position:absolute; top:-20px; left:50%; transform:translateX(-50%);
+            background: var(--accent-2); color: var(--accent-2-text); font-weight:900; font-size:1.2rem;
+            text-align:center; padding:12px 28px; letter-spacing:1px; font-family: var(--font-title);
+            border-radius:999px; white-space:nowrap; z-index:3; margin:0;
+            box-shadow: 0 5px 0 0 var(--accent-2-shadow), 0 10px 20px rgba(0,0,0,0.35);
+        }
+        #modal-subtitle { color: var(--text); font-family: var(--font-main); font-weight:600; font-size:0.85rem; margin:4px 0 8px; }
         .run-info-row { display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:0.85rem; color: var(--text); background: rgba(0,0,0,0.06); padding:9px 12px; border-radius: var(--radius-sm); font-family: var(--font-main); }
         .run-info-row.clickable { cursor:pointer; }
         .menu-btn.quit-run-btn { background: var(--accent-2); border-color: var(--accent-2-shadow); color: var(--accent-2-text); box-shadow: 0 var(--press-depth) 0 0 var(--accent-2-shadow); }
@@ -860,10 +894,10 @@
             flex:1; padding:15px 4px; border-radius: var(--btn-radius); font-weight:900; font-size:0.85rem; letter-spacing: var(--letter-spacing-ui);
             cursor:pointer; background: var(--cap-bg); color: var(--cap-color); border: var(--outline-w) solid var(--cap-border);
             box-shadow: 0 5px 0 0 var(--cap-shadow-color); font-family: var(--font-main);
-            transition: transform 0.08s ease, box-shadow 0.08s ease;
+            transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.16s ease;
             text-align:center; white-space:nowrap;
         }
-        .btn-action:active:not(:disabled) { transform:translateY(5px); box-shadow: 0 0 0 0 var(--cap-shadow-color); }
+        .btn-action:active:not(:disabled) { transform:translateY(5px) scale(0.96); box-shadow: 0 0 0 0 var(--cap-shadow-color); transition: transform 0.06s ease-out, box-shadow 0.06s ease-out; }
         .btn-action:disabled { opacity:0.5; background: var(--panel-bg) !important; color: var(--text-soft) !important; border-color: var(--panel-border) !important; transform:translateY(5px); box-shadow: 0 0 0 0 !important; cursor:not-allowed; }
         #btn-submit { background: var(--accent-1); border-color: var(--accent-1-shadow); color: var(--accent-1-text); font-size:0.9rem; letter-spacing:1px; box-shadow: 0 5px 0 0 var(--accent-1-shadow); }
         #btn-submit:active:not(:disabled) { box-shadow: 0 0 0 0 var(--accent-1-shadow); }
@@ -899,12 +933,16 @@
             cursor:pointer; text-align:center; background: var(--accent-1); border: var(--outline-w) solid var(--accent-1-shadow); color: var(--accent-1-text);
             flex-shrink:0; font-family: var(--font-main);
             box-shadow: 0 5px 0 0 var(--accent-1-shadow);
-            transition: transform 0.08s ease, box-shadow 0.08s ease;
+            transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.16s ease;
         }
-        #btn-start-stage:active { transform:translateY(5px); box-shadow: 0 0 0 0 var(--accent-1-shadow); }
+        #btn-start-stage:active { transform:translateY(5px) scale(0.97); box-shadow: 0 0 0 0 var(--accent-1-shadow); transition: transform 0.06s ease-out, box-shadow 0.06s ease-out; }
 
-        #confirm-modal { position:absolute; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; z-index:85; }
-        #confirm-modal.show { display:flex; }
+        #confirm-modal {
+            position:absolute; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(0px);
+            display:flex; align-items:center; justify-content:center; z-index:85;
+            opacity:0; pointer-events:none; transition: opacity 0.22s ease, backdrop-filter 0.22s ease;
+        }
+        #confirm-modal.show { opacity:1; pointer-events:auto; backdrop-filter:blur(6px); }
         .confirm-inner { background: var(--panel-bg); border: var(--outline-w) solid var(--panel-border); border-radius:var(--panel-radius); padding:22px; width:280px; text-align:center; box-shadow:0 8px 24px rgba(0,0,0,0.5); display:flex; flex-direction:column; gap:14px; }
         .confirm-inner p { font-weight:700; font-size:0.9rem; color: var(--text); font-family: var(--font-main); }
         .confirm-btns { display:flex; gap:10px; }
@@ -915,17 +953,49 @@
         .confirm-btns .btn-quit { background: var(--accent-2); border-color: var(--accent-2-shadow); color: var(--accent-2-text); box-shadow: 0 5px 0 0 var(--accent-2-shadow); }
         .confirm-btns .btn-quit:active { box-shadow: 0 0 0 0 var(--accent-2-shadow); }
 
-        #options-modal, #modal-overlay, #run-info-modal, #howto-modal { position:absolute; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; z-index:80; }
-        #options-modal.show, #modal-overlay.show, #run-info-modal.show, #howto-modal.show { display:flex; }
-        #howto-modal { z-index:90; }
+        #options-modal, #modal-overlay, #run-info-modal, #howto-modal, #noads-modal {
+            position:absolute; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(0px);
+            display:flex; align-items:center; justify-content:center; z-index:80;
+            opacity:0; pointer-events:none; transition: opacity 0.22s ease, backdrop-filter 0.22s ease;
+        }
+        #options-modal.show, #modal-overlay.show, #run-info-modal.show, #howto-modal.show, #noads-modal.show {
+            opacity:1; pointer-events:auto; backdrop-filter:blur(6px);
+        }
+        #howto-modal, #noads-modal { z-index:90; }
+        .modal-inner, .confirm-inner {
+            transform: scale(0.85) translateY(14px);
+            transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #confirm-modal.show .confirm-inner,
+        #options-modal.show .modal-inner,
+        #modal-overlay.show .modal-inner,
+        #run-info-modal.show .modal-inner,
+        #howto-modal.show .modal-inner,
+        #noads-modal.show .modal-inner {
+            transform: scale(1) translateY(0);
+        }
         .options-title-row { display:flex; align-items:center; justify-content:center; gap:10px; }
         .info-btn { width:26px; height:26px; flex-shrink:0; border-radius:50%; background: var(--accent-3); color: var(--accent-3-text); border: var(--outline-w) solid var(--accent-3-shadow); font-weight:900; font-size:0.85rem; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; line-height:1; box-shadow: 0 2px 0 0 var(--accent-3-shadow); font-family: var(--font-main); }
         .info-btn:active { transform: translateY(2px); box-shadow: 0 0 0 0 var(--accent-3-shadow); }
         .howto-body { max-height:56vh; overflow-y:auto; }
         .howto-row { display:flex; gap:10px; align-items:flex-start; font-weight:600; font-size:0.8rem; color: var(--text); background: rgba(0,0,0,0.06); padding:10px 12px; border-radius: var(--radius-sm); font-family: var(--font-main); line-height:1.35; }
         .howto-num { width:22px; height:22px; border-radius:50%; background: var(--accent-1); color: var(--accent-1-text); font-size:0.75rem; font-weight:900; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-family: var(--font-main); margin-top:1px; }
+        .howto-section-label { font-size:0.68rem; font-weight:900; letter-spacing:1.5px; text-transform:uppercase; color: var(--text-soft); text-align:center; margin:6px 0 -2px; font-family: var(--font-main); }
+        .howto-showcase { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; padding:6px 4px 8px; }
+        .howto-tile-demo { display:flex; flex-direction:column; align-items:center; gap:5px; width:56px; }
+        .howto-tile-demo .tile-inner { width:50px; height:50px; position:relative; cursor:default; }
+        .howto-tile-caption { font-size:0.6rem; font-weight:800; color: var(--text-soft); text-align:center; line-height:1.15; font-family: var(--font-main); }
+        .howto-glyph-guide { display:flex; flex-direction:column; gap:8px; padding:2px 0 8px; }
+        .howto-glyph-chip { display:flex; align-items:center; gap:12px; background: rgba(0,0,0,0.06); border-left:4px solid var(--glyph-color, var(--accent-1)); border-radius: var(--radius-sm); padding:9px 12px; }
+        .howto-glyph-icon { width:32px; height:32px; border-radius:50%; background: var(--glyph-color, var(--accent-1)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1rem; flex-shrink:0; }
+        .howto-glyph-text { font-size:0.75rem; font-weight:600; color: var(--text); line-height:1.3; font-family: var(--font-main); }
+        .howto-glyph-text b { font-weight:900; }
         .modal-inner { background: var(--panel-bg); border: var(--outline-w) solid var(--panel-border); border-radius:var(--panel-radius); padding:26px 22px; width:100%; max-width:320px; box-shadow:0 12px 32px rgba(0,0,0,0.5); display:flex; flex-direction:column; gap:14px; }
-        .modal-inner h3 { text-align:center; font-size:1.3rem; font-weight:900; color: var(--text); font-family: var(--font-title); }
+        .modal-inner h3 {
+            text-align:center; font-size:1.05rem; font-weight:900; color: var(--cap-color); font-family: var(--font-title);
+            background: var(--cap-bg); border: var(--outline-w) solid var(--cap-border); border-radius:999px;
+            padding:10px 22px; box-shadow: 0 4px 0 0 var(--cap-shadow-color);
+        }
         .modal-inner label { display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:0.85rem; color: var(--text); gap:10px; font-family: var(--font-main); }
         .modal-inner input[type="range"] { accent-color: var(--accent-1); flex:1; min-width:60px; height:6px; }
         .modal-inner input[type="checkbox"] { width:22px; height:22px; accent-color: var(--accent-1); }
@@ -1044,7 +1114,7 @@
             <button id="btn-close-run-info" class="menu-btn" style="width:100%; margin-top:4px;">CLOSE</button>
         </div>
     </div></div>
-    <div id="options-modal"><div class="modal-inner"><div class="options-title-row"><h3>PAUSED</h3><button id="btn-howto" class="info-btn" type="button" aria-label="How to play">ⓘ</button></div><label>Music <input type="range" id="music-slider" min="0" max="100" value="25"><span class="slider-val" id="music-val">25%</span></label><label>Sounds <input type="range" id="sounds-slider" min="0" max="100" value="65"><span class="slider-val" id="sounds-val">65%</span></label><label>Vibration <input type="checkbox" id="vibration-toggle" checked></label><label>Screen Shake <input type="range" id="shake-slider" min="0" max="100" value="100"><span class="slider-val" id="shake-val">100%</span></label><label>Disable Ads <input type="checkbox" disabled><span style="font-size:0.65rem;">(soon)</span></label><button id="btn-close-settings">RESUME</button><button id="btn-exit-save" class="menu-btn themes-btn" style="width:100%;">EXIT TO MENU</button><button id="btn-abandon-run" class="menu-btn quit-run-btn" style="width:100%;">ABANDON RUN</button></div></div>
+    <div id="options-modal"><div class="modal-inner"><div class="options-title-row"><h3>PAUSED</h3><button id="btn-howto" class="info-btn" type="button" aria-label="How to play">ⓘ</button></div><label>Music <input type="range" id="music-slider" min="0" max="100" value="25"><span class="slider-val" id="music-val">25%</span></label><label>Sounds <input type="range" id="sounds-slider" min="0" max="100" value="65"><span class="slider-val" id="sounds-val">65%</span></label><label>Vibration <input type="checkbox" id="vibration-toggle" checked></label><label>Screen Shake <input type="range" id="shake-slider" min="0" max="100" value="100"><span class="slider-val" id="shake-val">100%</span></label><label>Ads <button id="btn-open-noads" class="ads-pill" type="button">REMOVE ADS</button></label><button id="btn-close-settings">RESUME</button><button id="btn-exit-save" class="menu-btn themes-btn" style="width:100%;">EXIT TO MENU</button><button id="btn-abandon-run" class="menu-btn quit-run-btn" style="width:100%;">ABANDON RUN</button></div></div>
     <div id="howto-modal"><div class="modal-inner run-info-inner">
         <div class="run-info-band">HOW TO PLAY</div>
         <div class="run-info-body howto-body">
@@ -1052,12 +1122,33 @@
             <div class="howto-row"><span class="howto-num">2</span><span>Tap SUBMIT to play a valid word. Chips × Multiplier = the points you score.</span></div>
             <div class="howto-row"><span class="howto-num">3</span><span>HANDS is how many words you can submit this stage — reach the target score before they run out.</span></div>
             <div class="howto-row"><span class="howto-num">4</span><span>REROLL: mark up to 3 tiles, then confirm to swap them for brand new letters. SHUFFLE just reorders your current hand.</span></div>
-            <div class="howto-row"><span class="howto-num">5</span><span>Upgraded tiles show a small badge for their bonus — flat points, a chip multiplier, or extra MULT.</span></div>
-            <div class="howto-row"><span class="howto-num">6</span><span>Wildcard (*) tiles stand in for any letter. They're rare shop finds — never in your starting hand.</span></div>
-            <div class="howto-row"><span class="howto-num">7</span><span>Finisher (!) tiles trigger a x3 score boost — but only when played as the LAST letter of the word.</span></div>
-            <div class="howto-row"><span class="howto-num">8</span><span>Boss stages add a Boss Blind twist. Earn Diamonds between stages to buy Glyphs and Consumables in the shop.</span></div>
+            <div class="howto-section-label">Letter Bonuses</div>
+            <div class="howto-showcase">
+                <div class="howto-tile-demo"><div class="tile-inner aura-blue"><span class="tile-letter">A</span><span class="tile-chips">1</span><span class="tile-badge badge-blue">+10</span></div><span class="howto-tile-caption">Flat bonus</span></div>
+                <div class="howto-tile-demo"><div class="tile-inner aura-gold"><span class="tile-letter">S</span><span class="tile-chips">1</span><span class="tile-badge badge-gold">x2</span></div><span class="howto-tile-caption">Chip x2</span></div>
+                <div class="howto-tile-demo"><div class="tile-inner aura-red"><span class="tile-letter">T</span><span class="tile-chips">1</span><span class="tile-badge badge-red">+2✦</span></div><span class="howto-tile-caption">Mult boost</span></div>
+                <div class="howto-tile-demo"><div class="tile-inner wildcard"><span class="tile-letter">*</span><span class="tile-chips">0</span><span class="tile-badge badge-wild">ANY</span></div><span class="howto-tile-caption">Wildcard</span></div>
+                <div class="howto-tile-demo"><div class="tile-inner finisher"><span class="tile-letter">!</span><span class="tile-chips">0</span><span class="tile-badge badge-finisher">END x3</span></div><span class="howto-tile-caption">Play LAST</span></div>
+            </div>
+            <div class="howto-section-label">Glyph Colors</div>
+            <div class="howto-glyph-guide">
+                <div class="howto-glyph-chip" style="--glyph-color:#22C55E;"><span class="howto-glyph-icon">↺</span><span class="howto-glyph-text"><b>Green</b> — Economy: extra hands, discards, tiles in your tray.</span></div>
+                <div class="howto-glyph-chip" style="--glyph-color:#3B82F6;"><span class="howto-glyph-icon">⚓</span><span class="howto-glyph-text"><b>Blue</b> — Flat bonus points for vowels, consonants, rare letters.</span></div>
+                <div class="howto-glyph-chip" style="--glyph-color:#EF4444;"><span class="howto-glyph-icon">⚔</span><span class="howto-glyph-text"><b>Red</b> — MULT boosts for word length, patterns, repeats.</span></div>
+                <div class="howto-glyph-chip" style="--glyph-color:#A855F7;"><span class="howto-glyph-icon">✦</span><span class="howto-glyph-text"><b>Purple</b> — Wildcards, duplication, and other synergy tricks.</span></div>
+            </div>
+            <div class="howto-row"><span class="howto-num">5</span><span>Boss stages add a Boss Blind twist. Earn Diamonds between stages to buy Glyphs and Consumables in the shop.</span></div>
         </div>
         <div style="padding:0 20px 20px;"><button id="btn-close-howto" class="menu-btn" style="width:100%;">GOT IT</button></div>
+    </div></div>
+    <div id="noads-modal"><div class="modal-inner run-info-inner">
+        <div class="run-info-band noads-band">NO ADS</div>
+        <div class="run-info-body">
+            <p class="noads-copy">Tired of pop-up ads? Remove them for good and keep the diamonds flowing to the devs!</p>
+            <div class="noads-bank-row">Your Bank: <span class="diamond-icon"></span><span id="noads-bank">0</span></div>
+            <button id="btn-noads-buy" class="menu-btn noads-buy-btn" style="width:100%;">UNLOCK · <span class="diamond-icon"></span><span id="noads-price">500</span></button>
+            <button id="btn-noads-cancel" class="menu-btn" style="width:100%;">CONTINUE WITH ADS</button>
+        </div>
     </div></div>
     <div id="modal-overlay"><div class="modal-inner" style="text-align:center;"><h2 id="modal-title">GAME OVER</h2><p id="modal-subtitle"></p><button id="btn-modal-action">Retry Run</button><button class="btn-main-menu" id="btn-modal-menu">Main Menu</button></div></div>
 </div>
@@ -1141,6 +1232,7 @@
     ];
     const SHOP_PRICES = { glyph:6, void_seal:3, gold_ink:5, transmuter:4, cloner:5, wild_tile:7, finisher_tile:7 };
     const SHOP_REROLL_BASE_COST = 2;
+    const NO_ADS_PRICE = 500;
     const CLASSIC_STAGE_TARGETS = [0, 300, 800, 2000, 5000, 12000, 30000, 75000, 200000];
     const DAILY_CHALLENGES = [
         { id:1, name:"The E-clipse", desc:"The letter 'E' is completely removed from the starting bag." },
@@ -1243,7 +1335,7 @@
         draftChoices:null, dragData:null,
         gameMode:'classic', dailyChallenge:null, isEndless:false, consumables:[], activeHazard:null, anchorTileId:null, mutedTileId:null,
         leaderboard:[], records:{highestWord:null, totalGoldEarned:0, mostStagesCleared:0},
-        shopOffers:{glyphs:[], consumables:[], tiles:[]}, shopRerollCount:0
+        shopOffers:{glyphs:[], consumables:[], tiles:[]}, shopRerollCount:0, adsRemoved:false
     };
 
     function assignRandomAura() { const r=Math.random(); if(r<0.15) return 'blue'; if(r<0.22) return 'red'; if(r<0.26) return 'gold'; return null; }
@@ -1314,7 +1406,22 @@
         document.getElementById('btn-abandon-run').style.display = G.gameStarted ? 'block' : 'none';
         document.getElementById('btn-exit-save').style.display = G.gameStarted ? 'block' : 'none';
         document.querySelector('#options-modal h3').textContent = G.gameStarted ? 'PAUSED' : 'SETTINGS';
+        updateAdsRow();
         document.getElementById('options-modal').classList.add('show');
+    }
+    function updateAdsRow() {
+        const btn = document.getElementById('btn-open-noads'); if (!btn) return;
+        if (G.adsRemoved) { btn.textContent='✓ REMOVED'; btn.disabled=true; btn.classList.add('unlocked'); }
+        else { btn.textContent='REMOVE ADS'; btn.disabled=false; btn.classList.remove('unlocked'); }
+    }
+    function openNoAdsModal() { document.getElementById('noads-price').textContent = NO_ADS_PRICE; document.getElementById('noads-bank').textContent = G.bank; document.getElementById('btn-noads-buy').disabled = G.bank < NO_ADS_PRICE; document.getElementById('noads-modal').classList.add('show'); }
+    function closeNoAdsModal() { document.getElementById('noads-modal').classList.remove('show'); }
+    function purchaseNoAds() {
+        if (G.adsRemoved || G.bank < NO_ADS_PRICE) return;
+        G.bank -= NO_ADS_PRICE; G.adsRemoved = true; saveAdsRemoved();
+        AudioEngine.playSubmit(); vibrate(15);
+        updateAdsRow(); render();
+        closeNoAdsModal();
     }
 
     function spawnPopup(el,value,isMult) { if(!el) return; const container=document.getElementById('game-container'); const rect=el.getBoundingClientRect(), cr=container.getBoundingClientRect(); const popup=document.createElement('span'); popup.className='score-popup '+(isMult?'mult-popup':'chip-popup'); popup.textContent=(isMult?'×':'+')+value; popup.style.left=(rect.left-cr.left+rect.width/2-(isMult?24:22))+'px'; popup.style.top=(rect.top-cr.top-(isMult?18:8))+'px'; container.appendChild(popup); AudioEngine.playPopup(); setTimeout(()=>{ if(popup.parentNode) popup.remove(); },980); }
@@ -2118,6 +2225,10 @@
         document.getElementById('btn-howto').addEventListener('click',()=>document.getElementById('howto-modal').classList.add('show'));
         document.getElementById('btn-close-howto').addEventListener('click',()=>document.getElementById('howto-modal').classList.remove('show'));
         document.getElementById('howto-modal').addEventListener('click',e=>{if(e.target===document.getElementById('howto-modal'))document.getElementById('howto-modal').classList.remove('show');});
+        document.getElementById('btn-open-noads').addEventListener('click',openNoAdsModal);
+        document.getElementById('btn-noads-cancel').addEventListener('click',closeNoAdsModal);
+        document.getElementById('btn-noads-buy').addEventListener('click',purchaseNoAds);
+        document.getElementById('noads-modal').addEventListener('click',e=>{if(e.target===document.getElementById('noads-modal'))closeNoAdsModal();});
         document.getElementById('music-slider').addEventListener('input',e=>{AudioEngine.setMusicVolume(parseInt(e.target.value)/100);document.getElementById('music-val').textContent=e.target.value+'%';});
         document.getElementById('sounds-slider').addEventListener('input',e=>{AudioEngine.setSfxVolume(parseInt(e.target.value)/100);document.getElementById('sounds-val').textContent=e.target.value+'%';});
         document.getElementById('shake-slider').addEventListener('input',e=>{G.shakeStrength=parseInt(e.target.value);document.getElementById('shake-val').textContent=e.target.value+'%';});
@@ -2185,9 +2296,11 @@
     function loadPersistence(){
         try{ G.leaderboard = JSON.parse(localStorage.getItem('wordling-leaderboard')||'[]'); }catch(e){ G.leaderboard=[]; }
         try{ G.records = JSON.parse(localStorage.getItem('wordling-records')||'null') || {highestWord:null,totalGoldEarned:0,mostStagesCleared:0}; }catch(e){ G.records={highestWord:null,totalGoldEarned:0,mostStagesCleared:0}; }
+        try{ G.adsRemoved = localStorage.getItem('wordling-ads-removed')==='1'; }catch(e){ G.adsRemoved=false; }
     }
     function saveLeaderboard(){ try{ localStorage.setItem('wordling-leaderboard', JSON.stringify(G.leaderboard)); }catch(e){} }
     function saveRecords(){ try{ localStorage.setItem('wordling-records', JSON.stringify(G.records)); }catch(e){} }
+    function saveAdsRemoved(){ try{ localStorage.setItem('wordling-ads-removed', G.adsRemoved ? '1' : '0'); }catch(e){} }
     function getRunSaveState() {
         return {
             gameMode: G.gameMode, dailyChallenge: G.dailyChallenge, isEndless: G.isEndless,
