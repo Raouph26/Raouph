@@ -457,7 +457,7 @@
         @keyframes tileIdle { 0%,100% { transform: translateY(0) rotate(0deg); } 25% { transform: translateY(-4px) rotate(-3deg); } 50% { transform: translateY(-6.5px) rotate(0deg); } 75% { transform: translateY(-4px) rotate(3deg); } }
         @keyframes tilePopIn { 0% { transform: scale(0.5); opacity: 0.4; } 60% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes tileScoringPop { 0% { transform: translateY(0) scale(1); } 50% { transform: translateY(-10px) scale(1.18); } 100% { transform: translateY(0) scale(1); } }
-        .scoring-pop { animation: tileScoringPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; z-index: 30; }
+        .active-tile .tile-inner.scoring-pop { animation: tileScoringPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; z-index: 30; }
         @keyframes nodePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.6); } 50% { box-shadow: 0 0 0 14px rgba(255,255,255,0); } }
         @keyframes nodeSlideIn { 0% { opacity: 0; transform: translate(-50%,-50%) translateY(10px); } 100% { opacity: 1; transform: translate(-50%,-50%) translateY(0); } }
         @keyframes hudPop { 0% { transform: scale(1); } 50% { transform: scale(1.25); color: var(--accent-2); } 100% { transform: scale(1); } }
@@ -507,7 +507,11 @@
             transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1), opacity 0.22s ease;
         }
         #view-draft.show .draft-panel { transform: scale(1) translateY(0); opacity: 1; }
-        .draft-panel h2 { color: var(--text); text-shadow: none; font-size: 1.3rem; font-weight: 900; text-align: center; margin-bottom: 4px; font-family: var(--font-title); }
+        .draft-panel h2 {
+            text-align:center; font-size:1.05rem; font-weight:900; color: var(--cap-color); font-family: var(--font-title);
+            background: var(--cap-bg); border: var(--outline-w) solid var(--cap-border); border-radius:999px;
+            padding:10px 22px; box-shadow: 0 4px 0 0 var(--cap-shadow-color); margin-bottom: 4px;
+        }
         .stage-clear-label { font-size: 0.8rem; letter-spacing: 2px; font-weight: 900; color: var(--text-soft); font-family: var(--font-main); margin-top: 6px; }
         .stage-clear-score { font-size: 2.8rem; font-weight: 900; font-family: var(--font-numeric); color: var(--accent-3); text-shadow: var(--number-shadow); margin: 2px 0 12px; line-height: 1; }
         .stage-clear-score.pop { animation: hudPop 0.45s ease; }
@@ -517,8 +521,8 @@
         .draft-grid { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin: 6px 0; }
         .draft-card-wrap { display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; width:86px; }
         .draft-card {
-            width: 82px; height: 82px; border-radius: var(--panel-radius); background: var(--panel-bg);
-            border: var(--outline-w) solid var(--panel-border); box-shadow: var(--readout-shadow);
+            width: 82px; height: 82px; border-radius: var(--panel-radius); background: var(--cap-bg);
+            border: var(--outline-w) solid var(--cap-border); box-shadow: 0 4px 0 0 var(--cap-shadow-color);
             display:flex; align-items:center; justify-content:center; font-weight:900; font-size:2.1rem;
             color: var(--glyph-color, var(--text)); font-family: var(--font-numeric);
             transition: transform 0.1s ease;
@@ -527,8 +531,8 @@
         .draft-card-label { font-size: 0.7rem; font-weight: 700; text-align:center; color: var(--text-soft); font-family: var(--font-main); line-height:1.2; }
         .draft-detail { display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center; }
         .draft-detail-icon {
-            width: 96px; height: 96px; border-radius: var(--panel-radius); background: var(--panel-bg);
-            border: var(--outline-w) solid var(--panel-border); box-shadow: var(--readout-shadow);
+            width: 96px; height: 96px; border-radius: var(--panel-radius); background: var(--cap-bg);
+            border: var(--outline-w) solid var(--cap-border); box-shadow: 0 4px 0 0 var(--cap-shadow-color);
             display:flex; align-items:center; justify-content:center; font-weight:900; font-size:2.7rem;
             color: var(--glyph-color, var(--text)); font-family: var(--font-numeric);
         }
@@ -540,22 +544,22 @@
         .hidden { display: none !important; }
 
         #view-menu h1 {
-            font-size: clamp(1.3rem, 8.2vw, 2.1rem); font-weight:900; color: var(--accent-1); letter-spacing:1px;
+            font-size: clamp(1.55rem, 9.8vw, 2.5rem); font-weight:900; color: var(--accent-1); letter-spacing:1px;
             text-shadow: var(--title-shadow), 0 0 20px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.4);
             -webkit-text-stroke: 2px rgba(0,0,0,0.55); paint-order: stroke fill;
             white-space: nowrap; max-width: 100%;
             animation: titleBounce 3s ease-in-out infinite; font-family: var(--font-title); text-align: center;
         }
         html[data-theme="wordling"] #view-menu h1 {
-            font-size: clamp(1.9rem, 11.8vw, 2.9rem);
+            font-size: clamp(2.1rem, 12.8vw, 3.3rem);
             letter-spacing: 0px; color: transparent; text-shadow: none; -webkit-text-stroke: 0;
             animation: none; margin-bottom: 10px; position: relative;
             filter: drop-shadow(0 8px 0 rgba(15,23,42,0.28)) drop-shadow(0 16px 20px rgba(0,0,0,0.35));
         }
         html[data-theme="wordling"] #view-menu h1 .title-letter {
             display: inline-block; position: relative; color: var(--accent-1);
-            animation: wlLetterWave 2.6s ease-in-out infinite;
-            animation-delay: calc(var(--i) * 0.09s);
+            animation-timing-function: ease-in-out; animation-iteration-count: infinite;
+            animation-delay: calc(var(--i) * 0.11s);
             text-shadow:
                 2px 0 0 #fff, -2px 0 0 #fff, 0 2px 0 #fff, 0 -2px 0 #fff,
                 2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff,
@@ -564,9 +568,10 @@
                 6px 2px 0 #fff, -6px -2px 0 #fff, 6px -2px 0 #fff, -6px 2px 0 #fff,
                 2px 6px 0 #fff, -2px -6px 0 #fff;
         }
-        html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(3n+2) { color: var(--accent-2); }
-        html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(3n) { color: var(--accent-3); }
-        html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(odd) { animation-name: wlLetterWaveL; }
+        html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(4n+1) { animation-name: wlWaveA; animation-duration: 2.3s; }
+        html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(4n+2) { animation-name: wlWaveB; animation-duration: 2.9s; color: var(--accent-2); }
+        html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(4n+3) { animation-name: wlWaveC; animation-duration: 2.6s; }
+        html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(4n)   { animation-name: wlWaveD; animation-duration: 3.2s; color: var(--accent-3); }
         html[data-theme="wordling"] #view-menu h1 .title-letter:first-child {
             margin-right: 2px;
         }
@@ -575,8 +580,10 @@
             width: 0.98em; height: 0.98em; background: var(--accent-2); border: 5px solid #fff; border-radius: 10px;
             z-index: -1; box-shadow: 0 4px 0 0 var(--accent-2-shadow);
         }
-        @keyframes wlLetterWave { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-12px) rotate(4deg); } }
-        @keyframes wlLetterWaveL { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-12px) rotate(-4deg); } }
+        @keyframes wlWaveA { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-6px) rotate(-3deg); } }
+        @keyframes wlWaveB { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-4px) rotate(2deg); } }
+        @keyframes wlWaveC { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-7px) rotate(3deg); } }
+        @keyframes wlWaveD { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-5px) rotate(-2.5deg); } }
         #view-difficulty h2, #view-themes h2, #view-map h2 {
             color: var(--bg-text); text-shadow: 0 2px 6px rgba(0,0,0,0.4), 0 1px 0 rgba(0,0,0,0.3); font-size: 1.3rem; font-weight: 900;
             width: 100%; text-align: center; margin-bottom: 8px; font-family: var(--font-title); letter-spacing: 1px;
