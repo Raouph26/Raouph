@@ -336,10 +336,6 @@
             --accent-1: #8B5CF6; --accent-1-shadow: #6D28D9; --accent-1-text: #ffffff;
             --accent-2: #FACC15; --accent-2-shadow: #A16207; --accent-2-text: #241a00;
         }
-        :root { --card-wl-split-1: #FF5A5A; --card-wl-split-2: #3B82F6; }
-        :root[data-palette="black-grey"] { --card-wl-split-1: #27272A; --card-wl-split-2: #6B7280; }
-        :root[data-palette="orange-green"] { --card-wl-split-1: #FF8A3D; --card-wl-split-2: #22C55E; }
-        :root[data-palette="purple-yellow"] { --card-wl-split-1: #8B5CF6; --card-wl-split-2: #FACC15; }
         html[data-theme="wordling"] #game-container::after {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect x='28' y='28' width='34' height='34' fill='white' fill-opacity='0.32' transform='rotate(45 45 45)'/%3E%3Crect x='-6' y='-6' width='18' height='18' fill='white' fill-opacity='0.24' transform='rotate(45 3 3)'/%3E%3Crect x='84' y='-6' width='18' height='18' fill='white' fill-opacity='0.24' transform='rotate(45 93 3)'/%3E%3Crect x='-6' y='84' width='18' height='18' fill='white' fill-opacity='0.24' transform='rotate(45 3 93)'/%3E%3Crect x='84' y='84' width='18' height='18' fill='white' fill-opacity='0.24' transform='rotate(45 93 93)'/%3E%3C/svg%3E");
             background-size: 90px 90px;
@@ -348,6 +344,7 @@
         @keyframes wordlingSplitShift { 0% { background-position: 15% 25%, 50% 30%; } 25% { background-position: 65% 10%, 50% 30%; } 50% { background-position: 85% 75%, 50% 30%; } 75% { background-position: 35% 85%, 50% 30%; } 100% { background-position: 15% 25%, 50% 30%; } }
         @keyframes wordlingAngleDrift { 0% { --wl-angle: 118deg; } 50% { --wl-angle: 152deg; } 100% { --wl-angle: 118deg; } }
         @keyframes wordlingDiamondDrift { 0% { background-position: 0 0; } 100% { background-position: 90px 90px; } }
+        html[data-theme="wordling"] .draft-panel { --panel-bg: #F0F2F8; }
         html[data-theme="wordling"] #map-header .header-badge,
         html[data-theme="wordling"] #view-difficulty h2 .header-badge,
         html[data-theme="wordling"] #view-themes h2 .header-badge {
@@ -459,7 +456,8 @@
         @keyframes titleBounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
         @keyframes tileIdle { 0%,100% { transform: translateY(0) rotate(0deg); } 25% { transform: translateY(-4px) rotate(-3deg); } 50% { transform: translateY(-6.5px) rotate(0deg); } 75% { transform: translateY(-4px) rotate(3deg); } }
         @keyframes tilePopIn { 0% { transform: scale(0.5); opacity: 0.4; } 60% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
-        @keyframes tileScoringPop { 0% { transform: translateY(0) scale(1); } 50% { transform: translateY(-6px) scale(1.1); } 100% { transform: translateY(0) scale(1); } }
+        @keyframes tileScoringPop { 0% { transform: translateY(0) scale(1); } 50% { transform: translateY(-10px) scale(1.18); } 100% { transform: translateY(0) scale(1); } }
+        .scoring-pop { animation: tileScoringPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; z-index: 30; }
         @keyframes nodePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.6); } 50% { box-shadow: 0 0 0 14px rgba(255,255,255,0); } }
         @keyframes nodeSlideIn { 0% { opacity: 0; transform: translate(-50%,-50%) translateY(10px); } 100% { opacity: 1; transform: translate(-50%,-50%) translateY(0); } }
         @keyframes hudPop { 0% { transform: scale(1); } 50% { transform: scale(1.25); color: var(--accent-2); } 100% { transform: scale(1); } }
@@ -517,21 +515,21 @@
         .stage-clear-reward.show { opacity: 1; transform: translateY(0); }
         .draft-hint { color: var(--text-soft); font-size: 0.8rem; font-family: var(--font-main); text-align: center; margin: -6px 0 4px; }
         .draft-grid { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin: 6px 0; }
-        .draft-card-wrap { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; width:74px; }
+        .draft-card-wrap { display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; width:86px; }
         .draft-card {
-            width: 70px; height: 70px; border-radius: var(--panel-radius); background: var(--panel-bg);
+            width: 82px; height: 82px; border-radius: var(--panel-radius); background: var(--panel-bg);
             border: var(--outline-w) solid var(--panel-border); box-shadow: var(--readout-shadow);
-            display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.8rem;
+            display:flex; align-items:center; justify-content:center; font-weight:900; font-size:2.1rem;
             color: var(--glyph-color, var(--text)); font-family: var(--font-numeric);
             transition: transform 0.1s ease;
         }
         .draft-card-wrap:active .draft-card { transform: translateY(3px) scale(0.96); }
-        .draft-card-label { font-size: 0.65rem; font-weight: 700; text-align:center; color: var(--text-soft); font-family: var(--font-main); line-height:1.2; }
+        .draft-card-label { font-size: 0.7rem; font-weight: 700; text-align:center; color: var(--text-soft); font-family: var(--font-main); line-height:1.2; }
         .draft-detail { display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center; }
         .draft-detail-icon {
-            width: 84px; height: 84px; border-radius: var(--panel-radius); background: var(--panel-bg);
+            width: 96px; height: 96px; border-radius: var(--panel-radius); background: var(--panel-bg);
             border: var(--outline-w) solid var(--panel-border); box-shadow: var(--readout-shadow);
-            display:flex; align-items:center; justify-content:center; font-weight:900; font-size:2.4rem;
+            display:flex; align-items:center; justify-content:center; font-weight:900; font-size:2.7rem;
             color: var(--glyph-color, var(--text)); font-family: var(--font-numeric);
         }
         .draft-detail-name { font-size: 1.05rem; font-weight: 900; color: var(--glyph-color, var(--text)); font-family: var(--font-title); }
@@ -548,6 +546,37 @@
             white-space: nowrap; max-width: 100%;
             animation: titleBounce 3s ease-in-out infinite; font-family: var(--font-title); text-align: center;
         }
+        html[data-theme="wordling"] #view-menu h1 {
+            font-size: clamp(1.9rem, 11.8vw, 2.9rem);
+            letter-spacing: 0px; color: transparent; text-shadow: none; -webkit-text-stroke: 0;
+            animation: none; margin-bottom: 10px; position: relative;
+            filter: drop-shadow(0 8px 0 rgba(15,23,42,0.28)) drop-shadow(0 16px 20px rgba(0,0,0,0.35));
+        }
+        html[data-theme="wordling"] #view-menu h1 .title-letter {
+            display: inline-block; position: relative; color: var(--accent-1);
+            animation: wlLetterWave 2.6s ease-in-out infinite;
+            animation-delay: calc(var(--i) * 0.09s);
+            text-shadow:
+                2px 0 0 #fff, -2px 0 0 #fff, 0 2px 0 #fff, 0 -2px 0 #fff,
+                2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff,
+                4px 0 0 #fff, -4px 0 0 #fff, 0 4px 0 #fff, 0 -4px 0 #fff,
+                4px 4px 0 #fff, -4px -4px 0 #fff, 4px -4px 0 #fff, -4px 4px 0 #fff,
+                6px 2px 0 #fff, -6px -2px 0 #fff, 6px -2px 0 #fff, -6px 2px 0 #fff,
+                2px 6px 0 #fff, -2px -6px 0 #fff;
+        }
+        html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(3n+2) { color: var(--accent-2); }
+        html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(3n) { color: var(--accent-3); }
+        html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(odd) { animation-name: wlLetterWaveL; }
+        html[data-theme="wordling"] #view-menu h1 .title-letter:first-child {
+            margin-right: 2px;
+        }
+        html[data-theme="wordling"] #view-menu h1 .title-letter:first-child::before {
+            content: ''; position: absolute; top: 52%; left: 50%; transform: translate(-50%,-50%) rotate(-10deg);
+            width: 0.98em; height: 0.98em; background: var(--accent-2); border: 5px solid #fff; border-radius: 10px;
+            z-index: -1; box-shadow: 0 4px 0 0 var(--accent-2-shadow);
+        }
+        @keyframes wlLetterWave { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-12px) rotate(4deg); } }
+        @keyframes wlLetterWaveL { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-12px) rotate(-4deg); } }
         #view-difficulty h2, #view-themes h2, #view-map h2 {
             color: var(--bg-text); text-shadow: 0 2px 6px rgba(0,0,0,0.4), 0 1px 0 rgba(0,0,0,0.3); font-size: 1.3rem; font-weight: 900;
             width: 100%; text-align: center; margin-bottom: 8px; font-family: var(--font-title); letter-spacing: 1px;
@@ -620,10 +649,6 @@
         .theme-preview-row { display: flex; gap: 6px; }
         .theme-preview-chip { width: 22px; height: 22px; border-radius: 5px; box-shadow: 0 2px 0 0 rgba(0,0,0,0.35); border: 2px solid rgba(255,255,255,0.7); }
 
-        .card-wordling { background: linear-gradient(135deg, var(--card-wl-split-1) 50%, var(--card-wl-split-2) 50%); }
-        .palette-row { display:flex; gap:7px; justify-content:center; margin-top:6px; position:relative; z-index:2; }
-        .palette-swatch { width:18px; height:18px; border-radius:50%; border:2px solid rgba(255,255,255,0.75); box-shadow:0 1px 0 0 rgba(0,0,0,0.3); cursor:pointer; }
-        .palette-swatch.active { outline: 2px solid rgba(0,0,0,0.4); outline-offset: 1px; }
         .card-wordling .theme-name { color: #fff; font-family: 'Poppins', sans-serif; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.25); }
         .card-cyber-arcade { background: #1A2127; background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 3px); }
         .card-cyber-arcade .theme-name { color: #E8EDF0; font-family: 'Press Start 2P', monospace; font-size: 0.6rem; line-height: 1.6; }
@@ -692,8 +717,8 @@
         #resource-row { display:flex; align-items:stretch; gap:10px; justify-content:center; flex-shrink:0; }
         .resource-box {
             flex:1 1 0; min-width:0; display:flex; align-items:center; justify-content:center; gap:5px;
-            background: rgba(0,0,0,0.3); border-radius: var(--radius-sm);
-            padding: 8px 4px; border: var(--outline-w) solid var(--panel-border); box-shadow: var(--readout-shadow);
+            background: rgba(0,0,0,0.62); border-radius: var(--radius-sm);
+            padding: 8px 4px; border: var(--outline-w) solid rgba(255,255,255,0.18); box-shadow: 0 4px 0 0 rgba(0,0,0,0.35), 0 6px 12px rgba(0,0,0,0.3);
             box-sizing: border-box; text-align:center;
         }
         .resource-label { font-size:0.65rem; letter-spacing:1px; font-weight:900; color: var(--accent-3); font-family: var(--font-main); white-space:nowrap; }
@@ -878,16 +903,23 @@
             display:flex; justify-content:space-between; gap:8px; font-size:0.82rem; font-weight:700;
             color: #fff; font-family: var(--font-main); background: rgba(255,255,255,0.1);
             padding:8px 12px; border-radius: var(--radius-sm); margin-bottom:6px;
+            border-left: 4px solid var(--accent-1);
         }
+        .stats-row.rank-row { border-left-color: var(--accent-3); }
+        .stats-rank { color: var(--accent-3); font-weight:900; min-width:28px; }
+        .stats-score { color: #fff; font-weight:900; font-family: var(--font-numeric); }
+        .stats-date { color: rgba(255,255,255,0.5); font-size:0.72rem; align-self:center; }
+        .stats-label { color: rgba(255,255,255,0.85); }
+        .stats-value { color: var(--accent-1); font-weight:900; }
         #stats-content { width:100%; }
-        #stats-content h3 { font-size:0.85rem; font-weight:900; letter-spacing:1px; color: rgba(255,255,255,0.6); margin: 10px 0 6px; text-align:center; font-family: var(--font-main); }
+        #stats-content h3 { font-size:0.85rem; font-weight:900; letter-spacing:1.5px; color: var(--accent-3); margin: 10px 0 6px; text-align:center; font-family: var(--font-main); text-shadow: 0 0 12px rgba(var(--accent-3-rgb),0.4); }
         #view-stats { align-items: center; justify-content: center; gap:10px; padding:30px 20px; z-index:9; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); transform: translateX(110%); opacity: 0; pointer-events: none; overflow-y:auto; }
         #view-stats.slide-in { transform: translateX(0); opacity: 1; pointer-events: auto; }
         .stats-panel {
             background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 2px solid rgba(255,255,255,0.18); border-radius: var(--panel-radius);
+            border: 2px solid var(--accent-1); border-radius: var(--panel-radius);
             padding: 26px 22px; width: 100%; max-width: 340px; margin: auto;
-            box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.6), 0 0 24px rgba(var(--accent-3-rgb),0.15);
             display: flex; flex-direction: column; align-items: center; gap: 10px;
         }
         .stats-panel h2 { color: #fff; text-shadow: none; font-size: 1.3rem; font-weight: 900; text-align: center; margin-bottom: 4px; font-family: var(--font-title); }
@@ -917,14 +949,14 @@
         #map-ladder { position:relative; width:100%; }
         .map-node-absolute { position:absolute; display:flex; flex-direction:column; align-items:center; gap:4px; transform:translate(-50%,-50%); animation: nodeSlideIn 0.4s ease-out forwards; opacity:0; }
         .map-node {
-            width:50px; height:50px; border-radius:50%; background: rgba(128,128,128,0.14);
-            box-shadow: var(--readout-shadow); display:flex; align-items:center; justify-content:center;
+            width:50px; height:50px; border-radius:50%; background: var(--panel-bg);
+            box-shadow: 0 4px 0 0 rgba(0,0,0,0.25), 0 6px 12px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center;
             font-weight:900; font-size:1.15rem; color: var(--text); flex-shrink:0; position:relative;
-            border: var(--outline-w) solid var(--panel-border); font-family: var(--font-numeric);
+            border: 3px solid rgba(0,0,0,0.4); font-family: var(--font-numeric);
         }
         .map-node.completed { background: var(--accent-1); color: var(--accent-1-text); border-color: var(--accent-1-shadow); }
         .map-node.current { background: var(--accent-3); color: var(--accent-3-text); border-color: var(--accent-3-shadow); animation: nodePulse 2s ease-in-out infinite; }
-        .map-node.upcoming { background: var(--panel-bg); color: var(--text-soft); opacity: 0.85; }
+        .map-node.upcoming { background: var(--panel-bg); color: var(--text-soft); opacity: 1; }
         .map-node-label {
             font-size:0.62rem; font-weight:900; color: var(--bg-text); text-shadow: 0 1px 4px rgba(0,0,0,0.5);
             font-family: var(--font-main); white-space:nowrap; text-align:center; background: rgba(0,0,0,0.35);
@@ -1031,20 +1063,41 @@
     </div>
     <div id="view-themes" class="view-panel">
         <h2><span class="header-badge">CHOOSE THEME</span></h2>
-        <div class="theme-card card-wordling active" data-theme="wordling">
+        <div class="theme-card card-wordling active" data-theme="wordling" data-palette="coral-sky" style="background: linear-gradient(135deg, #3B82F6 50%, #FF5A5A 50%);">
             <span class="theme-check">✓</span>
             <div class="theme-preview-row">
-                <span class="theme-preview-chip" id="wl-chip-1" style="background:#3B82F6;"></span>
-                <span class="theme-preview-chip" id="wl-chip-2" style="background:#FF5A5A;"></span>
+                <span class="theme-preview-chip" style="background:#3B82F6;"></span>
+                <span class="theme-preview-chip" style="background:#FF5A5A;"></span>
                 <span class="theme-preview-chip" style="background:#FFC107;"></span>
             </div>
             <span class="theme-name">Wordling</span>
-            <div class="palette-row">
-                <span class="palette-swatch active" data-palette="coral-sky" style="background: linear-gradient(135deg, #3B82F6 50%, #FF5A5A 50%);"></span>
-                <span class="palette-swatch" data-palette="black-grey" style="background: linear-gradient(135deg, #6B7280 50%, #27272A 50%);"></span>
-                <span class="palette-swatch" data-palette="orange-green" style="background: linear-gradient(135deg, #22C55E 50%, #FF8A3D 50%);"></span>
-                <span class="palette-swatch" data-palette="purple-yellow" style="background: linear-gradient(135deg, #8B5CF6 50%, #FACC15 50%);"></span>
+        </div>
+        <div class="theme-card card-wordling" data-theme="wordling" data-palette="black-grey" style="background: linear-gradient(135deg, #6B7280 50%, #27272A 50%);">
+            <span class="theme-check">✓</span>
+            <div class="theme-preview-row">
+                <span class="theme-preview-chip" style="background:#6B7280;"></span>
+                <span class="theme-preview-chip" style="background:#27272A;"></span>
+                <span class="theme-preview-chip" style="background:#FFC107;"></span>
             </div>
+            <span class="theme-name">Wordling<br>Noir</span>
+        </div>
+        <div class="theme-card card-wordling" data-theme="wordling" data-palette="orange-green" style="background: linear-gradient(135deg, #22C55E 50%, #FF8A3D 50%);">
+            <span class="theme-check">✓</span>
+            <div class="theme-preview-row">
+                <span class="theme-preview-chip" style="background:#22C55E;"></span>
+                <span class="theme-preview-chip" style="background:#FF8A3D;"></span>
+                <span class="theme-preview-chip" style="background:#FFC107;"></span>
+            </div>
+            <span class="theme-name">Wordling<br>Citrus</span>
+        </div>
+        <div class="theme-card card-wordling" data-theme="wordling" data-palette="purple-yellow" style="background: linear-gradient(135deg, #8B5CF6 50%, #FACC15 50%);">
+            <span class="theme-check">✓</span>
+            <div class="theme-preview-row">
+                <span class="theme-preview-chip" style="background:#8B5CF6;"></span>
+                <span class="theme-preview-chip" style="background:#FACC15;"></span>
+                <span class="theme-preview-chip" style="background:#FFC107;"></span>
+            </div>
+            <span class="theme-name">Wordling<br>Grape</span>
         </div>
         <div class="theme-card card-cyber-arcade" data-theme="cyber-arcade">
             <span class="theme-check">✓</span>
@@ -1170,7 +1223,8 @@
         playShuffle() { const g=this._sfxOut(); if(!g) return; const ctx=this.audioCtx; const t=ctx.currentTime; [500,620,730].forEach((f,i)=>{ const o=ctx.createOscillator(); o.type='sine'; const st=t+i*0.035; o.frequency.setValueAtTime(f,st); const gn=ctx.createGain(); gn.gain.setValueAtTime(0.04,st); gn.gain.exponentialRampToValueAtTime(0.001,st+0.05); o.connect(gn); gn.connect(g); o.start(st); o.stop(st+0.06); }); },
         playError() { const g=this._sfxOut(); if(!g) return; const ctx=this.audioCtx; const t=ctx.currentTime; const o=ctx.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(90,t); o.frequency.linearRampToValueAtTime(55,t+0.15); const gn=ctx.createGain(); gn.gain.setValueAtTime(0.18,t); gn.gain.exponentialRampToValueAtTime(0.001,t+0.18); o.connect(gn); gn.connect(g); o.start(t); o.stop(t+0.2); },
         playPopup() { const g=this._sfxOut(); if(!g) return; const ctx=this.audioCtx; const t=ctx.currentTime; const o=ctx.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(660,t); o.frequency.exponentialRampToValueAtTime(440,t+0.07); const gn=ctx.createGain(); gn.gain.setValueAtTime(0.08,t); gn.gain.exponentialRampToValueAtTime(0.001,t+0.07); o.connect(gn); gn.connect(g); o.start(t); o.stop(t+0.08); },
-        playSubmit() { const g=this._sfxOut(); if(!g) return; const ctx=this.audioCtx; const t=ctx.currentTime; const freqs=[261.63,329.63,392.0,523.25]; freqs.forEach((f,i)=>{ const o=ctx.createOscillator(); o.type='sine'; const st=t+i*0.04; o.frequency.setValueAtTime(f,st); const gn=ctx.createGain(); gn.gain.setValueAtTime(0,st); gn.gain.linearRampToValueAtTime(0.09,st+0.25); gn.gain.exponentialRampToValueAtTime(0.001,st+0.9); o.connect(gn); gn.connect(g); o.start(st); o.stop(st+1.0); }); }
+        playSubmit() { const g=this._sfxOut(); if(!g) return; const ctx=this.audioCtx; const t=ctx.currentTime; const freqs=[261.63,329.63,392.0,523.25]; freqs.forEach((f,i)=>{ const o=ctx.createOscillator(); o.type='sine'; const st=t+i*0.04; o.frequency.setValueAtTime(f,st); const gn=ctx.createGain(); gn.gain.setValueAtTime(0,st); gn.gain.linearRampToValueAtTime(0.09,st+0.25); gn.gain.exponentialRampToValueAtTime(0.001,st+0.9); o.connect(gn); gn.connect(g); o.start(st); o.stop(st+1.0); }); },
+        playWin() { const g=this._sfxOut(); if(!g) return; const ctx=this.audioCtx; const t=ctx.currentTime; const freqs=[392.0,523.25,659.25,783.99,1046.5]; freqs.forEach((f,i)=>{ const o=ctx.createOscillator(); o.type='triangle'; const st=t+i*0.075; o.frequency.setValueAtTime(f,st); const gn=ctx.createGain(); gn.gain.setValueAtTime(0,st); gn.gain.linearRampToValueAtTime(0.13,st+0.05); gn.gain.exponentialRampToValueAtTime(0.001,st+1.1); o.connect(gn); gn.connect(g); o.start(st); o.stop(st+1.2); }); }
     };
     const THEMES = ['wordling', 'cyber-arcade', 'typewriter', 'phantom'];
     function applyTheme(n){ const name = THEMES.includes(n) ? n : 'wordling'; document.documentElement.setAttribute('data-theme', name); document.body.classList.toggle('theme-phantom', name==='phantom'); try{localStorage.setItem('wordling-theme',name);}catch(e){} }
@@ -1184,11 +1238,7 @@
         const pal = WORDLING_PALETTES[id] ? id : 'coral-sky';
         document.documentElement.setAttribute('data-palette', pal);
         try{localStorage.setItem('wordling-palette',pal);}catch(e){}
-        document.querySelectorAll('.palette-swatch').forEach(s=>s.classList.toggle('active', s.dataset.palette===pal));
-        const p = WORDLING_PALETTES[pal];
-        const chip1=document.getElementById('wl-chip-1'), chip2=document.getElementById('wl-chip-2');
-        if(chip1) chip1.style.background = p.c1;
-        if(chip2) chip2.style.background = p.c2;
+        G.currentPalette = pal;
     }
 
     const TILE_DIST = [
@@ -1339,7 +1389,7 @@
         draftChoices:null, dragData:null,
         gameMode:'classic', dailyChallenge:null, isEndless:false, consumables:[], activeHazard:null, anchorTileId:null, mutedTileId:null,
         leaderboard:[], records:{highestWord:null, totalGoldEarned:0, mostStagesCleared:0},
-        shopOffers:{glyphs:[], consumables:[], tiles:[]}, shopRerollCount:0, adsRemoved:false
+        shopOffers:{glyphs:[], consumables:[]}, shopRerollCount:0, adsRemoved:false
     };
 
     function assignRandomAura() { const r=Math.random(); if(r<0.15) return 'blue'; if(r<0.22) return 'red'; if(r<0.26) return 'gold'; return null; }
@@ -1352,7 +1402,7 @@
         G.removedLetters = new Set();
         if (G.gameMode==='daily' && G.dailyChallenge===1) G.removedLetters.add('E');
         G.equippedGlyphs = []; G.bank = 0; G.consumables = []; G.activeHazard = null; G.anchorTileId = null; G.mutedTileId = null; G.isEndless = false;
-        G.shopOffers = {glyphs:[], consumables:[], tiles:[]}; G.shopRerollCount = 0;
+        G.shopOffers = {glyphs:[], consumables:[]}; G.shopRerollCount = 0;
         G.stageScores = [];
         G.tileBag = buildInitialBag();
         if (G.gameMode==='daily' && G.dailyChallenge===6) {
@@ -1428,7 +1478,7 @@
         closeNoAdsModal();
     }
 
-    function spawnPopup(el,value,isMult) { if(!el) return; const container=document.getElementById('game-container'); const rect=el.getBoundingClientRect(), cr=container.getBoundingClientRect(); const popup=document.createElement('span'); popup.className='score-popup '+(isMult?'mult-popup':'chip-popup'); popup.textContent=(isMult?'×':'+')+value; popup.style.left=(rect.left-cr.left+rect.width/2-(isMult?24:22))+'px'; popup.style.top=(rect.top-cr.top-(isMult?18:8))+'px'; container.appendChild(popup); AudioEngine.playPopup(); setTimeout(()=>{ if(popup.parentNode) popup.remove(); },980); }
+    function spawnPopup(el,value,isMult,bg,fg) { if(!el) return; const container=document.getElementById('game-container'); const rect=el.getBoundingClientRect(), cr=container.getBoundingClientRect(); const popup=document.createElement('span'); popup.className='score-popup '+(isMult?'mult-popup':'chip-popup'); popup.textContent=(isMult?'×':'+')+value; popup.style.left=(rect.left-cr.left+rect.width/2-(isMult?24:22))+'px'; popup.style.top=(rect.top-cr.top-(isMult?18:8))+'px'; if(bg) popup.style.background=bg; if(fg) popup.style.color=fg; container.appendChild(popup); AudioEngine.playPopup(); setTimeout(()=>{ if(popup.parentNode) popup.remove(); },980); }
     function spawnGlyphIndicator(glyphEl, text) { const container = document.getElementById('game-container'); const rect = glyphEl.getBoundingClientRect(); const cr = container.getBoundingClientRect(); const indicator = document.createElement('span'); indicator.className = 'glyph-indicator'; indicator.textContent = text; indicator.style.left = (rect.left - cr.left + rect.width/2 - 30) + 'px'; indicator.style.top = (rect.top - cr.top - 10) + 'px'; container.appendChild(indicator); AudioEngine.playPopup(); setTimeout(() => { if(indicator.parentNode) indicator.remove(); }, 850); }
 
     function getWordLengthWarning(occ) {
@@ -1477,7 +1527,13 @@
             if (tile.type === 'finisher') { if (i === tilesCopy.length - 1) spawnPopup(el, 3, true); await sleep(220); el.classList.remove('scoring-pop'); continue; }
             let chip = isMutedTile(tile) ? 0 : ((G.gameMode==='daily' && G.dailyChallenge===2 && VOWEL_LETTERS.has(tile.letter)) ? 0 : (tile.chips || 0)); if (!isMutedTile(tile)) { if (tile.aura === 'blue') chip += 10; if (tile.aura === 'gold') chip *= 2; if (tile.aura === 'red') runningRedMult += 2; if (tile.goldInk) chip += 20; }
             runningChips += chip; pointsEl.textContent = runningChips; pointsEl.classList.add('pop');
-            spawnPopup(el, chip, false); if (tile.aura === 'red') setTimeout(() => spawnPopup(el, 2, true), 160);
+            spawnPopup(el, chip, false);
+            if (!isMutedTile(tile)) {
+                if (tile.aura === 'red') setTimeout(() => spawnPopup(el, 2, true, 'var(--accent-2)', 'var(--accent-2-text)'), 160);
+                else if (tile.aura === 'gold') setTimeout(() => spawnPopup(el, 2, true, 'var(--accent-3)', 'var(--accent-3-text)'), 160);
+                else if (tile.aura === 'blue') setTimeout(() => spawnPopup(el, 10, false, 'var(--accent-1)', 'var(--accent-1-text)'), 160);
+                if (tile.goldInk) setTimeout(() => spawnPopup(el, 20, false, 'var(--accent-3)', 'var(--accent-3-text)'), 320);
+            }
             await sleep(220); el.classList.remove('scoring-pop'); pointsEl.classList.remove('pop');
         }
 
@@ -1547,7 +1603,16 @@
             await new Promise(resolve => {
                 animateValueCountUp(prevScore, G.currentScore, 550, (val)=>{ scorePill.textContent = val.toLocaleString()+' / '+tgt.toLocaleString(); }, resolve);
             });
-            await sleep(300);
+            await sleep(150);
+            AudioEngine.playWin(); vibrate([30,40,60]);
+            c.style.setProperty('--shake-px', (16 * (G.shakeStrength / 100)) + 'px');
+            c.style.setProperty('--shake-duration', '480ms');
+            c.classList.add('shake-active');
+            overlay.style.transition = 'background 0.18s ease';
+            overlay.style.background = 'rgba(255,215,64,0.5)';
+            setTimeout(()=>{ overlay.style.background = 'transparent'; }, 240);
+            await sleep(480);
+            c.classList.remove('shake-active');
             showStageClear(G.currentScore);
         }
         else if (G.playsLeft <= 0) showModal('game-over');
@@ -1627,21 +1692,18 @@
     function generateShopGlyphOffers() {
         const pool = [];
         GLYPH_DATABASE.forEach(g=>{ const alreadyEquipped=G.equippedGlyphs.some(eg=>eg.id===g.id); if(!alreadyEquipped && G.equippedGlyphs.length<MAX_GLYPH_SLOTS){ pool.push({ kind:'glyph', id:g.id, name:g.name, desc:g.desc, color:g.color, icon:g.icon, price:shopPrice('glyph'), apply:()=>{ G.equippedGlyphs.push({id:g.id}); } }); } });
+        SPECIAL_TILE_DATABASE.forEach(def=>{ pool.push({ kind:'tile', id:def.id, name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{
+            G.tileBag.push({ id:'t_'+def.tileType+'_'+Math.random().toString(36).slice(2,11)+'_'+Date.now(), letter: def.tileType==='wildcard'?'*':'!', chips:0, type:def.tileType });
+        } }); });
         return shuffle(pool).slice(0,3);
     }
     function generateShopConsumableOffers() {
         const pool = CONSUMABLE_DATABASE.map(def=>({ kind:'consumable', id:def.id, name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{ G.consumables.push({id:def.id}); } }));
         return shuffle(pool).slice(0,2);
     }
-    function generateShopTileOffers() {
-        return SPECIAL_TILE_DATABASE.map(def=>({ kind:'tile', id:def.id, name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{
-            G.tileBag.push({ id:'t_'+def.tileType+'_'+Math.random().toString(36).slice(2,11)+'_'+Date.now(), letter: def.tileType==='wildcard'?'*':'!', chips:0, type:def.tileType });
-        } }));
-    }
     function initShopOffers() {
         G.shopOffers.glyphs = generateShopGlyphOffers();
         G.shopOffers.consumables = generateShopConsumableOffers();
-        G.shopOffers.tiles = generateShopTileOffers();
         G.shopRerollCount = 0;
     }
     function getShopRerollCost() { return SHOP_REROLL_BASE_COST + G.shopRerollCount; }
@@ -1652,7 +1714,6 @@
         G.shopRerollCount++;
         G.shopOffers.glyphs = generateShopGlyphOffers();
         G.shopOffers.consumables = generateShopConsumableOffers();
-        G.shopOffers.tiles = generateShopTileOffers();
         AudioEngine.playSubmit();
         renderShop(container);
     }
@@ -1670,7 +1731,7 @@
                 const price=document.createElement('span'); price.className='draft-card-price'; price.innerHTML='<span class="diamond-icon"></span>'+item.price; card.appendChild(price);
                 const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=item.name;
                 wrap.appendChild(card); wrap.appendChild(label);
-                wrap.addEventListener('click', ()=>{ AudioEngine.playTap(); renderShopDetail(container, item, 'glyph'); });
+                wrap.addEventListener('click', ()=>{ AudioEngine.playTap(); renderShopDetail(container, item, item.kind); });
                 grid.appendChild(wrap);
             });
             container.appendChild(grid);
@@ -1690,22 +1751,6 @@
                 cGrid.appendChild(wrap);
             });
             container.appendChild(cGrid);
-        }
-        const tileLabel = document.createElement('div'); tileLabel.className='shop-section-label'; tileLabel.textContent='SPECIAL TILES'; container.appendChild(tileLabel);
-        if (G.shopOffers.tiles.length===0) {
-            const p=document.createElement('p'); p.className='draft-hint'; p.textContent='None in stock.'; container.appendChild(p);
-        } else {
-            const tGrid = document.createElement('div'); tGrid.className='draft-grid';
-            G.shopOffers.tiles.forEach(item=>{
-                const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
-                const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); card.textContent=item.icon;
-                const price=document.createElement('span'); price.className='draft-card-price'; price.innerHTML='<span class="diamond-icon"></span>'+item.price; card.appendChild(price);
-                const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=item.name;
-                wrap.appendChild(card); wrap.appendChild(label);
-                wrap.addEventListener('click', ()=>{ AudioEngine.playTap(); renderShopDetail(container, item, 'tile'); });
-                tGrid.appendChild(wrap);
-            });
-            container.appendChild(tGrid);
         }
         const rerollCost = getShopRerollCost();
         const rerollBtn = document.createElement('button'); rerollBtn.className='draft-btn reroll-btn'; rerollBtn.style.width='100%'; rerollBtn.style.marginTop='10px'; rerollBtn.innerHTML='REROLL (<span class="diamond-icon"></span>'+rerollCost+')';
@@ -1732,7 +1777,7 @@
         buyBtn.addEventListener('click', ()=>{
             if (G.bank < item.price || inventoryFull) return;
             G.bank -= item.price; item.apply(); AudioEngine.playSubmit();
-            const offers = kind==='glyph' ? G.shopOffers.glyphs : (kind==='tile' ? G.shopOffers.tiles : G.shopOffers.consumables);
+            const offers = (kind==='glyph'||kind==='tile') ? G.shopOffers.glyphs : G.shopOffers.consumables;
             const idx = offers.findIndex(o=>o.id===item.id);
             if (idx!==-1) offers.splice(idx,1);
             renderShop(container);
@@ -2206,8 +2251,20 @@
 
     function initDict() { G.dictSet=new Set(DICTIONARY_WORDS.split(' ')); }
 
-    function slideToView(showId, hideId) { const he=document.getElementById(hideId),se=document.getElementById(showId); if(he){he.classList.add('slide-left');he.classList.remove('slide-in');} if(se){se.classList.remove('hidden');requestAnimationFrame(()=>{se.classList.add('slide-in');});} setTimeout(()=>{if(he)he.classList.add('hidden');},400); }
-    function slideBack(showId, hideId) { const he=document.getElementById(hideId),se=document.getElementById(showId); if(he){he.classList.remove('slide-in');} if(se){se.classList.remove('hidden','slide-left');se.classList.add('slide-in');} setTimeout(()=>{if(he)he.classList.add('hidden');},400); }
+    const _viewHideTimers = {};
+    function _armHide(el, id) { if(_viewHideTimers[id]){ clearTimeout(_viewHideTimers[id]); } _viewHideTimers[id] = setTimeout(()=>{ if(el) el.classList.add('hidden'); delete _viewHideTimers[id]; }, 400); }
+    function slideToView(showId, hideId) {
+        const he=document.getElementById(hideId), se=document.getElementById(showId);
+        if(he){ he.classList.add('slide-left'); he.classList.remove('slide-in'); }
+        if(se){ se.classList.remove('hidden'); requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ se.classList.add('slide-in'); }); }); }
+        _armHide(he, hideId);
+    }
+    function slideBack(showId, hideId) {
+        const he=document.getElementById(hideId), se=document.getElementById(showId);
+        if(he){ he.classList.remove('slide-in'); }
+        if(se){ se.classList.remove('hidden'); requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ se.classList.remove('slide-left'); }); }); }
+        _armHide(he, hideId);
+    }
 
     function bind() {
         document.getElementById('btn-play').addEventListener('click',()=>{ const c=getTodaysChallenge(); document.getElementById('daily-mode-sub').textContent=c.name; document.getElementById('daily-info-text').textContent=c.desc; document.getElementById('daily-info-panel').classList.remove('open'); slideToView('view-difficulty','view-menu'); });
@@ -2222,8 +2279,7 @@
         document.getElementById('btn-mode-classic').addEventListener('click',()=>startClassicLikeRun('classic'));
         document.getElementById('btn-mode-daily').addEventListener('click',()=>startClassicLikeRun('daily'));
         document.getElementById('btn-mode-zen').addEventListener('click',()=>startZenRun());
-        document.querySelectorAll('.theme-card').forEach(c=>c.addEventListener('click',()=>{ applyTheme(c.dataset.theme); G.currentTheme=c.dataset.theme; document.querySelectorAll('.theme-card').forEach(x=>x.classList.toggle('active',x.dataset.theme===G.currentTheme)); }));
-        document.querySelectorAll('.palette-swatch').forEach(s=>s.addEventListener('click',(e)=>{ e.stopPropagation(); applyPalette(s.dataset.palette); applyTheme('wordling'); G.currentTheme='wordling'; updateThemeButtons(); AudioEngine.playTap(); }));
+        document.querySelectorAll('.theme-card').forEach(c=>c.addEventListener('click',()=>{ applyTheme(c.dataset.theme); G.currentTheme=c.dataset.theme; if(c.dataset.palette) applyPalette(c.dataset.palette); updateThemeButtons(); AudioEngine.playTap(); }));
         document.getElementById('btn-confirm-cancel').addEventListener('click', hideConfirmModal);
         document.getElementById('btn-confirm-quit').addEventListener('click', () => { hideConfirmModal(); goToMenu(); });
         document.getElementById('btn-run-info').addEventListener('click',()=>{ renderRunInfo(); document.getElementById('run-info-modal').classList.add('show'); });
@@ -2300,7 +2356,7 @@
         render();
     }
     function showThemes(){document.getElementById('view-menu').classList.add('hidden');document.getElementById('view-themes').classList.remove('hidden');}
-    function updateThemeButtons(){ document.querySelectorAll('.theme-card').forEach(c=>c.classList.toggle('active',c.dataset.theme===G.currentTheme)); }
+    function updateThemeButtons(){ document.querySelectorAll('.theme-card').forEach(c=>{ const paletteMatches = !c.dataset.palette || c.dataset.palette===G.currentPalette; c.classList.toggle('active', c.dataset.theme===G.currentTheme && paletteMatches); }); }
     function setTheme(n){G.currentTheme=n;applyTheme(n);updateThemeButtons();}
     function returnToMenuUI(){G.gameStarted=false;G.rerollMode=false;G.rerollMarks.clear();G.isAnimating=false;G.hand=[];G.activeWord=[];document.getElementById('game-container').classList.remove('zen-mode');document.getElementById('view-game').classList.add('hidden');document.getElementById('view-map').classList.add('hidden');document.getElementById('view-draft').classList.add('hidden');document.getElementById('view-stats').classList.add('hidden');hideModal();document.getElementById('options-modal').classList.remove('show');document.getElementById('view-difficulty').classList.add('hidden');document.getElementById('view-themes').classList.add('hidden');document.getElementById('view-menu').classList.remove('hidden','slide-left');AudioEngine.stopMusic();updateContinueButtonVisibility();}
     function goToMenu(){clearActiveRun();returnToMenuUI();}
@@ -2356,7 +2412,7 @@
         const c = document.getElementById('stats-content'); c.innerHTML='';
         const lbTitle=document.createElement('h3'); lbTitle.textContent='TOP 5 SCORES'; c.appendChild(lbTitle);
         if (G.leaderboard.length===0) { const p=document.createElement('p'); p.className='draft-hint'; p.textContent='No runs yet — play Classic Mode!'; c.appendChild(p); }
-        else { G.leaderboard.forEach((entry,i)=>{ const row=document.createElement('div'); row.className='stats-row'; row.innerHTML=`<span>#${i+1}</span><span>${entry.score.toLocaleString()}</span><span>${entry.date}</span>`; c.appendChild(row); }); }
+        else { G.leaderboard.forEach((entry,i)=>{ const row=document.createElement('div'); row.className='stats-row rank-row'; row.innerHTML=`<span class="stats-rank">#${i+1}</span><span class="stats-score">${entry.score.toLocaleString()}</span><span class="stats-date">${entry.date}</span>`; c.appendChild(row); }); }
         const recTitle=document.createElement('h3'); recTitle.textContent='RECORDS'; c.appendChild(recTitle);
         const hw = G.records.highestWord;
         const rows = [
@@ -2364,11 +2420,11 @@
             ['Total Diamonds Earned', '<span class="diamond-icon"></span> '+G.records.totalGoldEarned.toLocaleString()],
             ['Most Stages Cleared', G.records.mostStagesCleared]
         ];
-        rows.forEach(([label,val])=>{ const row=document.createElement('div'); row.className='stats-row'; row.innerHTML=`<span>${label}</span><span>${val}</span>`; c.appendChild(row); });
+        rows.forEach(([label,val])=>{ const row=document.createElement('div'); row.className='stats-row'; row.innerHTML=`<span class="stats-label">${label}</span><span class="stats-value">${val}</span>`; c.appendChild(row); });
     }
     function updateContinueButtonVisibility() { document.getElementById('btn-continue-run').classList.toggle('hidden', !hasActiveRun()); }
-    function wrapTitleLetters(){ const h1=document.querySelector('#view-menu h1'); if(!h1||h1.dataset.wrapped) return; const text=h1.textContent; h1.innerHTML=text.split('').map(ch=>ch===' '?' ':'<span class="title-letter">'+ch+'</span>').join(''); h1.dataset.wrapped='1'; }
-    function boot(){try{G.currentTheme=localStorage.getItem('wordling-theme')||'wordling';}catch(e){G.currentTheme='wordling';}applyTheme(G.currentTheme);updateThemeButtons();let savedPalette;try{savedPalette=localStorage.getItem('wordling-palette')||'coral-sky';}catch(e){savedPalette='coral-sky';}applyPalette(savedPalette);loadPersistence();updateContinueButtonVisibility();initDict();bind();wrapTitleLetters();}
+    function wrapTitleLetters(){ const h1=document.querySelector('#view-menu h1'); if(!h1||h1.dataset.wrapped) return; const text=h1.textContent; h1.innerHTML=text.split('').map((ch,idx)=>ch===' '?' ':'<span class="title-letter" style="--i:'+idx+'">'+ch+'</span>').join(''); h1.dataset.wrapped='1'; }
+    function boot(){try{G.currentTheme=localStorage.getItem('wordling-theme')||'wordling';}catch(e){G.currentTheme='wordling';}applyTheme(G.currentTheme);let savedPalette;try{savedPalette=localStorage.getItem('wordling-palette')||'coral-sky';}catch(e){savedPalette='coral-sky';}applyPalette(savedPalette);updateThemeButtons();loadPersistence();updateContinueButtonVisibility();initDict();bind();wrapTitleLetters();}
     document.addEventListener('visibilitychange', () => { if(document.hidden){ if(G.dragData){ cleanupDrag(); render(); } } else { const c=document.getElementById('game-container'); if(c){ c.classList.add('anim-kick'); void c.offsetHeight; c.classList.remove('anim-kick'); } } });
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 })();
