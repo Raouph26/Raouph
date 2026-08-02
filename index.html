@@ -1234,7 +1234,12 @@
         playWin() { const g=this._sfxOut(); if(!g) return; const ctx=this.audioCtx; const t=ctx.currentTime; const freqs=[392.0,523.25,659.25,783.99,1046.5]; freqs.forEach((f,i)=>{ const o=ctx.createOscillator(); o.type='triangle'; const st=t+i*0.075; o.frequency.setValueAtTime(f,st); const gn=ctx.createGain(); gn.gain.setValueAtTime(0,st); gn.gain.linearRampToValueAtTime(0.13,st+0.05); gn.gain.exponentialRampToValueAtTime(0.001,st+1.1); o.connect(gn); gn.connect(g); o.start(st); o.stop(st+1.2); }); }
     };
     const THEMES = ['wordling', 'cyber-arcade', 'typewriter', 'phantom'];
-    function applyTheme(n){ const name = THEMES.includes(n) ? n : 'wordling'; document.documentElement.setAttribute('data-theme', name); document.body.classList.toggle('theme-phantom', name==='phantom'); try{localStorage.setItem('wordling-theme',name);}catch(e){} }
+    let activeTheme = 'wordling';
+    function applyTheme(n){ const name = THEMES.includes(n) ? n : 'wordling'; activeTheme = name; document.documentElement.setAttribute('data-theme', name); document.body.classList.toggle('theme-phantom', name==='phantom'); try{localStorage.setItem('wordling-theme',name);}catch(e){} }
+    // A host page that embeds this file may stamp its own light/dark value onto the
+    // root data-theme attribute, which would drop every html[data-theme=...] rule.
+    new MutationObserver(function(){ if (document.documentElement.getAttribute('data-theme') !== activeTheme) applyTheme(activeTheme); })
+        .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     const WORDLING_PALETTES = {
         'coral-sky': { c1:'#3B82F6', c2:'#FF5A5A' },
         'black-grey': { c1:'#6B7280', c2:'#27272A' },
