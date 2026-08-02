@@ -641,13 +641,11 @@
             display: inline-block; position: relative; color: var(--accent-1);
             animation-timing-function: ease-in-out; animation-iteration-count: infinite;
             animation-delay: calc(var(--i) * 0.11s);
-            text-shadow:
-                2px 0 0 #fff, -2px 0 0 #fff, 0 2px 0 #fff, 0 -2px 0 #fff,
-                2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff,
-                4px 0 0 #fff, -4px 0 0 #fff, 0 4px 0 #fff, 0 -4px 0 #fff,
-                4px 4px 0 #fff, -4px -4px 0 #fff, 4px -4px 0 #fff, -4px 4px 0 #fff,
-                6px 2px 0 #fff, -6px -2px 0 #fff, 6px -2px 0 #fff, -6px 2px 0 #fff,
-                2px 6px 0 #fff, -2px -6px 0 #fff;
+            /* a stack of 22 hard offsets faked this outline and stair-stepped every
+               curve, which read as pixelated. One real stroke, painted behind the
+               fill, keeps the chunk without the jaggies. */
+            -webkit-text-stroke: 7px #ffffff; paint-order: stroke fill;
+            text-shadow: 0 5px 0 rgba(0,0,0,0.20);
         }
         html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(4n+1) { animation-name: wlWaveA; animation-duration: 2.3s; }
         html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(4n+2) { animation-name: wlWaveB; animation-duration: 2.9s; color: var(--accent-2); }
@@ -975,12 +973,17 @@
             content: '🔇'; position:absolute; top:2px; right:2px; font-size:0.55rem; line-height:1; z-index:2;
         }
         #hazard-banner {
+            /* an in-flow banner shifted the whole column the moment a boss rolled.
+               It floats now, so the board never moves, and RUN INFO keeps the detail. */
+            position:absolute; left:14px; right:14px; top:100px; z-index:45; cursor:pointer;
+            opacity:0; transform:translateY(-10px); transition:opacity 0.3s ease, transform 0.3s ease;
             display:flex; align-items:center; justify-content:center; gap:6px; flex-shrink:0;
             background: var(--accent-2); color: var(--accent-2-text); border: var(--outline-w) solid var(--accent-2-shadow);
             border-radius: var(--radius-sm); padding:6px 10px; font-size:0.7rem; font-weight:900;
             letter-spacing:0.4px; margin-bottom:2px; box-shadow: 0 3px 0 0 var(--accent-2-shadow);
             font-family: var(--font-main); text-align:center;
         }
+        #hazard-banner.show { opacity:1; transform:translateY(0); }
         .shop-section-label {
             font-size: 0.75rem; font-weight: 900; letter-spacing: 1.5px; color: var(--text-soft);
             font-family: var(--font-main); text-align:center; margin: 10px 0 2px;
@@ -1039,14 +1042,28 @@
         #stats-content h3 { font-size:0.85rem; font-weight:900; letter-spacing:1.5px; color: var(--accent-3); margin: 10px 0 6px; text-align:center; font-family: var(--font-main); text-shadow: 0 0 12px rgba(var(--accent-3-rgb),0.4); }
         #view-stats { align-items: center; justify-content: center; gap:10px; padding:30px 20px; z-index:9; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); transform: translateX(110%); opacity: 0; pointer-events: none; overflow-y:auto; }
         #view-stats.slide-in { transform: translateX(0); opacity: 1; pointer-events: auto; }
+        .unlock-row {
+            display:flex; align-items:flex-start; gap:9px; width:100%; padding:7px 9px;
+            border-radius: calc(var(--panel-radius) * 0.6); background: rgba(127,127,127,0.10);
+            border: 1px solid var(--panel-border); border-left: 3px solid var(--text-soft); margin-bottom:5px;
+        }
+        .unlock-row.is-unlocked { border-left-color: var(--accent-3); }
+        .unlock-icon { font-size:1rem; line-height:1.2; flex-shrink:0; width:20px; text-align:center; color: var(--text-soft); }
+        .unlock-body { display:flex; flex-direction:column; gap:2px; min-width:0; flex:1 1 auto; }
+        .unlock-name { font-size:0.72rem; font-weight:900; color: var(--text); font-family: var(--font-main); }
+        .unlock-row:not(.is-unlocked) .unlock-name { color: var(--text); opacity: 0.75; }
+        .unlock-sub { font-size:0.62rem; font-weight:700; color: var(--text-soft); font-family: var(--font-main); line-height:1.3; }
+        .unlock-bar { display:block; width:100%; height:5px; border-radius:3px; background: rgba(127,127,127,0.3); overflow:hidden; margin-top:3px; }
+        .unlock-bar-fill { display:block; height:100%; background: var(--accent-3); }
+        .unlock-count { font-size:0.56rem; font-weight:900; color: var(--accent-3); font-family: var(--font-numeric); font-variant-numeric: tabular-nums; }
         .stats-panel {
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 2px solid var(--accent-1); border-radius: var(--panel-radius);
+            background: var(--panel-bg); color: var(--text);
+            border: var(--outline-w) solid var(--panel-border); border-radius: var(--panel-radius);
             padding: 26px 22px; width: 100%; max-width: 340px; margin: auto;
             box-shadow: 0 12px 32px rgba(0,0,0,0.6), 0 0 24px rgba(var(--accent-3-rgb),0.15);
             display: flex; flex-direction: column; align-items: center; gap: 10px;
         }
-        .stats-panel h2 { color: #fff; text-shadow: none; font-size: 1.3rem; font-weight: 900; text-align: center; margin-bottom: 4px; font-family: var(--font-title); }
+        .stats-panel h2 { color: var(--text); text-shadow: none; font-size: 1.3rem; font-weight: 900; text-align: center; margin-bottom: 4px; font-family: var(--font-title); }
         #game-container.zen-mode #resource-row, #game-container.zen-mode #action-slots-row, #game-container.zen-mode #hazard-banner { display:none !important; }
 
         #controls-row { display:flex; gap:10px; flex-shrink:0; }
@@ -1269,7 +1286,7 @@
             --bg-solid: #c8c5b5;
             --bg-vignette: none;
             --panel-bg: #d2cfc0; --panel-border: #383732; --panel-shadow-color: #a8a495; --panel-radius: 0px;
-            --text: #383732; --text-soft: #6b6a61; --bg-text: #383732;
+            --text: #383732; --text-soft: #55544c; --bg-text: #383732;
             --accent-1: #7f7c6d; --accent-1-shadow: #4d4b43; --accent-1-text: #efece0;
             --accent-2: #8c403e; --accent-2-shadow: #5c2a29; --accent-2-text: #f2e9e6;
             --accent-3: #a89f81; --accent-3-rgb: 168,159,129; --accent-3-shadow: #6f6853; --accent-3-text: #2c2b26;
@@ -1705,19 +1722,49 @@
     const PRESS_RARE = new Set(['J','Q','X','Z']);
 
     // Feats that permanently add something to the shop pool.
+    // Gating the shop to unlocked items left twelve glyphs with no route at all.
+    // Every glyph now has a stated feat behind it, and the Unlocks tab reads this table.
     const MILESTONES = [
-        { id:'double_trouble', kind:'glyph', label:'Double Trouble',
+        { id:'double_trouble', kind:'glyph', label:'Double Trouble', hint:'Play a 5+ letter word with two identical letters side by side',
           test:c => c.event==='word' && c.word && c.word.length>=5 && /([A-Za-z])\1/.test(c.word) },
-        { id:'piggy_bank', kind:'glyph', label:'Piggy Bank',
+        { id:'piggy_bank', kind:'glyph', label:'Piggy Bank', hint:'Clear a stage holding 15 or more Diamonds',
           test:c => c.event==='stageClear' && c.bank>=15 },
-        { id:'insurance_policy', kind:'glyph', label:'Insurance Policy',
+        { id:'insurance_policy', kind:'glyph', label:'Insurance Policy', hint:'Fall short of a target by less than 20%',
           test:c => c.event==='stageFail' && c.shortfallPct < 0.20 },
-        { id:'middle_child', kind:'glyph', label:'Middle Child',
+        { id:'middle_child', kind:'glyph', label:'Middle Child', hint:'Score over 1,000 with an odd-length word',
           test:c => c.event==='word' && c.score>1000 && c.word && c.word.length % 2 === 1 },
-        { id:'heavy_hitter', kind:'glyph', label:'Heavy Hitter',
+        { id:'heavy_hitter', kind:'glyph', label:'Heavy Hitter', hint:'Play a word with two or more of J, Q, X or Z',
           test:c => c.event==='word' && c.word && (c.word.match(/[JQXZ]/g)||[]).length >= 2 },
-        { id:'void_seal', kind:'consumable', label:'Void Seal',
-          test:c => c.event==='stageClear' && c.stage>=5 && c.rerollsUsed===0 }
+        { id:'void_seal', kind:'consumable', label:'Void Seal', hint:'Clear stage 5 without rerolling the shop',
+          test:c => c.event==='stageClear' && c.stage>=5 && c.rerollsUsed===0 },
+        { id:'grammarian', kind:'glyph', label:'The Grammarian', hint:'Play a word with 4 or more vowels',
+          test:c => c.event==='word' && c.word && (c.word.match(/[AEIOU]/g)||[]).length >= 4 },
+        { id:'novelist', kind:'glyph', label:'The Novelist', hint:'Play a word 7 letters or longer',
+          test:c => c.event==='word' && c.word && c.word.length >= 7 },
+        { id:'bookends', kind:'glyph', label:'Bookends', hint:'Play a word that starts and ends with the same letter',
+          test:c => c.event==='word' && c.word && c.word.length>2 && c.word[0]===c.word[c.word.length-1] },
+        { id:'double_down', kind:'glyph', label:'Double Down', hint:'Play a word with 3 or more repeated letters',
+          test:c => c.event==='word' && c.word && (c.word.length - new Set(c.word.split('')).size) >= 3 },
+        { id:'vowel_shifter', kind:'glyph', label:'Vowel Shifter', hint:'Play a word containing Y',
+          test:c => c.event==='word' && c.word && c.word.indexOf('Y') !== -1 },
+        { id:'alchemy', kind:'glyph', label:'Golden Touch', hint:'Score 500 or more with a single word',
+          test:c => c.event==='word' && c.score >= 500 },
+        { id:'duplicator', kind:'glyph', label:'Duplicator', hint:'Play three 5-letter words in one stage',
+          test:c => c.event==='word' && (G.stageWords||[]).filter(w=>w.word && w.word.length===5).length >= 3 },
+        { id:'wildcard_rune', kind:'glyph', label:'Wildcard Rune', hint:'Play a special tile',
+          progress:()=>[G.progress.stats.specialTilesPlayed||0, 1],
+          test:c => (G.progress.stats.specialTilesPlayed||0) >= 1 },
+        { id:'scavenger', kind:'glyph', label:'The Scavenger', hint:'Discard 25 letters in total',
+          progress:()=>[G.progress.stats.lettersDiscarded||0, 25],
+          test:c => (G.progress.stats.lettersDiscarded||0) >= 25 },
+        { id:'recycler', kind:'glyph', label:'The Recycler', hint:'Discard 60 letters in total',
+          progress:()=>[G.progress.stats.lettersDiscarded||0, 60],
+          test:c => (G.progress.stats.lettersDiscarded||0) >= 60 },
+        { id:'perfectionist', kind:'glyph', label:'The Perfectionist', hint:'Clear a stage without using a single discard',
+          test:c => c.event==='stageClear' && c.noDiscards===true },
+        { id:'deep_pockets', kind:'glyph', label:'Deep Pockets', hint:'Reach stage 4 in any run',
+          progress:()=>[G.progress.stats.highestStageReached||1, 4],
+          test:c => (G.progress.stats.highestStageReached||1) >= 4 }
     ];
 
     const DEFAULT_PROGRESS = {
@@ -1820,7 +1867,7 @@
     }
     function getActivePress() { return G.gameMode==='zen' ? null : getPress(G.activePressId); }
     function pressValue(key, fallback) { const p = getActivePress(); return (p && p[key] !== undefined) ? p[key] : fallback; }
-    function bumpStat(key, by) { if (!G.progress || !G.progress.stats) return; G.progress.stats[key] = (G.progress.stats[key]||0) + (by||1); saveProgress(); }
+    function bumpStat(key, by) { if (!G.progress || !G.progress.stats) return; G.progress.stats[key] = (G.progress.stats[key]||0) + (by||1); saveProgress(); checkMilestones({ event:'stat' }); }
 
     // A run is won -> bank the completion and open the next press in the chain.
     function winRun(pressId) {
@@ -1989,7 +2036,7 @@
         // them to the discard pile keeps the 98-tile pool whole; dropping them cost the
         // player ~10 tiles per stage and starved the bag by stage 7.
         if (G.gameMode!=='zen') { const carry=[...G.hand, ...G.activeWord].filter(t=>t&&t.id); if(carry.length) G.discardPile.push(...carry); }
-        G.currentScore=0; G.playsLeft=(G.gameMode==='daily'&&G.dailyChallenge===4)?2:4; G.rerollsLeft=3; G.activeWord=[]; G.hand=[]; G.stageWords=[]; G.isAnimating=false; G.rerollMode=false; G.rerollMarks.clear(); G.anchorTileId=null; G.mutedTileId=null; drawToHand(); }
+        G.currentScore=0; G.discardsUsedThisStage=0; G.playsLeft=(G.gameMode==='daily'&&G.dailyChallenge===4)?2:4; G.rerollsLeft=3; G.activeWord=[]; G.hand=[]; G.stageWords=[]; G.isAnimating=false; G.rerollMode=false; G.rerollMarks.clear(); G.anchorTileId=null; G.mutedTileId=null; drawToHand(); }
     function startRun() {
         clearActiveRun();
         G.removedLetters = new Set();
@@ -2074,7 +2121,7 @@
     function exitReroll() { G.rerollMode=false; G.rerollMarks.clear(); render(); }
     function drawIntoSlots(slots) { for(const idx of slots){ if(G.gameMode==='zen'){ G.hand[idx]=generateRandomTile(); continue; } if(G.tileBag.length===0){ if(G.discardPile.length===0) break; G.tileBag=shuffle(G.discardPile); G.discardPile=[]; } G.hand[idx]=G.tileBag.pop(); } ensureMutedTile(); }
     function isDiscardTaxed() { return G.activeHazard==='taxman' || (G.gameMode==='daily' && G.dailyChallenge===3); }
-    function confirmReroll() { if(!G.rerollMode||G.rerollMarks.size===0){ exitReroll(); return; } if(G.gameMode!=='zen'&&G.rerollsLeft<=0) return; if(G.gameMode!=='zen') G.rerollsLeft--; const discarded=[]; const freedSlots=[]; for(let i=0;i<getHandSize();i++){ if(G.hand[i]&&G.rerollMarks.has(G.hand[i].id)){ discarded.push(G.hand[i]); G.discardPile.push(G.hand[i]); G.hand[i]=null; freedSlots.push(i); } } GlyphManager.onDiscardEvent(discarded); bumpStat('lettersDiscarded', discarded.length); if(discarded.length>0&&isDiscardTaxed()) G.bank=Math.max(0,G.bank-2); drawIntoSlots(freedSlots); G.rerollMarks.clear(); G.rerollMode=false; AudioEngine.playShuffle(); vibrate(12); renderWithTileFlip(); }
+    function confirmReroll() { if(!G.rerollMode||G.rerollMarks.size===0){ exitReroll(); return; } if(G.gameMode!=='zen'&&G.rerollsLeft<=0) return; if(G.gameMode!=='zen') G.rerollsLeft--; const discarded=[]; const freedSlots=[]; for(let i=0;i<getHandSize();i++){ if(G.hand[i]&&G.rerollMarks.has(G.hand[i].id)){ discarded.push(G.hand[i]); G.discardPile.push(G.hand[i]); G.hand[i]=null; freedSlots.push(i); } } GlyphManager.onDiscardEvent(discarded); G.discardsUsedThisStage = (G.discardsUsedThisStage||0) + 1; bumpStat('lettersDiscarded', discarded.length); if(discarded.length>0&&isDiscardTaxed()) G.bank=Math.max(0,G.bank-2); drawIntoSlots(freedSlots); G.rerollMarks.clear(); G.rerollMode=false; AudioEngine.playShuffle(); vibrate(12); renderWithTileFlip(); }
     function toggleRerollBtn() { if(G.rerollMode) confirmReroll(); else enterReroll(); }
 
     function showConfirmModal() { document.getElementById('confirm-modal').classList.add('show'); }
@@ -2295,7 +2342,7 @@
     }
 
     function showStageClear(score) {
-        checkMilestones({ event:'stageClear', bank:G.bank, stage:G.currentStage, rerollsUsed:G.shopRerollsUsedThisRun||0 });
+        checkMilestones({ event:'stageClear', bank:G.bank, stage:G.currentStage, rerollsUsed:G.shopRerollsUsedThisRun||0, noDiscards:(G.discardsUsedThisStage||0)===0 });
         G.phase='stageclear'; saveActiveRun();
         const draftDiv=document.getElementById('view-draft'); draftDiv.innerHTML=''; draftDiv.classList.remove('show');
         const panel=document.createElement('div'); panel.className='draft-panel';
@@ -2370,7 +2417,13 @@
         lines.forEach(([label,val]) => { const row=document.createElement('div'); row.className='payout-row'; row.innerHTML = `<span>${label}</span><span>+<span class="diamond-icon"></span>${val}</span>`; list.appendChild(row); });
         container.appendChild(list);
         const total = document.createElement('div'); total.className='payout-total'; total.innerHTML='BANK: <span class="diamond-icon"></span>'+G.bank; container.appendChild(total);
-        setTimeout(()=>{
+        const nextBtn=document.createElement('button'); nextBtn.className='draft-btn'; nextBtn.style.width='100%'; nextBtn.style.marginTop='12px'; nextBtn.textContent='NEXT ▶';
+        nextBtn.addEventListener('click', ()=>{ AudioEngine.playTap(); nextBtn.disabled=true; openShopPanel(container); });
+        container.appendChild(nextBtn);
+    }
+    // the payout used to slide away on a timer; players asked to read it in their own time
+    function openShopPanel(container) {
+        {
             container.classList.remove('show');
             setTimeout(()=>{
                 // the round is over: the stage total and its word list stop being the
@@ -2387,7 +2440,7 @@
                 renderShop(container);
                 requestAnimationFrame(()=>requestAnimationFrame(()=>container.classList.add('show')));
             }, 350);
-        }, 1500);
+        }
     }
     function shopPrice(id) { const inflated = G.gameMode==='daily' && G.dailyChallenge===7; const base = SHOP_PRICES[id]||0; return inflated ? base*2 : base; }
     function makeGlyphOffer(g) { return { kind:'glyph', id:g.id, name:g.name, desc:g.desc, color:g.color, icon:g.icon, price:shopPrice('glyph'), apply:()=>{ G.equippedGlyphs.push({id:g.id}); } }; }
@@ -2958,12 +3011,8 @@
             document.getElementById('progress-fill').style.width=pct+'%';
             document.getElementById('score-pill').textContent=G.currentScore.toLocaleString()+' / '+tgt.toLocaleString();
         }
-        const hazardBanner = document.getElementById('hazard-banner');
-        if (G.activeHazard && HAZARD_DATABASE[G.activeHazard]) {
-            const hz = HAZARD_DATABASE[G.activeHazard];
-            hazardBanner.textContent = hz.icon+' BOSS BLIND: '+hz.name.toUpperCase()+' — '+hz.desc;
-            hazardBanner.classList.remove('hidden');
-        } else { hazardBanner.classList.add('hidden'); }
+        const riBtn = document.getElementById('btn-run-info');
+        if (riBtn) riBtn.textContent = (G.activeHazard && HAZARD_DATABASE[G.activeHazard]) ? '☠ RUN INFO' : 'RUN INFO';
         const p=calcScore();
         // The staged word's math stays hidden until it is actually played. Showing
         // chips x mult up front turns the decision into arithmetic instead of a read.
@@ -3088,7 +3137,17 @@
     }
     function showMap() { resetStageState(); renderMap(); }
     function rollStageHazard() { G.activeHazard = null; if (G.gameMode==='zen') return; if (G.currentStage % 4 === 0) { const hazards=['wall','taxman','mute','anchor']; G.activeHazard = hazards[Math.floor(Math.random()*hazards.length)]; } }
-    function startStage() { G.phase='playing'; if (G.progress && G.currentStage > (G.progress.stats.highestStageReached||1)) bumpStat('highestStageReached', G.currentStage - (G.progress.stats.highestStageReached||1)); document.getElementById('view-map').classList.add('hidden'); document.getElementById('view-game').classList.remove('hidden'); resetStageState(); rollStageHazard(); GlyphManager.onStageStart(); GlyphManager.onRoundStart(G.hand); AudioEngine.startMusic(); render(); }
+    function showHazardToast() {
+        const b=document.getElementById('hazard-banner'); if(!b) return;
+        const hz=HAZARD_DATABASE[G.activeHazard]; if(!hz) { b.classList.add('hidden'); return; }
+        b.textContent = hz.icon+' BOSS BLIND: '+hz.name.toUpperCase()+' — '+hz.desc;
+        b.classList.remove('hidden');
+        requestAnimationFrame(()=>requestAnimationFrame(()=>b.classList.add('show')));
+        const dismiss=()=>{ b.classList.remove('show'); setTimeout(()=>b.classList.add('hidden'), 320); };
+        clearTimeout(G._hazardTimer); G._hazardTimer=setTimeout(dismiss, 5200);
+        b.onclick = ()=>{ clearTimeout(G._hazardTimer); dismiss(); };
+    }
+    function startStage() { G.phase='playing'; if (G.progress && G.currentStage > (G.progress.stats.highestStageReached||1)) bumpStat('highestStageReached', G.currentStage - (G.progress.stats.highestStageReached||1)); document.getElementById('view-map').classList.add('hidden'); document.getElementById('view-game').classList.remove('hidden'); resetStageState(); rollStageHazard(); GlyphManager.onStageStart(); setTimeout(showHazardToast, 260); GlyphManager.onRoundStart(G.hand); AudioEngine.startMusic(); render(); }
 
     function initDict() { G.dictSet=new Set(DICTIONARY_WORDS.split(' ')); }
 
@@ -3276,6 +3335,56 @@
             ['Most Stages Cleared', G.records.mostStagesCleared]
         ];
         rows.forEach(([label,val])=>{ const row=document.createElement('div'); row.className='stats-row'; row.innerHTML=`<span class="stats-label">${label}</span><span class="stats-value">${val}</span>`; c.appendChild(row); });
+        renderUnlocks(c);
+    }
+    function milestoneFor(id) { return MILESTONES.find(m=>m.id===id) || null; }
+    function unlockRow(opts) {
+        const row=document.createElement('div'); row.className='unlock-row'+(opts.unlocked?' is-unlocked':'');
+        const icon=document.createElement('span'); icon.className='unlock-icon'; icon.textContent = opts.unlocked ? opts.icon : '🔒';
+        if (opts.unlocked && opts.color) icon.style.color = opts.color;
+        const body=document.createElement('span'); body.className='unlock-body';
+        const nm=document.createElement('span'); nm.className='unlock-name'; nm.textContent=opts.name;
+        const sub=document.createElement('span'); sub.className='unlock-sub'; sub.textContent = opts.unlocked ? opts.desc : (opts.hint || 'Keep playing to discover this one');
+        body.appendChild(nm); body.appendChild(sub);
+        if (!opts.unlocked && opts.progress) {
+            const [have,need]=opts.progress;
+            const bar=document.createElement('span'); bar.className='unlock-bar';
+            const fill=document.createElement('span'); fill.className='unlock-bar-fill';
+            fill.style.width = Math.max(0, Math.min(100, (have/need)*100)) + '%';
+            bar.appendChild(fill); body.appendChild(bar);
+            const cnt=document.createElement('span'); cnt.className='unlock-count'; cnt.textContent = Math.min(have,need)+' / '+need;
+            body.appendChild(cnt);
+        }
+        row.appendChild(icon); row.appendChild(body);
+        return row;
+    }
+    function renderUnlocks(c) {
+        const gU=G.progress.unlockedGlyphs, cU=G.progress.unlockedConsumables, pU=G.progress.unlockedPresses;
+        const t1=document.createElement('h3');
+        t1.textContent='GLYPHS ('+GLYPH_DATABASE.filter(g=>gU.includes(g.id)).length+' / '+GLYPH_DATABASE.length+')';
+        c.appendChild(t1);
+        GLYPH_DATABASE.forEach(g=>{
+            const m=milestoneFor(g.id);
+            c.appendChild(unlockRow({ unlocked:gU.includes(g.id), icon:g.icon, color:g.color, name:g.name, desc:g.desc,
+                hint:m?m.hint:'Available from the start', progress:(m&&m.progress)?m.progress():null }));
+        });
+        const t2=document.createElement('h3');
+        t2.textContent='INK SEALS ('+CONSUMABLE_DATABASE.filter(d=>cU.includes(d.id)).length+' / '+CONSUMABLE_DATABASE.length+')';
+        c.appendChild(t2);
+        CONSUMABLE_DATABASE.forEach(d=>{
+            const m=milestoneFor(d.id);
+            c.appendChild(unlockRow({ unlocked:cU.includes(d.id), icon:d.icon, color:d.color, name:d.name, desc:d.desc,
+                hint:m?m.hint:'Available from the start', progress:(m&&m.progress)?m.progress():null }));
+        });
+        const t3=document.createElement('h3');
+        t3.textContent='RUN LOADOUTS ('+PRESSES.filter(p=>pU.includes(p.id)).length+' / '+PRESSES.length+')';
+        c.appendChild(t3);
+        PRESSES.forEach(p=>{
+            const prev=getPress(p.unlockedBy);
+            c.appendChild(unlockRow({ unlocked:pU.includes(p.id), icon:p.icon, color:p.color, name:p.name,
+                desc:p.perk+' · '+p.tradeoff,
+                hint:prev?('Clear a run with '+prev.name):'Available from the start' }));
+        });
     }
     function updateContinueButtonVisibility() { document.getElementById('btn-continue-run').classList.toggle('hidden', !hasActiveRun()); }
     function wrapTitleLetters(){ const main=document.querySelector('#view-menu h1 .title-main'); if(!main||main.dataset.wrapped) return; const text=main.textContent; main.innerHTML=text.split('').map((ch,idx)=>ch===' '?' ':'<span class="title-letter" style="--i:'+idx+'">'+ch+'</span>').join(''); main.dataset.wrapped='1'; }
