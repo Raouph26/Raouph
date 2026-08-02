@@ -566,6 +566,37 @@
         }
         .draft-detail-name { font-size: 1.05rem; font-weight: 900; color: var(--glyph-color, var(--text)); font-family: var(--font-title); }
         .draft-detail-desc { font-size: 0.88rem; color: var(--text); font-family: var(--font-main); line-height: 1.4; max-width: 260px; }
+        #press-picker { width:100%; flex-shrink:0; }
+        .press-title { font-size:0.68rem; font-weight:900; letter-spacing:2px; color: var(--bg-text); text-align:center; font-family: var(--font-main); margin-bottom:6px; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+        #press-rail { display:flex; gap:10px; overflow-x:auto; overflow-y:hidden; padding:4px 2px 8px; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; }
+        .press-card {
+            flex:0 0 auto; width:146px; scroll-snap-align:center; cursor:pointer;
+            background: var(--panel-bg); border: var(--outline-w) solid var(--panel-border);
+            border-radius: var(--panel-radius); padding:9px 9px 10px; text-align:center;
+            box-shadow: 0 4px 0 0 var(--panel-shadow-color); position:relative; transition: transform 0.15s ease;
+        }
+        .press-card:active { transform: translateY(3px); }
+        .press-card .press-icon { font-size:1.5rem; line-height:1; color: var(--press-color, var(--accent-1)); }
+        .press-card .press-name { font-size:0.72rem; font-weight:900; color: var(--text); font-family: var(--font-main); margin-top:3px; line-height:1.15; }
+        .press-card .press-perk { font-size:0.6rem; font-weight:700; color:#22C55E; font-family: var(--font-main); margin-top:5px; line-height:1.25; }
+        .press-card .press-cost { font-size:0.6rem; font-weight:700; color:#EF4444; font-family: var(--font-main); margin-top:2px; line-height:1.25; }
+        .press-card.selected { border-color: var(--press-color, var(--accent-1)); box-shadow: 0 4px 0 0 var(--panel-shadow-color), 0 0 0 3px var(--press-color, var(--accent-1)); }
+        .press-card.selected::after { content:'✓'; position:absolute; top:-9px; right:-9px; width:22px; height:22px; border-radius:50%; background: var(--press-color, var(--accent-1)); color:#fff; font-size:0.72rem; font-weight:900; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.4); }
+        .press-card.locked { cursor:default; }
+        .press-card.locked .press-icon, .press-card.locked .press-name { filter: brightness(0.35) saturate(0.2); }
+        .press-card.locked .press-perk, .press-card.locked .press-cost { display:none; }
+        .press-lock { font-size:0.6rem; font-weight:700; color: var(--text-soft); font-family: var(--font-main); margin-top:5px; line-height:1.25; }
+        #unlock-banner {
+            position:absolute; top:14px; left:50%; transform: translateX(-50%) translateY(-140%);
+            z-index:120; pointer-events:none; display:flex; flex-direction:column; align-items:center; gap:2px;
+            background: var(--accent-3); color: var(--accent-3-text); padding:9px 18px;
+            border-radius: var(--panel-radius); border: var(--outline-w) solid var(--accent-3-shadow);
+            box-shadow: 0 5px 0 0 var(--accent-3-shadow), 0 10px 22px rgba(0,0,0,0.45);
+            transition: transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.42s ease; opacity:0; max-width:88%;
+        }
+        #unlock-banner.show { transform: translateX(-50%) translateY(0); opacity:1; }
+        #unlock-banner .unlock-kicker { font-size:0.56rem; font-weight:900; letter-spacing:1.6px; font-family: var(--font-main); opacity:0.85; }
+        #unlock-banner .unlock-name { font-size:0.92rem; font-weight:900; font-family: var(--font-main); letter-spacing:0.3px; text-align:center; }
         .draft-detail-actions { display:flex; gap:12px; margin-top:4px; }
         .draft-btn.sell-btn { background: var(--accent-2); border-color: var(--accent-2-shadow); color: var(--accent-2-text); box-shadow: 0 5px 0 0 var(--accent-2-shadow); }
         .draft-btn.sell-btn:active { box-shadow: 0 0 0 0 var(--accent-2-shadow); }
@@ -1104,6 +1135,7 @@
 </head>
 <body>
 <div id="game-container">
+    <div id="unlock-banner" class="hidden"></div>
     <div id="bg-overlay"></div>
     <div id="view-menu" class="view-panel"><h1>WORDLING!</h1><button class="menu-btn play-btn" id="btn-play">▶ PLAY</button><button class="menu-btn continue-btn hidden" id="btn-continue-run">↻ CONTINUE RUN</button><button class="menu-btn themes-btn" id="btn-menu-themes">◆ THEMES</button><button class="menu-btn settings-btn" id="btn-menu-options">⚙ SETTINGS</button><button class="menu-btn settings-btn" id="btn-menu-stats">★ STATS</button></div>
     <div id="view-stats" class="view-panel hidden">
@@ -1182,6 +1214,7 @@
     </div>
     <div id="view-difficulty" class="view-panel">
         <h2><span class="header-badge">SELECT MODE</span></h2>
+        <div id="press-picker"><div class="press-title">RUN LOADOUT</div><div id="press-rail"></div></div>
         <button class="diff-btn diff-easy" id="btn-mode-classic">CLASSIC<br><span class="mode-sub">8 Stages · Shop · Glyphs</span></button>
         <div class="daily-card">
             <button class="diff-btn diff-medium" id="btn-mode-daily">DAILY CHALLENGE<br><span class="mode-sub" id="daily-mode-sub">Loading…</span></button>
@@ -1352,6 +1385,141 @@
     // Zen has no fail state, so the targets exist to mark progress rather than to
     // squeeze. They sit far below the classic curve and climb far more gently.
     const ZEN_STAGE_TARGETS = [0, 100, 220, 380, 580, 820, 1100, 1450, 1850];
+
+    // Run loadouts, unlocked one at a time by winning a run with the previous one.
+    const PRESSES = [
+        { id:'merchant_press', name:'Merchant Press', icon:'⚖', color:'#F59E0B', unlockedBy:null,
+          perk:'Start with ◆15', tradeoff:'Shop rerolls cost ◆3',
+          startBank:15, rerollBase:3 },
+        { id:'deep_pockets_press', name:'Deep Pockets Press', icon:'▦', color:'#22C55E', unlockedBy:'merchant_press',
+          perk:'Bench holds 12 letters', tradeoff:'Stage targets +15%',
+          handBonus:2, targetMult:1.15 },
+        { id:'recycler_press', name:'Recycler Press', icon:'♻', color:'#38BDF8', unlockedBy:'deep_pockets_press',
+          perk:'+1 Discard every stage', tradeoff:'No starting ◆, one fewer letter',
+          discardBonus:1, startBank:0, handBonus:-1 },
+        { id:'ink_master_press', name:'Ink Master Press', icon:'✒', color:'#A855F7', unlockedBy:'recycler_press',
+          perk:'Start with 2 Ink Seals', tradeoff:'Shop shows 1 fewer Glyph',
+          startSeals:2, shopGlyphDelta:-1 },
+        { id:'wildcard_press', name:'Wildcard Press', icon:'✦', color:'#EF4444', unlockedBy:'ink_master_press',
+          perk:'A free Wildcard every stage', tradeoff:'J, Q, X and Z score 0 base',
+          wildcardEachStage:true, rareZero:true }
+    ];
+    const PRESS_RARE = new Set(['J','Q','X','Z']);
+
+    // Feats that permanently add something to the shop pool.
+    const MILESTONES = [
+        { id:'double_trouble', kind:'glyph', label:'Double Trouble',
+          test:c => c.event==='word' && c.word && c.word.length>=5 && /([A-Za-z])\1/.test(c.word) },
+        { id:'piggy_bank', kind:'glyph', label:'Piggy Bank',
+          test:c => c.event==='stageClear' && c.bank>=15 },
+        { id:'insurance_policy', kind:'glyph', label:'Insurance Policy',
+          test:c => c.event==='stageFail' && c.shortfallPct < 0.20 },
+        { id:'middle_child', kind:'glyph', label:'Middle Child',
+          test:c => c.event==='word' && c.score>1000 && c.word && c.word.length % 2 === 1 },
+        { id:'heavy_hitter', kind:'glyph', label:'Heavy Hitter',
+          test:c => c.event==='word' && c.word && (c.word.match(/[JQXZ]/g)||[]).length >= 2 },
+        { id:'void_seal', kind:'consumable', label:'Void Seal',
+          test:c => c.event==='stageClear' && c.stage>=5 && c.rerollsUsed===0 }
+    ];
+
+    const DEFAULT_PROGRESS = {
+        unlockedPresses: ['merchant_press'],
+        unlockedGlyphs: ['scrabble_master','vowel_anchor','consonant_charge','long_form','underdog'],
+        unlockedConsumables: ['gold_ink','transmuter','cloner'],
+        completedRuns: [],
+        selectedPress: 'merchant_press',
+        stats: { lettersDiscarded:0, inkSealsUsed:0, specialTilesPlayed:0, highestStageReached:1 }
+    };
+    function loadProgress() {
+        let saved = null;
+        try { saved = JSON.parse(localStorage.getItem('wordling-progress')||'null'); } catch(e) { saved = null; }
+        const p = Object.assign({}, DEFAULT_PROGRESS, saved||{});
+        p.stats = Object.assign({}, DEFAULT_PROGRESS.stats, (saved&&saved.stats)||{});
+        ['unlockedPresses','unlockedGlyphs','unlockedConsumables','completedRuns'].forEach(k=>{
+            if (!Array.isArray(p[k])) p[k] = DEFAULT_PROGRESS[k].slice();
+        });
+        if (!p.unlockedPresses.includes('merchant_press')) p.unlockedPresses.unshift('merchant_press');
+        if (!p.unlockedPresses.includes(p.selectedPress)) p.selectedPress = 'merchant_press';
+        G.progress = p;
+        saveProgress();
+    }
+    function saveProgress() { try { localStorage.setItem('wordling-progress', JSON.stringify(G.progress)); } catch(e) {} }
+    function getPress(id) { return PRESSES.find(p=>p.id===id) || null; }
+    function renderPresses() {
+        const rail = document.getElementById('press-rail');
+        if (!rail || !G.progress) return;
+        rail.innerHTML = '';
+        PRESSES.forEach(press => {
+            const unlocked = G.progress.unlockedPresses.includes(press.id);
+            const card = document.createElement('div');
+            card.className = 'press-card' + (unlocked ? '' : ' locked') + (unlocked && G.progress.selectedPress===press.id ? ' selected' : '');
+            card.style.setProperty('--press-color', press.color);
+            const icon = document.createElement('div'); icon.className='press-icon'; icon.textContent = unlocked ? press.icon : '🔒';
+            const name = document.createElement('div'); name.className='press-name'; name.textContent = press.name;
+            card.appendChild(icon); card.appendChild(name);
+            if (unlocked) {
+                const perk = document.createElement('div'); perk.className='press-perk'; perk.textContent = press.perk;
+                const cost = document.createElement('div'); cost.className='press-cost'; cost.textContent = press.tradeoff;
+                card.appendChild(perk); card.appendChild(cost);
+                card.addEventListener('click', ()=>{ G.progress.selectedPress = press.id; saveProgress(); AudioEngine.playTap(); renderPresses(); });
+            } else {
+                const prev = getPress(press.unlockedBy);
+                const lock = document.createElement('div'); lock.className='press-lock';
+                lock.textContent = 'Clear a run with ' + (prev ? prev.name : 'the previous press') + ' to unlock';
+                card.appendChild(lock);
+            }
+            rail.appendChild(card);
+        });
+        const sel = rail.querySelector('.press-card.selected');
+        if (sel) rail.scrollLeft = Math.max(0, sel.offsetLeft - rail.clientWidth/2 + sel.offsetWidth/2);
+    }
+    function getActivePress() { return G.gameMode==='zen' ? null : getPress(G.activePressId); }
+    function pressValue(key, fallback) { const p = getActivePress(); return (p && p[key] !== undefined) ? p[key] : fallback; }
+    function bumpStat(key, by) { if (!G.progress || !G.progress.stats) return; G.progress.stats[key] = (G.progress.stats[key]||0) + (by||1); saveProgress(); }
+
+    // A run is won -> bank the completion and open the next press in the chain.
+    function winRun(pressId) {
+        if (!pressId || !G.progress) return null;
+        if (!G.progress.completedRuns.includes(pressId)) G.progress.completedRuns.push(pressId);
+        const next = PRESSES.find(p=>p.unlockedBy===pressId);
+        let unlocked = null;
+        if (next && !G.progress.unlockedPresses.includes(next.id)) { G.progress.unlockedPresses.push(next.id); unlocked = next; }
+        saveProgress(); renderPresses();
+        if (unlocked) showUnlockBanner('NEW PRESS UNLOCKED', unlocked.name);
+        return unlocked;
+    }
+
+    function checkMilestones(ctx) {
+        if (!G.progress) return;
+        MILESTONES.forEach(m => {
+            const list = m.kind==='glyph' ? G.progress.unlockedGlyphs : G.progress.unlockedConsumables;
+            if (list.includes(m.id)) return;
+            let hit = false;
+            try { hit = !!m.test(ctx); } catch(e) { hit = false; }
+            if (!hit) return;
+            list.push(m.id); saveProgress();
+            showUnlockBanner(m.kind==='glyph' ? 'NEW GLYPH UNLOCKED' : 'NEW INK SEAL UNLOCKED', m.label);
+        });
+    }
+
+    let _bannerQueue = [], _bannerBusy = false;
+    function showUnlockBanner(kicker, name) {
+        _bannerQueue.push([kicker, name]);
+        if (!_bannerBusy) drainUnlockBanner();
+    }
+    function drainUnlockBanner() {
+        const next = _bannerQueue.shift();
+        if (!next) { _bannerBusy = false; return; }
+        _bannerBusy = true;
+        const el = document.getElementById('unlock-banner');
+        if (!el) { _bannerBusy = false; return; }
+        el.innerHTML = '<span class="unlock-kicker">'+next[0]+'</span><span class="unlock-name">'+next[1]+'</span>';
+        el.classList.remove('hidden');
+        void el.offsetWidth;
+        el.classList.add('show');
+        try { AudioEngine.playWin(); } catch(e) {}
+        setTimeout(()=>{ el.classList.remove('show'); setTimeout(()=>{ el.classList.add('hidden'); drainUnlockBanner(); }, 420); }, 2200);
+    }
     const DAILY_CHALLENGES = [
         { id:1, name:"The E-clipse", desc:"The letter 'E' is completely removed from the starting bag." },
         { id:2, name:"Vowel Drought", desc:"All vowels provide 0 base points." },
@@ -1379,7 +1547,8 @@
     }
     function isVowelLetter(letter) { if(letter==='Y'&&GlyphManager.hasGlyph('vowel_shifter')) return true; return VOWEL_LETTERS.has(letter); }
     function isConsonantLetter(letter) { return /[A-Z]/.test(letter) && !VOWEL_LETTERS.has(letter); }
-    function getHandSize() { return BASE_HAND_SIZE + (GlyphManager.hasGlyph('deep_pockets') ? 2 : 0); }
+    function getHandSize() { return Math.max(4, BASE_HAND_SIZE + (GlyphManager.hasGlyph('deep_pockets') ? 2 : 0) + pressValue('handBonus', 0)); }
+    function getMaxConsumables() { return MAX_CONSUMABLES + (pressValue('startSeals',0) ? 1 : 0); }
 
     const GlyphManager = {
         hasGlyph(id) { return G.equippedGlyphs.some(g=>g.id===id); },
@@ -1389,6 +1558,11 @@
             G.recyclerUsedThisStage = false;
             if (this.hasGlyph('scavenger')) G.rerollsLeft += 2;
             if (this.hasGlyph('perfectionist')) G.playsLeft += 1;
+            G.rerollsLeft += pressValue('discardBonus', 0);
+            if (pressValue('wildcardEachStage', false)) {
+                G.tileBag.push({ id:'t_press_wild_'+Math.random().toString(36).slice(2,9)+'_'+Date.now(), letter:'*', chips:0, type:'wildcard' });
+                G.tileBag = shuffle(G.tileBag);
+            }
         },
         onRoundStart(activeTiles) {
             if (!this.hasGlyph('wildcard_rune')) return;
@@ -1479,8 +1653,13 @@
         clearActiveRun();
         G.removedLetters = new Set();
         if (G.gameMode==='daily' && G.dailyChallenge===1) G.removedLetters.add('E');
-        G.equippedGlyphs = []; G.bank = 0; G.consumables = []; G.activeHazard = null; G.anchorTileId = null; G.mutedTileId = null; G.isEndless = false;
-        G.shopOffers = {glyphs:[], consumables:[]}; G.shopRerollCount = 0;
+        G.equippedGlyphs = []; G.bank = pressValue('startBank', 0); G.consumables = []; G.activeHazard = null; G.anchorTileId = null; G.mutedTileId = null; G.isEndless = false;
+        G.shopOffers = {glyphs:[], consumables:[]}; G.shopRerollCount = 0; G.shopRerollsUsedThisRun = 0;
+        const seedSeals = pressValue('startSeals', 0);
+        if (seedSeals > 0) {
+            const pool = shuffle(CONSUMABLE_DATABASE.filter(d=>G.progress.unlockedConsumables.includes(d.id)));
+            for (let i = 0; i < seedSeals && i < pool.length; i++) G.consumables.push({ id: pool[i].id });
+        }
         G.stageScores = [];
         G.tileBag = buildInitialBag();
         if (G.gameMode==='daily' && G.dailyChallenge===6) {
@@ -1496,11 +1675,13 @@
     function calcScore() {
         let totalChips=0, hasWildcard=false, redAuraBonus=0; const letters=[]; const pattern=[];
         const vowelDrought = G.gameMode==='daily' && G.dailyChallenge===2;
+        const pressRareZero = pressValue('rareZero', false);
         const midIdx = getMiddleChildIndex(G.activeWord.length);
         G.activeWord.forEach((t,ti)=>{
             if(t.type==='finisher') return;
             if(t.type==='wildcard'){ hasWildcard=true; pattern.push('?'); return; }
             let chip = isMutedTile(t) ? 0 : ((vowelDrought && VOWEL_LETTERS.has(t.letter)) ? 0 : (t.chips||0));
+            if (pressRareZero && PRESS_RARE.has(t.letter)) chip = 0;
             if(!isMutedTile(t)){ if(t.aura==='blue') chip+=10; if(t.aura==='gold') chip*=2; if(t.aura==='red') redAuraBonus+=2; if(t.goldInk) chip+=20; }
             if(ti===midIdx) chip = Math.floor(chip*1.5);
             totalChips+=chip; letters.push(t.letter); pattern.push(t.letter);
@@ -1531,7 +1712,7 @@
     function exitReroll() { G.rerollMode=false; G.rerollMarks.clear(); render(); }
     function drawIntoSlots(slots) { for(const idx of slots){ if(G.gameMode==='zen'){ G.hand[idx]=generateRandomTile(); continue; } if(G.tileBag.length===0){ if(G.discardPile.length===0) break; G.tileBag=shuffle(G.discardPile); G.discardPile=[]; } G.hand[idx]=G.tileBag.pop(); } ensureMutedTile(); }
     function isDiscardTaxed() { return G.activeHazard==='taxman' || (G.gameMode==='daily' && G.dailyChallenge===3); }
-    function confirmReroll() { if(!G.rerollMode||G.rerollMarks.size===0){ exitReroll(); return; } if(G.gameMode!=='zen'&&G.rerollsLeft<=0) return; if(G.gameMode!=='zen') G.rerollsLeft--; const discarded=[]; const freedSlots=[]; for(let i=0;i<getHandSize();i++){ if(G.hand[i]&&G.rerollMarks.has(G.hand[i].id)){ discarded.push(G.hand[i]); G.discardPile.push(G.hand[i]); G.hand[i]=null; freedSlots.push(i); } } GlyphManager.onDiscardEvent(discarded); if(discarded.length>0&&isDiscardTaxed()) G.bank=Math.max(0,G.bank-2); drawIntoSlots(freedSlots); G.rerollMarks.clear(); G.rerollMode=false; AudioEngine.playShuffle(); vibrate(12); renderWithTileFlip(); }
+    function confirmReroll() { if(!G.rerollMode||G.rerollMarks.size===0){ exitReroll(); return; } if(G.gameMode!=='zen'&&G.rerollsLeft<=0) return; if(G.gameMode!=='zen') G.rerollsLeft--; const discarded=[]; const freedSlots=[]; for(let i=0;i<getHandSize();i++){ if(G.hand[i]&&G.rerollMarks.has(G.hand[i].id)){ discarded.push(G.hand[i]); G.discardPile.push(G.hand[i]); G.hand[i]=null; freedSlots.push(i); } } GlyphManager.onDiscardEvent(discarded); bumpStat('lettersDiscarded', discarded.length); if(discarded.length>0&&isDiscardTaxed()) G.bank=Math.max(0,G.bank-2); drawIntoSlots(freedSlots); G.rerollMarks.clear(); G.rerollMode=false; AudioEngine.playShuffle(); vibrate(12); renderWithTileFlip(); }
     function toggleRerollBtn() { if(G.rerollMode) confirmReroll(); else enterReroll(); }
 
     function showConfirmModal() { document.getElementById('confirm-modal').classList.add('show'); }
@@ -1626,9 +1807,9 @@
             const tile = tilesCopy[i]; const el = tileEls[i];
             if (!tile || !el) continue;
             el.classList.add('scoring-pop');
-            if (tile.type === 'wildcard') { spawnGlyphIndicator(el, 'WILD'); await sleep(220); el.classList.remove('scoring-pop'); continue; }
+            if (tile.type === 'wildcard') { bumpStat('specialTilesPlayed', 1); spawnGlyphIndicator(el, 'WILD'); await sleep(220); el.classList.remove('scoring-pop'); continue; }
             if (tile.type === 'finisher') { if (i === tilesCopy.length - 1) spawnPopup(el, 3, true); await sleep(220); el.classList.remove('scoring-pop'); continue; }
-            let chip = isMutedTile(tile) ? 0 : ((G.gameMode==='daily' && G.dailyChallenge===2 && VOWEL_LETTERS.has(tile.letter)) ? 0 : (tile.chips || 0)); if (!isMutedTile(tile)) { if (tile.aura === 'blue') chip += 10; if (tile.aura === 'gold') chip *= 2; if (tile.aura === 'red') runningRedMult += 2; if (tile.goldInk) chip += 20; }
+            let chip = isMutedTile(tile) ? 0 : ((G.gameMode==='daily' && G.dailyChallenge===2 && VOWEL_LETTERS.has(tile.letter)) ? 0 : (tile.chips || 0)); if (pressValue('rareZero', false) && PRESS_RARE.has(tile.letter)) chip = 0; if (!isMutedTile(tile)) { if (tile.aura === 'blue') chip += 10; if (tile.aura === 'gold') chip *= 2; if (tile.aura === 'red') runningRedMult += 2; if (tile.goldInk) chip += 20; }
             if (i === animMidIdx) { chip = Math.floor(chip * 1.5); setTimeout(() => spawnGlyphIndicator(el, 'x1.5'), 80); }
             runningChips += chip; pointsEl.textContent = runningChips; pointsEl.classList.add('pop');
             const sparkColor = tile.aura === 'blue' ? 'var(--accent-1)' : tile.aura === 'red' ? 'var(--accent-2)' : 'var(--accent-3)';
@@ -1668,6 +1849,7 @@
         G.currentScore += payload.totalScore;
         if(!Array.isArray(G.stageWords)) G.stageWords=[];
         G.stageWords.push({word:payload.word, score:payload.totalScore});
+        checkMilestones({ event:'word', word:payload.word, score:payload.totalScore });
         updateHighestWord(payload.word, payload.totalScore);
         GlyphManager.onWordScored(payload.word, payload.totalScore, tilesCopy);
         AudioEngine.playSubmit(); vibrate(18);
@@ -1725,6 +1907,7 @@
         else if (G.playsLeft <= 0) {
             const tgt = G.stageTargets[G.currentStage];
             const shortfall = tgt - G.currentScore;
+            checkMilestones({ event:'stageFail', shortfallPct: tgt>0 ? shortfall/tgt : 1 });
             if (GlyphManager.hasGlyph('insurance_policy') && shortfall <= tgt * 0.15) {
                 const at = G.equippedGlyphs.findIndex(g=>g.id==='insurance_policy');
                 if (at !== -1) G.equippedGlyphs.splice(at,1);
@@ -1742,6 +1925,7 @@
     }
 
     function showStageClear(score) {
+        checkMilestones({ event:'stageClear', bank:G.bank, stage:G.currentStage, rerollsUsed:G.shopRerollsUsedThisRun||0 });
         G.phase='stageclear'; saveActiveRun();
         const draftDiv=document.getElementById('view-draft'); draftDiv.innerHTML=''; draftDiv.classList.remove('show');
         const panel=document.createElement('div'); panel.className='draft-panel';
@@ -1841,14 +2025,17 @@
         G.tileBag.push({ id:'t_'+def.tileType+'_'+Math.random().toString(36).slice(2,11)+'_'+Date.now(), letter: def.tileType==='wildcard'?'*':'!', chips:0, type:def.tileType });
     } }; }
     function makeConsumableOffer(def) { return { kind:'consumable', id:def.id, name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{ G.consumables.push({id:def.id}); } }; }
+    function isGlyphUnlocked(id) { return !G.progress || G.progress.unlockedGlyphs.includes(id); }
+    function isConsumableUnlocked(id) { return !G.progress || G.progress.unlockedConsumables.includes(id); }
     function generateShopGlyphOffers() {
         const pool = [];
-        GLYPH_DATABASE.forEach(g=>{ const alreadyEquipped=G.equippedGlyphs.some(eg=>eg.id===g.id); if(!alreadyEquipped && G.equippedGlyphs.length<MAX_GLYPH_SLOTS){ pool.push(makeGlyphOffer(g)); } });
+        GLYPH_DATABASE.forEach(g=>{ const alreadyEquipped=G.equippedGlyphs.some(eg=>eg.id===g.id); if(!alreadyEquipped && isGlyphUnlocked(g.id) && G.equippedGlyphs.length<MAX_GLYPH_SLOTS){ pool.push(makeGlyphOffer(g)); } });
         SPECIAL_TILE_DATABASE.forEach(def=>{ pool.push(makeTileOffer(def)); });
-        return shuffle(pool).slice(0,3);
+        const slots = Math.max(1, 3 + pressValue('shopGlyphDelta', 0));
+        return shuffle(pool).slice(0, slots);
     }
     function generateShopConsumableOffers() {
-        return shuffle(CONSUMABLE_DATABASE.map(def=>makeConsumableOffer(def))).slice(0,2);
+        return shuffle(CONSUMABLE_DATABASE.filter(def=>isConsumableUnlocked(def.id)).map(def=>makeConsumableOffer(def))).slice(0,2);
     }
     // localStorage keeps the offer data but drops every apply() closure, so a restored
     // shop would render cards that do nothing when bought. Rebuild them from the ids.
@@ -1877,12 +2064,13 @@
         G.shopOffers.consumables = generateShopConsumableOffers();
         G.shopRerollCount = 0;
     }
-    function getShopRerollCost() { return SHOP_REROLL_BASE_COST + G.shopRerollCount; }
+    function getShopRerollCost() { return pressValue('rerollBase', SHOP_REROLL_BASE_COST) + G.shopRerollCount; }
     function rerollShop(container) {
         const cost = getShopRerollCost();
         if (G.bank < cost) return;
         G.bank -= cost;
         G.shopRerollCount++;
+        G.shopRerollsUsedThisRun = (G.shopRerollsUsedThisRun||0) + 1;
         G.shopOffers.glyphs = generateShopGlyphOffers();
         G.shopOffers.consumables = generateShopConsumableOffers();
         AudioEngine.playSubmit();
@@ -1923,7 +2111,7 @@
             });
             zone.appendChild(oGrid); container.appendChild(zone);
         }
-        const consLabel = document.createElement('div'); consLabel.className='shop-section-label sec-seals'; consLabel.textContent='✦ INK SEALS ('+G.consumables.length+'/'+MAX_CONSUMABLES+' held)'; container.appendChild(consLabel);
+        const consLabel = document.createElement('div'); consLabel.className='shop-section-label sec-seals'; consLabel.textContent='✦ INK SEALS ('+G.consumables.length+'/'+getMaxConsumables()+' held)'; container.appendChild(consLabel);
         if (G.shopOffers.consumables.length===0) {
             const p=document.createElement('p'); p.className='draft-hint'; p.textContent='No seals in stock.'; container.appendChild(p);
         } else {
@@ -1992,7 +2180,7 @@
         const backBtn=document.createElement('button'); backBtn.className='menu-btn'; backBtn.textContent='BACK';
         backBtn.addEventListener('click', ()=>{ AudioEngine.playTap(); renderShop(container); });
         const buyBtn=document.createElement('button'); buyBtn.className='draft-btn'; buyBtn.textContent='BUY';
-        const inventoryFull = (kind==='consumable' && G.consumables.length>=MAX_CONSUMABLES) || (kind==='glyph' && G.equippedGlyphs.length>=MAX_GLYPH_SLOTS);
+        const inventoryFull = (kind==='consumable' && G.consumables.length>=getMaxConsumables()) || (kind==='glyph' && G.equippedGlyphs.length>=MAX_GLYPH_SLOTS);
         if (G.bank < item.price || inventoryFull) buyBtn.disabled = true;
         buyBtn.addEventListener('click', ()=>{
             if (G.bank < item.price || inventoryFull) return;
@@ -2036,6 +2224,7 @@
         requestAnimationFrame(()=>requestAnimationFrame(()=>draftDiv.classList.add('show')));
     }
     function claimVictory() {
+        winRun(G.activePressId);
         clearActiveRun();
         recordLeaderboardScore(G.currentScore);
         updateMostStagesCleared(G.totalStages);
@@ -2215,6 +2404,7 @@
     function useConsumable(invIndex) {
         if (G.isAnimating) return;
         const held = G.consumables[invIndex]; if (!held) return;
+        bumpStat('inkSealsUsed', 1);
         if (held.id === 'void_seal') {
             showLetterPicker({ title:'VOID SEAL', hint:'Pick up to 2 letter types to remove', filter:'all', maxPicks:2, onConfirm:(letters)=>{
                 letters.forEach(l => { G.removedLetters.add(l); G.tileBag = G.tileBag.filter(t => !(t.letter===l && t.type==='normal')); G.discardPile = G.discardPile.filter(t => !(t.letter===l && t.type==='normal')); });
@@ -2499,7 +2689,7 @@
     }
     function showMap() { resetStageState(); renderMap(); }
     function rollStageHazard() { G.activeHazard = null; if (G.gameMode==='zen') return; if (G.currentStage % 4 === 0) { const hazards=['wall','taxman','mute','anchor']; G.activeHazard = hazards[Math.floor(Math.random()*hazards.length)]; } }
-    function startStage() { G.phase='playing'; document.getElementById('view-map').classList.add('hidden'); document.getElementById('view-game').classList.remove('hidden'); resetStageState(); rollStageHazard(); GlyphManager.onStageStart(); GlyphManager.onRoundStart(G.hand); AudioEngine.startMusic(); render(); }
+    function startStage() { G.phase='playing'; if (G.progress && G.currentStage > (G.progress.stats.highestStageReached||1)) bumpStat('highestStageReached', G.currentStage - (G.progress.stats.highestStageReached||1)); document.getElementById('view-map').classList.add('hidden'); document.getElementById('view-game').classList.remove('hidden'); resetStageState(); rollStageHazard(); GlyphManager.onStageStart(); GlyphManager.onRoundStart(G.hand); AudioEngine.startMusic(); render(); }
 
     function initDict() { G.dictSet=new Set(DICTIONARY_WORDS.split(' ')); }
 
@@ -2568,6 +2758,8 @@
         Object.assign(G, saved);
         G.removedLetters = new Set(saved.removedLetters || []);
         G.stageWords = saved.stageWords || [];
+        G.activePressId = saved.activePressId || (G.progress && G.progress.selectedPress) || 'merchant_press';
+        G.shopRerollsUsedThisRun = saved.shopRerollsUsedThisRun || 0;
         G.rerollMode = false; G.rerollMarks = new Set(); G.isAnimating = false; G.modalType = null; G.dragData = null;
         G.gameStarted = true;
         document.getElementById('game-container').classList.remove('zen-mode');
@@ -2587,7 +2779,10 @@
     function startClassicLikeRun(mode) {
         G.gameMode = mode;
         G.dailyChallenge = mode==='daily' ? getTodaysChallenge().id : null;
+        G.activePressId = (G.progress && G.progress.selectedPress) || 'merchant_press';
+        const activePress = getPress(G.activePressId);
         G.stageTargets = [...CLASSIC_STAGE_TARGETS];
+        if (activePress && activePress.targetMult) G.stageTargets = G.stageTargets.map(t=>Math.floor(t*activePress.targetMult));
         G.totalStages = 8;
         G.isEndless = false;
         G.gameStarted = true;
@@ -2636,7 +2831,8 @@
             removedLetters: [...G.removedLetters],
             equippedGlyphs: G.equippedGlyphs, bank: G.bank, consumables: G.consumables,
             activeHazard: G.activeHazard, anchorTileId: G.anchorTileId, mutedTileId: G.mutedTileId,
-            shopOffers: G.shopOffers, shopRerollCount: G.shopRerollCount, phase: G.phase
+            shopOffers: G.shopOffers, shopRerollCount: G.shopRerollCount, phase: G.phase,
+            activePressId: G.activePressId, shopRerollsUsedThisRun: G.shopRerollsUsedThisRun
         };
     }
     function saveActiveRun() {
@@ -2682,7 +2878,7 @@
     }
     function updateContinueButtonVisibility() { document.getElementById('btn-continue-run').classList.toggle('hidden', !hasActiveRun()); }
     function wrapTitleLetters(){ const h1=document.querySelector('#view-menu h1'); if(!h1||h1.dataset.wrapped) return; const text=h1.textContent; h1.innerHTML=text.split('').map((ch,idx)=>ch===' '?' ':'<span class="title-letter" style="--i:'+idx+'">'+ch+'</span>').join(''); h1.dataset.wrapped='1'; }
-    function boot(){try{G.currentTheme=localStorage.getItem('wordling-theme')||'wordling';}catch(e){G.currentTheme='wordling';}applyTheme(G.currentTheme);let savedPalette;try{savedPalette=localStorage.getItem('wordling-palette')||'coral-sky';}catch(e){savedPalette='coral-sky';}applyPalette(savedPalette);updateThemeButtons();loadPersistence();updateContinueButtonVisibility();initDict();bind();wrapTitleLetters();}
+    function boot(){try{G.currentTheme=localStorage.getItem('wordling-theme')||'wordling';}catch(e){G.currentTheme='wordling';}loadProgress();applyTheme(G.currentTheme);let savedPalette;try{savedPalette=localStorage.getItem('wordling-palette')||'coral-sky';}catch(e){savedPalette='coral-sky';}applyPalette(savedPalette);updateThemeButtons();loadPersistence();renderPresses();updateContinueButtonVisibility();initDict();bind();wrapTitleLetters();}
     document.addEventListener('visibilitychange', () => { if(document.hidden){ if(G.dragData){ cleanupDrag(); render(); } } else { const c=document.getElementById('game-container'); if(c){ c.classList.add('anim-kick'); void c.offsetHeight; c.classList.remove('anim-kick'); } } });
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 })();
