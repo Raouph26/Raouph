@@ -979,6 +979,28 @@
         html[data-theme="cyber-arcade"] .glyph-slot.has-glyph, html[data-theme="cyber-arcade"] .draft-card.has-glyph, html[data-theme="cyber-arcade"] .draft-detail-icon.has-glyph {
             box-shadow: 0 0 10px 1px var(--glyph-color, transparent), var(--readout-shadow);
         }
+        /* !important is what lets a theme win against the inline colour the
+           card is built with; without it every theme would show arcade hues */
+        html[data-theme="wordling"] [data-gtype="green"]  { --glyph-color: #15803D !important; color: #15803D !important; }
+        html[data-theme="wordling"] [data-gtype="blue"]   { --glyph-color: #1D4ED8 !important; color: #1D4ED8 !important; }
+        html[data-theme="wordling"] [data-gtype="red"]    { --glyph-color: #B91C1C !important; color: #B91C1C !important; }
+        html[data-theme="wordling"] [data-gtype="purple"] { --glyph-color: #6D28D9 !important; color: #6D28D9 !important; }
+        html[data-theme="wordling"] [data-gtype="special"]{ --glyph-color: #0E7490 !important; color: #0E7490 !important; }
+        html[data-theme="renegade-crimson"] [data-gtype="green"]  { --glyph-color: #111113 !important; color: #111113 !important; }
+        html[data-theme="renegade-crimson"] [data-gtype="blue"]   { --glyph-color: #1c1c22 !important; color: #1c1c22 !important; }
+        html[data-theme="renegade-crimson"] [data-gtype="red"]    { --glyph-color: #E60012 !important; color: #E60012 !important; }
+        html[data-theme="renegade-crimson"] [data-gtype="purple"] { --glyph-color: #FF2A4B !important; color: #FF2A4B !important; }
+        html[data-theme="pale-terminal"] [data-gtype="green"]  { --glyph-color: #4f5445 !important; color: #4f5445 !important; }
+        html[data-theme="pale-terminal"] [data-gtype="blue"]   { --glyph-color: #3a3f47 !important; color: #3a3f47 !important; }
+        html[data-theme="pale-terminal"] [data-gtype="red"]    { --glyph-color: #7a3a35 !important; color: #7a3a35 !important; }
+        html[data-theme="pale-terminal"] [data-gtype="purple"] { --glyph-color: #4a4550 !important; color: #4a4550 !important; }
+        html[data-theme="typewriter"] [data-gtype="green"]  { --glyph-color: #4a5c3a !important; color: #4a5c3a !important; }
+        html[data-theme="typewriter"] [data-gtype="blue"]   { --glyph-color: #2f3a4a !important; color: #2f3a4a !important; }
+        html[data-theme="typewriter"] [data-gtype="red"]    { --glyph-color: #D9383A !important; color: #D9383A !important; }
+        html[data-theme="typewriter"] [data-gtype="purple"] { --glyph-color: #4a3f5c !important; color: #4a3f5c !important; }
+        html[data-theme="renegade-crimson"] [data-gtype="special"] { --glyph-color: #E60012 !important; color: #E60012 !important; }
+        html[data-theme="pale-terminal"] [data-gtype="special"] { --glyph-color: #45505c !important; color: #45505c !important; }
+        html[data-theme="typewriter"] [data-gtype="special"] { --glyph-color: #3a4a5c !important; color: #3a4a5c !important; }
         html[data-theme="typewriter"] .glyph-slot.has-glyph, html[data-theme="typewriter"] .draft-card.has-glyph, html[data-theme="typewriter"] .draft-detail-icon.has-glyph {
             border: 2px dashed var(--glyph-color, var(--panel-border));
         }
@@ -1015,6 +1037,15 @@
         .shop-section-label.sec-buy { color: #A855F7; }
         .shop-section-label.sec-seals { color: #22D3EE; }
         .shop-section-label.sec-sell { color: #FF4D4D; }
+        html[data-theme="renegade-crimson"] .shop-section-label.sec-buy   { color: #111113; }
+        html[data-theme="renegade-crimson"] .shop-section-label.sec-seals { color: #E60012; }
+        html[data-theme="pale-terminal"] .shop-section-label.sec-buy   { color: #45505c; }
+        html[data-theme="pale-terminal"] .shop-section-label.sec-seals { color: #4f5445; }
+        html[data-theme="pale-terminal"] .shop-section-label.sec-sell  { color: #7a3a35; }
+        html[data-theme="pale-terminal"] .shop-sell-zone { border-color: #7a3a35; background: rgba(122,58,53,0.08); }
+        html[data-theme="typewriter"] .shop-section-label.sec-buy   { color: #4a3f5c; }
+        html[data-theme="typewriter"] .shop-section-label.sec-seals { color: #2f3a4a; }
+        html[data-theme="typewriter"] .shop-section-label.sec-sell  { color: #D9383A; }
         .shop-sell-zone { border: 2px dashed #FF4D4D; background: rgba(255,77,77,0.10); border-radius: var(--panel-radius); padding: 2px 8px 10px; margin-top: 12px; width: 100%; }
         .sell-banner { width:100%; background:#FF4D4D; color:#ffffff; font-family:var(--font-main); font-weight:900; letter-spacing:1.5px; font-size:0.78rem; text-align:center; padding:9px 10px; border-radius: calc(var(--panel-radius) * 0.6); box-shadow: 0 3px 0 0 #A3111F; }
         .shop-price {
@@ -1077,7 +1108,7 @@
             border: 1px solid var(--panel-border); border-left: 3px solid var(--text-soft); margin-bottom:5px;
         }
         .unlock-row.is-unlocked { border-left-color: var(--accent-3); }
-        .unlock-icon { font-size:1rem; line-height:1.2; flex-shrink:0; width:20px; text-align:center; color: var(--text-soft); }
+        .unlock-icon { font-size:1rem; line-height:1.2; flex-shrink:0; width:26px; text-align:center; color: var(--text-soft); }
         /* the padlock is drawn, not typed: the emoji codepoint renders in full
            colour from the system font and cannot be tinted. */
         .unlock-row:not(.is-unlocked) .unlock-icon { color: var(--text); opacity: 0.9; }
@@ -1111,9 +1142,12 @@
         }
         /* the drawings take the colour of whatever they are placed in */
         .gicon { width: 1em; height: 1em; display: block; fill: currentColor; color: inherit; overflow: visible; }
-        .draft-card.has-glyph .gicon, .draft-detail-icon.has-glyph .gicon { width: 1em; height: 1em; margin: 0 auto; }
-        .glyph-stat .gicon { width: 1em; height: 1em; }
-        .unlock-icon .gicon { width: 15px; height: 15px; margin: 1px auto 0; }
+        /* sized against the card rather than the font so the art keeps its
+           margins, and lifted clear of the price in the bottom corner */
+        .draft-card .gicon { width: 66%; height: 66%; margin: 0 auto 11px; }
+        .draft-detail-icon .gicon { width: 72%; height: 72%; margin: 0 auto; }
+        .glyph-stat .gicon { width: 1.7em; height: 1.7em; }
+        .unlock-icon .gicon { width: 25px; height: 25px; margin: 1px auto 0; }
         .stats-panel {
             background: var(--panel-bg); color: var(--text);
             border: var(--outline-w) solid var(--panel-border); border-radius: var(--panel-radius);
@@ -1262,12 +1296,12 @@
         html[data-theme="renegade-crimson"] {
             --bg-solid: #111113;
             --bg-vignette: radial-gradient(ellipse at 50% 28%, rgba(230,0,18,0.26) 0%, rgba(0,0,0,0) 60%);
-            --panel-bg: #ffffff; --panel-border: #111111; --panel-shadow-color: #000000; --panel-radius: 0px;
+            --panel-bg: #F4F1EA; --panel-border: #111111; --panel-shadow-color: #000000; --panel-radius: 0px;
             --text: #111111; --text-soft: #55555c; --bg-text: #ffffff;
             --accent-1: #e60012; --accent-1-shadow: #000000; --accent-1-text: #ffffff;
             --accent-2: #ffffff; --accent-2-shadow: #000000; --accent-2-text: #111111;
             --accent-3: #e60012; --accent-3-rgb: 230,0,18; --accent-3-shadow: #000000; --accent-3-text: #ffffff;
-            --cap-bg: #ffffff; --cap-color: #111111; --cap-border: #111111; --cap-shadow-color: #000000; --cap-radius: 0px;
+            --cap-bg: #F4F1EA; --cap-color: #111111; --cap-border: #111111; --cap-shadow-color: #000000; --cap-radius: 0px;
             --tile-bg: #ffffff; --tile-color: #111111; --tile-border: #111111; --tile-shadow-color: #000000; --tile-radius: 0px;
             --btn-radius: 0px; --outline-w: 3px; --press-depth: 5px;
             --title-shadow: 5px 5px 0 #000000;
@@ -1341,9 +1375,9 @@
             --font-title: 'Courier New', Consolas, monospace;
             --font-numeric: 'Courier New', Consolas, monospace;
             --font-weight-ui: 700; --letter-spacing-ui: 1px;
-            --bg-solid: #c8c5b5;
+            --bg-solid: #b9b6a6;
             --bg-vignette: none;
-            --panel-bg: #d2cfc0; --panel-border: #383732; --panel-shadow-color: #a8a495; --panel-radius: 0px;
+            --panel-bg: #cbc8b8; --panel-border: #383732; --panel-shadow-color: #a8a495; --panel-radius: 0px;
             --text: #383732; --text-soft: #55544c; --bg-text: #383732;
             --accent-1: #7f7c6d; --accent-1-shadow: #4d4b43; --accent-1-text: #efece0;
             --accent-2: #8c403e; --accent-2-shadow: #5c2a29; --accent-2-text: #f2e9e6;
@@ -1356,7 +1390,7 @@
             --readout-shadow: 2px 2px 0 0 #9a9788;
         }
         html[data-theme="pale-terminal"] #game-container {
-            background-color: #c8c5b5;
+            background-color: #b9b6a6;
             background-image:
                 linear-gradient(rgba(56,55,50,0.08) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(56,55,50,0.08) 1px, transparent 1px);
@@ -2613,7 +2647,7 @@
             const grid=document.createElement('div'); grid.className='draft-grid';
             G.shopOffers.glyphs.forEach(item=>{
                 const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
-                const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); setIcon(card, item.id, item.icon);
+                const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); card.dataset.gtype=item.type||'special'; setIcon(card, item.id, item.icon);
                 const price=document.createElement('span'); price.className='draft-card-price'; price.innerHTML='<span class="diamond-icon"></span>'+item.price; card.appendChild(price);
                 const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=item.name;
                 wrap.appendChild(card); wrap.appendChild(label);
@@ -2629,7 +2663,7 @@
             G.equippedGlyphs.forEach((eq, i)=>{
                 const data = GlyphManager.getGlyphData(eq.id); if(!data) return;
                 const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
-                const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', data.color); setIcon(card, data.id, data.icon);
+                const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', data.color); card.dataset.gtype=data.type||'special'; setIcon(card, data.id, data.icon);
                 const price=document.createElement('span'); price.className='draft-card-price'; price.innerHTML='<span class="diamond-icon"></span>'+getGlyphSellValue(); card.appendChild(price);
                 const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=data.name;
                 wrap.appendChild(card); wrap.appendChild(label);
@@ -2645,7 +2679,7 @@
             const cGrid = document.createElement('div'); cGrid.className='draft-grid';
             G.shopOffers.consumables.forEach(item=>{
                 const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
-                const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); setIcon(card, item.id, item.icon);
+                const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); card.dataset.gtype=item.type||'special'; setIcon(card, item.id, item.icon);
                 const price=document.createElement('span'); price.className='draft-card-price'; price.innerHTML='<span class="diamond-icon"></span>'+item.price; card.appendChild(price);
                 const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=item.name;
                 wrap.appendChild(card); wrap.appendChild(label);
@@ -2674,7 +2708,7 @@
         const value = getGlyphSellValue();
         const wrap=document.createElement('div'); wrap.className='draft-detail';
         const banner=document.createElement('div'); banner.className='sell-banner'; banner.textContent='● SELLING — THIS REMOVES THE GLYPH';
-        const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', data.color); setIcon(icon, data.id, data.icon);
+        const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', data.color); icon.dataset.gtype=data.type||'special'; setIcon(icon, data.id, data.icon);
         const name=document.createElement('div'); name.className='draft-detail-name'; name.style.setProperty('--glyph-color', data.color); name.textContent=data.name;
         const desc=document.createElement('div'); desc.className='draft-detail-desc'; desc.textContent=data.desc;
         const price=document.createElement('div'); price.className='shop-price'; price.innerHTML='SELL FOR <span class="diamond-icon"></span>'+value;
@@ -2785,7 +2819,7 @@
                     slot.classList.add('has-glyph'); slot.style.setProperty('--glyph-color', data.color);
                     slot.title = data.name + ' — ' + data.desc;
                     const badge = document.createElement('span'); badge.className = 'glyph-level-badge'; badge.style.background = data.color; badge.textContent = data.type.toUpperCase(); slot.appendChild(badge);
-                    const stat = document.createElement('span'); stat.className = 'glyph-stat'; stat.style.color = data.color; setIcon(stat, data.id, data.icon); slot.appendChild(stat);
+                    const stat = document.createElement('span'); stat.className = 'glyph-stat'; stat.style.color = data.color; stat.dataset.gtype = data.type||'special'; setIcon(stat, data.id, data.icon); slot.appendChild(stat);
                     slot.addEventListener('pointerdown', (e) => onDragStart(e, 'glyph', i));
                 }
             }
@@ -2797,7 +2831,7 @@
         const draftDiv=document.getElementById('view-draft'); draftDiv.innerHTML=''; draftDiv.classList.remove('show');
         const panel=document.createElement('div'); panel.className='draft-panel';
         const wrap=document.createElement('div'); wrap.className='draft-detail';
-        const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', data.color); setIcon(icon, data.id, data.icon);
+        const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', data.color); icon.dataset.gtype=data.type||'special'; setIcon(icon, data.id, data.icon);
         const name=document.createElement('div'); name.className='draft-detail-name'; name.style.setProperty('--glyph-color', data.color); name.textContent=data.name;
         const desc=document.createElement('div'); desc.className='draft-detail-desc'; desc.textContent=data.desc;
         const closeBtn=document.createElement('button'); closeBtn.className='draft-btn'; closeBtn.style.width='100%'; closeBtn.textContent='CLOSE';
@@ -3027,6 +3061,8 @@
             return;
         }
         if(!hasMoved){ if(source==='hand'){ if(G.rerollMode) toggleRerollMark(index); else placeTileInSlot(index); } else { removeTileFromWord(index); } return; }
+        // a deliberate drag is not a discard mark: step out of reroll and move it
+        if(G.rerollMode){ G.rerollMode=false; G.rerollMarks.clear(); }
         const targetEl=document.elementFromPoint(px,py); if(!targetEl){ renderWithTileFlip(); return; }
         const handWrap=targetEl.closest('.hand-tile-wrap'); const activeTile=targetEl.closest('.active-tile'); const wordLine=targetEl.closest('#active-word-line'); const handRack=targetEl.closest('#hand-rack');
         if(source==='hand'){
@@ -3165,6 +3201,7 @@
         tickResourceValue(document.getElementById('val-gold'), G.bank, '<span class="diamond-icon"></span> '+G.bank);
         const sb=document.getElementById('score-banner'); if(p.occ===0) sb.textContent='—'; else if(!p.valid) sb.textContent='INVALID WORD'; else sb.textContent='READY';
         const sortBtn=document.getElementById('btn-sort-bench'); if(sortBtn) sortBtn.textContent = BENCH_SORT_LABELS[G.benchSort||'draw'];
+        const clearBtn=document.getElementById('btn-clear'); if(clearBtn) clearBtn.textContent = G.rerollMode ? 'CANCEL' : 'RECALL';
         sb.classList.toggle('invalid',p.occ>0&&!p.valid);
         const awl=document.getElementById('active-word-line');
         reconcileTileList(awl, G.activeWord, tile=>tile.id,
@@ -3187,7 +3224,7 @@
         document.getElementById('btn-reroll').disabled=(!isZen&&G.rerollsLeft<=0)||G.isAnimating;
         document.getElementById('btn-clear').disabled=(p.occ===0&&!G.rerollMode)||G.isAnimating;
         document.getElementById('btn-shuffle-hand').disabled=G.hand.filter(t=>t).length<2||G.isAnimating||G.rerollMode;
-        const rb=document.getElementById('btn-reroll'); if(G.rerollMode){ rb.classList.add('reroll-mode'); rb.textContent='CONFIRM ('+G.rerollMarks.size+'/3)'; } else { rb.classList.remove('reroll-mode'); rb.textContent='REROLL'; }
+        const rb=document.getElementById('btn-reroll'); if(G.rerollMode){ rb.classList.add('reroll-mode'); rb.textContent = G.rerollMarks.size===0 ? 'CANCEL' : 'CONFIRM ('+G.rerollMarks.size+'/3)'; } else { rb.classList.remove('reroll-mode'); rb.textContent='REROLL'; }
         saveActiveRun();
     }
 
