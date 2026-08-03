@@ -581,6 +581,21 @@
         .draft-detail-desc { font-size: 0.88rem; color: var(--text); font-family: var(--font-main); line-height: 1.4; max-width: 260px; }
         #press-picker { width:100%; flex-shrink:0; }
         .press-title { font-size:0.68rem; font-weight:900; letter-spacing:2px; color: var(--bg-text); text-align:center; font-family: var(--font-main); margin-bottom:6px; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+        .loadout-summary {
+            width: 250px; display: flex; align-items: center; gap: 8px;
+            padding: 11px 14px; cursor: pointer; text-align: left;
+            background: var(--cap-bg); color: var(--cap-color); font-family: var(--font-main);
+            border: var(--outline-w) solid var(--cap-border); border-radius: var(--btn-radius);
+            box-shadow: 0 var(--press-depth) 0 0 var(--cap-shadow-color);
+        }
+        .loadout-summary:active { transform: translateY(var(--press-depth)); box-shadow: 0 0 0 0 var(--cap-shadow-color); }
+        .loadout-label { font-size: 0.55rem; font-weight: 900; letter-spacing: 1.4px; opacity: 0.65; }
+        .loadout-name { flex: 1 1 auto; text-align: right; font-size: 0.82rem; font-weight: 900; }
+        .loadout-chev { font-size: 1.1rem; font-weight: 900; opacity: 0.55; }
+        #view-press { align-items: center; gap: 14px; padding: 30px 20px; z-index: 9;
+            justify-content: flex-start; justify-content: safe center;
+            background: rgba(0,0,0,0.1); transform: translateX(110%); opacity: 0; pointer-events: none; }
+        #view-press.slide-in { transform: translateX(0); opacity: 1; pointer-events: auto; }
         .press-rail-wrap { position:relative; width:100%; }
         /* side padding of half the leftover width lets the first and last card sit
            dead centre; the top padding is what the selected tick needs so it is not
@@ -656,8 +671,8 @@
             /* a stack of 22 hard offsets faked this outline and stair-stepped every
                curve, which read as pixelated. One real stroke, painted behind the
                fill, keeps the chunk without the jaggies. */
-            -webkit-text-stroke: 7px #ffffff; paint-order: stroke fill;
-            text-shadow: 0 7px 0 rgba(15,23,42,0.26), 0 12px 16px rgba(0,0,0,0.3);
+            -webkit-text-stroke: 9px #ffffff; paint-order: stroke fill;
+            text-shadow: 0 7px 0 rgba(15,23,42,0.26), 0 12px 18px rgba(0,0,0,0.32);
             will-change: transform;
         }
         html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(4n+1) { animation-name: wlWaveA; animation-duration: 2.3s; }
@@ -684,10 +699,42 @@
         html[data-theme="wordling"][data-palette="black-grey"] #view-menu h1 .title-letter:first-child::before {
             background: var(--accent-3); border-color: #18181B; box-shadow: 0 4px 0 0 #18181B;
         }
-        @keyframes wlWaveA { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-6px) rotate(-3deg); } }
-        @keyframes wlWaveB { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-4px) rotate(2deg); } }
-        @keyframes wlWaveC { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-7px) rotate(3deg); } }
-        @keyframes wlWaveD { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-5px) rotate(-2.5deg); } }
+        .title-gem { display: none; }
+        html[data-theme="wordling"] #view-menu h1 { position: relative; }
+        html[data-theme="wordling"] .title-gem {
+            display: block; position: absolute; top: -18px; right: -20px;
+            width: 42px; height: 42px; pointer-events: none; z-index: 3;
+        }
+        .gem-shard {
+            position: absolute; inset: 6px; display: block;
+            background: linear-gradient(135deg, #fff7d6 0%, #ffd54a 40%, #e0a207 75%, #a86f04 100%);
+            clip-path: polygon(50% 0%, 100% 38%, 50% 100%, 0% 38%);
+            filter: drop-shadow(0 2px 0 rgba(15,23,42,0.35));
+            animation: gemBob 2.6s ease-in-out infinite;
+        }
+        .gem-glint {
+            position: absolute; left: 50%; top: 50%; display: block;
+            width: 3px; height: 3px; margin: -1.5px 0 0 -1.5px; border-radius: 50%;
+            background: #fffdf2; box-shadow: 0 0 6px 2px rgba(255,241,168,0.9);
+            opacity: 0;
+        }
+        .gem-glint-a { animation: gemGlint 2.6s ease-in-out infinite; --gx: 13px; --gy: -12px; }
+        .gem-glint-b { animation: gemGlint 2.6s ease-in-out infinite 0.85s; --gx: -14px; --gy: 9px; }
+        .gem-glint-c { animation: gemGlint 2.6s ease-in-out infinite 1.7s; --gx: 11px; --gy: 13px; }
+        @keyframes gemBob {
+            0%, 100% { transform: translateY(0) rotate(-6deg) scale(1); }
+            35%      { transform: translateY(-4px) rotate(5deg) scale(1.12); }
+            70%      { transform: translateY(1px) rotate(-2deg) scale(0.97); }
+        }
+        @keyframes gemGlint {
+            0%, 62%, 100% { opacity: 0; transform: translate(var(--gx), var(--gy)) scale(0.4); }
+            72%           { opacity: 1; transform: translate(var(--gx), var(--gy)) scale(1.6); }
+            84%           { opacity: 0; transform: translate(var(--gx), var(--gy)) scale(0.7); }
+        }
+        @keyframes wlWaveA { 0%, 100% { transform: translateY(0) rotate(-2deg) scale(1); } 50% { transform: translateY(-8px) rotate(-6deg) scale(1.06); } }
+        @keyframes wlWaveB { 0%, 100% { transform: translateY(0) rotate(2deg) scale(1); } 50% { transform: translateY(-6px) rotate(5deg) scale(1.05); } }
+        @keyframes wlWaveC { 0%, 100% { transform: translateY(0) rotate(-1deg) scale(1); } 50% { transform: translateY(-9px) rotate(4deg) scale(1.07); } }
+        @keyframes wlWaveD { 0%, 100% { transform: translateY(0) rotate(3deg) scale(1); } 50% { transform: translateY(-7px) rotate(-4deg) scale(1.05); } }
         #view-difficulty h2, #view-themes h2, #view-map h2 {
             color: var(--bg-text); text-shadow: 0 2px 6px rgba(0,0,0,0.4), 0 1px 0 rgba(0,0,0,0.3); font-size: 1.3rem; font-weight: 900;
             width: 100%; text-align: center; margin-bottom: 8px; font-family: var(--font-title); letter-spacing: 1px;
@@ -813,6 +860,9 @@
         #modal-subtitle { color: var(--text); font-family: var(--font-main); font-weight:600; font-size:0.85rem; margin:4px 0 8px; }
         .run-info-row { display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:0.85rem; color: var(--text); background: rgba(0,0,0,0.06); padding:9px 12px; border-radius: var(--radius-sm); font-family: var(--font-main); }
         .run-info-row.clickable { cursor:pointer; }
+        .info-dot { font-size:0.8rem; opacity:0.75; margin-left:3px; }
+        #ri-hazard-panel { margin-top:-4px; }
+        #ri-hazard-panel p { margin:0; }
         .menu-btn.quit-run-btn { background: var(--accent-2); border-color: var(--accent-2-shadow); color: var(--accent-2-text); box-shadow: 0 var(--press-depth) 0 0 var(--accent-2-shadow); }
         .menu-btn.quit-run-btn:active { box-shadow: 0 0 0 0 var(--accent-2-shadow); }
         #top-info { flex-shrink:0; display:flex; flex-direction:column; gap:4px; }
@@ -975,7 +1025,7 @@
             z-index: 2; white-space: nowrap; line-height: 1.4; font-family: var(--font-main);
         }
         .glyph-stat { font-size: 1.4rem; font-weight: 900; letter-spacing: -0.3px; text-align: center; line-height: 1.1; font-family: var(--font-numeric); }
-        .glyph-slot.has-glyph, .draft-card.has-glyph, .draft-detail-icon.has-glyph { border-top: 3px solid var(--glyph-color, var(--panel-border)); }
+        .glyph-slot.has-glyph, .draft-card.has-glyph, .draft-detail-icon.has-glyph { border-top: 5px solid var(--glyph-color, var(--panel-border)); }
         html[data-theme="cyber-arcade"] .glyph-slot.has-glyph, html[data-theme="cyber-arcade"] .draft-card.has-glyph, html[data-theme="cyber-arcade"] .draft-detail-icon.has-glyph {
             box-shadow: 0 0 10px 1px var(--glyph-color, transparent), var(--readout-shadow);
         }
@@ -998,6 +1048,14 @@
         html[data-theme="typewriter"] [data-gtype="blue"]   { --glyph-color: #2f3a4a !important; color: #2f3a4a !important; }
         html[data-theme="typewriter"] [data-gtype="red"]    { --glyph-color: #D9383A !important; color: #D9383A !important; }
         html[data-theme="typewriter"] [data-gtype="purple"] { --glyph-color: #4a3f5c !important; color: #4a3f5c !important; }
+        html[data-theme="wordling"] [data-gtype="seal"] { --glyph-color: #0E7490 !important; color: #0E7490 !important; }
+        html[data-theme="wordling"] [data-gtype="tile"] { --glyph-color: #B45309 !important; color: #B45309 !important; }
+        html[data-theme="renegade-crimson"] [data-gtype="seal"] { --glyph-color: #8A0710 !important; color: #8A0710 !important; }
+        html[data-theme="renegade-crimson"] [data-gtype="tile"] { --glyph-color: #3d3d47 !important; color: #3d3d47 !important; }
+        html[data-theme="pale-terminal"] [data-gtype="seal"] { --glyph-color: #45505c !important; color: #45505c !important; }
+        html[data-theme="pale-terminal"] [data-gtype="tile"] { --glyph-color: #6b5f3f !important; color: #6b5f3f !important; }
+        html[data-theme="typewriter"] [data-gtype="seal"] { --glyph-color: #3a4a5c !important; color: #3a4a5c !important; }
+        html[data-theme="typewriter"] [data-gtype="tile"] { --glyph-color: #7a5c2a !important; color: #7a5c2a !important; }
         html[data-theme="renegade-crimson"] [data-gtype="special"] { --glyph-color: #E60012 !important; color: #E60012 !important; }
         html[data-theme="pale-terminal"] [data-gtype="special"] { --glyph-color: #45505c !important; color: #45505c !important; }
         html[data-theme="typewriter"] [data-gtype="special"] { --glyph-color: #3a4a5c !important; color: #3a4a5c !important; }
@@ -1519,6 +1577,20 @@
             font-size: 0.58rem; letter-spacing: 1.6px; color: #6b6a61; text-shadow: none;
         }
         .card-renegade-crimson .theme-name { color: #e60012; font-family: 'Poppins', sans-serif; font-weight: 900; letter-spacing: -0.5px; }
+        html[data-theme="renegade-crimson"] .glyph-slot.has-glyph,
+        html[data-theme="renegade-crimson"] .draft-card.has-glyph,
+        html[data-theme="renegade-crimson"] .draft-detail-icon.has-glyph,
+        html[data-theme="pale-terminal"] .glyph-slot.has-glyph,
+        html[data-theme="pale-terminal"] .draft-card.has-glyph,
+        html[data-theme="pale-terminal"] .draft-detail-icon.has-glyph,
+        html[data-theme="typewriter"] .glyph-slot.has-glyph,
+        html[data-theme="typewriter"] .draft-card.has-glyph,
+        html[data-theme="typewriter"] .draft-detail-icon.has-glyph,
+        html[data-theme="cyber-arcade"] .glyph-slot.has-glyph,
+        html[data-theme="cyber-arcade"] .draft-card.has-glyph,
+        html[data-theme="cyber-arcade"] .draft-detail-icon.has-glyph {
+            border-top: 5px solid var(--glyph-color, var(--panel-border));
+        }
     </style>
 </head>
 <body>
@@ -1526,7 +1598,7 @@
 <div id="game-container">
     <div id="unlock-banner" class="hidden"></div>
     <div id="bg-overlay"></div>
-    <div id="view-menu" class="view-panel"><h1 id="game-title" class="game-title"><span class="title-eyebrow"></span><span class="title-main">WORDSPYRE</span><span class="title-tagline"></span></h1><button class="menu-btn play-btn" id="btn-play">▶ PLAY</button><button class="menu-btn themes-btn" id="btn-menu-themes">◆ THEMES</button><button class="menu-btn settings-btn" id="btn-menu-unlocks">◈ UNLOCKS</button><button class="menu-btn settings-btn" id="btn-menu-options">⚙ SETTINGS</button><button class="menu-btn settings-btn" id="btn-menu-stats">★ STATS</button></div>
+    <div id="view-menu" class="view-panel"><h1 id="game-title" class="game-title"><span class="title-eyebrow"></span><span class="title-main">WORDSPYRE</span><span class="title-gem" aria-hidden="true"><span class="gem-shard"></span><span class="gem-glint gem-glint-a"></span><span class="gem-glint gem-glint-b"></span><span class="gem-glint gem-glint-c"></span></span><span class="title-tagline"></span></h1><button class="menu-btn play-btn" id="btn-play">▶ PLAY</button><button class="menu-btn themes-btn" id="btn-menu-themes">◆ THEMES</button><button class="menu-btn settings-btn" id="btn-menu-unlocks">◈ UNLOCKS</button><button class="menu-btn settings-btn" id="btn-menu-options">⚙ SETTINGS</button><button class="menu-btn settings-btn" id="btn-menu-stats">★ STATS</button></div>
     <div id="view-stats" class="view-panel hidden">
         <button type="button" class="panel-close" id="btn-close-stats" aria-label="Back to menu">✕</button>
         <div class="stats-panel">
@@ -1624,7 +1696,7 @@
         <button type="button" class="panel-close" id="btn-close-diff" aria-label="Back to menu">✕</button>
         <h2><span class="header-badge">SELECT MODE</span></h2>
         <button class="menu-btn continue-btn hidden" id="btn-continue-run">↻ CONTINUE RUN</button>
-        <div id="press-picker"><div class="press-title">RUN LOADOUT</div><div class="press-rail-wrap"><button type="button" class="press-arrow" id="press-prev" aria-label="Previous loadout">‹</button><div id="press-rail"></div><button type="button" class="press-arrow" id="press-next" aria-label="Next loadout">›</button></div></div>
+        <button type="button" class="loadout-summary" id="btn-open-press"><span class="loadout-label">RUN LOADOUT</span><span class="loadout-name" id="loadout-name">—</span><span class="loadout-chev">›</span></button>
         <button class="diff-btn diff-easy" id="btn-mode-classic">CLASSIC<br><span class="mode-sub">8 Stages · Shop · Glyphs</span></button>
         <div class="daily-card">
             <button class="diff-btn diff-medium" id="btn-mode-daily">DAILY CHALLENGE<br><span class="mode-sub" id="daily-mode-sub">Loading…</span></button>
@@ -1632,7 +1704,12 @@
             <div class="daily-info-panel" id="daily-info-panel"><p id="daily-info-text"></p></div>
         </div>
         <button class="diff-btn diff-hard" id="btn-mode-zen">ZEN<br><span class="mode-sub">Relaxed · Endless · No Economy</span></button>
-        <button class="menu-btn" id="btn-back-diff">BACK</button>
+    </div>
+    <div id="view-press" class="view-panel hidden">
+        <button type="button" class="panel-close" id="btn-close-press" aria-label="Back">✕</button>
+        <h2><span class="header-badge">RUN LOADOUT</span></h2>
+        <div id="press-picker"><div class="press-rail-wrap"><button type="button" class="press-arrow" id="press-prev" aria-label="Previous loadout">‹</button><div id="press-rail"></div><button type="button" class="press-arrow" id="press-next" aria-label="Next loadout">›</button></div></div>
+        <button class="menu-btn play-btn" id="btn-press-done">USE THIS LOADOUT</button>
     </div>
     <div id="view-map" class="view-panel hidden"><div id="map-header"></div><div id="map-scroll"><div id="map-ladder"></div></div><button id="btn-start-stage">START STAGE</button></div>
     <div id="view-game" class="view-panel hidden">
@@ -1662,7 +1739,8 @@
         <div class="run-info-body">
             <div class="run-info-row"><span>Stage</span><span id="ri-stage">—</span></div>
             <div class="run-info-row"><span>Bag</span><span id="ri-bag">—</span></div>
-            <div class="run-info-row"><span>Boss Blind</span><span id="ri-hazard">—</span></div>
+            <div class="run-info-row clickable" id="ri-hazard-row"><span>Boss Blind <span class="info-dot" id="ri-hazard-info">ⓘ</span></span><span id="ri-hazard">—</span></div>
+            <div class="daily-info-panel" id="ri-hazard-panel"><p id="ri-hazard-desc"></p></div>
             <div class="run-info-row clickable" id="ri-daily-row"><span>Daily Run</span><span id="ri-daily">—</span></div>
             <button id="btn-close-run-info" class="menu-btn" style="width:100%; margin-top:4px;">CLOSE</button>
         </div>
@@ -1799,6 +1877,14 @@
         merchant_press:'shop-discount-carc', deep_pockets_press:'extra-item-slot', recycler_press:'free-shop-reroll',
         ink_master_press:'red-multiplier-seal', wildcard_press:'wildcard-generator'
     };
+    // seals and special tiles have no type field of their own
+    function familyOf(id, fallback) {
+        const g = GLYPH_DATABASE.find(x => x.id === id); if (g) return g.type;
+        if (CONSUMABLE_DATABASE.some(x => x.id === id)) return "seal";
+        if (typeof SPECIAL_TILE_DATABASE !== "undefined" && SPECIAL_TILE_DATABASE.some(x => x.id === id)) return "tile";
+        if (typeof PRESSES !== "undefined" && PRESSES.some(x => x.id === id)) return "press";
+        return fallback || "special";
+    }
     function setIcon(el, id, fallback) {
         const art = ICON_ART[id];
         if (art && document.getElementById("ic-" + art)) {
@@ -2576,8 +2662,8 @@
         }
     }
     function shopPrice(id) { const inflated = G.gameMode==='daily' && G.dailyChallenge===7; const base = SHOP_PRICES[id]||0; return inflated ? base*2 : base; }
-    function makeGlyphOffer(g) { return { kind:'glyph', id:g.id, name:g.name, desc:g.desc, color:g.color, icon:g.icon, price:shopPrice('glyph'), apply:()=>{ G.equippedGlyphs.push({id:g.id}); } }; }
-    function makeTileOffer(def) { return { kind:'tile', id:def.id, name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{
+    function makeGlyphOffer(g) { return { kind:'glyph', id:g.id, type:g.type, name:g.name, desc:g.desc, color:g.color, icon:g.icon, price:shopPrice('glyph'), apply:()=>{ G.equippedGlyphs.push({id:g.id}); } }; }
+    function makeTileOffer(def) { return { kind:'tile', id:def.id, type:'tile', name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{
         if (def.tileType === 'italic') {
             const pick = TILE_DIST[Math.floor(Math.random()*TILE_DIST.length)];
             G.tileBag.push({ id:'t_italic_'+Math.random().toString(36).slice(2,11)+'_'+Date.now(), letter:pick.letter, chips:pick.chips, type:'italic', aura:null });
@@ -2585,7 +2671,7 @@
             G.tileBag.push({ id:'t_'+def.tileType+'_'+Math.random().toString(36).slice(2,11)+'_'+Date.now(), letter: def.tileType==='wildcard'?'*':'!', chips:0, type:def.tileType });
         }
     } }; }
-    function makeConsumableOffer(def) { return { kind:'consumable', id:def.id, name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{ G.consumables.push({id:def.id}); } }; }
+    function makeConsumableOffer(def) { return { kind:'consumable', id:def.id, type:'seal', name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{ G.consumables.push({id:def.id}); } }; }
     function isGlyphUnlocked(id) { return !G.progress || G.progress.unlockedGlyphs.includes(id); }
     function isConsumableUnlocked(id) { return !G.progress || G.progress.unlockedConsumables.includes(id); }
     function generateShopGlyphOffers() {
@@ -2647,7 +2733,7 @@
             const grid=document.createElement('div'); grid.className='draft-grid';
             G.shopOffers.glyphs.forEach(item=>{
                 const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
-                const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); card.dataset.gtype=item.type||'special'; setIcon(card, item.id, item.icon);
+                const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); card.dataset.gtype=familyOf(item.id, item.type); setIcon(card, item.id, item.icon);
                 const price=document.createElement('span'); price.className='draft-card-price'; price.innerHTML='<span class="diamond-icon"></span>'+item.price; card.appendChild(price);
                 const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=item.name;
                 wrap.appendChild(card); wrap.appendChild(label);
@@ -2663,7 +2749,7 @@
             G.equippedGlyphs.forEach((eq, i)=>{
                 const data = GlyphManager.getGlyphData(eq.id); if(!data) return;
                 const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
-                const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', data.color); card.dataset.gtype=data.type||'special'; setIcon(card, data.id, data.icon);
+                const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', data.color); card.dataset.gtype=familyOf(data.id, data.type); setIcon(card, data.id, data.icon);
                 const price=document.createElement('span'); price.className='draft-card-price'; price.innerHTML='<span class="diamond-icon"></span>'+getGlyphSellValue(); card.appendChild(price);
                 const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=data.name;
                 wrap.appendChild(card); wrap.appendChild(label);
@@ -2679,7 +2765,7 @@
             const cGrid = document.createElement('div'); cGrid.className='draft-grid';
             G.shopOffers.consumables.forEach(item=>{
                 const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
-                const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); card.dataset.gtype=item.type||'special'; setIcon(card, item.id, item.icon);
+                const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); card.dataset.gtype=familyOf(item.id, item.type); setIcon(card, item.id, item.icon);
                 const price=document.createElement('span'); price.className='draft-card-price'; price.innerHTML='<span class="diamond-icon"></span>'+item.price; card.appendChild(price);
                 const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=item.name;
                 wrap.appendChild(card); wrap.appendChild(label);
@@ -2708,7 +2794,7 @@
         const value = getGlyphSellValue();
         const wrap=document.createElement('div'); wrap.className='draft-detail';
         const banner=document.createElement('div'); banner.className='sell-banner'; banner.textContent='● SELLING — THIS REMOVES THE GLYPH';
-        const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', data.color); icon.dataset.gtype=data.type||'special'; setIcon(icon, data.id, data.icon);
+        const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', data.color); icon.dataset.gtype=familyOf(data.id, data.type); setIcon(icon, data.id, data.icon);
         const name=document.createElement('div'); name.className='draft-detail-name'; name.style.setProperty('--glyph-color', data.color); name.textContent=data.name;
         const desc=document.createElement('div'); desc.className='draft-detail-desc'; desc.textContent=data.desc;
         const price=document.createElement('div'); price.className='shop-price'; price.innerHTML='SELL FOR <span class="diamond-icon"></span>'+value;
@@ -2819,7 +2905,7 @@
                     slot.classList.add('has-glyph'); slot.style.setProperty('--glyph-color', data.color);
                     slot.title = data.name + ' — ' + data.desc;
                     const badge = document.createElement('span'); badge.className = 'glyph-level-badge'; badge.style.background = data.color; badge.textContent = data.type.toUpperCase(); slot.appendChild(badge);
-                    const stat = document.createElement('span'); stat.className = 'glyph-stat'; stat.style.color = data.color; stat.dataset.gtype = data.type||'special'; setIcon(stat, data.id, data.icon); slot.appendChild(stat);
+                    const stat = document.createElement('span'); stat.className = 'glyph-stat'; stat.style.color = data.color; stat.dataset.gtype = familyOf(data.id, data.type); setIcon(stat, data.id, data.icon); slot.appendChild(stat);
                     slot.addEventListener('pointerdown', (e) => onDragStart(e, 'glyph', i));
                 }
             }
@@ -2831,7 +2917,7 @@
         const draftDiv=document.getElementById('view-draft'); draftDiv.innerHTML=''; draftDiv.classList.remove('show');
         const panel=document.createElement('div'); panel.className='draft-panel';
         const wrap=document.createElement('div'); wrap.className='draft-detail';
-        const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', data.color); icon.dataset.gtype=data.type||'special'; setIcon(icon, data.id, data.icon);
+        const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', data.color); icon.dataset.gtype=familyOf(data.id, data.type); setIcon(icon, data.id, data.icon);
         const name=document.createElement('div'); name.className='draft-detail-name'; name.style.setProperty('--glyph-color', data.color); name.textContent=data.name;
         const desc=document.createElement('div'); desc.className='draft-detail-desc'; desc.textContent=data.desc;
         const closeBtn=document.createElement('button'); closeBtn.className='draft-btn'; closeBtn.style.width='100%'; closeBtn.textContent='CLOSE';
@@ -2868,7 +2954,11 @@
         document.getElementById('ri-stage').textContent = isZen ? ('Stage '+G.currentStage+' (Zen)') : ('Stage '+G.currentStage+' / '+G.totalStages);
         document.getElementById('ri-bag').textContent = isZen ? '∞' : (G.tileBag.length+' tiles');
         const hz = HAZARD_DATABASE[G.activeHazard];
-        document.getElementById('ri-hazard').textContent = isZen ? 'None (Zen)' : (hz ? (hz.icon+' '+hz.name) : 'None');
+        document.getElementById('ri-hazard').textContent = isZen ? 'None (Zen)' : (hz ? (hz.icon+'\uFE0E '+hz.name) : 'None');
+        const hzDesc = document.getElementById('ri-hazard-desc');
+        const hzRow = document.getElementById('ri-hazard-row');
+        if (hzDesc) hzDesc.textContent = hz ? hz.desc : (isZen ? 'Zen runs have no Boss Blinds.' : 'No Boss Blind on this stage.');
+        if (hzRow) hzRow.classList.toggle('has-boss', !!hz);
         const dailyRow = document.getElementById('ri-daily-row');
         if (G.gameMode === 'daily') {
             const challenge = DAILY_CHALLENGES.find(c => c.id === G.dailyChallenge);
@@ -3346,12 +3436,12 @@
     function slideBack(showId, hideId) {
         const he=document.getElementById(hideId), se=document.getElementById(showId);
         if(he){ he.classList.remove('slide-in'); }
-        if(se){ se.classList.remove('hidden'); requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ se.classList.remove('slide-left'); }); }); }
+        if(se){ se.classList.remove('hidden'); requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ se.classList.remove('slide-left'); if(showId!=='view-menu') se.classList.add('slide-in'); }); }); }
         _armHide(he, hideId);
     }
 
     function bind() {
-        document.getElementById('btn-play').addEventListener('click',()=>{ const c=getTodaysChallenge(); document.getElementById('daily-mode-sub').textContent=c.name; document.getElementById('daily-info-text').textContent=c.desc; document.getElementById('daily-info-panel').classList.remove('open'); updateContinueButtonVisibility(); slideToView('view-difficulty','view-menu'); });
+        document.getElementById('btn-play').addEventListener('click',()=>{ const c=getTodaysChallenge(); document.getElementById('daily-mode-sub').textContent=c.name; document.getElementById('daily-info-text').textContent=c.desc; document.getElementById('daily-info-panel').classList.remove('open'); updateContinueButtonVisibility(); updateLoadoutSummary(); slideToView('view-difficulty','view-menu'); });
         document.getElementById('btn-continue-run').addEventListener('click', continueRun);
         document.getElementById('btn-daily-info').addEventListener('click',(e)=>{ e.stopPropagation(); document.getElementById('daily-info-panel').classList.toggle('open'); });
         document.getElementById('btn-menu-themes').addEventListener('click',()=>slideToView('view-themes','view-menu'));
@@ -3364,7 +3454,9 @@
         document.getElementById('btn-close-themes').addEventListener('click',()=>slideBack('view-menu','view-themes'));
         document.getElementById('btn-close-stats').addEventListener('click',()=>slideBack('view-menu','view-stats'));
         document.getElementById('btn-close-unlocks').addEventListener('click',()=>slideBack('view-menu','view-unlocks'));
-        document.getElementById('btn-back-diff').addEventListener('click',()=>slideBack('view-menu','view-difficulty'));
+        document.getElementById('btn-open-press').addEventListener('click',()=>{ renderPresses(); slideToView('view-press','view-difficulty'); setTimeout(()=>{ const i=PRESSES.findIndex(p=>p.id===((G.progress&&G.progress.selectedPress)||'merchant_press')); centerPress(i<0?0:i,false); updatePressArrows(); }, 420); });
+        document.getElementById('btn-close-press').addEventListener('click',()=>slideBack('view-difficulty','view-press'));
+        document.getElementById('btn-press-done').addEventListener('click',()=>{ updateLoadoutSummary(); slideBack('view-difficulty','view-press'); });
         document.getElementById('btn-back-themes').addEventListener('click',()=>slideBack('view-menu','view-themes'));
         document.getElementById('btn-sort-bench').addEventListener('click', cycleBenchSort);
         document.getElementById('btn-mode-classic').addEventListener('click',()=>startClassicLikeRun('classic'));
@@ -3374,6 +3466,7 @@
         document.getElementById('btn-confirm-cancel').addEventListener('click', hideConfirmModal);
         document.getElementById('btn-confirm-quit').addEventListener('click', () => { hideConfirmModal(); goToMenu(); });
         document.getElementById('btn-run-info').addEventListener('click',()=>{ renderRunInfo(); document.getElementById('run-info-modal').classList.add('show'); });
+        document.getElementById('ri-hazard-row').addEventListener('click',()=>{ document.getElementById('ri-hazard-panel').classList.toggle('open'); });
         document.getElementById('btn-close-run-info').addEventListener('click',()=>document.getElementById('run-info-modal').classList.remove('show'));
         document.getElementById('ri-daily-row').addEventListener('click',()=>{ if(G.gameMode!=='daily') return; document.getElementById('run-info-modal').classList.remove('show'); showChallengeInfo(); });
         document.getElementById('btn-header-options').addEventListener('click', openOptionsModal);
@@ -3585,6 +3678,11 @@
         });
         setTimeout(()=>{ ['view-menu','view-difficulty','view-themes','view-stats','view-unlocks']
             .forEach(id=>{ const v=document.getElementById(id); if(v) v.classList.add('hidden'); }); }, 400);
+    }
+    function updateLoadoutSummary() {
+        const el = document.getElementById("loadout-name"); if (!el) return;
+        const p = getPress((G.progress && G.progress.selectedPress) || "merchant_press");
+        el.textContent = p ? p.name : "—";
     }
     function updateContinueButtonVisibility() { document.getElementById('btn-continue-run').classList.toggle('hidden', !hasActiveRun()); }
     function wrapTitleLetters(){ const main=document.querySelector('#view-menu h1 .title-main'); if(!main||main.dataset.wrapped) return; const text=main.textContent; main.innerHTML=text.split('').map((ch,idx)=>ch===' '?' ':'<span class="title-letter" style="--i:'+idx+'">'+ch+'</span>').join(''); main.dataset.wrapped='1'; }
