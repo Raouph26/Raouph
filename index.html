@@ -263,7 +263,7 @@
             overflow-anchor: none;
             will-change: background-position;
         }
-        #game-container.anim-kick, #game-container.anim-kick::after { animation: none !important; }
+        #game-container.anim-kick, #game-container.anim-kick::after, #game-container.anim-kick::before { animation: none !important; }
         #game-container::after {
             will-change: background-position;
             content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1;
@@ -327,9 +327,19 @@
         @keyframes renegadeGrainDrift { 0% { background-position: 0 0; } 25% { background-position: 40px -20px; } 50% { background-position: -30px 35px; } 75% { background-position: 20px 50px; } 100% { background-position: 0 0; } }
         @property --wl-angle { syntax: '<angle>'; inherits: false; initial-value: 135deg; }
         html[data-theme="wordling"] #game-container {
-            background-image: linear-gradient(var(--wl-angle, 135deg), var(--wl-split-1) 50%, var(--wl-split-2) 50%), var(--bg-vignette);
-            background-size: 250% 250%, 160% 160%;
-            animation: wordlingSplitShift 14s ease-in-out infinite, wordlingAngleDrift 22s ease-in-out infinite alternate;
+            background-image: var(--bg-vignette);
+            background-size: 160% 160%;
+            background-position: 50% 30%;
+            animation: none;
+        }
+        html[data-theme="wordling"] #game-container::before {
+            content: ""; position: absolute; z-index: 0; pointer-events: none;
+            left: -50%; top: -50%; width: 200%; height: 200%;
+            background-image: linear-gradient(135deg, var(--wl-split-1) 50%, var(--wl-split-2) 50%);
+            /* rotating the layer swings the split line the way the old angle
+               keyframes did, without rebuilding the gradient each frame */
+            animation: wordlingSplitFloat 18s ease-in-out infinite alternate;
+            will-change: transform;
         }
         html[data-theme="wordling"][data-palette="black-grey"] {
             --wl-split-1: #27272A; --wl-split-2: #6B7280; --bg-solid: #27272A;
@@ -348,10 +358,13 @@
             --accent-2: #FACC15; --accent-2-shadow: #A16207; --accent-2-text: #241a00;
         }
         html[data-theme="wordling"] #game-container::after {
+            inset: -90px; will-change: transform;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect x='28' y='28' width='34' height='34' fill='white' fill-opacity='0.32' transform='rotate(45 45 45)'/%3E%3Crect x='-6' y='-6' width='18' height='18' fill='white' fill-opacity='0.24' transform='rotate(45 3 3)'/%3E%3Crect x='84' y='-6' width='18' height='18' fill='white' fill-opacity='0.24' transform='rotate(45 93 3)'/%3E%3Crect x='-6' y='84' width='18' height='18' fill='white' fill-opacity='0.24' transform='rotate(45 3 93)'/%3E%3Crect x='84' y='84' width='18' height='18' fill='white' fill-opacity='0.24' transform='rotate(45 93 93)'/%3E%3C/svg%3E");
             background-size: 90px 90px;
-            animation: wordlingDiamondDrift 10s linear infinite;
+            animation: wordlingDiamondFloat 10s linear infinite;
         }
+        @keyframes wordlingSplitFloat { 0% { transform: translate3d(-9%, -7%, 0) rotate(-3deg); } 100% { transform: translate3d(9%, 8%, 0) rotate(3deg); } }
+        @keyframes wordlingDiamondFloat { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(90px, 90px, 0); } }
         @keyframes wordlingSplitShift { 0% { background-position: 15% 25%, 50% 30%; } 25% { background-position: 65% 10%, 50% 30%; } 50% { background-position: 85% 75%, 50% 30%; } 75% { background-position: 35% 85%, 50% 30%; } 100% { background-position: 15% 25%, 50% 30%; } }
         @keyframes wordlingAngleDrift { 0% { --wl-angle: 118deg; } 50% { --wl-angle: 152deg; } 100% { --wl-angle: 118deg; } }
         @keyframes wordlingDiamondDrift { 0% { background-position: 0 0; } 100% { background-position: 90px 90px; } }
@@ -509,11 +522,11 @@
             overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
         }
-        #view-menu { align-items: center; justify-content: center; gap:14px; padding:30px; z-index:10; background: rgba(0,0,0,0.1); transform: translateX(0); }
+        #view-menu { align-items: center; justify-content: flex-start; justify-content: safe center; gap:14px; padding:30px; z-index:10; background: rgba(0,0,0,0.1); transform: translateX(0); }
         #view-menu.slide-left { transform: translateX(-110%); opacity: 0; pointer-events: none; }
-        #view-difficulty { align-items: center; justify-content: center; gap:14px; padding:30px; z-index:9; background: rgba(0,0,0,0.1); transform: translateX(110%); opacity: 0; pointer-events: none; }
+        #view-difficulty { align-items: center; justify-content: flex-start; justify-content: safe center; gap:14px; padding:30px; z-index:9; background: rgba(0,0,0,0.1); transform: translateX(110%); opacity: 0; pointer-events: none; }
         #view-difficulty.slide-in { transform: translateX(0); opacity: 1; pointer-events: auto; }
-        #view-themes { align-items: center; justify-content: center; gap:14px; padding:30px; z-index:9; background: rgba(0,0,0,0.1); transform: translateX(110%); opacity: 0; pointer-events: none; display: flex; flex-wrap: wrap; flex-direction: row; align-content: flex-start; }
+        #view-themes { align-items: center; justify-content: flex-start; justify-content: safe center; gap:14px; padding:30px; z-index:9; background: rgba(0,0,0,0.1); transform: translateX(110%); opacity: 0; pointer-events: none; display: flex; flex-wrap: wrap; flex-direction: row; align-content: flex-start; }
         #view-themes.slide-in { transform: translateX(0); opacity: 1; pointer-events: auto; }
         #view-draft {
             align-items: center; justify-content: center; padding:30px; z-index:20;
@@ -625,17 +638,16 @@
         .hidden { display: none !important; }
 
         #view-menu h1 {
-            font-size: clamp(1.55rem, 9.8vw, 2.5rem); font-weight:900; color: var(--accent-1); letter-spacing:1px;
+            font-size: clamp(1.85rem, 11.6vw, 3rem); font-weight:900; color: var(--accent-1); letter-spacing:1px;
             text-shadow: var(--title-shadow), 0 0 20px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.4);
             -webkit-text-stroke: 2px rgba(0,0,0,0.55); paint-order: stroke fill;
             white-space: nowrap; max-width: 100%;
             animation: titleBounce 3s ease-in-out infinite; font-family: var(--font-title); text-align: center;
         }
         html[data-theme="wordling"] #view-menu h1 {
-            font-size: clamp(2.1rem, 12.8vw, 3.3rem);
+            font-size: clamp(2.4rem, 14.6vw, 3.8rem);
             letter-spacing: 0px; color: transparent; text-shadow: none; -webkit-text-stroke: 0;
             animation: none; margin-bottom: 10px; position: relative;
-            filter: drop-shadow(0 8px 0 rgba(15,23,42,0.28)) drop-shadow(0 16px 20px rgba(0,0,0,0.35));
         }
         html[data-theme="wordling"] #view-menu h1 .title-letter {
             display: inline-block; position: relative; color: var(--accent-1);
@@ -645,7 +657,8 @@
                curve, which read as pixelated. One real stroke, painted behind the
                fill, keeps the chunk without the jaggies. */
             -webkit-text-stroke: 7px #ffffff; paint-order: stroke fill;
-            text-shadow: 0 5px 0 rgba(0,0,0,0.20);
+            text-shadow: 0 7px 0 rgba(15,23,42,0.26), 0 12px 16px rgba(0,0,0,0.3);
+            will-change: transform;
         }
         html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(4n+1) { animation-name: wlWaveA; animation-duration: 2.3s; }
         html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(4n+2) { animation-name: wlWaveB; animation-duration: 2.9s; color: var(--accent-2); }
@@ -658,6 +671,18 @@
             content: ''; position: absolute; top: 52%; left: 50%; transform: translate(-50%,-50%) rotate(-10deg);
             width: 0.98em; height: 0.98em; background: var(--accent-2); border: 5px solid #fff; border-radius: 10px;
             z-index: -1; box-shadow: 0 4px 0 0 var(--accent-2-shadow);
+        }
+        html[data-theme="wordling"][data-palette="black-grey"] #view-menu h1 .title-letter,
+        html[data-theme="wordling"][data-palette="black-grey"] #view-menu h1 .title-letter:nth-child(4n+1),
+        html[data-theme="wordling"][data-palette="black-grey"] #view-menu h1 .title-letter:nth-child(4n+3) {
+            color: #F4F4F5; -webkit-text-stroke-color: #18181B;
+        }
+        html[data-theme="wordling"][data-palette="black-grey"] #view-menu h1 .title-letter:nth-child(4n+2),
+        html[data-theme="wordling"][data-palette="black-grey"] #view-menu h1 .title-letter:nth-child(4n) {
+            color: var(--accent-3); -webkit-text-stroke-color: #18181B;
+        }
+        html[data-theme="wordling"][data-palette="black-grey"] #view-menu h1 .title-letter:first-child::before {
+            background: var(--accent-3); border-color: #18181B; box-shadow: 0 4px 0 0 #18181B;
         }
         @keyframes wlWaveA { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-6px) rotate(-3deg); } }
         @keyframes wlWaveB { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-4px) rotate(2deg); } }
@@ -1040,8 +1065,13 @@
         .stats-value { color: var(--accent-1); font-weight:900; }
         #stats-content { width:100%; }
         #stats-content h3 { font-size:0.85rem; font-weight:900; letter-spacing:1.5px; color: var(--accent-3); margin: 10px 0 6px; text-align:center; font-family: var(--font-main); text-shadow: 0 0 12px rgba(var(--accent-3-rgb),0.4); }
-        #view-stats { align-items: center; justify-content: center; gap:10px; padding:30px 20px; z-index:9; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); transform: translateX(110%); opacity: 0; pointer-events: none; overflow-y:auto; }
-        #view-stats.slide-in { transform: translateX(0); opacity: 1; pointer-events: auto; }
+        #view-stats, #view-unlocks {
+            align-items: center; gap:10px; padding:30px 20px; z-index:9;
+            justify-content: flex-start; justify-content: safe center;
+            background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+            transform: translateX(110%); opacity: 0; pointer-events: none; overflow-y:auto;
+        }
+        #view-stats.slide-in, #view-unlocks.slide-in { transform: translateX(0); opacity: 1; pointer-events: auto; }
         .unlock-row {
             display:flex; align-items:flex-start; gap:9px; width:100%; padding:7px 9px;
             border-radius: calc(var(--panel-radius) * 0.6); background: rgba(127,127,127,0.10);
@@ -1049,6 +1079,11 @@
         }
         .unlock-row.is-unlocked { border-left-color: var(--accent-3); }
         .unlock-icon { font-size:1rem; line-height:1.2; flex-shrink:0; width:20px; text-align:center; color: var(--text-soft); }
+        /* the padlock is drawn, not typed: the emoji codepoint renders in full
+           colour from the system font and cannot be tinted. */
+        .unlock-row:not(.is-unlocked) .unlock-icon { color: var(--text); opacity: 0.9; }
+        .unlock-icon svg { display:block; margin:2px auto 0; }
+        .unlock-icon { font-variant-emoji: text; }
         .unlock-body { display:flex; flex-direction:column; gap:2px; min-width:0; flex:1 1 auto; }
         .unlock-name { font-size:0.72rem; font-weight:900; color: var(--text); font-family: var(--font-main); }
         .unlock-row:not(.is-unlocked) .unlock-name { color: var(--text); opacity: 0.75; }
@@ -1059,7 +1094,7 @@
         .stats-panel {
             background: var(--panel-bg); color: var(--text);
             border: var(--outline-w) solid var(--panel-border); border-radius: var(--panel-radius);
-            padding: 26px 22px; width: 100%; max-width: 340px; margin: auto;
+            padding: 26px 22px; width: 100%; max-width: 340px; margin: 0 auto; flex-shrink: 0;
             box-shadow: 0 12px 32px rgba(0,0,0,0.6), 0 0 24px rgba(var(--accent-3-rgb),0.15);
             display: flex; flex-direction: column; align-items: center; gap: 10px;
         }
@@ -1386,7 +1421,7 @@
         html[data-theme="renegade-crimson"] #view-menu h1 .title-main {
             display: inline-block;
             font-family: Impact, 'Trebuchet MS', 'Poppins', sans-serif;
-            font-weight: 900; font-size: clamp(2.3rem, 15vw, 3.8rem); line-height: 1.02;
+            font-weight: 900; font-size: clamp(2.6rem, 17vw, 4.3rem); line-height: 1.02;
             letter-spacing: 3px; color: #ffffff; background: #111113;
             padding: 12px 22px 14px; border: 4px solid #ffffff;
             transform: skewX(-10deg) rotate(-3deg);
@@ -1412,7 +1447,7 @@
         html[data-theme="pale-terminal"] #view-menu h1 .title-main {
             display: inline-block;
             font-family: Georgia, 'Times New Roman', serif; font-weight: 400;
-            font-size: clamp(1.5rem, 8.5vw, 2.5rem); line-height: 1.25;
+            font-size: clamp(1.72rem, 9.7vw, 2.85rem); line-height: 1.25;
             letter-spacing: 16px; text-indent: 16px; color: #D8D8D8;
             text-shadow: 0 0 14px rgba(216,216,216,0.5), 0 1px 0 #2c2b26;
             padding: 8px 16px; border-left: 2px solid #383732; border-right: 2px solid #383732;
@@ -1432,12 +1467,19 @@
 <div id="game-container">
     <div id="unlock-banner" class="hidden"></div>
     <div id="bg-overlay"></div>
-    <div id="view-menu" class="view-panel"><h1 id="game-title" class="game-title"><span class="title-eyebrow"></span><span class="title-main">ARGOT</span><span class="title-tagline"></span></h1><button class="menu-btn play-btn" id="btn-play">▶ PLAY</button><button class="menu-btn continue-btn hidden" id="btn-continue-run">↻ CONTINUE RUN</button><button class="menu-btn themes-btn" id="btn-menu-themes">◆ THEMES</button><button class="menu-btn settings-btn" id="btn-menu-options">⚙ SETTINGS</button><button class="menu-btn settings-btn" id="btn-menu-stats">★ STATS</button></div>
+    <div id="view-menu" class="view-panel"><h1 id="game-title" class="game-title"><span class="title-eyebrow"></span><span class="title-main">ARGOT</span><span class="title-tagline"></span></h1><button class="menu-btn play-btn" id="btn-play">▶ PLAY</button><button class="menu-btn themes-btn" id="btn-menu-themes">◆ THEMES</button><button class="menu-btn settings-btn" id="btn-menu-unlocks">◈ UNLOCKS</button><button class="menu-btn settings-btn" id="btn-menu-options">⚙ SETTINGS</button><button class="menu-btn settings-btn" id="btn-menu-stats">★ STATS</button></div>
     <div id="view-stats" class="view-panel hidden">
         <div class="stats-panel">
             <h2>STATS</h2>
             <div id="stats-content"></div>
             <button class="menu-btn" id="btn-back-stats" style="width:100%; margin-top:10px;">BACK</button>
+        </div>
+    </div>
+    <div id="view-unlocks" class="view-panel hidden">
+        <div class="stats-panel">
+            <h2>UNLOCKS</h2>
+            <div id="unlocks-content"></div>
+            <button class="menu-btn" id="btn-back-unlocks" style="width:100%; margin-top:10px;">BACK</button>
         </div>
     </div>
     <div id="view-themes" class="view-panel">
@@ -1518,6 +1560,7 @@
     </div>
     <div id="view-difficulty" class="view-panel">
         <h2><span class="header-badge">SELECT MODE</span></h2>
+        <button class="menu-btn continue-btn hidden" id="btn-continue-run">↻ CONTINUE RUN</button>
         <div id="press-picker"><div class="press-title">RUN LOADOUT</div><div class="press-rail-wrap"><button type="button" class="press-arrow" id="press-prev" aria-label="Previous loadout">‹</button><div id="press-rail"></div><button type="button" class="press-arrow" id="press-next" aria-label="Next loadout">›</button></div></div>
         <button class="diff-btn diff-easy" id="btn-mode-classic">CLASSIC<br><span class="mode-sub">8 Stages · Shop · Glyphs</span></button>
         <div class="daily-card">
@@ -3167,13 +3210,15 @@
     }
 
     function bind() {
-        document.getElementById('btn-play').addEventListener('click',()=>{ const c=getTodaysChallenge(); document.getElementById('daily-mode-sub').textContent=c.name; document.getElementById('daily-info-text').textContent=c.desc; document.getElementById('daily-info-panel').classList.remove('open'); slideToView('view-difficulty','view-menu'); });
+        document.getElementById('btn-play').addEventListener('click',()=>{ const c=getTodaysChallenge(); document.getElementById('daily-mode-sub').textContent=c.name; document.getElementById('daily-info-text').textContent=c.desc; document.getElementById('daily-info-panel').classList.remove('open'); updateContinueButtonVisibility(); slideToView('view-difficulty','view-menu'); });
         document.getElementById('btn-continue-run').addEventListener('click', continueRun);
         document.getElementById('btn-daily-info').addEventListener('click',(e)=>{ e.stopPropagation(); document.getElementById('daily-info-panel').classList.toggle('open'); });
         document.getElementById('btn-menu-themes').addEventListener('click',()=>slideToView('view-themes','view-menu'));
         document.getElementById('btn-menu-options').addEventListener('click',openOptionsModal);
         document.getElementById('btn-menu-stats').addEventListener('click',()=>{ renderStats(); slideToView('view-stats','view-menu'); });
         document.getElementById('btn-back-stats').addEventListener('click',()=>slideBack('view-menu','view-stats'));
+        document.getElementById('btn-menu-unlocks').addEventListener('click',()=>{ renderUnlocksPage(); slideToView('view-unlocks','view-menu'); });
+        document.getElementById('btn-back-unlocks').addEventListener('click',()=>slideBack('view-menu','view-unlocks'));
         document.getElementById('btn-back-diff').addEventListener('click',()=>slideBack('view-menu','view-difficulty'));
         document.getElementById('btn-back-themes').addEventListener('click',()=>slideBack('view-menu','view-themes'));
         document.getElementById('btn-sort-bench').addEventListener('click', cycleBenchSort);
@@ -3223,8 +3268,7 @@
         G.rerollMode = false; G.rerollMarks = new Set(); G.isAnimating = false; G.modalType = null; G.dragData = null;
         G.gameStarted = true;
         document.getElementById('game-container').classList.remove('zen-mode');
-        document.getElementById('view-menu').classList.add('slide-left');
-        setTimeout(()=>{ document.getElementById('view-menu').classList.add('hidden'); }, 400);
+        dismissMenuViews();
         G.phase = saved.phase || 'playing';
         document.getElementById('view-map').classList.add('hidden');
         document.getElementById('view-draft').classList.add('hidden');
@@ -3335,12 +3379,14 @@
             ['Most Stages Cleared', G.records.mostStagesCleared]
         ];
         rows.forEach(([label,val])=>{ const row=document.createElement('div'); row.className='stats-row'; row.innerHTML=`<span class="stats-label">${label}</span><span class="stats-value">${val}</span>`; c.appendChild(row); });
-        renderUnlocks(c);
     }
+    function renderUnlocksPage(){ const c=document.getElementById('unlocks-content'); c.innerHTML=''; renderUnlocks(c); }
     function milestoneFor(id) { return MILESTONES.find(m=>m.id===id) || null; }
     function unlockRow(opts) {
         const row=document.createElement('div'); row.className='unlock-row'+(opts.unlocked?' is-unlocked':'');
-        const icon=document.createElement('span'); icon.className='unlock-icon'; icon.textContent = opts.unlocked ? opts.icon : '🔒';
+        const icon=document.createElement('span'); icon.className='unlock-icon';
+        if (opts.unlocked) icon.textContent = opts.icon + '\uFE0E';
+        else icon.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M12 1.5A5.2 5.2 0 0 0 6.8 6.7V9.4H5.6A1.9 1.9 0 0 0 3.7 11.3v9A1.9 1.9 0 0 0 5.6 22.2H18.4A1.9 1.9 0 0 0 20.3 20.3v-9A1.9 1.9 0 0 0 18.4 9.4H17.2V6.7A5.2 5.2 0 0 0 12 1.5Zm0 2.2a3 3 0 0 1 3 3V9.4H9V6.7a3 3 0 0 1 3-3Zm0 9.6a1.9 1.9 0 0 1 1 3.5v1.8h-2v-1.8a1.9 1.9 0 0 1 1-3.5Z"/></svg>';
         if (opts.unlocked && opts.color) icon.style.color = opts.color;
         const body=document.createElement('span'); body.className='unlock-body';
         const nm=document.createElement('span'); nm.className='unlock-name'; nm.textContent=opts.name;
@@ -3385,6 +3431,15 @@
                 desc:p.perk+' · '+p.tradeoff,
                 hint:prev?('Clear a run with '+prev.name):'Available from the start' }));
         });
+    }
+    function dismissMenuViews() {
+        const menu=document.getElementById('view-menu');
+        if(menu) menu.classList.add('slide-left');
+        ['view-difficulty','view-themes','view-stats','view-unlocks'].forEach(id=>{
+            const v=document.getElementById(id); if(v) v.classList.remove('slide-in');
+        });
+        setTimeout(()=>{ ['view-menu','view-difficulty','view-themes','view-stats','view-unlocks']
+            .forEach(id=>{ const v=document.getElementById(id); if(v) v.classList.add('hidden'); }); }, 400);
     }
     function updateContinueButtonVisibility() { document.getElementById('btn-continue-run').classList.toggle('hidden', !hasActiveRun()); }
     function wrapTitleLetters(){ const main=document.querySelector('#view-menu h1 .title-main'); if(!main||main.dataset.wrapped) return; const text=main.textContent; main.innerHTML=text.split('').map((ch,idx)=>ch===' '?' ':'<span class="title-letter" style="--i:'+idx+'">'+ch+'</span>').join(''); main.dataset.wrapped='1'; }
