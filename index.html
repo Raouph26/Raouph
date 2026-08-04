@@ -965,8 +965,11 @@
         .hand-tile-wrap { width: clamp(52px, 13vw, 68px); height: clamp(52px, 13vw, 68px); flex-shrink: 0; }
         /* Deep Pockets deals 12 tiles; at phone widths only 5 fit per flex row, which
            spills a third row over the controls. Lock it to a 2x6 grid instead. */
-        #hand-rack.deep-pockets { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; justify-items: center; align-content: center; }
+        #hand-rack.deep-pockets { display: grid; grid-template-columns: repeat(var(--bench-cols, 6), 1fr); gap: 6px; justify-items: center; align-content: center; }
         #hand-rack.deep-pockets .hand-tile-wrap { width: 100%; max-width: clamp(52px, 13vw, 68px); height: auto; aspect-ratio: 1 / 1; }
+        #hand-rack.deep-pockets[data-cols="7"] .hand-tile-wrap { max-width: clamp(42px, 11.4vw, 58px); }
+        #hand-rack.deep-pockets[data-cols="7"] .tile-inner { font-size: clamp(1.05rem, 3.4vw, 1.45rem); }
+        #hand-rack.deep-pockets[data-cols="7"] .tile-chips { font-size: 9px; bottom: 2px; right: 4px; }
 
         .tile-inner {
             width:100%; height:100%; background: var(--tile-bg); border-radius: var(--tile-radius);
@@ -1635,6 +1638,23 @@
             font-family: var(--font-numeric); font-size: 0.6rem; font-weight: 900;
             padding: 1px 3px; border-radius: 2px; background: rgba(127,127,127,0.22); color: var(--text);
         }
+        .upgrade-step {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            font-family: var(--font-numeric); font-weight: 900; font-size: 0.8rem; margin-bottom: 8px;
+        }
+        .lvl-from { opacity: 0.55; }
+        .lvl-arrow { opacity: 0.7; }
+        .lvl-to { color: var(--glyph-color, var(--text)); }
+        .upgrade-line {
+            display: flex; gap: 8px; align-items: baseline; text-align: left;
+            font-size: 0.68rem; line-height: 1.3; margin-bottom: 5px;
+        }
+        .upgrade-line b {
+            flex: 0 0 42px; font-family: var(--font-numeric); font-size: 0.52rem;
+            font-weight: 900; letter-spacing: 0.8px; opacity: 0.7;
+        }
+        .upgrade-line.is-now span { opacity: 0.6; }
+        .upgrade-line.is-next span { color: var(--glyph-color, var(--text)); font-weight: 900; }
         .lvl-badge {
             position: absolute; top: -5px; right: -2px; z-index: 4;
             font-family: var(--font-numeric); font-size: 0.38rem; font-weight: 900;
@@ -2813,6 +2833,35 @@
             G.tileBag.push({ id:'t_'+def.tileType+'_'+Math.random().toString(36).slice(2,11)+'_'+Date.now(), letter: def.tileType==='wildcard'?'*':'!', chips:0, type:def.tileType });
         }
     } }; }
+    function scaleScore(base, lvl) { return Math.round(base * (LEVEL_SCALE[lvl] || 1)); }
+    const LEVEL_DESC = {
+        vowel_anchor:      l => "+" + scaleScore(15, l) + " Base Points for every Vowel played.",
+        consonant_charge:  l => "+" + scaleScore(10, l) + " Base Points for every Consonant played.",
+        scrabble_master:   l => "+" + scaleScore(40, l) + " Base Points if word contains Q, X, Z, or J.",
+        long_form:         l => "+" + scaleScore(60, l) + " Base Points if played word is 6+ letters.",
+        grammarian:        l => "+" + scaleScore(3, l) + " MULT for every Vowel in played word.",
+        novelist:          l => "x" + scaleNum(3, l) + " MULT if played word is 6+ letters.",
+        bookends:          l => "x" + scaleNum(4, l) + " MULT if first and last letters match.",
+        heavy_hitter:      l => "x" + scaleNum(2, l) + " MULT if word has 2+ rare letters (Q, X, Z, J, V).",
+        double_down:       l => "+" + scaleScore(2, l) + " MULT for every repeated letter in the played word.",
+        underdog:          l => "x" + scaleNum(3, l) + " MULT if the played word is exactly 3 letters long.",
+        double_trouble:    l => "+" + scaleScore(15, l) + " MULT if the played word has two identical letters side by side.",
+        middle_child:      l => "Odd words of 5+ letters score their middle tile at x" + scaleNum(1.5, l) + ".",
+        scavenger:         l => "+" + scaleInt(2, l) + " Discards per stage.",
+        perfectionist:     l => "+" + scaleInt(1, l) + " Hand per stage.",
+        deep_pockets:      l => "Start each round with +" + scaleInt(2, l) + " extra tiles in tray.",
+        recycler:          l => "Discarding 3 Vowels at once refunds " + scaleInt(1, l) + " Discard (Max 1/round).",
+        alchemy:           l => "Scoring 100+ Points in a single hand grants +" + scaleInt(2, l) + " Diamonds to your Bank.",
+        insurance_policy:  l => "Fall short by " + Math.round(scaleNum(0.15, l) * 100) + "% or less and the stage clears anyway. Consumed when it saves you.",
+        piggy_bank:        l => "Earn a second helping of interest at the end of every stage, up to " + scaleInt(5, l) + ".",
+        wildcard_rune:     l => "At round start, " + scaleInt(1, l) + " random tile in active hand becomes Wild."
+    };
+    function describeGlyph(id, lvl) {
+        const f = LEVEL_DESC[id];
+        if (f) return f(lvl || 1);
+        const d = GLYPH_DATABASE.find(g => g.id === id);
+        return d ? d.desc : "";
+    }
     function upgradePrice(lvl) { return shopPrice("glyph") + (lvl === 1 ? 2 : 4); }
     function makeUpgradeOffer(g) {
         const from = glyphLevel(g.id), to = from + 1;
@@ -3005,6 +3054,19 @@
         const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', item.color); setIcon(icon, item.id, item.icon);
         const name=document.createElement('div'); name.className='draft-detail-name'; name.style.setProperty('--glyph-color', item.color); name.textContent=item.name;
         const desc=document.createElement('div'); desc.className='draft-detail-desc'; desc.textContent=item.desc;
+        if (item.kind === 'upgrade') {
+            const from = glyphLevel(item.id), to = item.upgradeTo;
+            name.textContent = item.name;
+            desc.textContent = '';
+            const step=document.createElement('div'); step.className='upgrade-step';
+            step.innerHTML = '<span class="lvl-from">LVL ' + from + '</span><span class="lvl-arrow">\u2192</span>' +
+                '<span class="lvl-to">' + (to >= MAX_GLYPH_LEVEL ? 'MAX' : 'LVL ' + to) + '</span>';
+            const now=document.createElement('div'); now.className='upgrade-line is-now';
+            now.innerHTML = '<b>NOW</b><span>' + describeGlyph(item.id, from) + '</span>';
+            const next=document.createElement('div'); next.className='upgrade-line is-next';
+            next.innerHTML = '<b>AFTER</b><span>' + describeGlyph(item.id, to) + '</span>';
+            desc.appendChild(step); desc.appendChild(now); desc.appendChild(next);
+        }
         const price=document.createElement('div'); price.className='shop-price'; price.innerHTML='<span class="diamond-icon"></span>'+item.price;
         const actions=document.createElement('div'); actions.className='draft-detail-actions';
         const backBtn=document.createElement('button'); backBtn.className='menu-btn'; backBtn.textContent='BACK';
@@ -3015,7 +3077,7 @@
         buyBtn.addEventListener('click', ()=>{
             if (G.bank < item.price || inventoryFull) return;
             G.bank -= item.price; item.apply(); AudioEngine.playSubmit();
-            const offers = (kind==='glyph'||kind==='tile') ? G.shopOffers.glyphs : G.shopOffers.consumables;
+            const offers = (kind==='glyph'||kind==='tile'||kind==='upgrade') ? G.shopOffers.glyphs : G.shopOffers.consumables;
             const idx = offers.findIndex(o=>o.id===item.id);
             if (idx!==-1) offers.splice(idx,1);
             renderShop(container);
@@ -3087,7 +3149,7 @@
                     slot.dataset.tileId = 'glyph_'+equipped.id;
                     slot.classList.add('has-glyph'); slot.style.setProperty('--glyph-color', data.color);
                     slot.title = data.name + ' — ' + data.desc;
-                    const badge = document.createElement('span'); badge.className = 'glyph-level-badge'; badge.style.background = data.color; badge.textContent = data.type.toUpperCase(); slot.appendChild(badge);
+
                     const stat = document.createElement('span'); stat.className = 'glyph-stat'; stat.style.color = data.color; stat.dataset.gtype = familyOf(data.id, data.type); setIcon(stat, data.id, data.icon); slot.appendChild(stat);
                 const lvl = equipped.lvl || 1;
                 slot.dataset.lvl = lvl;
@@ -3109,8 +3171,10 @@
         const panel=document.createElement('div'); panel.className='draft-panel';
         const wrap=document.createElement('div'); wrap.className='draft-detail';
         const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', data.color); icon.dataset.gtype=familyOf(data.id, data.type); setIcon(icon, data.id, data.icon);
-        const name=document.createElement('div'); name.className='draft-detail-name'; name.style.setProperty('--glyph-color', data.color); name.textContent=data.name;
-        const desc=document.createElement('div'); desc.className='draft-detail-desc'; desc.textContent=data.desc;
+        const lvlNow = glyphLevel(id);
+        const name=document.createElement('div'); name.className='draft-detail-name'; name.style.setProperty('--glyph-color', data.color);
+        name.textContent = data.name + (lvlNow > 1 ? (lvlNow >= MAX_GLYPH_LEVEL ? '  [ MAX ]' : '  [ II ]') : '');
+        const desc=document.createElement('div'); desc.className='draft-detail-desc'; desc.textContent=describeGlyph(id, lvlNow); const _unusedDesc=data.desc;
         const closeBtn=document.createElement('button'); closeBtn.className='draft-btn'; closeBtn.style.width='100%'; closeBtn.textContent='CLOSE';
         closeBtn.addEventListener('click', ()=>{ draftDiv.classList.remove('show'); });
         wrap.appendChild(icon); wrap.appendChild(name); wrap.appendChild(desc);
@@ -3465,7 +3529,13 @@
     function render() {
         if(!G.gameStarted) return;
         const isZen = G.gameMode==='zen';
-        document.getElementById('hand-rack').classList.toggle('deep-pockets', getHandSize() > BASE_HAND_SIZE);
+        const rack = document.getElementById('hand-rack');
+        const benchSize = getHandSize();
+        rack.classList.toggle('deep-pockets', benchSize > BASE_HAND_SIZE);
+        // keep the bench to two rows however many tiles it holds
+        const cols = benchSize > 12 ? 7 : 6;
+        rack.dataset.cols = cols;
+        rack.style.setProperty('--bench-cols', cols);
         {
             const tgt=G.stageTargets[G.currentStage]; const pct=Math.min(100,(G.currentScore/tgt)*100);
             document.getElementById('progress-fill').style.width=pct+'%';
