@@ -581,21 +581,30 @@
         .draft-detail-desc { font-size: 0.88rem; color: var(--text); font-family: var(--font-main); line-height: 1.4; max-width: 260px; }
         #press-picker { width:100%; flex-shrink:0; }
         .press-title { font-size:0.68rem; font-weight:900; letter-spacing:2px; color: var(--bg-text); text-align:center; font-family: var(--font-main); margin-bottom:6px; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
-        .loadout-summary {
-            width: 250px; display: flex; align-items: center; gap: 8px;
-            padding: 11px 14px; cursor: pointer; text-align: left;
-            background: var(--cap-bg); color: var(--cap-color); font-family: var(--font-main);
-            border: var(--outline-w) solid var(--cap-border); border-radius: var(--btn-radius);
-            box-shadow: 0 var(--press-depth) 0 0 var(--cap-shadow-color);
+        .resume-shelf { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 250px; }
+        .resume-shelf.hidden { display: none !important; }
+        .resume-strip {
+            width: 100%; display: flex; align-items: center; gap: 10px; cursor: pointer;
+            padding: 9px 12px; text-align: left; font-family: var(--font-main);
+            background: var(--accent-2); color: var(--accent-2-text);
+            border: var(--outline-w) solid var(--accent-2-shadow); border-radius: var(--btn-radius);
+            box-shadow: 0 var(--press-depth) 0 0 var(--accent-2-shadow);
+            transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.16s ease;
         }
-        .loadout-summary:active { transform: translateY(var(--press-depth)); box-shadow: 0 0 0 0 var(--cap-shadow-color); }
-        .loadout-label { font-size: 0.55rem; font-weight: 900; letter-spacing: 1.4px; opacity: 0.65; }
-        .loadout-name { flex: 1 1 auto; text-align: right; font-size: 0.82rem; font-weight: 900; }
-        .loadout-chev { font-size: 1.1rem; font-weight: 900; opacity: 0.55; }
-        #view-press { align-items: center; gap: 14px; padding: 30px 20px; z-index: 9;
-            justify-content: flex-start; justify-content: safe center;
-            background: rgba(0,0,0,0.1); transform: translateX(110%); opacity: 0; pointer-events: none; }
-        #view-press.slide-in { transform: translateX(0); opacity: 1; pointer-events: auto; }
+        .resume-strip:active { transform: translateY(var(--press-depth)) scale(0.98); box-shadow: 0 0 0 0 var(--accent-2-shadow); }
+        .resume-mark { font-size: 1.15rem; font-weight: 900; line-height: 1; }
+        .resume-text { flex: 1 1 auto; display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+        .resume-text b { font-size: 0.82rem; font-weight: 900; letter-spacing: 0.4px; }
+        .resume-text i { font-style: normal; font-size: 0.6rem; font-weight: 700; opacity: 0.8; }
+        .resume-go { font-size: 1.15rem; font-weight: 900; opacity: 0.7; }
+        .resume-or {
+            display: flex; align-items: center; gap: 8px; width: 100%;
+            font-size: 0.55rem; font-weight: 900; letter-spacing: 1.2px;
+            color: var(--bg-text); opacity: 0.75; font-family: var(--font-main);
+        }
+        .resume-or::before, .resume-or::after {
+            content: ""; flex: 1 1 auto; height: 2px; background: currentColor; opacity: 0.35; border-radius: 2px;
+        }
         .press-rail-wrap { position:relative; width:100%; }
         /* side padding of half the leftover width lets the first and last card sit
            dead centre; the top padding is what the selected tick needs so it is not
@@ -651,6 +660,25 @@
         .draft-detail-actions .menu-btn, .draft-detail-actions .draft-btn { width: 118px; padding: 13px 0; font-size: 0.9rem; }
         #view-game { padding: 10px 16px 12px; gap:4px; display:flex; flex-direction:column; justify-content: flex-start; }
         .hidden { display: none !important; }
+        /* screens inside a run: enter from below, leave upward */
+        .screen-enter { animation: screenIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .screen-exit { animation: screenOut 0.28s cubic-bezier(0.4, 0, 1, 1) both; pointer-events: none; }
+        .screen-enter-back { animation: screenInBack 0.42s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        @keyframes screenIn {
+            from { opacity: 0; transform: translate3d(0, 26px, 0) scale(0.965); }
+            to   { opacity: 1; transform: none; }
+        }
+        @keyframes screenInBack {
+            from { opacity: 0; transform: translate3d(0, -22px, 0) scale(1.02); }
+            to   { opacity: 1; transform: none; }
+        }
+        @keyframes screenOut {
+            from { opacity: 1; transform: none; }
+            to   { opacity: 0; transform: translate3d(0, -18px, 0) scale(0.985); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .screen-enter, .screen-exit, .screen-enter-back { animation-duration: 0.01s; }
+        }
 
         #view-menu h1 {
             font-size: clamp(1.35rem, 7.9vw, 2.1rem); font-weight:900; color: var(--accent-1); letter-spacing:1px;
@@ -1695,8 +1723,11 @@
     <div id="view-difficulty" class="view-panel">
         <button type="button" class="panel-close" id="btn-close-diff" aria-label="Back to menu">✕</button>
         <h2><span class="header-badge">SELECT MODE</span></h2>
-        <button class="menu-btn continue-btn hidden" id="btn-continue-run">↻ CONTINUE RUN</button>
-        <button type="button" class="loadout-summary" id="btn-open-press"><span class="loadout-label">RUN LOADOUT</span><span class="loadout-name" id="loadout-name">—</span><span class="loadout-chev">›</span></button>
+        <div class="resume-shelf hidden" id="resume-shelf">
+            <button class="resume-strip continue-btn" id="btn-continue-run"><span class="resume-mark">↻</span><span class="resume-text"><b>CONTINUE RUN</b><i id="resume-where">Stage 1</i></span><span class="resume-go">›</span></button>
+            <div class="resume-or"><span>or start a new run</span></div>
+        </div>
+        <div id="press-picker"><div class="press-title">RUN LOADOUT</div><div class="press-rail-wrap"><button type="button" class="press-arrow" id="press-prev" aria-label="Previous loadout">‹</button><div id="press-rail"></div><button type="button" class="press-arrow" id="press-next" aria-label="Next loadout">›</button></div></div>
         <button class="diff-btn diff-easy" id="btn-mode-classic">CLASSIC<br><span class="mode-sub">8 Stages · Shop · Glyphs</span></button>
         <div class="daily-card">
             <button class="diff-btn diff-medium" id="btn-mode-daily">DAILY CHALLENGE<br><span class="mode-sub" id="daily-mode-sub">Loading…</span></button>
@@ -1705,12 +1736,7 @@
         </div>
         <button class="diff-btn diff-hard" id="btn-mode-zen">ZEN<br><span class="mode-sub">Relaxed · Endless · No Economy</span></button>
     </div>
-    <div id="view-press" class="view-panel hidden">
-        <button type="button" class="panel-close" id="btn-close-press" aria-label="Back">✕</button>
-        <h2><span class="header-badge">RUN LOADOUT</span></h2>
-        <div id="press-picker"><div class="press-rail-wrap"><button type="button" class="press-arrow" id="press-prev" aria-label="Previous loadout">‹</button><div id="press-rail"></div><button type="button" class="press-arrow" id="press-next" aria-label="Next loadout">›</button></div></div>
-        <button class="menu-btn play-btn" id="btn-press-done">USE THIS LOADOUT</button>
-    </div>
+
     <div id="view-map" class="view-panel hidden"><div id="map-header"></div><div id="map-scroll"><div id="map-ladder"></div></div><button id="btn-start-stage">START STAGE</button></div>
     <div id="view-game" class="view-panel hidden">
         <div id="header"><button id="btn-run-info" class="header-pill">RUN INFO</button><button id="btn-header-options" class="header-pill">OPTIONS</button></div>
@@ -3399,14 +3425,14 @@
             if (i === G.currentStage) return { state:'current', icon: isBoss?'☠':String(i), label:'Target: '+G.stageTargets[i].toLocaleString() };
             return { state:'upcoming', icon: isBoss?'☠':String(i), label:null };
         });
-        document.getElementById('btn-start-stage').textContent='START STAGE '+G.currentStage; document.getElementById('btn-start-stage').onclick=startStage; document.getElementById('view-map').classList.remove('hidden'); document.getElementById('view-game').classList.add('hidden'); document.getElementById('view-draft').classList.add('hidden');
+        document.getElementById('btn-start-stage').textContent='START STAGE '+G.currentStage; document.getElementById('btn-start-stage').onclick=startStage; hideScreen('view-game'); showScreen('view-map', true); document.getElementById('view-draft').classList.add('hidden');
         G.phase='map'; saveActiveRun();
     }
     function renderEndlessMap() {
         document.getElementById('map-header').innerHTML = '<span class="header-badge">ENDLESS — STAGE '+G.currentStage+'</span>';
         const ladder=document.getElementById('map-ladder');
         layoutWindingNodes(ladder, 1, 1, () => ({ state:'current', icon:String(G.currentStage), label:'Target: '+G.stageTargets[G.currentStage].toLocaleString() }));
-        document.getElementById('btn-start-stage').textContent='START STAGE '+G.currentStage; document.getElementById('btn-start-stage').onclick=startStage; document.getElementById('view-map').classList.remove('hidden'); document.getElementById('view-game').classList.add('hidden'); document.getElementById('view-draft').classList.add('hidden');
+        document.getElementById('btn-start-stage').textContent='START STAGE '+G.currentStage; document.getElementById('btn-start-stage').onclick=startStage; hideScreen('view-game'); showScreen('view-map', true); document.getElementById('view-draft').classList.add('hidden');
         G.phase='map'; saveActiveRun();
     }
     function showMap() { resetStageState(); renderMap(); }
@@ -3421,12 +3447,30 @@
         clearTimeout(G._hazardTimer); G._hazardTimer=setTimeout(dismiss, 5200);
         b.onclick = ()=>{ clearTimeout(G._hazardTimer); dismiss(); };
     }
-    function startStage() { G.phase='playing'; if (G.progress && G.currentStage > (G.progress.stats.highestStageReached||1)) bumpStat('highestStageReached', G.currentStage - (G.progress.stats.highestStageReached||1)); document.getElementById('view-map').classList.add('hidden'); document.getElementById('view-game').classList.remove('hidden'); resetStageState(); rollStageHazard(); GlyphManager.onStageStart(); setTimeout(showHazardToast, 260); GlyphManager.onRoundStart(G.hand); AudioEngine.startMusic(); render(); }
+    function startStage() { G.phase='playing'; if (G.progress && G.currentStage > (G.progress.stats.highestStageReached||1)) bumpStat('highestStageReached', G.currentStage - (G.progress.stats.highestStageReached||1)); hideScreen('view-map'); showScreen('view-game'); resetStageState(); rollStageHazard(); GlyphManager.onStageStart(); setTimeout(showHazardToast, 260); GlyphManager.onRoundStart(G.hand); AudioEngine.startMusic(); render(); }
 
     function initDict() { G.dictSet=new Set(DICTIONARY_WORDS.split(' ')); }
 
     const _viewHideTimers = {};
     function _armHide(el, id) { if(_viewHideTimers[id]){ clearTimeout(_viewHideTimers[id]); } _viewHideTimers[id] = setTimeout(()=>{ if(el) el.classList.add('hidden'); delete _viewHideTimers[id]; }, 400); }
+    // show/hide a run screen with a beat of movement instead of a hard cut
+    function showScreen(id, back) {
+        const el = document.getElementById(id); if (!el) return;
+        const cls = back ? "screen-enter-back" : "screen-enter";
+        el.classList.remove("hidden", "screen-exit", "screen-enter", "screen-enter-back");
+        void el.offsetWidth;
+        el.classList.add(cls);
+    }
+    function hideScreen(id) {
+        const el = document.getElementById(id);
+        if (!el || el.classList.contains("hidden")) return;
+        el.classList.remove("screen-enter", "screen-enter-back");
+        void el.offsetWidth;
+        el.classList.add("screen-exit");
+        const done = () => { el.classList.add("hidden"); el.classList.remove("screen-exit"); };
+        el.__hideTimer && clearTimeout(el.__hideTimer);
+        el.__hideTimer = setTimeout(done, 290);
+    }
     function slideToView(showId, hideId) {
         const he=document.getElementById(hideId), se=document.getElementById(showId);
         if(he){ he.classList.add('slide-left'); he.classList.remove('slide-in'); }
@@ -3441,7 +3485,7 @@
     }
 
     function bind() {
-        document.getElementById('btn-play').addEventListener('click',()=>{ const c=getTodaysChallenge(); document.getElementById('daily-mode-sub').textContent=c.name; document.getElementById('daily-info-text').textContent=c.desc; document.getElementById('daily-info-panel').classList.remove('open'); updateContinueButtonVisibility(); updateLoadoutSummary(); slideToView('view-difficulty','view-menu'); });
+        document.getElementById('btn-play').addEventListener('click',()=>{ const c=getTodaysChallenge(); document.getElementById('daily-mode-sub').textContent=c.name; document.getElementById('daily-info-text').textContent=c.desc; document.getElementById('daily-info-panel').classList.remove('open'); updateContinueButtonVisibility(); slideToView('view-difficulty','view-menu'); });
         document.getElementById('btn-continue-run').addEventListener('click', continueRun);
         document.getElementById('btn-daily-info').addEventListener('click',(e)=>{ e.stopPropagation(); document.getElementById('daily-info-panel').classList.toggle('open'); });
         document.getElementById('btn-menu-themes').addEventListener('click',()=>slideToView('view-themes','view-menu'));
@@ -3454,9 +3498,7 @@
         document.getElementById('btn-close-themes').addEventListener('click',()=>slideBack('view-menu','view-themes'));
         document.getElementById('btn-close-stats').addEventListener('click',()=>slideBack('view-menu','view-stats'));
         document.getElementById('btn-close-unlocks').addEventListener('click',()=>slideBack('view-menu','view-unlocks'));
-        document.getElementById('btn-open-press').addEventListener('click',()=>{ renderPresses(); slideToView('view-press','view-difficulty'); setTimeout(()=>{ const i=PRESSES.findIndex(p=>p.id===((G.progress&&G.progress.selectedPress)||'merchant_press')); centerPress(i<0?0:i,false); updatePressArrows(); }, 420); });
-        document.getElementById('btn-close-press').addEventListener('click',()=>slideBack('view-difficulty','view-press'));
-        document.getElementById('btn-press-done').addEventListener('click',()=>{ updateLoadoutSummary(); slideBack('view-difficulty','view-press'); });
+
         document.getElementById('btn-back-themes').addEventListener('click',()=>slideBack('view-menu','view-themes'));
         document.getElementById('btn-sort-bench').addEventListener('click', cycleBenchSort);
         document.getElementById('btn-mode-classic').addEventListener('click',()=>startClassicLikeRun('classic'));
@@ -3508,9 +3550,7 @@
         document.getElementById('game-container').classList.remove('zen-mode');
         dismissMenuViews();
         G.phase = saved.phase || 'playing';
-        document.getElementById('view-map').classList.add('hidden');
-        document.getElementById('view-draft').classList.add('hidden');
-        document.getElementById('view-game').classList.remove('hidden');
+        hideScreen('view-map'); hideScreen('view-draft'); showScreen('view-game');
         AudioEngine.startMusic();
         render();
         // a run saved between stages must not resume onto a board that is already won
@@ -3530,7 +3570,7 @@
         G.gameStarted = true;
         document.getElementById('game-container').classList.remove('zen-mode');
         startRun();
-        document.getElementById('view-difficulty').classList.add('hidden');
+        dismissMenuViews();
         renderMap();
     }
     function startZenRun() {
@@ -3545,8 +3585,8 @@
         G.gameStarted = true;
         document.getElementById('game-container').classList.add('zen-mode');
         drawToHand();
-        document.getElementById('view-difficulty').classList.add('hidden');
-        document.getElementById('view-game').classList.remove('hidden');
+        dismissMenuViews();
+        showScreen('view-game');
         AudioEngine.startMusic();
         render();
     }
@@ -3679,12 +3719,19 @@
         setTimeout(()=>{ ['view-menu','view-difficulty','view-themes','view-stats','view-unlocks']
             .forEach(id=>{ const v=document.getElementById(id); if(v) v.classList.add('hidden'); }); }, 400);
     }
-    function updateLoadoutSummary() {
-        const el = document.getElementById("loadout-name"); if (!el) return;
-        const p = getPress((G.progress && G.progress.selectedPress) || "merchant_press");
-        el.textContent = p ? p.name : "—";
+    function updateContinueButtonVisibility() {
+        const shelf = document.getElementById('resume-shelf');
+        const active = hasActiveRun();
+        if (shelf) shelf.classList.toggle('hidden', !active);
+        const where = document.getElementById('resume-where');
+        if (where && active) {
+            let saved = null;
+            try { saved = JSON.parse(localStorage.getItem('wordling-active-run') || 'null'); } catch(e) {}
+            const stage = saved && saved.currentStage ? saved.currentStage : 1;
+            const mode = saved && saved.gameMode === 'zen' ? 'Zen' : (saved && saved.gameMode === 'daily' ? 'Daily' : 'Classic');
+            where.textContent = mode + ' · Stage ' + stage;
+        }
     }
-    function updateContinueButtonVisibility() { document.getElementById('btn-continue-run').classList.toggle('hidden', !hasActiveRun()); }
     function wrapTitleLetters(){ const main=document.querySelector('#view-menu h1 .title-main'); if(!main||main.dataset.wrapped) return; const text=main.textContent; main.innerHTML=text.split('').map((ch,idx)=>ch===' '?' ':'<span class="title-letter" style="--i:'+idx+'">'+ch+'</span>').join(''); main.dataset.wrapped='1'; }
     // the hero logo carries different chrome per theme
     const TITLE_CHROME = {
