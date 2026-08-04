@@ -1619,6 +1619,73 @@
         html[data-theme="cyber-arcade"] .draft-detail-icon.has-glyph {
             border-top: 5px solid var(--glyph-color, var(--panel-border));
         }
+        /* ---- overclock tiers ---------------------------------------- */
+        .howto-section {
+            width: 100%; padding: 10px 12px; margin-bottom: 8px;
+            border-radius: calc(var(--panel-radius) * 0.6);
+            background: rgba(127,127,127,0.10); border: 1px solid var(--panel-border);
+            font-family: var(--font-main); color: var(--text);
+        }
+        .howto-section h3 { font-size: 0.78rem; font-weight: 900; letter-spacing: 1px; margin: 0 0 6px; }
+        .howto-section p { font-size: 0.68rem; margin: 0 0 6px; }
+        .howto-section ul { margin: 0; padding-left: 15px; display: flex; flex-direction: column; gap: 5px; }
+        .howto-section li { font-size: 0.66rem; line-height: 1.35; color: var(--text-soft); }
+        .howto-section li strong { color: var(--text); }
+        .howto-section code {
+            font-family: var(--font-numeric); font-size: 0.6rem; font-weight: 900;
+            padding: 1px 3px; border-radius: 2px; background: rgba(127,127,127,0.22); color: var(--text);
+        }
+        .lvl-badge {
+            position: absolute; top: -5px; right: -2px; z-index: 4;
+            font-family: var(--font-numeric); font-size: 0.38rem; font-weight: 900;
+            letter-spacing: 0.2px; line-height: 1; white-space: nowrap;
+            padding: 2px 3px; border-radius: 3px;
+            background: var(--panel-bg); color: var(--text);
+            border: 1px solid var(--glyph-color, var(--panel-border));
+        }
+        .glyph-slot { position: relative; }
+        .glyph-slot[data-lvl="2"] { box-shadow: 0 0 8px rgba(127,127,127,0.4); }
+        .glyph-slot[data-lvl="3"] { box-shadow: 0 0 16px rgba(127,127,127,0.7); animation: overclockPulse 1.9s ease-in-out infinite; }
+        .upgrade-flag {
+            position: absolute; top: 3px; left: 3px; z-index: 4;
+            font-family: var(--font-numeric); font-size: 0.42rem; font-weight: 900;
+            letter-spacing: 0.4px; line-height: 1; padding: 3px 4px; border-radius: 3px;
+            background: var(--glyph-color, var(--panel-border)); color: var(--panel-bg);
+        }
+        .draft-card.is-upgrade { position: relative; }
+        .draft-card.is-upgrade[data-lvl="2"] { box-shadow: 0 4px 0 0 var(--cap-shadow-color), 0 0 8px rgba(127,127,127,0.4); }
+        .draft-card.is-upgrade[data-lvl="3"] { box-shadow: 0 4px 0 0 var(--cap-shadow-color), 0 0 16px rgba(127,127,127,0.7); }
+        @keyframes overclockPulse {
+            0%, 100% { filter: brightness(1); }
+            50%      { filter: brightness(1.18); }
+        }
+        /* Renegade: soft crimson at II, neon crimson at MAX */
+        html[data-theme="renegade-crimson"] .glyph-slot[data-lvl="2"],
+        html[data-theme="renegade-crimson"] .draft-card.is-upgrade[data-lvl="2"] {
+            box-shadow: 0 0 8px rgba(255, 42, 75, 0.4);
+        }
+        html[data-theme="renegade-crimson"] .glyph-slot[data-lvl="3"],
+        html[data-theme="renegade-crimson"] .draft-card.is-upgrade[data-lvl="3"] {
+            box-shadow: 0 0 16px rgba(255, 42, 75, 0.8);
+        }
+        /* Pale Terminal: platinum at II, cyan aura at MAX */
+        html[data-theme="pale-terminal"] .glyph-slot[data-lvl="2"],
+        html[data-theme="pale-terminal"] .draft-card.is-upgrade[data-lvl="2"] {
+            box-shadow: 0 0 8px rgba(216, 216, 216, 0.4);
+        }
+        html[data-theme="pale-terminal"] .glyph-slot[data-lvl="3"],
+        html[data-theme="pale-terminal"] .draft-card.is-upgrade[data-lvl="3"] {
+            box-shadow: 0 0 16px rgba(0, 240, 255, 0.7);
+        }
+        html[data-theme="cyber-arcade"] .glyph-slot[data-lvl="2"] { box-shadow: 0 0 8px rgba(0,240,255,0.45); }
+        html[data-theme="cyber-arcade"] .glyph-slot[data-lvl="3"] { box-shadow: 0 0 16px rgba(0,240,255,0.8); }
+        html[data-theme="typewriter"] .glyph-slot[data-lvl="2"] { box-shadow: 0 0 8px rgba(217,56,58,0.35); }
+        html[data-theme="typewriter"] .glyph-slot[data-lvl="3"] { box-shadow: 0 0 16px rgba(217,56,58,0.65); }
+        html[data-theme="wordling"] .glyph-slot[data-lvl="2"] { box-shadow: 0 0 8px rgba(250,204,21,0.5); }
+        html[data-theme="wordling"] .glyph-slot[data-lvl="3"] { box-shadow: 0 0 16px rgba(250,204,21,0.85); }
+        @media (prefers-reduced-motion: reduce) {
+            .glyph-slot[data-lvl="3"] { animation: none; }
+        }
     </style>
 </head>
 <body>
@@ -1775,6 +1842,15 @@
     <div id="howto-modal"><div class="modal-inner run-info-inner">
         <div class="run-info-band">HOW TO PLAY</div>
         <div class="run-info-body howto-body">
+            <div class="howto-section tutorial-section">
+                <h3>⚡︎ OVERCLOCKING GLYPHS</h3>
+                <p><strong>Filled all your Glyph slots? Don't stop spending!</strong></p>
+                <ul>
+                    <li><strong>Duplicate Buy:</strong> When a Glyph you already own appears in the Shop, buy it to <strong>Level Up</strong> the one you are carrying, up to <strong>Level 3 (MAX)</strong>.</li>
+                    <li><strong>Power Boost:</strong> Level 2 is half again as strong, Level 3 is double — no extra board slot needed.</li>
+                    <li><strong>Spot the Glow:</strong> Look for the <code>[ II ]</code> and <code>[ MAX ]</code> badges and the border glow on your board to see which gear is running hot.</li>
+                </ul>
+            </div>
             <div class="howto-row"><span class="howto-num">1</span><span>Tap or drag letter tiles from your hand up into the word line to build a word.</span></div>
             <div class="howto-row"><span class="howto-num">2</span><span>Tap SUBMIT to play a valid word. Chips × Multiplier = the points you score.</span></div>
             <div class="howto-row"><span class="howto-num">3</span><span>HANDS is how many words you can submit this stage — reach the target score before they run out.</span></div>
@@ -2179,23 +2255,50 @@
     function hasDoubledLetter(word) { return /([A-Za-z])\1/.test(word||''); }
     // Middle Child boosts one tile, so it is applied per tile rather than in the
     // shared modifier pass. Both the scorer and the score animation ask for the index.
+    function middleChildFactor() { return scaleNum(1.5, glyphLevel("middle_child")); }
     function getMiddleChildIndex(len) {
         if (!GlyphManager.hasGlyph('middle_child')) return -1;
         return (len >= 5 && len % 2 !== 0) ? Math.floor(len / 2) : -1;
     }
     function isVowelLetter(letter) { if(letter==='Y'&&GlyphManager.hasGlyph('vowel_shifter')) return true; return VOWEL_LETTERS.has(letter); }
     function isConsonantLetter(letter) { return /[A-Z]/.test(letter) && !VOWEL_LETTERS.has(letter); }
-    function getHandSize() { return Math.max(4, BASE_HAND_SIZE + (GlyphManager.hasGlyph('deep_pockets') ? 2 : 0) + pressValue('handBonus', 0)); }
+    function getHandSize() { return Math.max(4, BASE_HAND_SIZE + (GlyphManager.hasGlyph('deep_pockets') ? scaleInt(2, glyphLevel('deep_pockets')) : 0) + pressValue('handBonus', 0)); }
     function getMaxConsumables() { return MAX_CONSUMABLES + (pressValue('startSeals',0) ? 1 : 0); }
 
+    // Overclocking: a glyph runs at Level 1, 2 or 3. Level 2 is half again as
+    // strong, Level 3 is double. Whole-number knobs (extra hands, extra tiles)
+    // step up by at least one per level, otherwise +1 rounds to the same number
+    // twice and the last upgrade would buy nothing.
+    const MAX_GLYPH_LEVEL = 3;
+    const LEVEL_SCALE = { 1: 1, 2: 1.5, 3: 2 };
+    // a glyph with no numeric knob cannot be overclocked, so it is never offered
+    const UNSCALABLE_GLYPHS = new Set(["vowel_shifter", "duplicator"]);
+    function glyphLevel(id) {
+        const eq = (G.equippedGlyphs || []).find(g => g.id === id);
+        return eq && eq.lvl ? Math.min(MAX_GLYPH_LEVEL, eq.lvl) : 1;
+    }
+    function canOverclock(id) {
+        if (UNSCALABLE_GLYPHS.has(id)) return false;
+        return GlyphManager.hasGlyph(id) && glyphLevel(id) < MAX_GLYPH_LEVEL;
+    }
+    function scaleInt(base, lvl) {
+        if (lvl <= 1) return base;
+        const two = Math.max(Math.round(base * LEVEL_SCALE[2]), base + 1);
+        if (lvl === 2) return two;
+        return Math.max(Math.round(base * LEVEL_SCALE[3]), two + 1);
+    }
+    function scaleNum(base, lvl) {
+        const v = base * (LEVEL_SCALE[lvl] || 1);
+        return Math.round(v * 10) / 10;
+    }
     const GlyphManager = {
         hasGlyph(id) { return G.equippedGlyphs.some(g=>g.id===id); },
         getGlyphData(id) { return GLYPH_DATABASE.find(g=>g.id===id); },
         getAbbrev(name) { const clean=name.replace(/^The\s+/i,''); const parts=clean.split(/\s+/); return parts.length>=2 ? (parts[0][0]+parts[1][0]).toUpperCase() : clean.slice(0,2).toUpperCase(); },
         onStageStart() {
             G.recyclerUsedThisStage = false;
-            if (this.hasGlyph('scavenger')) G.rerollsLeft += 2;
-            if (this.hasGlyph('perfectionist')) G.playsLeft += 1;
+            if (this.hasGlyph('scavenger')) G.rerollsLeft += scaleInt(2, glyphLevel('scavenger'));
+            if (this.hasGlyph('perfectionist')) G.playsLeft += scaleInt(1, glyphLevel('perfectionist'));
             G.rerollsLeft += pressValue('discardBonus', 0);
             if (pressValue('wildcardEachStage', false)) {
                 G.tileBag.push({ id:'t_press_wild_'+Math.random().toString(36).slice(2,9)+'_'+Date.now(), letter:'*', chips:0, type:'wildcard' });
@@ -2206,7 +2309,8 @@
             if (!this.hasGlyph('wildcard_rune')) return;
             const candidates = (activeTiles||[]).filter(t=>t&&t.type==='normal');
             if (candidates.length===0) return;
-            candidates[Math.floor(Math.random()*candidates.length)].type = 'wildcard';
+            const picks = Math.min(candidates.length, scaleInt(1, glyphLevel('wildcard_rune')));
+            shuffle(candidates).slice(0, picks).forEach(t => { t.type = 'wildcard'; });
         },
         calculateScoreModifiers(word, basePoints, baseMult) {
             let finalPoints = basePoints||0, finalMult = baseMult||1;
@@ -2225,6 +2329,18 @@
             return { finalPoints, finalMult };
         },
         getGlyphEffectPreview(id, word) {
+            const e = this.baseGlyphEffect(id, word);
+            const lvl = glyphLevel(id);
+            if (!e || lvl <= 1) return e;
+            if (e.kind === "mult-mul") {
+                const v = scaleNum(e.value, lvl);
+                return { kind: e.kind, value: v, label: "x" + v + " MULT" };
+            }
+            const v = Math.round(e.value * LEVEL_SCALE[lvl]);
+            const unit = e.kind === "points" ? " PTS" : " MULT";
+            return { kind: e.kind, value: v, label: "+" + v + unit };
+        },
+        baseGlyphEffect(id, word) {
             const letters=(word||'').split(''); const vowelCount=letters.filter(isVowelLetter).length; const consonantCount=letters.filter(isConsonantLetter).length; const rareCount=letters.filter(l=>RARE_LETTERS.has(l)).length; const hasScrabbleLetter=letters.some(l=>l==='Q'||l==='X'||l==='Z'||l==='J'); const dupCount=letters.length-new Set(letters).size;
             switch(id) {
                 case 'vowel_anchor': return vowelCount>0 ? {kind:'points', value:15*vowelCount, label:'+'+(15*vowelCount)+' PTS'} : null;
@@ -2244,12 +2360,12 @@
         onDiscardEvent(discardedTiles) {
             if (!this.hasGlyph('recycler') || G.recyclerUsedThisStage) return;
             if (discardedTiles.length===3 && discardedTiles.every(t=>t&&isVowelLetter(t.letter))) {
-                G.rerollsLeft += 1;
+                G.rerollsLeft += scaleInt(1, glyphLevel('recycler'));
                 G.recyclerUsedThisStage = true;
             }
         },
         onWordScored(word, finalScore, playedTiles) {
-            if (this.hasGlyph('alchemy') && finalScore>=100) G.bank += 2;
+            if (this.hasGlyph('alchemy') && finalScore>=100) G.bank += scaleInt(2, glyphLevel('alchemy'));
             if (this.hasGlyph('duplicator') && word && word.length===5 && playedTiles && playedTiles.length) {
                 const normalTiles = playedTiles.filter(t=>t&&t.type==='normal');
                 if (normalTiles.length) {
@@ -2316,7 +2432,7 @@
             let chip = isMutedTile(t) ? 0 : ((vowelDrought && VOWEL_LETTERS.has(t.letter)) ? 0 : (t.chips||0));
             if (pressRareZero && PRESS_RARE.has(t.letter)) chip = 0;
             if(!isMutedTile(t)){ if(t.aura==='blue') chip+=10; if(t.aura==='gold') chip*=2; if(t.aura==='red') redAuraBonus+=2; if(t.goldInk) chip+=20; }
-            if(ti===midIdx) chip = Math.floor(chip*1.5);
+            if(ti===midIdx) chip = Math.floor(chip*middleChildFactor());
             totalChips+=chip; letters.push(t.letter); pattern.push(t.letter);
         });
         const length=G.activeWord.length; const baseChips=getLengthBaseChips(length); const baseMult=getLengthBaseMult(length)+redAuraBonus;
@@ -2464,7 +2580,7 @@
             if (tile.type === 'wildcard') { bumpStat('specialTilesPlayed', 1); spawnGlyphIndicator(el, 'WILD'); await sleep(220); el.classList.remove('scoring-pop'); continue; }
             if (tile.type === 'finisher') { if (i === tilesCopy.length - 1) spawnPopup(el, 3, true); await sleep(220); el.classList.remove('scoring-pop'); continue; }
             let chip = isMutedTile(tile) ? 0 : ((G.gameMode==='daily' && G.dailyChallenge===2 && VOWEL_LETTERS.has(tile.letter)) ? 0 : (tile.chips || 0)); if (pressValue('rareZero', false) && PRESS_RARE.has(tile.letter)) chip = 0; if (!isMutedTile(tile)) { if (tile.aura === 'blue') chip += 10; if (tile.aura === 'gold') chip *= 2; if (tile.aura === 'red') runningRedMult += 2; if (tile.goldInk) chip += 20; }
-            if (i === animMidIdx) { chip = Math.floor(chip * 1.5); setTimeout(() => spawnGlyphIndicator(el, 'x1.5'), 80); }
+            if (i === animMidIdx) { chip = Math.floor(chip * middleChildFactor()); setTimeout(() => spawnGlyphIndicator(el, 'x1.5'), 80); }
             runningChips += chip; pointsEl.textContent = runningChips; pointsEl.classList.add('pop');
             const sparkColor = tile.aura === 'blue' ? 'var(--accent-1)' : tile.aura === 'red' ? 'var(--accent-2)' : 'var(--accent-3)';
             spawnTileBurst(el, sparkColor, 6 + Math.round(chip / 3));
@@ -2570,7 +2686,7 @@
             const tgt = G.stageTargets[G.currentStage];
             const shortfall = tgt - G.currentScore;
             checkMilestones({ event:'stageFail', shortfallPct: tgt>0 ? shortfall/tgt : 1 });
-            if (GlyphManager.hasGlyph('insurance_policy') && shortfall <= tgt * 0.15) {
+            if (GlyphManager.hasGlyph('insurance_policy') && shortfall <= tgt * scaleNum(0.15, glyphLevel('insurance_policy'))) {
                 const at = G.equippedGlyphs.findIndex(g=>g.id==='insurance_policy');
                 if (at !== -1) G.equippedGlyphs.splice(at,1);
                 G.stageScores[G.currentStage] = G.currentScore;
@@ -2654,7 +2770,7 @@
         const interest = Math.min(5, Math.floor(G.bank/5));
         if (interest > 0) { G.bank += interest; lines.push(['Interest', interest]); }
         let piggy = 0;
-        if (GlyphManager.hasGlyph('piggy_bank')) { piggy = Math.min(5, Math.floor(G.bank/5)); if (piggy > 0) { G.bank += piggy; lines.push(['Piggy Bank', piggy]); } }
+        if (GlyphManager.hasGlyph('piggy_bank')) { piggy = Math.min(scaleInt(5, glyphLevel('piggy_bank')), Math.floor(G.bank/5)); if (piggy > 0) { G.bank += piggy; lines.push(['Piggy Bank', piggy]); } }
         G.records.totalGoldEarned += (base + Math.max(0,G.playsLeft) + Math.max(0,G.rerollsLeft) + interest + piggy);
         saveRecords();
         // payout is banked from here on, so a resume must land on the shop, not replay it
@@ -2697,12 +2813,33 @@
             G.tileBag.push({ id:'t_'+def.tileType+'_'+Math.random().toString(36).slice(2,11)+'_'+Date.now(), letter: def.tileType==='wildcard'?'*':'!', chips:0, type:def.tileType });
         }
     } }; }
+    function upgradePrice(lvl) { return shopPrice("glyph") + (lvl === 1 ? 2 : 4); }
+    function makeUpgradeOffer(g) {
+        const from = glyphLevel(g.id), to = from + 1;
+        return { kind: "upgrade", id: g.id, type: g.type, name: g.name, upgradeTo: to,
+            desc: g.desc, color: g.color, icon: g.icon, price: upgradePrice(from),
+            apply: () => {
+                const eq = G.equippedGlyphs.find(x => x.id === g.id);
+                if (!eq) return;
+                eq.lvl = Math.min(MAX_GLYPH_LEVEL, (eq.lvl || 1) + 1);
+                renderGlyphs();
+            } };
+    }
     function makeConsumableOffer(def) { return { kind:'consumable', id:def.id, type:'seal', name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{ G.consumables.push({id:def.id}); } }; }
     function isGlyphUnlocked(id) { return !G.progress || G.progress.unlockedGlyphs.includes(id); }
     function isConsumableUnlocked(id) { return !G.progress || G.progress.unlockedConsumables.includes(id); }
     function generateShopGlyphOffers() {
         const pool = [];
-        GLYPH_DATABASE.forEach(g=>{ const alreadyEquipped=G.equippedGlyphs.some(eg=>eg.id===g.id); if(!alreadyEquipped && isGlyphUnlocked(g.id) && G.equippedGlyphs.length<MAX_GLYPH_SLOTS){ pool.push(makeGlyphOffer(g)); } });
+        GLYPH_DATABASE.forEach(g=>{
+            if (!isGlyphUnlocked(g.id)) return;
+            if (G.equippedGlyphs.some(eg=>eg.id===g.id)) {
+                // already carried: offer the overclock, unless it is maxed or
+                // has nothing to scale, in which case it leaves the pool for good
+                if (canOverclock(g.id)) pool.push(makeUpgradeOffer(g));
+                return;
+            }
+            if (G.equippedGlyphs.length < MAX_GLYPH_SLOTS) pool.push(makeGlyphOffer(g));
+        });
         SPECIAL_TILE_DATABASE.forEach(def=>{ pool.push(makeTileOffer(def)); });
         const slots = Math.max(1, 3 + pressValue('shopGlyphDelta', 0));
         return shuffle(pool).slice(0, slots);
@@ -2716,7 +2853,13 @@
         const savedG = (G.shopOffers && G.shopOffers.glyphs) || [];
         const savedC = (G.shopOffers && G.shopOffers.consumables) || [];
         const glyphs = savedG.map(o=>{
-            const g = GLYPH_DATABASE.find(x=>x.id===o.id); if (g) return makeGlyphOffer(g);
+            const g = GLYPH_DATABASE.find(x=>x.id===o.id);
+            if (g) {
+                if (o.kind === 'upgrade' || G.equippedGlyphs.some(eq=>eq.id===g.id)) {
+                    return canOverclock(g.id) ? makeUpgradeOffer(g) : null;
+                }
+                return makeGlyphOffer(g);
+            }
             const t = SPECIAL_TILE_DATABASE.find(x=>x.id===o.id); return t ? makeTileOffer(t) : null;
         }).filter(Boolean);
         const cons = savedC.map(o=>{ const c = CONSUMABLE_DATABASE.find(x=>x.id===o.id); return c ? makeConsumableOffer(c) : null; }).filter(Boolean);
@@ -2761,7 +2904,14 @@
                 const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
                 const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); card.dataset.gtype=familyOf(item.id, item.type); setIcon(card, item.id, item.icon);
                 const price=document.createElement('span'); price.className='draft-card-price'; price.innerHTML='<span class="diamond-icon"></span>'+item.price; card.appendChild(price);
-                const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=item.name;
+                if (item.kind === 'upgrade') {
+                    card.classList.add('is-upgrade');
+                    card.dataset.lvl = item.upgradeTo;
+                    const flag=document.createElement('span'); flag.className='upgrade-flag';
+                    flag.textContent = item.upgradeTo >= MAX_GLYPH_LEVEL ? 'MAX' : 'LVL '+item.upgradeTo;
+                    card.appendChild(flag);
+                }
+                const label=document.createElement('span'); label.className='draft-card-label'; label.textContent = item.kind==='upgrade' ? ('UPGRADE TO LVL '+item.upgradeTo) : item.name;
                 wrap.appendChild(card); wrap.appendChild(label);
                 wrap.addEventListener('click', ()=>{ AudioEngine.playTap(); renderShopDetail(container, item, item.kind); });
                 grid.appendChild(wrap);
@@ -2793,7 +2943,14 @@
                 const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
                 const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); card.dataset.gtype=familyOf(item.id, item.type); setIcon(card, item.id, item.icon);
                 const price=document.createElement('span'); price.className='draft-card-price'; price.innerHTML='<span class="diamond-icon"></span>'+item.price; card.appendChild(price);
-                const label=document.createElement('span'); label.className='draft-card-label'; label.textContent=item.name;
+                if (item.kind === 'upgrade') {
+                    card.classList.add('is-upgrade');
+                    card.dataset.lvl = item.upgradeTo;
+                    const flag=document.createElement('span'); flag.className='upgrade-flag';
+                    flag.textContent = item.upgradeTo >= MAX_GLYPH_LEVEL ? 'MAX' : 'LVL '+item.upgradeTo;
+                    card.appendChild(flag);
+                }
+                const label=document.createElement('span'); label.className='draft-card-label'; label.textContent = item.kind==='upgrade' ? ('UPGRADE TO LVL '+item.upgradeTo) : item.name;
                 wrap.appendChild(card); wrap.appendChild(label);
                 wrap.addEventListener('click', ()=>{ AudioEngine.playTap(); renderShopDetail(container, item, 'consumable'); });
                 cGrid.appendChild(wrap);
@@ -2932,6 +3089,14 @@
                     slot.title = data.name + ' — ' + data.desc;
                     const badge = document.createElement('span'); badge.className = 'glyph-level-badge'; badge.style.background = data.color; badge.textContent = data.type.toUpperCase(); slot.appendChild(badge);
                     const stat = document.createElement('span'); stat.className = 'glyph-stat'; stat.style.color = data.color; stat.dataset.gtype = familyOf(data.id, data.type); setIcon(stat, data.id, data.icon); slot.appendChild(stat);
+                const lvl = equipped.lvl || 1;
+                slot.dataset.lvl = lvl;
+                if (lvl > 1) {
+                    const badge = document.createElement('span');
+                    badge.className = 'lvl-badge';
+                    badge.textContent = lvl >= MAX_GLYPH_LEVEL ? '[ MAX ]' : '[ II ]';
+                    slot.appendChild(badge);
+                }
                     slot.addEventListener('pointerdown', (e) => onDragStart(e, 'glyph', i));
                 }
             }
