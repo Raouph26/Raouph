@@ -1826,6 +1826,13 @@
         @media (prefers-reduced-motion: reduce) {
             #blitz-clock.is-low, .blitz-slot.just-filled { animation: none; }
         }
+        /* five and six slot boards still have to fit a 390px screen */
+        #glyph-slots[data-slots="5"] .glyph-slot { width: clamp(38px, 10vw, 52px); }
+        #glyph-slots[data-slots="6"] .glyph-slot { width: clamp(32px, 8.6vw, 46px); }
+        #glyph-slots[data-slots="5"] { gap: 5px; }
+        #glyph-slots[data-slots="6"] { gap: 4px; }
+        #glyph-slots[data-slots="5"] .lvl-badge,
+        #glyph-slots[data-slots="6"] .lvl-badge { font-size: 0.38rem; padding: 2px 3px; }
     </style>
 </head>
 <body>
@@ -2109,7 +2116,12 @@
         { id:"double_trouble", name:"Double Trouble", type:"red", color:"#EF4444", icon:"‼", desc:"+15 MULT if the played word has two identical letters side by side." },
         { id:"middle_child", name:"Middle Child", type:"blue", color:"#3B82F6", icon:"◈", desc:"Odd words of 5+ letters score their middle tile at x1.5." }
     ];
-    const MAX_GLYPH_SLOTS = 4;
+    const BASE_GLYPH_SLOTS = 4;
+    const MAX_GLYPH_SLOTS = 6;   // the ceiling; maxGlyphSlots() is what to ask
+    function maxGlyphSlots() {
+        const stage = G.currentStage || 1;
+        return BASE_GLYPH_SLOTS + (stage >= 4 ? 1 : 0) + (stage >= 6 ? 1 : 0);
+    }
     const BASE_HAND_SIZE = 10;
     const CONSUMABLE_COLOR = "#06B6D4";
     // one drawing per unlockable; edit a value here to swap what a glyph wears
@@ -2546,7 +2558,7 @@
         // them to the discard pile keeps the 98-tile pool whole; dropping them cost the
         // player ~10 tiles per stage and starved the bag by stage 7.
         if (!isZenLike()) { const carry=[...G.hand, ...G.activeWord].filter(t=>t&&t.id); if(carry.length) G.discardPile.push(...carry); }
-        G.currentScore=0; G.discardsUsedThisStage=0; G.playsLeft=(G.gameMode==='daily'&&G.dailyChallenge===4)?2:4; G.rerollsLeft=3; G.activeWord=[]; G.hand=[]; G.stageWords=[]; G.isAnimating=false; G.rerollMode=false; G.rerollMarks.clear(); G.anchorTileId=null; G.mutedTileId=null; drawToHand(); }
+        G.currentScore=0; G.discardsUsedThisStage=0; G.playsLeft=(G.gameMode==='daily'&&G.dailyChallenge===4)?2:(4+((G.currentStage||1)>=5?1:0)+((G.currentStage||1)>=7?1:0)); G.rerollsLeft=3; G.activeWord=[]; G.hand=[]; G.stageWords=[]; G.isAnimating=false; G.rerollMode=false; G.rerollMarks.clear(); G.anchorTileId=null; G.mutedTileId=null; drawToHand(); }
     function startRun() {
         clearActiveRun();
         G.removedLetters = new Set();
@@ -3034,11 +3046,24 @@
                 if (canOverclock(g.id)) pool.push(makeUpgradeOffer(g));
                 return;
             }
-            if (G.equippedGlyphs.length < MAX_GLYPH_SLOTS) pool.push(makeGlyphOffer(g));
+            if (G.equippedGlyphs.length < maxGlyphSlots()) pool.push(makeGlyphOffer(g));
         });
         SPECIAL_TILE_DATABASE.forEach(def=>{ pool.push(makeTileOffer(def)); });
         const slots = Math.max(1, 3 + pressValue('shopGlyphDelta', 0));
-        return shuffle(pool).slice(0, slots);
+        const picked = shuffle(pool).slice(0, slots);
+        const boardFull = G.equippedGlyphs.length >= maxGlyphSlots();
+        const isUpgrade = o => o && o.kind === 'upgrade';
+        if (boardFull && !picked.some(isUpgrade)) {
+            const up = shuffle(pool.filter(isUpgrade))[0];
+            if (up) picked[picked.length - 1] = up;
+        }
+        // and while there is room, at least one card that actually scores
+        const scores = o => o && o.kind === 'glyph' && o.type !== 'green';
+        if (!boardFull && !picked.some(scores)) {
+            const s = shuffle(pool.filter(scores))[0];
+            if (s) picked[picked.length - 1] = s;
+        }
+        return picked;
     }
     function generateShopConsumableOffers() {
         return shuffle(CONSUMABLE_DATABASE.filter(def=>isConsumableUnlocked(def.id)).map(def=>makeConsumableOffer(def))).slice(0,2);
@@ -3116,7 +3141,7 @@
         }
         if (G.equippedGlyphs.length > 0) {
             const zone = document.createElement('div'); zone.className='shop-sell-zone';
-            const ownedLabel = document.createElement('div'); ownedLabel.className='shop-section-label sec-sell'; ownedLabel.textContent='● SELL YOUR GLYPHS ('+G.equippedGlyphs.length+'/'+MAX_GLYPH_SLOTS+')'; zone.appendChild(ownedLabel);
+            const ownedLabel = document.createElement('div'); ownedLabel.className='shop-section-label sec-sell'; ownedLabel.textContent='● SELL YOUR GLYPHS ('+G.equippedGlyphs.length+'/'+maxGlyphSlots()+')'; zone.appendChild(ownedLabel);
             const oGrid = document.createElement('div'); oGrid.className='draft-grid';
             G.equippedGlyphs.forEach((eq, i)=>{
                 const data = GlyphManager.getGlyphData(eq.id); if(!data) return;
@@ -3219,7 +3244,7 @@
         const backBtn=document.createElement('button'); backBtn.className='menu-btn'; backBtn.textContent='BACK';
         backBtn.addEventListener('click', ()=>{ AudioEngine.playTap(); renderShop(container); });
         const buyBtn=document.createElement('button'); buyBtn.className='draft-btn'; buyBtn.textContent='BUY';
-        const inventoryFull = (kind==='consumable' && G.consumables.length>=getMaxConsumables()) || (kind==='glyph' && G.equippedGlyphs.length>=MAX_GLYPH_SLOTS);
+        const inventoryFull = (kind==='consumable' && G.consumables.length>=getMaxConsumables()) || (kind==='glyph' && G.equippedGlyphs.length>=maxGlyphSlots());
         if (G.bank < item.price || inventoryFull) buyBtn.disabled = true;
         buyBtn.addEventListener('click', ()=>{
             if (G.bank < item.price || inventoryFull) return;
@@ -3286,7 +3311,9 @@
 
     function renderGlyphs() {
         const container = document.getElementById('glyph-slots'); container.innerHTML = '';
-        for (let i = 0; i < MAX_GLYPH_SLOTS; i++) {
+        const slotCount = Math.max(maxGlyphSlots(), G.equippedGlyphs.length);
+        container.dataset.slots = String(slotCount);
+        for (let i = 0; i < slotCount; i++) {
             const slot = document.createElement('div'); slot.className = 'glyph-slot';
             const equipped = G.equippedGlyphs[i];
             if (!equipped) slot.classList.add('empty');
