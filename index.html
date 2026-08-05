@@ -2164,7 +2164,7 @@
     const SHOP_PRICES = { glyph:6, void_seal:3, gold_ink:5, transmuter:4, cloner:5, wild_tile:7, finisher_tile:7, italic_tile:7 };
     const SHOP_REROLL_BASE_COST = 2;
     const NO_ADS_PRICE = 500;
-    const CLASSIC_STAGE_TARGETS = [0, 300, 800, 2000, 5000, 12000, 30000, 75000, 200000];
+    const CLASSIC_STAGE_TARGETS = [0, 300, 800, 2000, 5000, 12000, 30000, 45000, 75000];
     // Zen has no fail state, so the targets exist to mark progress rather than to
     // squeeze. They sit far below the classic curve and climb far more gently.
     const ZEN_STAGE_TARGETS = [0, 100, 220, 380, 580, 820, 1100, 1450, 1850];
@@ -2699,7 +2699,7 @@
         if(!isZenLike() && G.playsLeft<=0) return;
         const payload = calcScore();
         if (G.gameMode === "blitz") {
-            if (G.blitzOver) return;
+            if (blitzSettleIfExpired() || G.blitzOver) return;
             if (!payload.valid || payload.occ === 0) {
                 AudioEngine.playError(); vibrate(25);
                 const b = document.getElementById("score-banner");
@@ -3700,11 +3700,15 @@
         tickResourceValue(document.getElementById('val-hands'), G.playsLeft);
         tickResourceValue(document.getElementById('val-rerolls'), G.rerollsLeft);
         tickResourceValue(document.getElementById('val-gold'), G.bank, '<span class="diamond-icon"></span> '+G.bank);
-        const sb=document.getElementById('score-banner'); if(p.occ===0) sb.textContent='—'; else if(!p.valid) sb.textContent='INVALID WORD'; else sb.textContent='READY';
+        const sb=document.getElementById('score-banner');
+        let blitzWhy = null;
+        if (G.gameMode==='blitz' && p.occ>0 && p.valid) blitzWhy = blitzRejection(p.word);
+        if(p.occ===0) sb.textContent='—'; else if(!p.valid) sb.textContent='INVALID WORD';
+        else if(blitzWhy) sb.textContent=blitzWhy.toUpperCase(); else sb.textContent='READY';
         const sortBtn=document.getElementById('btn-sort-bench'); if(sortBtn) sortBtn.textContent = BENCH_SORT_LABELS[G.benchSort||'draw'];
         const clearBtn=document.getElementById('btn-clear'); if(clearBtn) clearBtn.textContent = G.rerollMode ? 'CANCEL' : 'RECALL';
-        sb.classList.toggle('invalid',p.occ>0&&!p.valid);
-        if (G.gameMode === 'blitz') renderBlitzBoard();
+        sb.classList.toggle('invalid',p.occ>0&&(!p.valid||!!blitzWhy));
+        if (G.gameMode === 'blitz') { renderBlitzBoard(); blitzSettleIfExpired(); }
         const awl=document.getElementById('active-word-line');
         awl.dataset.len = String(Math.min(G.activeWord.length, 14));
         reconcileTileList(awl, G.activeWord, tile=>tile.id,
@@ -3893,6 +3897,12 @@
         document.getElementById('btn-mode-daily').addEventListener('click',()=>startClassicLikeRun('daily'));
         document.getElementById('btn-mode-zen').addEventListener('click',()=>startZenRun());
         document.getElementById('btn-mode-blitz').addEventListener('click',()=>startBlitzRun());
+        // a backgrounded WebView can stop the interval outright, so re-check
+        // against the clock and re-arm the moment the page is on screen again
+        const blitzResume = () => { if (G.gameMode!=='blitz'||G.blitzOver) return; if (!blitzSettleIfExpired()) { paintBlitzClock(); startBlitzClock(); } };
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) blitzResume(); });
+        window.addEventListener('pageshow', blitzResume);
+        window.addEventListener('focus', blitzResume);
         document.getElementById('btn-bug-report').addEventListener('click',()=>document.getElementById('bug-modal').classList.add('show'));
         document.getElementById('btn-bug-close').addEventListener('click',()=>document.getElementById('bug-modal').classList.remove('show'));
         document.querySelectorAll('.theme-card').forEach(c=>c.addEventListener('click',()=>{ applyTheme(c.dataset.theme); G.currentTheme=c.dataset.theme; if(c.dataset.palette) applyPalette(c.dataset.palette); updateThemeButtons(); AudioEngine.playTap(); }));
@@ -4020,6 +4030,12 @@
             paintBlitzClock();
             if (blitzRemaining() <= 0) endBlitz("time");
         }, 100);
+    }
+    function blitzSettleIfExpired() {
+        if (G.gameMode !== "blitz" || G.blitzOver) return false;
+        if (blitzRemaining() > 0) return false;
+        endBlitz("time");
+        return true;
     }
     function stopBlitzClock() { if (G.blitzTicker) { clearInterval(G.blitzTicker); G.blitzTicker = null; } }
     function paintBlitzClock() {
