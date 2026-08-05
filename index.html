@@ -529,11 +529,11 @@
         #view-themes { align-items: center; justify-content: flex-start; justify-content: safe center; gap:14px; padding:30px; z-index:9; background: rgba(0,0,0,0.1); transform: translateX(110%); opacity: 0; pointer-events: none; display: flex; flex-wrap: wrap; flex-direction: row; align-content: flex-start; }
         #view-themes.slide-in { transform: translateX(0); opacity: 1; pointer-events: auto; }
         #view-draft {
-            align-items: center; justify-content: center; padding:30px; z-index:20;
-            backdrop-filter: blur(0px); background: rgba(0,0,0,0); opacity: 0; pointer-events: none;
-            transition: opacity 0.22s ease, background 0.22s ease, backdrop-filter 0.22s ease;
+            align-items: safe center; justify-content: safe center; padding:30px; z-index:20;
+            background: rgba(0,0,0,0); opacity: 0; pointer-events: none;
+            transition: opacity 0.22s ease, background 0.22s ease;
         }
-        #view-draft.show { opacity: 1; pointer-events: auto; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); }
+        #view-draft.show { opacity: 1; pointer-events: auto; background: rgba(0,0,0,0.82); }
         .draft-panel {
             background: var(--panel-bg); border: var(--outline-w) solid var(--panel-border); border-radius: var(--panel-radius);
             padding: 26px 22px; width: 100%; max-width: 320px; box-shadow: 0 12px 32px rgba(0,0,0,0.5);
@@ -960,6 +960,32 @@
             animation: tilePopIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         .active-tile .tile-chips { font-size: 10px; bottom: 2px; right: 4px; }
+        /* Nine and ten letter words are legal, so the line has to hold them on a
+           phone. Each step down keeps the whole word on screen without wrapping. */
+        #active-word-line[data-len="9"]  { gap: 5px; }
+        #active-word-line[data-len="9"]  .active-tile { width: clamp(36px, 9.4vw, 52px); }
+        #active-word-line[data-len="10"] { gap: 4px; }
+        #active-word-line[data-len="10"] .active-tile { width: clamp(32px, 8.5vw, 48px); }
+        #active-word-line[data-len="11"] { gap: 3px; }
+        #active-word-line[data-len="11"] .active-tile { width: clamp(29px, 7.7vw, 44px); }
+        #active-word-line[data-len="12"] { gap: 3px; }
+        #active-word-line[data-len="12"] .active-tile { width: clamp(27px, 7.1vw, 40px); }
+        #active-word-line[data-len="13"] { gap: 2px; }
+        #active-word-line[data-len="13"] .active-tile { width: clamp(25px, 6.5vw, 37px); }
+        #active-word-line[data-len="14"] { gap: 2px; }
+        #active-word-line[data-len="14"] .active-tile { width: clamp(23px, 6.1vw, 34px); }
+        #active-word-line[data-len="9"]  .tile-inner { font-size: clamp(0.95rem, 3.0vw, 1.3rem); }
+        #active-word-line[data-len="10"] .tile-inner { font-size: clamp(0.86rem, 2.7vw, 1.2rem); }
+        #active-word-line[data-len="11"] .tile-inner { font-size: clamp(0.78rem, 2.5vw, 1.1rem); }
+        #active-word-line[data-len="12"] .tile-inner,
+        #active-word-line[data-len="13"] .tile-inner,
+        #active-word-line[data-len="14"] .tile-inner { font-size: clamp(0.7rem, 2.2vw, 1rem); }
+        #active-word-line[data-len="9"]  .tile-chips,
+        #active-word-line[data-len="10"] .tile-chips { font-size: 8px; bottom: 1px; right: 2px; }
+        #active-word-line[data-len="11"] .tile-chips,
+        #active-word-line[data-len="12"] .tile-chips,
+        #active-word-line[data-len="13"] .tile-chips,
+        #active-word-line[data-len="14"] .tile-chips { font-size: 7px; bottom: 1px; right: 2px; }
 
         #hand-rack { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 10px 6px; width: 100%; flex-shrink: 0; min-height: 136px; }
         .hand-tile-wrap { width: clamp(52px, 13vw, 68px); height: clamp(52px, 13vw, 68px); flex-shrink: 0; }
@@ -1187,7 +1213,7 @@
         #view-stats, #view-unlocks {
             align-items: center; gap:10px; padding:30px 20px; z-index:9;
             justify-content: flex-start; justify-content: safe center;
-            background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+            background: rgba(0,0,0,0.72);
             transform: translateX(110%); opacity: 0; pointer-events: none; overflow-y:auto;
         }
         #view-stats.slide-in, #view-unlocks.slide-in { transform: translateX(0); opacity: 1; pointer-events: auto; }
@@ -1302,11 +1328,11 @@
         #btn-start-stage:active { transform:translateY(5px) scale(0.97); box-shadow: 0 0 0 0 var(--accent-1-shadow); transition: transform 0.06s ease-out, box-shadow 0.06s ease-out; }
 
         #confirm-modal {
-            position:absolute; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(0px);
-            display:flex; align-items:center; justify-content:center; z-index:85;
-            opacity:0; pointer-events:none; transition: opacity 0.22s ease, backdrop-filter 0.22s ease;
+            position:absolute; inset:0; background:rgba(0,0,0,0.78);
+            display:flex; align-items:safe center; justify-content:safe center; overflow-y:auto; z-index:85;
+            opacity:0; pointer-events:none; transition: opacity 0.22s ease;
         }
-        #confirm-modal.show { opacity:1; pointer-events:auto; backdrop-filter:blur(6px); }
+        #confirm-modal.show { opacity:1; pointer-events:auto; }
         .confirm-inner { background: var(--panel-bg); border: var(--outline-w) solid var(--panel-border); border-radius:var(--panel-radius); padding:22px; width:280px; text-align:center; box-shadow:0 8px 24px rgba(0,0,0,0.5); display:flex; flex-direction:column; gap:14px; }
         .confirm-inner p { font-weight:700; font-size:0.9rem; color: var(--text); font-family: var(--font-main); }
         .confirm-btns { display:flex; gap:10px; }
@@ -1318,12 +1344,12 @@
         .confirm-btns .btn-quit:active { box-shadow: 0 0 0 0 var(--accent-2-shadow); }
 
         #options-modal, #modal-overlay, #run-info-modal, #howto-modal, #noads-modal {
-            position:absolute; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(0px);
-            display:flex; align-items:center; justify-content:center; z-index:80;
-            opacity:0; pointer-events:none; transition: opacity 0.22s ease, backdrop-filter 0.22s ease;
+            position:absolute; inset:0; background:rgba(0,0,0,0.78);
+            display:flex; align-items:safe center; justify-content:safe center; overflow-y:auto; z-index:80;
+            opacity:0; pointer-events:none; transition: opacity 0.22s ease;
         }
         #options-modal.show, #modal-overlay.show, #run-info-modal.show, #howto-modal.show, #noads-modal.show {
-            opacity:1; pointer-events:auto; backdrop-filter:blur(6px);
+            opacity:1; pointer-events:auto;
         }
         #howto-modal, #noads-modal { z-index:90; }
         .modal-inner, .confirm-inner {
@@ -1722,6 +1748,14 @@
         html[data-theme="renegade-crimson"] .glyph-slot [data-gtype="red"]    { color: #C4001A !important; }
         html[data-theme="renegade-crimson"] .glyph-slot [data-gtype="purple"] { color: #A80016 !important; }
         html[data-theme="renegade-crimson"] .glyph-slot [data-gtype="seal"]   { color: #8A0710 !important; }
+        /* 560-tall phones: trim the padding so STAGE CLEARED fits whole */
+        @media (max-height: 640px) {
+            #view-draft { padding: 10px; }
+            .draft-panel { padding: 16px 16px; gap: 8px; }
+            .draft-title { font-size: 1.05rem; margin-bottom: 2px; }
+            .stage-clear-reward { margin-top: 4px; }
+            #view-draft .draft-panel > button { padding-top: 10px; padding-bottom: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -2455,8 +2489,8 @@
         G.currentStage = 1;
         resetStageState();
     }
-    function getLengthBaseChips(l) { if(l>=7) return 300; if(l===6) return 150; if(l===5) return 80; if(l===4) return 40; if(l===3) return 20; return 0; }
-    function getLengthBaseMult(l) { if(l>=7) return 8; if(l===6) return 5; if(l===5) return 3; if(l===4) return 2; if(l===3) return 1; return 1; }
+    function getLengthBaseChips(l) { if(l>=10) return 700; if(l===9) return 550; if(l===8) return 400; if(l===7) return 300; if(l===6) return 150; if(l===5) return 80; if(l===4) return 40; if(l===3) return 20; return 0; }
+    function getLengthBaseMult(l) { if(l>=10) return 15; if(l===9) return 12; if(l===8) return 10; if(l===7) return 8; if(l===6) return 5; if(l===5) return 3; if(l===4) return 2; if(l===3) return 1; return 1; }
     function calcScore() {
         let totalChips=0, hasWildcard=false, redAuraBonus=0; const letters=[]; const pattern=[];
         const vowelDrought = G.gameMode==='daily' && G.dailyChallenge===2;
@@ -2488,7 +2522,7 @@
     }
     function vibrate(ms=8) { if(document.getElementById('vibration-toggle').checked&&navigator.vibrate){ try{navigator.vibrate(ms);}catch(e){} } }
     function getInsertIndexFromX(clientX) { const container=document.getElementById('active-word-line'); const tiles=container.querySelectorAll('.active-tile'); const cr=container.getBoundingClientRect(); const x=clientX-cr.left; for(let i=0;i<tiles.length;i++){ const tr=tiles[i].getBoundingClientRect(); const tc=tr.left-cr.left+tr.width/2; if(x<tc) return i; } return G.activeWord.length; }
-    function placeTileInSlot(handIndex, insertAt=null) { if(G.isAnimating||G.rerollMode) return; if(handIndex<0||handIndex>=getHandSize()||!G.hand[handIndex]) return; if(G.activeWord.length>=8) return; const tile=G.hand[handIndex]; const wasEmpty=G.activeWord.length===0; G.hand[handIndex]=null; const idx=(insertAt!==null)?insertAt:G.activeWord.length; G.activeWord.splice(idx,0,tile); if(wasEmpty && G.activeHazard==='anchor') G.anchorTileId=tile.id; AudioEngine.playTap(); vibrate(6); renderWithTileFlip(); }
+    function placeTileInSlot(handIndex, insertAt=null) { if(G.isAnimating||G.rerollMode) return; if(handIndex<0||handIndex>=getHandSize()||!G.hand[handIndex]) return; const tile=G.hand[handIndex]; const wasEmpty=G.activeWord.length===0; G.hand[handIndex]=null; const idx=(insertAt!==null)?insertAt:G.activeWord.length; G.activeWord.splice(idx,0,tile); if(wasEmpty && G.activeHazard==='anchor') G.anchorTileId=tile.id; AudioEngine.playTap(); vibrate(6); renderWithTileFlip(); }
     function isAnchorLocked(tileId) { return G.activeHazard==='anchor' && G.anchorTileId===tileId; }
     function removeTileFromWord(wordIndex) { if(G.isAnimating||G.rerollMode) return; if(wordIndex<0||wordIndex>=G.activeWord.length) return; const tile=G.activeWord[wordIndex]; if(isAnchorLocked(tile.id)) return; const ei=G.hand.findIndex(t=>t===null); if(ei===-1) return; G.hand[ei]=tile; G.activeWord.splice(wordIndex,1); AudioEngine.playTap(); vibrate(6); renderWithTileFlip(); }
     function reorderActiveWord(fromIndex, toIndex) { if(G.isAnimating||G.rerollMode) return; if(fromIndex<0||fromIndex>=G.activeWord.length) return; const tile=G.activeWord[fromIndex]; G.activeWord.splice(fromIndex,1); let insertAt=toIndex; if(insertAt>fromIndex) insertAt--; if(insertAt<0) insertAt=0; if(insertAt>G.activeWord.length) insertAt=G.activeWord.length; G.activeWord.splice(insertAt,0,tile); AudioEngine.playTap(); renderWithTileFlip(); }
@@ -3576,6 +3610,7 @@
         const clearBtn=document.getElementById('btn-clear'); if(clearBtn) clearBtn.textContent = G.rerollMode ? 'CANCEL' : 'RECALL';
         sb.classList.toggle('invalid',p.occ>0&&!p.valid);
         const awl=document.getElementById('active-word-line');
+        awl.dataset.len = String(Math.min(G.activeWord.length, 14));
         reconcileTileList(awl, G.activeWord, tile=>tile.id,
             (tile,idx)=>{ const wrap=document.createElement('div'); wrap.className='active-tile'; wrap.dataset.tileId=tile.id; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>${getTileBadge(tile)}`; inner.onpointerdown=(e)=>{e.stopPropagation();onDragStart(e,'word',idx);}; wrap.appendChild(inner); return wrap; },
             (wrap,tile,idx)=>{ const inner=wrap.firstElementChild; inner.className=getTileClass(tile); paintTileFace(inner, `<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>${getTileBadge(tile)}`); inner.onpointerdown=(e)=>{e.stopPropagation();onDragStart(e,'word',idx);}; }
