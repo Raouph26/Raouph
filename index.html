@@ -699,9 +699,10 @@
             /* a stack of 22 hard offsets faked this outline and stair-stepped every
                curve, which read as pixelated. One real stroke, painted behind the
                fill, keeps the chunk without the jaggies. */
-            -webkit-text-stroke: 9px #ffffff; paint-order: stroke fill;
-            text-shadow: 0 7px 0 rgba(15,23,42,0.26), 0 12px 18px rgba(0,0,0,0.32);
-            will-change: transform;
+            -webkit-text-stroke: 4px #FFFFFF; paint-order: stroke fill;
+            text-shadow: none;
+            filter: drop-shadow(0px 6px 12px rgba(0, 200, 255, 0.35));
+            font-weight: 900; will-change: transform;
         }
         html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(4n+1) { animation-name: wlWaveA; animation-duration: 2.3s; }
         html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(4n+2) { animation-name: wlWaveB; animation-duration: 2.9s; color: var(--accent-2); }
@@ -1343,12 +1344,12 @@
         .confirm-btns .btn-quit { background: var(--accent-2); border-color: var(--accent-2-shadow); color: var(--accent-2-text); box-shadow: 0 5px 0 0 var(--accent-2-shadow); }
         .confirm-btns .btn-quit:active { box-shadow: 0 0 0 0 var(--accent-2-shadow); }
 
-        #options-modal, #modal-overlay, #run-info-modal, #howto-modal, #noads-modal, #bug-modal {
+        #options-modal, #modal-overlay, #run-info-modal, #howto-modal, #noads-modal, #bug-modal, #ad-modal {
             position:absolute; inset:0; background:rgba(0,0,0,0.78);
             display:flex; align-items:safe center; justify-content:safe center; overflow-y:auto; z-index:80;
             opacity:0; pointer-events:none; transition: opacity 0.22s ease;
         }
-        #options-modal.show, #modal-overlay.show, #run-info-modal.show, #howto-modal.show, #noads-modal.show, #bug-modal.show {
+        #options-modal.show, #modal-overlay.show, #run-info-modal.show, #howto-modal.show, #noads-modal.show, #bug-modal.show, #ad-modal.show {
             opacity:1; pointer-events:auto;
         }
         #howto-modal, #noads-modal { z-index:90; }
@@ -1749,12 +1750,14 @@
         html[data-theme="renegade-crimson"] .glyph-slot [data-gtype="purple"] { color: #A80016 !important; }
         html[data-theme="renegade-crimson"] .glyph-slot [data-gtype="seal"]   { color: #8A0710 !important; }
         /* 560-tall phones: trim the padding so STAGE CLEARED fits whole */
-        @media (max-height: 640px) {
+        @media (max-height: 720px) {
             #view-draft { padding: 10px; }
             .draft-panel { padding: 16px 16px; gap: 8px; }
             .draft-title { font-size: 1.05rem; margin-bottom: 2px; }
             .stage-clear-reward { margin-top: 4px; }
             #view-draft .draft-panel > button { padding-top: 10px; padding-bottom: 10px; }
+            #view-draft .ad-btn { padding: 8px; margin-top: 5px; font-size: 0.62rem; }
+            .payout-row { padding-top: 6px; padding-bottom: 6px; }
         }
         /* ---- Blitz -------------------------------------------------- */
         .diff-blitz {
@@ -1815,13 +1818,14 @@
         /* ---- report a bug ------------------------------------------- */
         .bug-btn {
             position: absolute; right: 14px; bottom: 14px; z-index: 12;
-            padding: 8px 11px; border-radius: var(--btn-radius);
-            font-family: var(--font-numeric); font-weight: 900; font-size: 0.56rem;
+            padding: 11px 16px; border-radius: var(--btn-radius);
+            font-family: var(--font-numeric); font-weight: 900; font-size: 0.72rem;
             letter-spacing: 1px; cursor: pointer;
-            background: transparent; color: var(--text-soft);
-            border: 1px solid var(--panel-border);
+            background: var(--accent-2); color: var(--accent-2-text);
+            border: var(--outline-w) solid var(--accent-2-shadow);
+            box-shadow: 0 4px 0 0 var(--accent-2-shadow), 0 6px 14px rgba(0,0,0,0.3);
         }
-        .bug-btn:active { transform: translateY(1px); }
+        .bug-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 0 var(--accent-2-shadow); }
         .bug-copy { font-size: 0.72rem; line-height: 1.45; color: var(--text-soft); margin: 6px 0 14px; }
         @media (prefers-reduced-motion: reduce) {
             #blitz-clock.is-low, .blitz-slot.just-filled { animation: none; }
@@ -1847,6 +1851,64 @@
         html[data-theme="renegade-crimson"] #blitz-count { color: #FFFFFF; }
         html[data-theme="renegade-crimson"] .blitz-slot-num { background: #FFFFFF; color: #111111; }
         html[data-theme="renegade-crimson"] .blitz-slot-word { color: #FFFFFF; }
+        #ad-modal { z-index: 95; }
+        #ad-count {
+            font-family: var(--font-numeric); font-weight: 900; font-size: 2.4rem;
+            color: var(--text); margin: 6px 0 14px; font-variant-numeric: tabular-nums;
+        }
+        .ad-btn {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            width: 100%; padding: 11px; margin-top: 8px; cursor: pointer;
+            font-family: var(--font-numeric); font-weight: 900; font-size: 0.7rem; letter-spacing: 0.8px;
+            border-radius: var(--btn-radius);
+            background: var(--accent-3); color: var(--accent-3-text);
+            border: var(--outline-w) solid var(--accent-3-shadow);
+            box-shadow: 0 4px 0 0 var(--accent-3-shadow);
+        }
+        .ad-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 0 var(--accent-3-shadow); }
+        .ad-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .theme-card.is-locked { filter: saturate(0.35) brightness(0.75); }
+        .theme-card.is-locked .theme-check { display: none; }
+        .theme-lock {
+            position: absolute; inset: 0; z-index: 3; border-radius: inherit;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+            background: rgba(0,0,0,0.55); padding: 6px; text-align: center;
+        }
+        .theme-lock-mark { font-size: 1.1rem; line-height: 1; color: #FFFFFF; }
+        .theme-lock-need {
+            font-family: var(--font-numeric); font-weight: 900; font-size: 0.5rem;
+            letter-spacing: 0.5px; color: #FFFFFF;
+        }
+        .theme-try {
+            font-family: var(--font-numeric); font-weight: 900; font-size: 0.46rem;
+            letter-spacing: 0.4px; padding: 5px 7px; border-radius: 4px; cursor: pointer;
+            background: #FFC700; color: #111111; border: 2px solid #111111; line-height: 1.1;
+        }
+        .theme-try:active { transform: translateY(1px); }
+        .theme-trial {
+            position: absolute; top: 4px; left: 4px; z-index: 4;
+            font-family: var(--font-numeric); font-weight: 900; font-size: 0.44rem;
+            padding: 3px 5px; border-radius: 3px; letter-spacing: 0.3px;
+            background: #FFC700; color: #111111; border: 1px solid #111111;
+        }
+        /* W O R D S P Y R E - blue on W R P, red on O S R, gold on D Y E */
+        html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(1),
+        html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(3),
+        html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(6) { color: #2B80FF; }
+        html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(2),
+        html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(5),
+        html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(8) { color: #FF3B4E; }
+        html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(4),
+        html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(7),
+        html[data-theme="wordling"] #view-menu h1 .title-letter:nth-child(9) { color: #FFC700; }
+        /* 560-tall phones: the payout plus its ad button needs another 21px */
+        @media (max-height: 600px) {
+            #view-draft .draft-panel { gap: 5px; padding: 12px 14px; }
+            #view-draft .ad-btn { padding: 6px; margin-top: 3px; font-size: 0.56rem; }
+            .payout-row { padding-top: 4px; padding-bottom: 4px; font-size: 0.72rem; }
+            .stage-clear-score { font-size: 1.5rem; }
+            .payout-list { gap: 3px; }
+        }
     </style>
 </head>
 <body>
@@ -2060,6 +2122,12 @@
             <button id="btn-noads-cancel" class="menu-btn" style="width:100%;">CONTINUE WITH ADS</button>
         </div>
     </div></div>
+    <div id="ad-modal"><div class="modal-inner" style="text-align:center;">
+        <h2 id="ad-title">REWARDED AD</h2>
+        <p id="ad-copy" class="bug-copy">No ad network is wired up yet, so this stands in for one.</p>
+        <div id="ad-count">3</div>
+        <button id="btn-ad-skip" class="menu-btn" style="width:100%;">CANCEL</button>
+    </div></div>
     <div id="modal-overlay"><div class="modal-inner" style="text-align:center;"><h2 id="modal-title">GAME OVER</h2><p id="modal-subtitle"></p><button id="btn-modal-action">Retry Run</button><button class="btn-main-menu" id="btn-modal-menu">Main Menu</button></div></div>
 </div>
 <script>
@@ -2266,6 +2334,8 @@
         unlockedGlyphs: ['scrabble_master','vowel_anchor','consonant_charge','long_form','underdog'],
         unlockedConsumables: ['gold_ink','transmuter','cloner'],
         completedRuns: [],
+        wins: 0,
+        grantedThemes: [],
         selectedPress: 'merchant_press',
         stats: { lettersDiscarded:0, inkSealsUsed:0, specialTilesPlayed:0, highestStageReached:1 }
     };
@@ -2279,6 +2349,12 @@
         });
         if (!p.unlockedPresses.includes('merchant_press')) p.unlockedPresses.unshift('merchant_press');
         if (!p.unlockedPresses.includes(p.selectedPress)) p.selectedPress = 'merchant_press';
+        if (!Array.isArray(p.grantedThemes)) p.grantedThemes = [];
+        if (!saved || saved.wins === undefined) {
+            let had = null;
+            try { had = localStorage.getItem("wordling-theme"); } catch (e) {}
+            if (had && !p.grantedThemes.includes(had)) p.grantedThemes.push(had);
+        }
         G.progress = p;
         saveProgress();
     }
@@ -2584,7 +2660,7 @@
             const pool = shuffle(CONSUMABLE_DATABASE.filter(d=>G.progress.unlockedConsumables.includes(d.id)));
             for (let i = 0; i < seedSeals && i < pool.length; i++) G.consumables.push({ id: pool[i].id });
         }
-        G.stageScores = [];
+        G.stageScores = []; G.revivedThisRun = false; G.freeShopRerolls = 0;
         G.tileBag = buildInitialBag();
         if (G.gameMode==='daily' && G.dailyChallenge===6) {
             ['Z','Q','X'].forEach(l => { const dist=TILE_DIST.find(d=>d.letter===l); for(let i=0;i<5;i++) G.tileBag.push({id:'t_junk_'+Math.random().toString(36).slice(2,11)+'_'+Date.now()+'_'+i, letter:l, chips:dist.chips, type:'normal', aura:assignRandomAura()}); });
@@ -2972,6 +3048,17 @@
         lines.forEach(([label,val]) => { const row=document.createElement('div'); row.className='payout-row'; row.innerHTML = `<span>${label}</span><span>+<span class="diamond-icon"></span>${val}</span>`; list.appendChild(row); });
         container.appendChild(list);
         const total = document.createElement('div'); total.className='payout-total'; total.innerHTML='BANK: <span class="diamond-icon"></span>'+G.bank; container.appendChild(total);
+        const earned = base + Math.max(0,G.playsLeft) + Math.max(0,G.rerollsLeft) + interest + piggy;
+        const boost = document.createElement('button'); boost.className='ad-btn'; boost.id='btn-ad-cash';
+        boost.textContent='\u25B6 WATCH AD \u00B7 +50% DIAMONDS';
+        boost.addEventListener('click', () => AdManager.show(AdManager.placements.cash, () => {
+            const bonus = Math.max(1, Math.round(earned * 0.5));
+            G.bank += bonus;
+            G.records.totalGoldEarned += bonus; saveRecords(); saveActiveRun();
+            boost.disabled = true; boost.textContent='\u2713 +' + bonus + ' DIAMONDS';
+            total.innerHTML='BANK: <span class="diamond-icon"></span>'+G.bank;
+        }));
+        container.appendChild(boost);
         const nextBtn=document.createElement('button'); nextBtn.className='draft-btn'; nextBtn.style.width='100%'; nextBtn.style.marginTop='12px'; nextBtn.textContent='NEXT ▶';
         nextBtn.addEventListener('click', ()=>{ AudioEngine.playTap(); nextBtn.disabled=true; openShopPanel(container); });
         container.appendChild(nextBtn);
@@ -3119,8 +3206,8 @@
     function getShopRerollCost() { return pressValue('rerollBase', SHOP_REROLL_BASE_COST) + G.shopRerollCount; }
     function rerollShop(container) {
         const cost = getShopRerollCost();
-        if (G.bank < cost) return;
-        G.bank -= cost;
+        if (G.freeShopRerolls > 0) { G.freeShopRerolls--; }
+        else { if (G.bank < cost) return; G.bank -= cost; }
         G.shopRerollCount++;
         G.shopRerollsUsedThisRun = (G.shopRerollsUsedThisRun||0) + 1;
         G.shopOffers.glyphs = generateShopGlyphOffers();
@@ -3194,10 +3281,22 @@
             container.appendChild(cGrid);
         }
         const rerollCost = getShopRerollCost();
-        const rerollBtn = document.createElement('button'); rerollBtn.className='draft-btn reroll-btn'; rerollBtn.style.width='100%'; rerollBtn.style.marginTop='10px'; rerollBtn.innerHTML='REROLL (<span class="diamond-icon"></span>'+rerollCost+')';
-        if (G.bank < rerollCost) rerollBtn.disabled = true;
+        const free = G.freeShopRerolls || 0;
+        const rerollBtn = document.createElement('button'); rerollBtn.className='draft-btn reroll-btn'; rerollBtn.style.width='100%'; rerollBtn.style.marginTop='10px';
+        rerollBtn.innerHTML = free > 0 ? 'REROLL (FREE \u00D7' + free + ')' : 'REROLL (<span class="diamond-icon"></span>'+rerollCost+')';
+        if (free <= 0 && G.bank < rerollCost) rerollBtn.disabled = true;
         rerollBtn.addEventListener('click', ()=>rerollShop(container));
         container.appendChild(rerollBtn);
+        // out of rerolls and out of diamonds: an ad buys two more
+        if (free <= 0 && G.bank < rerollCost) {
+            const adRoll = document.createElement('button'); adRoll.className='ad-btn'; adRoll.id='btn-ad-rerolls';
+            adRoll.textContent = '\u25B6 WATCH AD \u00B7 +2 FREE REROLLS';
+            adRoll.addEventListener('click', () => AdManager.show(AdManager.placements.rerolls, () => {
+                G.freeShopRerolls = (G.freeShopRerolls || 0) + 2;
+                saveActiveRun(); renderShop(container);
+            }));
+            container.appendChild(adRoll);
+        }
         const continueBtn = document.createElement('button'); continueBtn.className='draft-btn'; continueBtn.style.width='100%'; continueBtn.style.marginTop='8px'; continueBtn.textContent='CONTINUE';
         continueBtn.addEventListener('click', ()=>{ document.getElementById('view-draft').classList.remove('show'); advanceStage(); });
         container.appendChild(continueBtn);
@@ -3307,6 +3406,7 @@
         clearActiveRun();
         recordLeaderboardScore(G.currentScore);
         updateMostStagesCleared(G.totalStages);
+        addWin();
         showModal('victory');
     }
     function goEndless() {
@@ -3317,7 +3417,26 @@
 
     function showModal(type) {
         if (type==='game-over' && !isZenLike()) { clearActiveRun(); recordLeaderboardScore(G.currentScore); updateMostStagesCleared(Math.max(0,G.currentStage-1)); }
-        G.modalType=type; const o=document.getElementById('modal-overlay'); const t=document.getElementById('modal-title'); const s=document.getElementById('modal-subtitle'); const b=document.getElementById('btn-modal-action'); const mb=document.getElementById('btn-modal-menu'); if(type==='game-over'){ t.textContent='GAME OVER'; s.textContent='Score: '+G.currentScore; b.textContent='Retry Run'; b.style.display='block'; mb.style.display='block'; } else { t.textContent='VICTORY!'; s.textContent='All stages conquered!'; b.textContent='New Game'; b.style.display='block'; mb.style.display='block'; } o.classList.add('show');
+        G.modalType=type; const o=document.getElementById('modal-overlay'); const t=document.getElementById('modal-title'); const s=document.getElementById('modal-subtitle'); const b=document.getElementById('btn-modal-action'); const mb=document.getElementById('btn-modal-menu'); if(type==='game-over'){ t.textContent='GAME OVER'; s.textContent='Score: '+G.currentScore; b.textContent='Retry Run'; b.style.display='block'; mb.style.display='block'; } else { t.textContent='VICTORY!'; s.textContent='All stages conquered!'; b.textContent='New Game'; b.style.display='block'; mb.style.display='block'; } renderReviveOffer(type); o.classList.add('show');
+    }
+    // one revive per run: a hand back and another go at the stage you lost
+    function renderReviveOffer(type) {
+        const holder = document.getElementById("modal-overlay").querySelector(".modal-inner");
+        const old = holder.querySelector(".ad-btn"); if (old) old.remove();
+        if (type !== "game-over" || isZenLike() || G.revivedThisRun) return;
+        const btn = document.createElement("button");
+        btn.className = "ad-btn"; btn.id = "btn-ad-revive";
+        btn.textContent = "\u25B6 WATCH AD \u00B7 REVIVE";
+        btn.addEventListener("click", () => AdManager.show(AdManager.placements.revive, reviveRun));
+        holder.insertBefore(btn, document.getElementById("btn-modal-action"));
+    }
+    function reviveRun() {
+        G.revivedThisRun = true;
+        hideModal();
+        G.playsLeft = Math.max(1, G.playsLeft + 1);
+        G.isAnimating = false;
+        showScreen("view-game");
+        render();
     }
     function hideModal() { G.modalType=null; document.getElementById('modal-overlay').classList.remove('show'); }
     function handleModalAction() { if(G.modalType==='blitz-over'){ hideModal(); startBlitzRun(); return; } if(G.modalType==='game-over') resetRun(); else if(G.modalType==='victory') resetRun(); hideModal(); }
@@ -3883,6 +4002,9 @@
     }
     function startStage() { G.phase='playing'; if (G.progress && G.currentStage > (G.progress.stats.highestStageReached||1)) bumpStat('highestStageReached', G.currentStage - (G.progress.stats.highestStageReached||1)); hideScreen('view-map'); showScreen('view-game'); resetStageState(); rollStageHazard(); GlyphManager.onStageStart(); setTimeout(showHazardToast, 260); GlyphManager.onRoundStart(G.hand); AudioEngine.startMusic(); render(); }
 
+    function checkThemeAccessOnBoot() {
+        try { if (!isThemeUnlocked(G.currentTheme)) setTheme(DEFAULT_THEME); } catch (e) {}
+    }
     function initDict() { G.dictSet=new Set(DICTIONARY_WORDS.split(' ')); }
 
     const _viewHideTimers = {};
@@ -3922,7 +4044,7 @@
         document.getElementById('btn-play').addEventListener('click',()=>{ const c=getTodaysChallenge(); document.getElementById('daily-mode-sub').textContent=c.name; document.getElementById('daily-info-text').textContent=c.desc; document.getElementById('daily-info-panel').classList.remove('open'); updateContinueButtonVisibility(); slideToView('view-difficulty','view-menu'); });
         document.getElementById('btn-continue-run').addEventListener('click', continueRun);
         document.getElementById('btn-daily-info').addEventListener('click',(e)=>{ e.stopPropagation(); document.getElementById('daily-info-panel').classList.toggle('open'); });
-        document.getElementById('btn-menu-themes').addEventListener('click',()=>slideToView('view-themes','view-menu'));
+        document.getElementById('btn-menu-themes').addEventListener('click',()=>{ slideToView('view-themes','view-menu'); renderThemeLocks(); startThemeTicker(); });
         document.getElementById('btn-menu-options').addEventListener('click',openOptionsModal);
         document.getElementById('btn-menu-stats').addEventListener('click',()=>{ renderStats(); slideToView('view-stats','view-menu'); });
         document.getElementById('btn-back-stats').addEventListener('click',()=>slideBack('view-menu','view-stats'));
@@ -3947,7 +4069,12 @@
         window.addEventListener('blur', pauseBlitz);
         document.getElementById('btn-bug-report').addEventListener('click',()=>document.getElementById('bug-modal').classList.add('show'));
         document.getElementById('btn-bug-close').addEventListener('click',()=>document.getElementById('bug-modal').classList.remove('show'));
-        document.querySelectorAll('.theme-card').forEach(c=>c.addEventListener('click',()=>{ applyTheme(c.dataset.theme); G.currentTheme=c.dataset.theme; if(c.dataset.palette) applyPalette(c.dataset.palette); updateThemeButtons(); AudioEngine.playTap(); }));
+        document.getElementById('btn-ad-skip').addEventListener('click', closeAdModal);
+        checkThemeAccessOnBoot();
+        renderThemeLocks();
+        document.querySelectorAll('.theme-card').forEach(c=>c.addEventListener('click',()=>{
+            if (!isThemeUnlocked(c.dataset.theme)) { renderThemeLocks(); AudioEngine.playError(); return; }
+            applyTheme(c.dataset.theme); G.currentTheme=c.dataset.theme; if(c.dataset.palette) applyPalette(c.dataset.palette); updateThemeButtons(); renderThemeLocks(); AudioEngine.playTap(); }));
         document.getElementById('btn-confirm-cancel').addEventListener('click', hideConfirmModal);
         document.getElementById('btn-confirm-quit').addEventListener('click', () => { hideConfirmModal(); goToMenu(); });
         document.getElementById('btn-run-info').addEventListener('click',()=>{ renderRunInfo(); document.getElementById('run-info-modal').classList.add('show'); });
@@ -4187,10 +4314,126 @@
         const best = blitzBestLabel();
         el.textContent = best ? "90 Seconds · Best: " + best : "90 Seconds · Fill 2 to 7";
     }
-    function showThemes(){document.getElementById('view-menu').classList.add('hidden');document.getElementById('view-themes').classList.remove('hidden');}
+    // ------------------------------------------------------------ ads
+    // Every rewarded placement goes through here. To wire a real network,
+    // provide window.WordspyreAds.showRewarded(placement, done) - call done(true)
+    // when the ad completes and done(false) if it is skipped or fails. Without
+    // one, the built-in placeholder below stands in so the flow is playable.
+    const AdManager = {
+        placements: { revive: "run_revive", rerolls: "shop_reroll_refill", cash: "victory_cash_boost", theme: "theme_1h_pass" },
+        show(placement, onReward) {
+            const host = window.WordspyreAds;
+            if (host && typeof host.showRewarded === "function") {
+                try { host.showRewarded(placement, granted => { if (granted) onReward(); }); return; }
+                catch (e) { /* fall through to the placeholder */ }
+            }
+            playAdPlaceholder(placement, onReward);
+        }
+    };
+    let adTimer = null;
+    function closeAdModal() { if (adTimer) { clearInterval(adTimer); adTimer = null; } document.getElementById("ad-modal").classList.remove("show"); }
+    function playAdPlaceholder(placement, onReward) {
+        const modal = document.getElementById("ad-modal");
+        const count = document.getElementById("ad-count");
+        const copy = document.getElementById("ad-copy");
+        copy.textContent = AD_COPY[placement] || "Watch to claim your reward.";
+        let left = 3; count.textContent = left;
+        modal.classList.add("show");
+        if (adTimer) clearInterval(adTimer);
+        adTimer = setInterval(() => {
+            left--;
+            count.textContent = left > 0 ? left : "\u2713";
+            if (left <= 0) { clearInterval(adTimer); adTimer = null;
+                setTimeout(() => { modal.classList.remove("show"); onReward(); }, 450); }
+        }, 700);
+    }
+    const AD_COPY = {
+        run_revive: "Watch to get a hand back and retry this stage.",
+        shop_reroll_refill: "Watch for 2 free shop rerolls.",
+        victory_cash_boost: "Watch for 50% more diamonds from this stage.",
+        theme_1h_pass: "Watch to use this theme for the next hour."
+    };
+
+    // ------------------------------------------------- wins and theme locks
+    const THEME_WINS_NEEDED = { "cyber-arcade": 1, "typewriter": 3, "renegade-crimson": 5, "pale-terminal": 10 };
+    const TRIAL_MS = 3600000;
+    const DEFAULT_THEME = "wordling";
+    function getWins() { return (G.progress && G.progress.wins) || 0; }
+    function addWin() {
+        if (!G.progress) return;
+        G.progress.wins = getWins() + 1;
+        saveProgress();
+        renderThemeLocks();
+    }
+    function trialKey(id) { return id + "_expiry"; }
+    function trialLeftMs(id) {
+        let v = 0;
+        try { v = +localStorage.getItem(trialKey(id)) || 0; } catch (e) { v = 0; }
+        return Math.max(0, v - Date.now());
+    }
+    function grantThemeTrial(id) {
+        try { localStorage.setItem(trialKey(id), String(Date.now() + TRIAL_MS)); } catch (e) {}
+        renderThemeLocks();
+    }
+    function isThemePermanent(id) {
+        if (!(id in THEME_WINS_NEEDED)) return true;
+        if (getWins() >= THEME_WINS_NEEDED[id]) return true;
+        const granted = (G.progress && G.progress.grantedThemes) || [];
+        return granted.indexOf(id) !== -1;
+    }
+    function isThemeUnlocked(id) { return isThemePermanent(id) || trialLeftMs(id) > 0; }
+    function trialLabel(id) {
+        const ms = trialLeftMs(id);
+        if (ms <= 0) return null;
+        const mins = Math.ceil(ms / 60000);
+        return mins > 1 ? "[ " + mins + "m left ]" : "[ <1m left ]";
+    }
+    // A trial can run out mid-session; drop back to the default rather than
+    // leaving the player wearing a theme they no longer own.
+    function enforceThemeAccess() {
+        if (!isThemeUnlocked(G.currentTheme)) { setTheme(DEFAULT_THEME); return true; }
+        return false;
+    }
+    function renderThemeLocks() {
+        document.querySelectorAll("#view-themes .theme-card").forEach(card => {
+            const id = card.dataset.theme;
+            card.querySelectorAll(".theme-lock, .theme-trial").forEach(el => el.remove());
+            const unlocked = isThemeUnlocked(id);
+            card.classList.toggle("is-locked", !unlocked);
+            if (!unlocked) {
+                const need = THEME_WINS_NEEDED[id];
+                const lock = document.createElement("div"); lock.className = "theme-lock";
+                const mark = document.createElement("span"); mark.className = "theme-lock-mark"; mark.textContent = "\u{1F512}";
+                const txt = document.createElement("span"); txt.className = "theme-lock-need";
+                txt.textContent = need + (need === 1 ? " WIN" : " WINS") + " \u00B7 " + getWins() + "/" + need;
+                const btn = document.createElement("button"); btn.type = "button"; btn.className = "theme-try";
+                btn.textContent = "TRY 1 HR \u25B6 AD";
+                btn.addEventListener("click", e => {
+                    e.stopPropagation();
+                    AdManager.show(AdManager.placements.theme, () => { grantThemeTrial(id); setTheme(id); });
+                });
+                lock.appendChild(mark); lock.appendChild(txt); lock.appendChild(btn);
+                card.appendChild(lock);
+            } else if (!isThemePermanent(id)) {
+                const tag = document.createElement("span"); tag.className = "theme-trial";
+                tag.textContent = trialLabel(id) || "";
+                card.appendChild(tag);
+            }
+        });
+    }
+    let themeTicker = null;
+    function startThemeTicker() {
+        stopThemeTicker();
+        themeTicker = setInterval(() => { if (!enforceThemeAccess()) renderThemeLocks(); }, 20000);
+    }
+    function stopThemeTicker() { if (themeTicker) { clearInterval(themeTicker); themeTicker = null; } }
+    function showThemes(){document.getElementById('view-menu').classList.add('hidden');document.getElementById('view-themes').classList.remove('hidden');renderThemeLocks();startThemeTicker();}
     function updateThemeButtons(){ document.querySelectorAll('.theme-card').forEach(c=>{ const paletteMatches = !c.dataset.palette || c.dataset.palette===G.currentPalette; c.classList.toggle('active', c.dataset.theme===G.currentTheme && paletteMatches); }); }
-    function setTheme(n){G.currentTheme=n;applyTheme(n);updateThemeButtons();}
-    function returnToMenuUI(){G.gameStarted=false;G.rerollMode=false;G.rerollMarks.clear();G.isAnimating=false;G.hand=[];G.activeWord=[];stopBlitzClock();G.blitzOver=true;document.getElementById('game-container').classList.remove('zen-mode');document.getElementById('game-container').classList.remove('blitz-mode');document.getElementById('view-game').classList.add('hidden');document.getElementById('view-map').classList.add('hidden');document.getElementById('view-draft').classList.add('hidden');document.getElementById('view-stats').classList.add('hidden');hideModal();document.getElementById('options-modal').classList.remove('show');document.getElementById('view-difficulty').classList.add('hidden');document.getElementById('view-themes').classList.add('hidden');document.getElementById('view-menu').classList.remove('hidden','slide-left');AudioEngine.stopMusic();updateContinueButtonVisibility();}
+    function setTheme(n){
+        if (!isThemeUnlocked(n)) { renderThemeLocks(); return; }
+        G.currentTheme=n;applyTheme(n);updateThemeButtons();renderThemeLocks();
+    }
+    function returnToMenuUI(){stopThemeTicker();G.gameStarted=false;G.rerollMode=false;G.rerollMarks.clear();G.isAnimating=false;G.hand=[];G.activeWord=[];stopBlitzClock();G.blitzOver=true;document.getElementById('game-container').classList.remove('zen-mode');document.getElementById('game-container').classList.remove('blitz-mode');document.getElementById('view-game').classList.add('hidden');document.getElementById('view-map').classList.add('hidden');document.getElementById('view-draft').classList.add('hidden');document.getElementById('view-stats').classList.add('hidden');hideModal();document.getElementById('options-modal').classList.remove('show');document.getElementById('view-difficulty').classList.add('hidden');document.getElementById('view-themes').classList.add('hidden');document.getElementById('view-menu').classList.remove('hidden','slide-left');AudioEngine.stopMusic();updateContinueButtonVisibility();}
     function goToMenu(){clearActiveRun();returnToMenuUI();}
     function exitToMenuSaved(){saveActiveRun();returnToMenuUI();}
     function loadPersistence(){
@@ -4210,7 +4453,7 @@
             removedLetters: [...G.removedLetters],
             equippedGlyphs: G.equippedGlyphs, bank: G.bank, consumables: G.consumables,
             activeHazard: G.activeHazard, anchorTileId: G.anchorTileId, mutedTileId: G.mutedTileId,
-            shopOffers: G.shopOffers, shopRerollCount: G.shopRerollCount, phase: G.phase, benchSort: G.benchSort, drawSeq: G.drawSeq,
+            shopOffers: G.shopOffers, shopRerollCount: G.shopRerollCount, freeShopRerolls: G.freeShopRerolls||0, revivedThisRun: !!G.revivedThisRun, phase: G.phase, benchSort: G.benchSort, drawSeq: G.drawSeq,
             activePressId: G.activePressId, shopRerollsUsedThisRun: G.shopRerollsUsedThisRun
         };
     }
