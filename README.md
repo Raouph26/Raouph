@@ -21,3 +21,29 @@ or players keep the build they already cached.
 
 Wrapping for the stores: point Capacitor, Cordova or a Trusted Web Activity at
 the same folder. The manifest and icons are already the sizes both stores want.
+
+## Analytics
+
+Every event goes through one funnel. To start receiving them, define this
+before or after the game loads — either works, a late provider gets the backlog:
+
+```js
+window.WordspyreAnalytics = {
+  track(event, props) { /* forward to GA4, PostHog, Firebase, your own endpoint */ }
+};
+```
+
+Events emitted: `run_start`, `stage_cleared`, `run_lost`, `run_won`,
+`ad_watched`, `shop_purchase`, `blitz_finished`, `save_restored`.
+`stage_cleared` and `run_lost` carry the stage, score, target, glyph count and
+hands left — that is the data that answers "which stage is killing people".
+
+Without a provider, events queue in memory (capped at 200) and **nothing leaves
+the device**.
+
+## Save backup codes
+
+Settings → BACK UP SAVE produces a `WSPY1.…` string containing progress,
+records, leaderboard, theme and any live theme trial. Pasting one back replaces
+that device's save. An in-flight run is deliberately not included, so restoring
+never mixes two runs together.

@@ -1974,6 +1974,18 @@
         @media (display-mode: standalone) {
             html, body { overscroll-behavior: none; overflow: hidden; }
         }
+        #backup-box { width: 100%; margin-top: 6px; }
+        #backup-code {
+            width: 100%; box-sizing: border-box; resize: vertical;
+            font-family: var(--font-numeric); font-size: 0.6rem; line-height: 1.3;
+            padding: 8px; border-radius: calc(var(--btn-radius) * 0.6);
+            background: rgba(127,127,127,0.14); color: var(--text);
+            border: 1px solid var(--panel-border); word-break: break-all;
+        }
+        .backup-row { display: flex; gap: 6px; margin-top: 6px; }
+        .backup-row .menu-btn { flex: 1; padding: 9px; font-size: 0.7rem; }
+        #backup-msg { margin: 6px 0 0; min-height: 1em; }
+        #backup-box.hidden { display: none; }
     </style>
 </head>
 <body>
@@ -2133,7 +2145,7 @@
             <button id="btn-close-run-info" class="menu-btn" style="width:100%; margin-top:4px;">CLOSE</button>
         </div>
     </div></div>
-    <div id="options-modal"><div class="modal-inner"><div class="options-title-row"><h3>PAUSED</h3></div><label>Music <input type="range" id="music-slider" min="0" max="100" value="25"><span class="slider-val" id="music-val">25%</span></label><label>Sounds <input type="range" id="sounds-slider" min="0" max="100" value="65"><span class="slider-val" id="sounds-val">65%</span></label><label>Vibration <input type="checkbox" id="vibration-toggle" checked></label><label>Screen Shake <input type="range" id="shake-slider" min="0" max="100" value="100"><span class="slider-val" id="shake-val">100%</span></label><label>Ads <button id="btn-open-noads" class="ads-pill" type="button">REMOVE ADS</button></label><button id="btn-howto" class="menu-btn themes-btn" type="button" style="width:100%;">? HOW TO PLAY</button><button id="btn-close-settings">RESUME</button><button id="btn-exit-save" class="menu-btn themes-btn" style="width:100%;">EXIT TO MENU</button><button id="btn-abandon-run" class="menu-btn quit-run-btn" style="width:100%;">ABANDON RUN</button></div></div>
+    <div id="options-modal"><div class="modal-inner"><div class="options-title-row"><h3>PAUSED</h3></div><label>Music <input type="range" id="music-slider" min="0" max="100" value="25"><span class="slider-val" id="music-val">25%</span></label><label>Sounds <input type="range" id="sounds-slider" min="0" max="100" value="65"><span class="slider-val" id="sounds-val">65%</span></label><label>Vibration <input type="checkbox" id="vibration-toggle" checked></label><label>Screen Shake <input type="range" id="shake-slider" min="0" max="100" value="100"><span class="slider-val" id="shake-val">100%</span></label><label>Ads <button id="btn-open-noads" class="ads-pill" type="button">REMOVE ADS</button></label><button id="btn-howto" class="menu-btn themes-btn" type="button" style="width:100%;">? HOW TO PLAY</button><button id="btn-backup" class="menu-btn themes-btn" type="button" style="width:100%;">⤓ BACK UP SAVE</button><div id="backup-box" class="hidden"><textarea id="backup-code" rows="3" spellcheck="false" placeholder="Paste a backup code here to restore"></textarea><div class="backup-row"><button id="btn-backup-copy" class="menu-btn" type="button">COPY</button><button id="btn-backup-restore" class="menu-btn" type="button">RESTORE</button></div><p id="backup-msg" class="bug-copy"></p></div><button id="btn-close-settings">RESUME</button><button id="btn-exit-save" class="menu-btn themes-btn" style="width:100%;">EXIT TO MENU</button><button id="btn-abandon-run" class="menu-btn quit-run-btn" style="width:100%;">ABANDON RUN</button></div></div>
     <div id="howto-modal"><div class="modal-inner run-info-inner">
         <div class="run-info-band">HOW TO PLAY</div>
         <div class="run-info-body howto-body">
@@ -2726,6 +2738,7 @@
             for (let i = 0; i < seedSeals && i < pool.length; i++) G.consumables.push({ id: pool[i].id });
         }
         G.stageScores = []; G.revivedThisRun = false; G.freeShopRerolls = 0;
+        Analytics.track("run_start", { mode: G.gameMode, press: G.activePressId, wins: getWins() });
         G.tileBag = buildInitialBag();
         if (G.gameMode==='daily' && G.dailyChallenge===6) {
             ['Z','Q','X'].forEach(l => { const dist=TILE_DIST.find(d=>d.letter===l); for(let i=0;i<5;i++) G.tileBag.push({id:'t_junk_'+Math.random().toString(36).slice(2,11)+'_'+Date.now()+'_'+i, letter:l, chips:dist.chips, type:'normal', aura:assignRandomAura()}); });
@@ -3099,6 +3112,8 @@
         const hint = document.createElement('p'); hint.className='draft-hint'; hint.textContent='STAGE PAYOUT'; container.appendChild(hint);
         const list = document.createElement('div'); list.className='payout-list';
         const lines = [];
+        Analytics.track("stage_cleared", { stage: G.currentStage, score: G.currentScore,
+            target: G.stageTargets[G.currentStage], handsLeft: G.playsLeft, glyphs: G.equippedGlyphs.length, bank: G.bank });
         const base = 3; G.bank += base; lines.push(['Base Win', base]);
         if (G.playsLeft > 0) { G.bank += G.playsLeft; lines.push(['Unused Hands ×'+G.playsLeft, G.playsLeft]); }
         if (G.rerollsLeft > 0) { G.bank += G.rerollsLeft; lines.push(['Unused Discards ×'+G.rerollsLeft, G.rerollsLeft]); }
@@ -3428,6 +3443,7 @@
         buyBtn.addEventListener('click', ()=>{
             if (G.bank < item.price || inventoryFull) return;
             G.bank -= item.price; item.apply(); AudioEngine.playSubmit();
+            Analytics.track('shop_purchase', { kind: kind, id: item.id, price: item.price, stage: G.currentStage, bankAfter: G.bank });
             const offers = (kind==='glyph'||kind==='tile'||kind==='upgrade') ? G.shopOffers.glyphs : G.shopOffers.consumables;
             const idx = offers.findIndex(o=>o.id===item.id);
             if (idx!==-1) offers.splice(idx,1);
@@ -3484,7 +3500,9 @@
     }
 
     function showModal(type) {
-        if (type==='game-over' && !isZenLike()) { clearActiveRun(); recordLeaderboardScore(G.currentScore); updateMostStagesCleared(Math.max(0,G.currentStage-1)); }
+        if (type==='game-over' && !isZenLike()) { Analytics.track('run_lost', { stage: G.currentStage,
+            score: G.currentScore, target: G.stageTargets[G.currentStage], glyphs: G.equippedGlyphs.length,
+            revived: !!G.revivedThisRun, mode: G.gameMode }); clearActiveRun(); recordLeaderboardScore(G.currentScore); updateMostStagesCleared(Math.max(0,G.currentStage-1)); }
         G.modalType=type; const o=document.getElementById('modal-overlay'); const t=document.getElementById('modal-title'); const s=document.getElementById('modal-subtitle'); const b=document.getElementById('btn-modal-action'); const mb=document.getElementById('btn-modal-menu'); if(type==='game-over'){ t.textContent='GAME OVER'; s.textContent='Score: '+G.currentScore; b.textContent='Retry Run'; b.style.display='block'; mb.style.display='block'; } else { t.textContent='VICTORY!'; s.textContent='All stages conquered!'; b.textContent='New Game'; b.style.display='block'; mb.style.display='block'; } renderReviveOffer(type); o.classList.add('show');
     }
     // one revive per run: a hand back and another go at the stage you lost
@@ -4075,6 +4093,43 @@
     }
     // Only over http(s): a service worker cannot register from file://, and
     // inside a native wrapper the assets are bundled so it is not needed.
+    // ------------------------------------------------- save backup codes
+    // Everything lives in localStorage, so a cleared browser wipes a player.
+    // These make the whole save a string they can keep somewhere safe and
+    // paste back. No server, no account.
+    const SAVE_KEYS = ["wordling-progress", "wordling-records", "wordling-leaderboard",
+                       "wordling-theme", "wordling-palette", "wordling-ads-removed"];
+    const SAVE_TAG = "WSPY1";
+    function exportSaveCode() {
+        const bag = {};
+        SAVE_KEYS.forEach(k => { const v = localStorage.getItem(k); if (v !== null) bag[k] = v; });
+        // theme trial passes are their own keys, keep whichever are still live
+        Object.keys(THEME_WINS_NEEDED).forEach(id => {
+            const v = localStorage.getItem(id + "_expiry");
+            if (v && +v > Date.now()) bag[id + "_expiry"] = v;
+        });
+        const json = JSON.stringify(bag);
+        // base64 of UTF-8, so any character in the save survives the trip
+        const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(json)));
+        return SAVE_TAG + "." + b64;
+    }
+    function importSaveCode(code) {
+        const raw = String(code || "").trim().replace(/\s+/g, "");
+        if (raw.indexOf(SAVE_TAG + ".") !== 0) return { ok: false, why: "That does not look like a Wordspyre backup code." };
+        let bag;
+        try {
+            const bin = atob(raw.slice(SAVE_TAG.length + 1));
+            const bytes = Uint8Array.from(bin, ch => ch.charCodeAt(0));
+            bag = JSON.parse(new TextDecoder().decode(bytes));
+        } catch (e) { return { ok: false, why: "That code is damaged or incomplete." }; }
+        if (!bag || typeof bag !== "object" || !bag["wordling-progress"]) return { ok: false, why: "That code has no save in it." };
+        try { JSON.parse(bag["wordling-progress"]); } catch (e) { return { ok: false, why: "That code has no save in it." }; }
+        // an in-flight run is not part of a backup; drop it rather than mix saves
+        try { localStorage.removeItem("wordling-active-run"); } catch (e) {}
+        Object.keys(bag).forEach(k => { try { localStorage.setItem(k, bag[k]); } catch (e) {} });
+        Analytics.track("save_restored", {});
+        return { ok: true };
+    }
     function registerServiceWorker() {
         if (!("serviceWorker" in navigator)) return;
         if (!/^https?:$/.test(location.protocol)) return;
@@ -4148,6 +4203,28 @@
         document.getElementById('btn-bug-report').addEventListener('click',()=>document.getElementById('bug-modal').classList.add('show'));
         document.getElementById('btn-bug-close').addEventListener('click',()=>document.getElementById('bug-modal').classList.remove('show'));
         document.getElementById('btn-ad-skip').addEventListener('click', closeAdModal);
+        const backupBox = document.getElementById('backup-box');
+        const backupCode = document.getElementById('backup-code');
+        const backupMsg = document.getElementById('backup-msg');
+        document.getElementById('btn-backup').addEventListener('click', () => {
+            backupBox.classList.toggle('hidden');
+            if (!backupBox.classList.contains('hidden')) {
+                backupCode.value = exportSaveCode();
+                backupMsg.textContent = 'Keep this code somewhere safe. Pasting one here replaces this device\u2019s save.';
+            }
+        });
+        document.getElementById('btn-backup-copy').addEventListener('click', () => {
+            backupCode.value = exportSaveCode();
+            backupCode.select();
+            const done = () => { backupMsg.textContent = 'Copied. Paste it somewhere you will still have later.'; };
+            if (navigator.clipboard) navigator.clipboard.writeText(backupCode.value).then(done, () => { try { document.execCommand('copy'); done(); } catch (e) { backupMsg.textContent = 'Select the code above and copy it.'; } });
+            else { try { document.execCommand('copy'); done(); } catch (e) { backupMsg.textContent = 'Select the code above and copy it.'; } }
+        });
+        document.getElementById('btn-backup-restore').addEventListener('click', () => {
+            const res = importSaveCode(backupCode.value);
+            backupMsg.textContent = res.ok ? 'Restored. Reloading\u2026' : res.why;
+            if (res.ok) setTimeout(() => location.reload(), 700);
+        });
         checkThemeAccessOnBoot();
         registerServiceWorker();
         renderThemeLocks();
@@ -4350,6 +4427,7 @@
         G.blitzFinishedIn = blitzElapsed();
         stopBlitzClock();
         paintBlitzClock();
+        Analytics.track("blitz_finished", { filled: blitzFilledCount(), seconds: +(G.blitzFinishedIn||0).toFixed(1), reason: reason });
         recordBlitzResult(blitzFilledCount(), G.blitzFinishedIn);
         showBlitzResult(reason);
     }
@@ -4393,6 +4471,32 @@
         const best = blitzBestLabel();
         el.textContent = best ? "90 Seconds · Best: " + best : "90 Seconds · Fill 2 to 7";
     }
+    // ------------------------------------------------------ analytics
+    // Same shape as AdManager: one funnel, one integration point. Provide
+    // window.WordspyreAnalytics.track(event, props) and everything below
+    // starts reporting. Until then events queue (capped) so nothing is lost
+    // if the provider loads late, and nothing leaves the device.
+    const Analytics = {
+        queue: [], MAX: 200, started: Date.now(),
+        sink() { const a = window.WordspyreAnalytics; return a && typeof a.track === "function" ? a : null; },
+        track(event, props) {
+            const row = Object.assign({ t: Date.now(), session: Math.round((Date.now() - this.started) / 1000) }, props || {});
+            const s = this.sink();
+            if (s) { try { s.track(event, row); } catch (e) {} return; }
+            this.queue.push([event, row]);
+            if (this.queue.length > this.MAX) this.queue.shift();
+        },
+        flush() {
+            const s = this.sink();
+            if (!s) return 0;
+            const sent = this.queue.length;
+            for (const [e, p] of this.queue.splice(0)) { try { s.track(e, p); } catch (err) {} }
+            return sent;
+        }
+    };
+    // a late-loading provider still gets the backlog
+    setInterval(() => Analytics.flush(), 5000);
+
     // ------------------------------------------------------------ ads
     // Every rewarded placement goes through here. To wire a real network,
     // provide window.WordspyreAds.showRewarded(placement, done) - call done(true)
@@ -4407,7 +4511,8 @@
                 catch (e) { /* fall through to the placeholder */ }
             }
             playAdPlaceholder(placement, onReward);
-        }
+        },
+        reward(placement) { Analytics.track("ad_watched", { placement: placement }); }
     };
     let adTimer = null;
     function closeAdModal() { if (adTimer) { clearInterval(adTimer); adTimer = null; } document.getElementById("ad-modal").classList.remove("show"); }
@@ -4423,7 +4528,7 @@
             left--;
             count.textContent = left > 0 ? left : "\u2713";
             if (left <= 0) { clearInterval(adTimer); adTimer = null;
-                setTimeout(() => { modal.classList.remove("show"); onReward(); }, 450); }
+                setTimeout(() => { modal.classList.remove("show"); AdManager.reward(placement); onReward(); }, 450); }
         }, 700);
     }
     const AD_COPY = {
@@ -4441,6 +4546,7 @@
     function addWin() {
         if (!G.progress) return;
         G.progress.wins = getWins() + 1;
+        Analytics.track("run_won", { wins: G.progress.wins, score: G.currentScore, mode: G.gameMode });
         saveProgress();
         renderThemeLocks();
     }
