@@ -2046,6 +2046,13 @@
             background: rgba(127,127,127,0.14); color: var(--text);
             border: 1px solid var(--panel-border); word-break: break-all;
         }
+        #bug-diag {
+            width: 100%; box-sizing: border-box; resize: vertical; margin-top: 6px;
+            font-family: var(--font-numeric); font-size: 0.58rem; line-height: 1.35;
+            padding: 8px; border-radius: calc(var(--btn-radius) * 0.6);
+            background: rgba(127,127,127,0.14); color: var(--text);
+            border: 1px solid var(--panel-border); white-space: pre; overflow-x: auto;
+        }
         .backup-row { display: flex; gap: 6px; margin-top: 6px; }
         .backup-row .menu-btn { flex: 1; padding: 9px; font-size: 0.7rem; }
         #backup-msg { margin: 6px 0 0; min-height: 1em; }
@@ -2059,7 +2066,7 @@
     <div id="bg-overlay"></div>
     <div id="view-menu" class="view-panel"><h1 id="game-title" class="game-title"><span class="title-eyebrow"></span><span class="title-main">WORDSPYRE</span><span class="title-gem" aria-hidden="true"><span class="gem-shard"></span><span class="gem-glint gem-glint-a"></span><span class="gem-glint gem-glint-b"></span><span class="gem-glint gem-glint-c"></span></span><span class="title-tagline"></span></h1><button class="menu-btn play-btn" id="btn-play">▶ PLAY</button><button class="menu-btn themes-btn" id="btn-menu-themes">◆ THEMES</button><button class="menu-btn settings-btn" id="btn-menu-unlocks">◈ UNLOCKS</button><button class="menu-btn settings-btn" id="btn-menu-options">⚙ SETTINGS</button><button class="menu-btn settings-btn" id="btn-menu-howto">? HOW TO PLAY</button><button class="menu-btn settings-btn" id="btn-menu-stats">★ STATS</button><button type="button" class="bug-btn" id="btn-bug-report" aria-label="Report a bug">⚑ REPORT A BUG</button><button type="button" class="save-btn" id="btn-backup" aria-label="Back up save">⤓ BACK UP SAVE</button></div>
     <div id="backup-modal"><div class="modal-inner"><h2>BACK UP SAVE</h2><textarea id="backup-code" rows="4" spellcheck="false" placeholder="Paste a backup code here to restore"></textarea><div class="backup-row"><button id="btn-backup-copy" class="menu-btn" type="button">COPY</button><button id="btn-backup-restore" class="menu-btn" type="button">RESTORE</button></div><p id="backup-msg" class="bug-copy"></p><button id="btn-backup-close" class="menu-btn" type="button" style="width:100%;">CLOSE</button></div></div>
-    <div id="bug-modal"><div class="modal-inner"><h2>REPORT A BUG</h2><p class="bug-copy">Bug reporting is not connected to anything yet. For now, note what happened and send it over the usual way.</p><button class="menu-btn" id="btn-bug-close">GOT IT</button></div></div>
+    <div id="bug-modal"><div class="modal-inner"><h2>REPORT A BUG</h2><p class="bug-copy" id="bug-lead">Tell us what went wrong. The details below are filled in for you — leave them as they are.</p><textarea id="bug-diag" rows="5" spellcheck="false" readonly></textarea><div class="backup-row"><button id="btn-bug-copy" class="menu-btn" type="button">COPY DETAILS</button><button id="btn-bug-send" class="menu-btn themes-btn" type="button">OPEN THE FORM</button></div><p id="bug-msg" class="bug-copy"></p><button class="menu-btn" id="btn-bug-close" style="width:100%;">CLOSE</button></div></div>
     <div id="view-stats" class="view-panel hidden">
         <button type="button" class="panel-close" id="btn-close-stats" aria-label="Back to menu">✕</button>
         <div class="stats-panel">
@@ -3079,6 +3086,75 @@
     function confirmReroll() { if(!G.rerollMode||G.rerollMarks.size===0){ exitReroll(); return; } if(!isZenLike()&&G.rerollsLeft<=0) return; if(!isZenLike()) G.rerollsLeft--; const discarded=[]; const freedSlots=[]; for(let i=0;i<getHandSize();i++){ if(G.hand[i]&&G.rerollMarks.has(G.hand[i].id)){ discarded.push(G.hand[i]); G.discardPile.push(G.hand[i]); G.hand[i]=null; freedSlots.push(i); } } GlyphManager.onDiscardEvent(discarded); G.discardsUsedThisStage = (G.discardsUsedThisStage||0) + 1; bumpStat('lettersDiscarded', discarded.length); if(discarded.length>0&&isDiscardTaxed()) G.bank=Math.max(0,G.bank-2); drawIntoSlots(freedSlots); G.rerollMarks.clear(); G.rerollMode=false; AudioEngine.playShuffle(); vibrate(12); renderWithTileFlip(); }
     function toggleRerollBtn() { if(G.rerollMode) confirmReroll(); else enterReroll(); }
 
+    // ---- bug reports -------------------------------------------------------
+    // The share link opens the form; to fill the Diagnostics box for the tester
+    // we need the PRE-FILLED link, which carries an "entry.NNNNNNNNN" field id.
+    // Paste that id into BUG_FORM_FIELD and the box fills itself. Left empty,
+    // the report still works - the tester copies the details in by hand.
+    // bump this on every build you hand out, so a tester's report says which one
+    const BUILD_ID = 'v1.0-test1';
+    const BUG_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSd0OwVFu-YDzu3IzuIS-F6g_6ZBl1dMQHwqk4ibnKyZgm3qHA/viewform';
+    const BUG_FORM_FIELD = '';
+    function buildDiagnostics() {
+        const L = [];
+        const now = new Date();
+        L.push('WORDSPYRE ' + BUILD_ID + '  ' + now.toISOString().slice(0, 16).replace('T', ' '));
+        L.push('screen ' + innerWidth + 'x' + innerHeight + '  ' + (devicePixelRatio || 1) + 'x' +
+               (matchMedia('(display-mode: standalone)').matches ? '  installed' : '  browser'));
+        L.push('device ' + (navigator.userAgent || '').slice(0, 90));
+        L.push('theme ' + (G.currentTheme || '?') + (G.currentTheme === 'wordling' ? '/' + (document.documentElement.getAttribute('data-palette') || '?') : ''));
+        if (G.gameStarted) {
+            const tgt = G.stageTargets && G.stageTargets[G.currentStage];
+            L.push('IN A RUN  mode ' + (G.gameMode || '?') + '  stage ' + G.currentStage + '/' + G.totalStages +
+                   '  score ' + (G.currentScore || 0).toLocaleString() + (tgt === undefined ? '' : ' of ' + tgt.toLocaleString()));
+            L.push('hands ' + G.playsLeft + '  rerolls ' + G.rerollsLeft + '  diamonds ' + G.bank +
+                   '  bag ' + ((G.tileBag || []).length) + '  press ' + (G.activePressId || '?'));
+            L.push('glyphs ' + ((G.equippedGlyphs || []).map(g => g.id + (g.lvl > 1 ? '/L' + g.lvl : '')).join(', ') || 'none'));
+            if (G.activeHazard) L.push('hazard ' + (G.activeHazard.id || G.activeHazard.name || '?'));
+        } else {
+            L.push('NOT IN A RUN  wins ' + getWins() + '  best stage ' + ((G.progress && G.progress.stats.highestStageReached) || 1));
+        }
+        const h = Analytics.history().slice(-12);
+        if (h.length) {
+            L.push('--- last ' + h.length + ' events ---');
+            h.forEach(r => {
+                const bits = Object.keys(r).filter(k => k !== 'e' && k !== 't' && k !== 'session')
+                    .map(k => k + '=' + r[k]).join(' ');
+                L.push('  ' + r.e + (bits ? '  ' + bits : ''));
+            });
+        }
+        return L.join('\n');
+    }
+    function openBugModal() {
+        const box = document.getElementById('bug-diag');
+        if (box) box.value = buildDiagnostics();
+        const msg = document.getElementById('bug-msg'); if (msg) msg.textContent = '';
+        const lead = document.getElementById('bug-lead');
+        if (lead) lead.textContent = BUG_FORM_FIELD
+            ? 'Tell us what went wrong. The details below are filled in for you \u2014 leave them as they are.'
+            : 'Tap COPY DETAILS, then OPEN THE FORM and paste them into the Diagnostics box.';
+        document.getElementById('bug-modal').classList.add('show');
+    }
+    function copyBugDetails() {
+        const box = document.getElementById('bug-diag');
+        const msg = document.getElementById('bug-msg');
+        box.removeAttribute('readonly'); box.select(); box.setSelectionRange(0, 99999);
+        const done = ok => { box.setAttribute('readonly', ''); msg.textContent = ok ? 'Copied.' : 'Select the text above and copy it.'; };
+        if (navigator.clipboard) navigator.clipboard.writeText(box.value).then(() => done(true), () => { try { done(document.execCommand('copy')); } catch (e) { done(false); } });
+        else { try { done(document.execCommand('copy')); } catch (e) { done(false); } }
+    }
+    function sendBugReport() {
+        const details = document.getElementById('bug-diag').value;
+        let url = BUG_FORM_URL;
+        if (BUG_FORM_FIELD) url += (url.indexOf('?') === -1 ? '?' : '&') + 'usp=pp_url&' +
+            encodeURIComponent(BUG_FORM_FIELD) + '=' + encodeURIComponent(details);
+        Analytics.track('bug_report_opened', { stage: G.currentStage, mode: G.gameMode, inRun: !!G.gameStarted });
+        const w = window.open(url, '_blank');
+        const msg = document.getElementById('bug-msg');
+        // an Android wrapper can refuse to open a link; say so instead of doing nothing
+        if (!w) msg.textContent = 'That would not open here. Tap COPY DETAILS and send them over instead.';
+        else msg.textContent = 'The form is open in your browser. Thank you!';
+    }
     function showConfirmModal() { document.getElementById('confirm-modal').classList.add('show'); }
     function hideConfirmModal() { document.getElementById('confirm-modal').classList.remove('show'); }
     function openOptionsModal() {
@@ -4497,7 +4573,9 @@
         window.addEventListener('pageshow', resumeBlitz);
         window.addEventListener('focus', resumeBlitz);
         window.addEventListener('blur', pauseBlitz);
-        document.getElementById('btn-bug-report').addEventListener('click',()=>document.getElementById('bug-modal').classList.add('show'));
+        document.getElementById('btn-bug-report').addEventListener('click',openBugModal);
+        document.getElementById('btn-bug-copy').addEventListener('click',copyBugDetails);
+        document.getElementById('btn-bug-send').addEventListener('click',sendBugReport);
         document.getElementById('btn-bug-close').addEventListener('click',()=>document.getElementById('bug-modal').classList.remove('show'));
         document.getElementById('btn-ad-skip').addEventListener('click', closeAdModal);
         // every X, BACK and CLOSE in the game answers when pressed
@@ -4811,9 +4889,26 @@
     // if the provider loads late, and nothing leaves the device.
     const Analytics = {
         queue: [], MAX: 200, started: Date.now(),
+        // Without a provider the queue used to live in memory and die with the
+        // tab, so a tester's run history was gone before they could report it.
+        // The last 60 events are kept on the device for the bug report to read.
+        HISTORY_KEY: "wordspyre-events", HISTORY_MAX: 60,
+        // trimmed on the way out as well as on the way in, so a store that grew
+        // under an older build cannot bloat a report
+        history() { try { const h = JSON.parse(localStorage.getItem(this.HISTORY_KEY) || "[]");
+            return Array.isArray(h) ? h.slice(-this.HISTORY_MAX) : []; } catch (e) { return []; } },
+        remember(event, row) {
+            try {
+                const h = this.history();
+                h.push(Object.assign({ e: event }, row));
+                while (h.length > this.HISTORY_MAX) h.shift();
+                localStorage.setItem(this.HISTORY_KEY, JSON.stringify(h));
+            } catch (e) {}
+        },
         sink() { const a = window.WordspyreAnalytics; return a && typeof a.track === "function" ? a : null; },
         track(event, props) {
             const row = Object.assign({ t: Date.now(), session: Math.round((Date.now() - this.started) / 1000) }, props || {});
+            this.remember(event, row);
             const s = this.sink();
             if (s) { try { s.track(event, row); } catch (e) {} return; }
             this.queue.push([event, row]);
