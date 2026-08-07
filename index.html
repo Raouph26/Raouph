@@ -1354,12 +1354,12 @@
         .confirm-btns .btn-quit { background: var(--accent-2); border-color: var(--accent-2-shadow); color: var(--accent-2-text); box-shadow: 0 5px 0 0 var(--accent-2-shadow); }
         .confirm-btns .btn-quit:active { box-shadow: 0 0 0 0 var(--accent-2-shadow); }
 
-        #options-modal, #modal-overlay, #run-info-modal, #howto-modal, #noads-modal, #bug-modal, #ad-modal {
+        #options-modal, #modal-overlay, #run-info-modal, #howto-modal, #noads-modal, #bug-modal, #ad-modal, #backup-modal {
             position:absolute; inset:0; background:rgba(0,0,0,0.78);
             display:flex; align-items:safe center; justify-content:safe center; overflow-y:auto; z-index:80;
             opacity:0; pointer-events:none; transition: opacity 0.22s ease;
         }
-        #options-modal.show, #modal-overlay.show, #run-info-modal.show, #howto-modal.show, #noads-modal.show, #bug-modal.show, #ad-modal.show {
+        #options-modal.show, #modal-overlay.show, #run-info-modal.show, #howto-modal.show, #noads-modal.show, #bug-modal.show, #ad-modal.show, #backup-modal.show {
             opacity:1; pointer-events:auto;
         }
         #howto-modal, #noads-modal { z-index:90; }
@@ -1974,6 +1974,42 @@
         @media (display-mode: standalone) {
             html, body { overscroll-behavior: none; overflow: hidden; }
         }
+        .save-btn {
+            position: absolute; left: 14px; bottom: 14px; z-index: 12;
+            padding: 11px 16px; border-radius: var(--btn-radius);
+            font-family: var(--font-numeric); font-weight: 900; font-size: 0.72rem;
+            letter-spacing: 1px; cursor: pointer;
+            background: var(--accent-1); color: var(--accent-1-text);
+            border: var(--outline-w) solid var(--accent-1-shadow);
+            box-shadow: 0 4px 0 0 var(--accent-1-shadow), 0 6px 14px rgba(0,0,0,0.3);
+        }
+        .save-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 0 var(--accent-1-shadow); }
+        .blitz-result-line { font-family: var(--font-numeric); font-weight: 900; font-size: 1.15rem; color: var(--text); }
+        .blitz-best-tag {
+            display: inline-block; margin-top: 5px; padding: 3px 9px; border-radius: 999px;
+            font-family: var(--font-numeric); font-weight: 900; font-size: 0.55rem; letter-spacing: 1px;
+            background: var(--accent-3); color: var(--accent-3-text);
+        }
+        .blitz-result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 12px; }
+        .blitz-result-cell {
+            display: flex; align-items: center; gap: 7px; padding: 5px 8px;
+            border-radius: calc(var(--panel-radius) * 0.45);
+            background: rgba(127,127,127,0.13); border: 1px solid var(--panel-border);
+        }
+        .blitz-result-cell span {
+            flex: 0 0 18px; height: 18px; border-radius: 3px; display: flex;
+            align-items: center; justify-content: center;
+            font-family: var(--font-numeric); font-weight: 900; font-size: 0.6rem;
+            background: var(--text); color: var(--panel-bg);
+        }
+        .blitz-result-cell b {
+            font-size: 0.66rem; letter-spacing: 0.4px; color: var(--text-soft);
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .blitz-result-cell.is-filled { background: var(--accent-1); border-color: var(--accent-1-shadow); }
+        .blitz-result-cell.is-filled span { background: var(--accent-1-text); color: var(--accent-1); }
+        .blitz-result-cell.is-filled b { color: var(--accent-1-text); }
+        #backup-modal { z-index: 95; }
         #backup-box { width: 100%; margin-top: 6px; }
         #backup-code {
             width: 100%; box-sizing: border-box; resize: vertical;
@@ -1993,7 +2029,8 @@
 <div id="game-container">
     <div id="unlock-banner" class="hidden"></div>
     <div id="bg-overlay"></div>
-    <div id="view-menu" class="view-panel"><h1 id="game-title" class="game-title"><span class="title-eyebrow"></span><span class="title-main">WORDSPYRE</span><span class="title-gem" aria-hidden="true"><span class="gem-shard"></span><span class="gem-glint gem-glint-a"></span><span class="gem-glint gem-glint-b"></span><span class="gem-glint gem-glint-c"></span></span><span class="title-tagline"></span></h1><button class="menu-btn play-btn" id="btn-play">▶ PLAY</button><button class="menu-btn themes-btn" id="btn-menu-themes">◆ THEMES</button><button class="menu-btn settings-btn" id="btn-menu-unlocks">◈ UNLOCKS</button><button class="menu-btn settings-btn" id="btn-menu-options">⚙ SETTINGS</button><button class="menu-btn settings-btn" id="btn-menu-howto">? HOW TO PLAY</button><button class="menu-btn settings-btn" id="btn-menu-stats">★ STATS</button><button type="button" class="bug-btn" id="btn-bug-report" aria-label="Report a bug">⚑ REPORT A BUG</button></div>
+    <div id="view-menu" class="view-panel"><h1 id="game-title" class="game-title"><span class="title-eyebrow"></span><span class="title-main">WORDSPYRE</span><span class="title-gem" aria-hidden="true"><span class="gem-shard"></span><span class="gem-glint gem-glint-a"></span><span class="gem-glint gem-glint-b"></span><span class="gem-glint gem-glint-c"></span></span><span class="title-tagline"></span></h1><button class="menu-btn play-btn" id="btn-play">▶ PLAY</button><button class="menu-btn themes-btn" id="btn-menu-themes">◆ THEMES</button><button class="menu-btn settings-btn" id="btn-menu-unlocks">◈ UNLOCKS</button><button class="menu-btn settings-btn" id="btn-menu-options">⚙ SETTINGS</button><button class="menu-btn settings-btn" id="btn-menu-howto">? HOW TO PLAY</button><button class="menu-btn settings-btn" id="btn-menu-stats">★ STATS</button><button type="button" class="bug-btn" id="btn-bug-report" aria-label="Report a bug">⚑ REPORT A BUG</button><button type="button" class="save-btn" id="btn-backup" aria-label="Back up save">⤓ BACK UP SAVE</button></div>
+    <div id="backup-modal"><div class="modal-inner"><h2>BACK UP SAVE</h2><textarea id="backup-code" rows="4" spellcheck="false" placeholder="Paste a backup code here to restore"></textarea><div class="backup-row"><button id="btn-backup-copy" class="menu-btn" type="button">COPY</button><button id="btn-backup-restore" class="menu-btn" type="button">RESTORE</button></div><p id="backup-msg" class="bug-copy"></p><button id="btn-backup-close" class="menu-btn" type="button" style="width:100%;">CLOSE</button></div></div>
     <div id="bug-modal"><div class="modal-inner"><h2>REPORT A BUG</h2><p class="bug-copy">Bug reporting is not connected to anything yet. For now, note what happened and send it over the usual way.</p><button class="menu-btn" id="btn-bug-close">GOT IT</button></div></div>
     <div id="view-stats" class="view-panel hidden">
         <button type="button" class="panel-close" id="btn-close-stats" aria-label="Back to menu">✕</button>
@@ -2145,7 +2182,7 @@
             <button id="btn-close-run-info" class="menu-btn" style="width:100%; margin-top:4px;">CLOSE</button>
         </div>
     </div></div>
-    <div id="options-modal"><div class="modal-inner"><div class="options-title-row"><h3>PAUSED</h3></div><label>Music <input type="range" id="music-slider" min="0" max="100" value="25"><span class="slider-val" id="music-val">25%</span></label><label>Sounds <input type="range" id="sounds-slider" min="0" max="100" value="65"><span class="slider-val" id="sounds-val">65%</span></label><label>Vibration <input type="checkbox" id="vibration-toggle" checked></label><label>Screen Shake <input type="range" id="shake-slider" min="0" max="100" value="100"><span class="slider-val" id="shake-val">100%</span></label><label>Ads <button id="btn-open-noads" class="ads-pill" type="button">REMOVE ADS</button></label><button id="btn-howto" class="menu-btn themes-btn" type="button" style="width:100%;">? HOW TO PLAY</button><button id="btn-backup" class="menu-btn themes-btn" type="button" style="width:100%;">⤓ BACK UP SAVE</button><div id="backup-box" class="hidden"><textarea id="backup-code" rows="3" spellcheck="false" placeholder="Paste a backup code here to restore"></textarea><div class="backup-row"><button id="btn-backup-copy" class="menu-btn" type="button">COPY</button><button id="btn-backup-restore" class="menu-btn" type="button">RESTORE</button></div><p id="backup-msg" class="bug-copy"></p></div><button id="btn-close-settings">RESUME</button><button id="btn-exit-save" class="menu-btn themes-btn" style="width:100%;">EXIT TO MENU</button><button id="btn-abandon-run" class="menu-btn quit-run-btn" style="width:100%;">ABANDON RUN</button></div></div>
+    <div id="options-modal"><div class="modal-inner"><div class="options-title-row"><h3>PAUSED</h3></div><label>Music <input type="range" id="music-slider" min="0" max="100" value="25"><span class="slider-val" id="music-val">25%</span></label><label>Sounds <input type="range" id="sounds-slider" min="0" max="100" value="65"><span class="slider-val" id="sounds-val">65%</span></label><label>Vibration <input type="checkbox" id="vibration-toggle" checked></label><label>Screen Shake <input type="range" id="shake-slider" min="0" max="100" value="100"><span class="slider-val" id="shake-val">100%</span></label><label>Ads <button id="btn-open-noads" class="ads-pill" type="button">REMOVE ADS</button></label><button id="btn-howto" class="menu-btn themes-btn" type="button" style="width:100%;">? HOW TO PLAY</button><button id="btn-close-settings">RESUME</button><button id="btn-exit-save" class="menu-btn themes-btn" style="width:100%;">EXIT TO MENU</button><button id="btn-abandon-run" class="menu-btn quit-run-btn" style="width:100%;">ABANDON RUN</button></div></div>
     <div id="howto-modal"><div class="modal-inner run-info-inner">
         <div class="run-info-band">HOW TO PLAY</div>
         <div class="run-info-body howto-body">
@@ -2947,7 +2984,23 @@
     }
     function shuffleHand() { if(G.isAnimating||G.hand.filter(t=>t).length<2||G.rerollMode) return; const tiles=G.hand.filter(t=>t!==null); const s=shuffle(tiles); let idx=0; for(let i=0;i<getHandSize();i++){ if(G.hand[i]!==null) G.hand[i]=s[idx++]; } AudioEngine.playShuffle(); vibrate(8); renderWithTileFlip(); }
     function toggleRerollMark(hi) { if(hi<0||hi>=getHandSize()||!G.hand[hi]) return; const id=G.hand[hi].id; if(G.rerollMarks.has(id)) G.rerollMarks.delete(id); else { if(G.rerollMarks.size>=3) return; G.rerollMarks.add(id); } AudioEngine.playTap(); render(); }
-    function enterReroll() { if(G.isAnimating||(!isZenLike()&&G.rerollsLeft<=0)||G.hand.every(t=>t===null)) return; G.rerollMode=true; G.rerollMarks.clear(); render(); }
+    function enterReroll() {
+        if(G.isAnimating||(!isZenLike()&&G.rerollsLeft<=0)||G.hand.every(t=>t===null)) return;
+        // Blitz: one press swaps the whole bench except the letters already
+        // sitting in your word. No marking, no confirming - there is a clock.
+        if (G.gameMode === 'blitz') { blitzSwapBench(); return; }
+        G.rerollMode=true; G.rerollMarks.clear(); render();
+    }
+    function blitzSwapBench() {
+        const freed = [];
+        for (let i = 0; i < getHandSize(); i++) {
+            if (G.hand[i]) { G.discardPile.push(G.hand[i]); G.hand[i] = null; freed.push(i); }
+        }
+        if (!freed.length) return;
+        drawIntoSlots(freed);
+        AudioEngine.playShuffle(); vibrate(12);
+        renderWithTileFlip();
+    }
     function exitReroll() { G.rerollMode=false; G.rerollMarks.clear(); render(); }
     function drawIntoSlots(slots) { for(const idx of slots){ if(isZenLike()){ G.hand[idx]=generateRandomTile(); continue; } if(G.tileBag.length===0){ if(G.discardPile.length===0) break; G.tileBag=shuffle(G.discardPile); G.discardPile=[]; } G.hand[idx]=G.tileBag.pop(); } ensureMutedTile(); }
     function isDiscardTaxed() { return G.activeHazard==='taxman' || (G.gameMode==='daily' && G.dailyChallenge===3); }
@@ -4123,7 +4176,10 @@
         document.getElementById('btn-reroll').disabled=(!isZen&&G.rerollsLeft<=0)||G.isAnimating;
         document.getElementById('btn-clear').disabled=(p.occ===0&&!G.rerollMode)||G.isAnimating;
         document.getElementById('btn-shuffle-hand').disabled=G.hand.filter(t=>t).length<2||G.isAnimating||G.rerollMode;
-        const rb=document.getElementById('btn-reroll'); if(G.rerollMode){ rb.classList.add('reroll-mode'); rb.textContent = G.rerollMarks.size===0 ? 'CANCEL' : 'CONFIRM ('+G.rerollMarks.size+'/3)'; } else { rb.classList.remove('reroll-mode'); rb.textContent='REROLL'; }
+        const rb0=document.getElementById('btn-reroll');
+        if(G.gameMode==='blitz'){ rb0.classList.remove('reroll-mode'); rb0.textContent='SWAP REST'; }
+        else {
+        const rb=document.getElementById('btn-reroll'); if(G.rerollMode){ rb.classList.add('reroll-mode'); rb.textContent = G.rerollMarks.size===0 ? 'CANCEL' : 'CONFIRM ('+G.rerollMarks.size+'/3)'; } else { rb.classList.remove('reroll-mode'); rb.textContent='REROLL'; } }
         saveActiveRun();
     }
 
@@ -4348,6 +4404,11 @@
         document.getElementById('btn-bug-report').addEventListener('click',()=>document.getElementById('bug-modal').classList.add('show'));
         document.getElementById('btn-bug-close').addEventListener('click',()=>document.getElementById('bug-modal').classList.remove('show'));
         document.getElementById('btn-ad-skip').addEventListener('click', closeAdModal);
+        // every X, BACK and CLOSE in the game answers when pressed
+        document.addEventListener('pointerdown', e => {
+            const t = e.target.closest('.panel-close, .info-btn, .daily-info-toggle');
+            if (t) AudioEngine.playTap();
+        }, true);
         // anything that covers the board pulls the music back a little
         // Watching for class changes missed cases and left the music stuck at the
         // ducked level, so the state is recomputed from what is actually on
@@ -4356,16 +4417,15 @@
             '#howto-modal.show, #noads-modal.show, #bug-modal.show, #ad-modal.show,' +
             '#confirm-modal.show, #view-draft.show';
         setInterval(() => AudioEngine.duck(!!document.querySelector(COVERS)), 250);
-        const backupBox = document.getElementById('backup-box');
         const backupCode = document.getElementById('backup-code');
         const backupMsg = document.getElementById('backup-msg');
         document.getElementById('btn-backup').addEventListener('click', () => {
-            backupBox.classList.toggle('hidden');
-            if (!backupBox.classList.contains('hidden')) {
-                backupCode.value = exportSaveCode();
-                backupMsg.textContent = 'Keep this code somewhere safe. Pasting one here replaces this device\u2019s save.';
-            }
+            document.getElementById('backup-modal').classList.add('show');
+            backupCode.value = exportSaveCode();
+            backupMsg.textContent = 'Keep this code somewhere safe. Pasting one here replaces this device\u2019s save.';
         });
+        document.getElementById('btn-backup-close').addEventListener('click', () =>
+            document.getElementById('backup-modal').classList.remove('show'));
         document.getElementById('btn-backup-copy').addEventListener('click', () => {
             backupCode.value = exportSaveCode();
             backupCode.select();
@@ -4595,8 +4655,25 @@
         const secs = G.blitzFinishedIn || BLITZ_SECONDS;
         G.modalType = "blitz-over";
         document.getElementById("modal-title").textContent = reason === "cleared" ? "BOARD CLEARED!" : "TIME!";
-        document.getElementById("modal-subtitle").textContent =
-            filled + " / " + total + " filled  ·  " + secs.toFixed(1) + "s" + (isBlitzBest(filled, secs) ? "  ·  NEW BEST" : "");
+        const sub = document.getElementById("modal-subtitle");
+        sub.innerHTML = "";
+        const line = document.createElement("div"); line.className = "blitz-result-line";
+        line.textContent = filled + " / " + total + "  \u00B7  " + secs.toFixed(1) + "s";
+        sub.appendChild(line);
+        if (isBlitzBest(filled, secs)) {
+            const b = document.createElement("div"); b.className = "blitz-best-tag"; b.textContent = "NEW BEST";
+            sub.appendChild(b);
+        }
+        // the board again, so you can see what you actually got
+        const grid = document.createElement("div"); grid.className = "blitz-result-grid";
+        BLITZ_LENGTHS.forEach(len => {
+            const w = G.blitzSlots ? G.blitzSlots[len] : null;
+            const cell = document.createElement("div");
+            cell.className = "blitz-result-cell" + (w ? " is-filled" : "");
+            cell.innerHTML = '<span>' + len + '</span><b>' + (w || "\u2014") + '</b>';
+            grid.appendChild(cell);
+        });
+        sub.appendChild(grid);
         const b = document.getElementById("btn-modal-action");
         const mb = document.getElementById("btn-modal-menu");
         b.textContent = "Play Again"; b.style.display = "block"; mb.style.display = "block";
