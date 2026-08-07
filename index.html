@@ -548,6 +548,7 @@
             background: var(--panel-bg); border: var(--outline-w) solid var(--panel-border); border-radius: var(--panel-radius);
             padding: 26px 22px; width: 100%; max-width: 320px; box-shadow: 0 12px 32px rgba(0,0,0,0.5);
             display: flex; flex-direction: column; align-items: center; gap: 12px;
+            max-height: 100%; min-height: 0;
             transform: scale(0.8) translateY(16px); opacity: 0;
             transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1), opacity 0.22s ease;
         }
@@ -565,10 +566,13 @@
         .stage-word-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 5px 10px; border-radius: calc(var(--panel-radius) * 0.6); background: rgba(127,127,127,0.12); border: 1px solid var(--panel-border); border-left: 3px solid var(--accent-3); }
         .stage-word-row .sw-word { font-family: var(--font-main); font-weight: 900; font-size: 0.8rem; color: var(--text); letter-spacing: 0.5px; }
         .stage-word-row .sw-score { font-family: var(--font-numeric); font-weight: 900; font-size: 0.8rem; color: var(--text); font-variant-numeric: tabular-nums; }
-        .stage-clear-reward { opacity: 0; transform: translateY(10px); transition: opacity 0.35s ease, transform 0.35s ease; width: 100%; }
+        .stage-clear-reward { opacity: 0; transform: translateY(10px); transition: opacity 0.35s ease, transform 0.35s ease; width: 100%; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
         .stage-clear-reward.show { opacity: 1; transform: translateY(0); }
         .draft-panel.shop-mode .stage-clear-label, .draft-panel.shop-mode .stage-clear-score { display: none; }
         .draft-hint { color: var(--text-soft); font-size: 0.8rem; font-family: var(--font-main); text-align: center; margin: -6px 0 4px; }
+        /* the reward panel scrolls its own contents now, and a negative top margin
+           gets sliced off by that; the first line inside it sits flush instead */
+        .stage-clear-reward > .draft-hint:first-child { margin-top: 2px; }
         .draft-grid { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); gap:10px; justify-content:center; margin: 6px 0; width:100%; max-width:100%; overflow-x:clip; }
         .draft-card-wrap { display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; width:100%; min-width:0; }
         .draft-card {
@@ -691,14 +695,14 @@
         }
 
         #view-menu h1 {
-            font-size: clamp(1.35rem, 7.9vw, 2.1rem); font-weight:900; color: var(--accent-1); letter-spacing:1px;
+            font-size: clamp(1.5rem, 11.4vw, 3rem); font-weight:900; color: var(--accent-1); letter-spacing:1px;
             text-shadow: var(--title-shadow), 0 0 20px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.4);
             -webkit-text-stroke: 2px rgba(0,0,0,0.55); paint-order: stroke fill;
             white-space: nowrap; max-width: 100%;
             animation: titleBounce 3s ease-in-out infinite; font-family: var(--font-title); text-align: center;
         }
         html[data-theme="wordling"] #view-menu h1 {
-            font-size: clamp(1.9rem, 11.2vw, 3.1rem);
+            font-size: clamp(1.9rem, 12.6vw, 3.4rem);
             letter-spacing: 0px; color: transparent; text-shadow: none; -webkit-text-stroke: 0;
             animation: none; margin-bottom: 10px; position: relative;
         }
@@ -1083,6 +1087,10 @@
         .draft-detail-actions .glyph-move-btn:disabled { opacity:0.4; }
         .glyph-slot.empty { background: rgba(0,0,0,0.2); border-style: dashed; border-color: var(--text-soft); box-shadow: none; opacity: 0.6; }
         .glyph-slot.empty:active { transform: none; }
+        .glyph-slot.locked { flex-direction: column; gap: 2px; opacity: 0.72; cursor: default; background: rgba(0,0,0,0.32); }
+        .glyph-slot.locked:active { transform: none; }
+        .glyph-lock-mark { font-size: 0.78rem; line-height: 1; filter: grayscale(1) brightness(1.5); }
+        .glyph-lock-stage { font-size: 0.58rem; font-weight: 900; letter-spacing: 0.5px; color: #F4F4F5; font-family: var(--font-main); line-height: 1; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
         .glyph-slot.level-2 { border-color: var(--accent-3); }
         .glyph-slot.level-3 { border-color: var(--accent-2); }
         .glyph-slot.level-4 { border-color: var(--accent-1); }
@@ -1160,6 +1168,8 @@
             font-size: 0.75rem; font-weight: 900; letter-spacing: 1.5px; color: var(--text-soft);
             font-family: var(--font-main); text-align:center; margin: 10px 0 2px;
         }
+        .draft-panel.shop-mode .shop-section-label { margin: 6px 0 2px; }
+        .draft-panel.shop-mode .draft-grid { margin: 4px 0; }
         .shop-section-label.sec-buy { color: #A855F7; }
         .shop-section-label.sec-seals { color: #22D3EE; }
         .shop-section-label.sec-sell { color: #FF4D4D; }
@@ -1172,7 +1182,14 @@
         html[data-theme="typewriter"] .shop-section-label.sec-buy   { color: #4a3f5c; }
         html[data-theme="typewriter"] .shop-section-label.sec-seals { color: #2f3a4a; }
         html[data-theme="typewriter"] .shop-section-label.sec-sell  { color: #D9383A; }
-        .shop-sell-zone { border: 2px dashed #FF4D4D; background: rgba(255,77,77,0.10); border-radius: var(--panel-radius); padding: 2px 8px 10px; margin-top: 12px; width: 100%; }
+        .shop-sell-zone { border: 2px dashed #FF4D4D; background: rgba(255,77,77,0.10); border-radius: var(--panel-radius); padding: 2px 8px 8px; margin-top: 8px; width: 100%; }
+        /* the glyphs you already own only need to be recognisable, so they sit at
+           roughly half size with no captions - that is what kept the shop on one screen */
+        .shop-sell-zone .draft-grid { gap: 6px; margin: 2px 0 0; }
+        .shop-sell-zone .draft-card { max-width: 46px; font-size: 1.3rem; }
+        .shop-sell-zone .draft-card-price { font-size: 0.5rem; bottom: 0; right: 2px; }
+        .shop-sell-zone .draft-card-label { display: none; }
+        .shop-sell-zone .shop-section-label { margin: 6px 0 0; font-size: 0.68rem; }
         .sell-banner { width:100%; background:#FF4D4D; color:#ffffff; font-family:var(--font-main); font-weight:900; letter-spacing:1.5px; font-size:0.78rem; text-align:center; padding:9px 10px; border-radius: calc(var(--panel-radius) * 0.6); box-shadow: 0 3px 0 0 #A3111F; }
         .shop-price {
             font-size: 1.1rem; font-weight: 900; font-family: var(--font-numeric); color: var(--accent-3);
@@ -1582,6 +1599,8 @@
         html[data-theme="pale-terminal"] .draft-panel h2 span::before { content: '[ '; }
         html[data-theme="pale-terminal"] .draft-panel h2 span::after { content: ' ]'; }
         html[data-theme="typewriter"] #view-menu h1 { font-size: clamp(1.6rem, 11.6vw, 3.2rem); }
+        /* Orbitron is a wide face; it needs a smaller step to stay inside the frame */
+        html[data-theme="cyber-arcade"] #view-menu h1 { font-size: clamp(1.4rem, 9.4vw, 2.6rem); }
         html[data-theme="pale-terminal"] #view-menu h1 { text-shadow: none; letter-spacing: 2px; }
         .card-pale-terminal {
             background: #c8c5b5;
@@ -1842,9 +1861,12 @@
         }
         /* five and six slot boards still have to fit a 390px screen */
         #glyph-slots[data-slots="5"] .glyph-slot { width: clamp(38px, 10vw, 52px); }
-        #glyph-slots[data-slots="6"] .glyph-slot { width: clamp(32px, 8.6vw, 46px); }
+        #glyph-slots[data-slots="6"] .glyph-slot { width: clamp(40px, 10.8vw, 52px); }
+        /* a squeezed slot keeps its square; without this it stretches into a letterbox */
+        #glyph-slots[data-slots="5"] .glyph-slot,
+        #glyph-slots[data-slots="6"] .glyph-slot { height: auto; aspect-ratio: 1 / 1; }
         #glyph-slots[data-slots="5"] { gap: 5px; }
-        #glyph-slots[data-slots="6"] { gap: 4px; }
+        #glyph-slots[data-slots="6"] { gap: 5px; }
         #glyph-slots[data-slots="5"] .lvl-badge,
         #glyph-slots[data-slots="6"] .lvl-badge { font-size: 0.38rem; padding: 2px 3px; }
         html[data-theme="renegade-crimson"] .run-info-inner { padding-top: 16px; }
@@ -1928,14 +1950,17 @@
         .theme-check { width: 18px; height: 18px; font-size: 0.6rem; }
         #view-themes h2 { margin-bottom: 4px; }
         #view-themes #btn-back-themes { padding: 10px; margin-top: 6px !important; }
-        #view-menu { gap: 9px; padding: 18px 26px; }
-        #view-menu .menu-btn { padding: 11px 14px; }
+        #view-menu { gap: 15px; padding: 20px 20px; }
+        #view-menu .menu-btn { padding: 16px 14px; width: min(310px, 84vw); font-size: 1.05rem; }
+        #view-menu .menu-btn.play-btn { font-size: 1.28rem; }
         #view-difficulty { gap: 7px; padding: 12px 26px; }
         #press-picker .press-title { font-size: 0.55rem; margin-bottom: 3px; }
         @media (max-height: 700px) {
-            #view-menu h1 { font-size: clamp(1.5rem, 9vw, 2.4rem) !important; margin-bottom: 4px !important; }
-            #view-menu { gap: 7px; padding: 12px 24px; }
-            #view-menu .menu-btn { padding: 9px 12px; font-size: 0.82rem; }
+            #view-menu h1 { font-size: clamp(1.4rem, 9.4vw, 2.5rem) !important; margin-bottom: 4px !important; }
+            html[data-theme="cyber-arcade"] #view-menu h1 { font-size: clamp(1.3rem, 8.5vw, 2.3rem) !important; }
+            #view-menu { gap: 8px; padding: 12px 20px; }
+            #view-menu .menu-btn { padding: 11px 12px; width: min(290px, 84vw); font-size: 0.9rem; }
+            #view-menu .menu-btn.play-btn { font-size: 1.05rem; }
             #view-difficulty { gap: 5px; padding: 8px 22px; }
             #view-difficulty .diff-btn { padding: 9px; }
             #view-themes { gap: 5px; padding: 10px 10px; }
@@ -1951,6 +1976,9 @@
             #score-banner { min-height: 14px; font-size: 0.78rem; }
             #bench-bar { margin: 0; }
             #view-menu h1 { font-size: clamp(1.3rem, 8vw, 2rem) !important; }
+            #view-menu { gap: 6px; padding: 10px 18px; }
+            #view-menu .menu-btn { padding: 9px 12px; font-size: 0.82rem; }
+            #view-menu .menu-btn.play-btn { font-size: 0.95rem; }
             #view-difficulty { gap: 4px; padding: 6px 18px; }
             #view-difficulty h2 { margin-bottom: 2px; }
             #view-difficulty .diff-btn { padding: 7px; font-size: 0.8rem; }
@@ -2182,7 +2210,7 @@
             <button id="btn-close-run-info" class="menu-btn" style="width:100%; margin-top:4px;">CLOSE</button>
         </div>
     </div></div>
-    <div id="options-modal"><div class="modal-inner"><div class="options-title-row"><h3>PAUSED</h3></div><label>Music <input type="range" id="music-slider" min="0" max="100" value="25"><span class="slider-val" id="music-val">25%</span></label><label>Sounds <input type="range" id="sounds-slider" min="0" max="100" value="65"><span class="slider-val" id="sounds-val">65%</span></label><label>Vibration <input type="checkbox" id="vibration-toggle" checked></label><label>Screen Shake <input type="range" id="shake-slider" min="0" max="100" value="100"><span class="slider-val" id="shake-val">100%</span></label><label>Ads <button id="btn-open-noads" class="ads-pill" type="button">REMOVE ADS</button></label><button id="btn-howto" class="menu-btn themes-btn" type="button" style="width:100%;">? HOW TO PLAY</button><button id="btn-close-settings">RESUME</button><button id="btn-exit-save" class="menu-btn themes-btn" style="width:100%;">EXIT TO MENU</button><button id="btn-abandon-run" class="menu-btn quit-run-btn" style="width:100%;">ABANDON RUN</button></div></div>
+    <div id="options-modal"><div class="modal-inner"><div class="options-title-row"><h3>PAUSED</h3></div><label>Music <input type="range" id="music-slider" min="0" max="100" value="55"><span class="slider-val" id="music-val">55%</span></label><label>Sounds <input type="range" id="sounds-slider" min="0" max="100" value="65"><span class="slider-val" id="sounds-val">65%</span></label><label>Vibration <input type="checkbox" id="vibration-toggle" checked></label><label>Screen Shake <input type="range" id="shake-slider" min="0" max="100" value="100"><span class="slider-val" id="shake-val">100%</span></label><label>Ads <button id="btn-open-noads" class="ads-pill" type="button">REMOVE ADS</button></label><button id="btn-howto" class="menu-btn themes-btn" type="button" style="width:100%;">? HOW TO PLAY</button><button id="btn-close-settings">RESUME</button><button id="btn-exit-save" class="menu-btn themes-btn" style="width:100%;">EXIT TO MENU</button><button id="btn-abandon-run" class="menu-btn quit-run-btn" style="width:100%;">ABANDON RUN</button></div></div>
     <div id="howto-modal"><div class="modal-inner run-info-inner">
         <div class="run-info-band">HOW TO PLAY</div>
         <div class="run-info-body howto-body">
@@ -2267,7 +2295,7 @@
             unlock:   ["unlock",   0.015, 1.400, 0.38, 0.00]
         };
     const AudioEngine = {
-        audioCtx: null, buffers: {}, sfxGain: 0.65, musicVol: 0.45,
+        audioCtx: null, buffers: {}, sfxGain: 0.65, musicVol: 0.55,
         music: {}, current: null, ducked: false, ready: false,
         _ensureContext() {
             if (!this.audioCtx) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) this.audioCtx = new AC(); }
@@ -2454,9 +2482,15 @@
     ];
     const BASE_GLYPH_SLOTS = 4;
     const MAX_GLYPH_SLOTS = 6;   // the ceiling; maxGlyphSlots() is what to ask
+    // stages 1-2: four slots. Stage 3 opens a fifth, stage 5 a sixth - one more
+    // every two stages, which is a beat the player can feel coming.
     function maxGlyphSlots() {
         const stage = G.currentStage || 1;
-        return BASE_GLYPH_SLOTS + (stage >= 4 ? 1 : 0) + (stage >= 6 ? 1 : 0);
+        return Math.min(MAX_GLYPH_SLOTS, BASE_GLYPH_SLOTS + Math.floor((stage - 1) / 2));
+    }
+    // the stage at which a given slot index stops being locked
+    function slotOpensAt(index) {
+        return index < BASE_GLYPH_SLOTS ? 1 : (index - BASE_GLYPH_SLOTS + 1) * 2 + 1;
     }
     const BASE_HAND_SIZE = 10;
     const CONSUMABLE_COLOR = "#06B6D4";
@@ -2512,6 +2546,10 @@
     const SHOP_PRICES = { glyph:6, void_seal:3, gold_ink:5, transmuter:4, cloner:5, wild_tile:7, finisher_tile:7, italic_tile:7 };
     const SHOP_REROLL_BASE_COST = 2;
     const NO_ADS_PRICE = 500;
+    // One switch for every ad touchpoint. false = the player never sees an ad
+    // offer anywhere; the AdManager, its placements and its analytics stay wired
+    // so turning this back to true restores all four placements as they were.
+    const ADS_ENABLED = false;
     const CLASSIC_STAGE_TARGETS = [0, 300, 800, 2000, 5000, 12000, 30000, 45000, 75000];
     // Zen has no fail state, so the targets exist to mark progress rather than to
     // squeeze. They sit far below the classic curve and climb far more gently.
@@ -2956,6 +2994,37 @@
         const finalScore = Math.floor(subtotal * finisherMult);
         return {word,valid,totalChips,totalMult,subtotal,finisherMult,totalScore:finalScore,occ:length};
     }
+    // volume, vibration and shake are the settings a player changes once and
+    // expects to stay changed
+    const SETTINGS_KEY = 'wordspyre-settings';
+    const DEFAULT_SETTINGS = { music: 55, sounds: 65, vibration: true, shake: 100 };
+    function loadSettings() {
+        let saved = null;
+        try { saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null'); } catch (e) {}
+        return Object.assign({}, DEFAULT_SETTINGS, saved || {});
+    }
+    function saveSettings() {
+        try {
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+                music: parseInt(document.getElementById('music-slider').value, 10),
+                sounds: parseInt(document.getElementById('sounds-slider').value, 10),
+                vibration: document.getElementById('vibration-toggle').checked,
+                shake: parseInt(document.getElementById('shake-slider').value, 10)
+            }));
+        } catch (e) {}
+    }
+    function applySavedSettings() {
+        const st = loadSettings();
+        const put = (id, valId, v) => { const el = document.getElementById(id); if (el) el.value = v;
+            const lab = document.getElementById(valId); if (lab) lab.textContent = v + '%'; };
+        put('music-slider', 'music-val', st.music);
+        put('sounds-slider', 'sounds-val', st.sounds);
+        put('shake-slider', 'shake-val', st.shake);
+        const vt = document.getElementById('vibration-toggle'); if (vt) vt.checked = !!st.vibration;
+        AudioEngine.setMusicVolume(st.music / 100);
+        AudioEngine.setSfxVolume(st.sounds / 100);
+        G.shakeStrength = st.shake;
+    }
     function vibrate(ms=8) { if(document.getElementById('vibration-toggle').checked&&navigator.vibrate){ try{navigator.vibrate(ms);}catch(e){} } }
     function getInsertIndexFromX(clientX) { const container=document.getElementById('active-word-line'); const tiles=container.querySelectorAll('.active-tile'); const cr=container.getBoundingClientRect(); const x=clientX-cr.left; for(let i=0;i<tiles.length;i++){ const tr=tiles[i].getBoundingClientRect(); const tc=tr.left-cr.left+tr.width/2; if(x<tc) return i; } return G.activeWord.length; }
     function placeTileInSlot(handIndex, insertAt=null) { AudioEngine.playTileTap(); if(G.isAnimating||G.rerollMode) return; if(handIndex<0||handIndex>=getHandSize()||!G.hand[handIndex]) return; const tile=G.hand[handIndex]; const wasEmpty=G.activeWord.length===0; G.hand[handIndex]=null; const idx=(insertAt!==null)?insertAt:G.activeWord.length; G.activeWord.splice(idx,0,tile); if(wasEmpty && G.activeHazard==='anchor') G.anchorTileId=tile.id; AudioEngine.playTap(); vibrate(6); renderWithTileFlip(); }
@@ -3019,6 +3088,9 @@
     }
     function updateAdsRow() {
         const btn = document.getElementById('btn-open-noads'); if (!btn) return;
+        const row = btn.closest('label');
+        if (row) row.style.display = ADS_ENABLED ? '' : 'none';
+        if (!ADS_ENABLED) return;
         if (G.adsRemoved) { btn.textContent='✓ REMOVED'; btn.disabled=true; btn.classList.add('unlocked'); }
         else { btn.textContent='REMOVE ADS'; btn.disabled=false; btn.classList.remove('unlocked'); }
     }
@@ -3334,7 +3406,7 @@
             boost.disabled = true; boost.textContent='\u2713 +' + bonus + ' DIAMONDS';
             total.innerHTML='BANK: <span class="diamond-icon"></span>'+G.bank;
         }));
-        container.appendChild(boost);
+        if (ADS_ENABLED) container.appendChild(boost);
         const nextBtn=document.createElement('button'); nextBtn.className='draft-btn'; nextBtn.style.width='100%'; nextBtn.style.marginTop='12px'; nextBtn.textContent='NEXT ▶';
         nextBtn.addEventListener('click', ()=>{ AudioEngine.playTap(); nextBtn.disabled=true; openShopPanel(container); });
         container.appendChild(nextBtn);
@@ -3564,7 +3636,7 @@
         rerollBtn.addEventListener('click', ()=>rerollShop(container));
         container.appendChild(rerollBtn);
         // out of rerolls and out of diamonds: an ad buys two more
-        if (free <= 0 && G.bank < rerollCost) {
+        if (ADS_ENABLED && free <= 0 && G.bank < rerollCost) {
             const adRoll = document.createElement('button'); adRoll.className='ad-btn'; adRoll.id='btn-ad-rerolls';
             adRoll.textContent = '\u25B6 WATCH AD \u00B7 +2 FREE REROLLS';
             adRoll.addEventListener('click', () => AdManager.show(AdManager.placements.rerolls, () => {
@@ -3706,7 +3778,7 @@
     function renderReviveOffer(type) {
         const holder = document.getElementById("modal-overlay").querySelector(".modal-inner");
         const old = holder.querySelector(".ad-btn"); if (old) old.remove();
-        if (type !== "game-over" || isZenLike() || G.revivedThisRun) return;
+        if (!ADS_ENABLED || type !== "game-over" || isZenLike() || G.revivedThisRun) return;
         const btn = document.createElement("button");
         btn.className = "ad-btn"; btn.id = "btn-ad-revive";
         btn.textContent = "\u25B6 WATCH AD \u00B7 REVIVE";
@@ -3728,12 +3800,21 @@
 
     function renderGlyphs() {
         const container = document.getElementById('glyph-slots'); container.innerHTML = '';
-        const slotCount = Math.max(maxGlyphSlots(), G.equippedGlyphs.length);
+        const open = maxGlyphSlots();
+        const slotCount = Math.max(MAX_GLYPH_SLOTS, G.equippedGlyphs.length);
         container.dataset.slots = String(slotCount);
         for (let i = 0; i < slotCount; i++) {
             const slot = document.createElement('div'); slot.className = 'glyph-slot';
             const equipped = G.equippedGlyphs[i];
             if (!equipped) slot.classList.add('empty');
+            if (!equipped && i >= open) {
+                slot.classList.add('locked');
+                const at = slotOpensAt(i);
+                slot.title = 'Opens at stage ' + at;
+                const mark = document.createElement('span'); mark.className = 'glyph-lock-mark'; mark.textContent = '\u{1F512}';
+                const at$ = document.createElement('span'); at$.className = 'glyph-lock-stage'; at$.textContent = 'S' + at;
+                slot.appendChild(mark); slot.appendChild(at$);
+            }
             if (equipped) {
                 const data = GlyphManager.getGlyphData(equipped.id);
                 if (data) {
@@ -4467,9 +4548,10 @@
         document.getElementById('btn-noads-cancel').addEventListener('click',closeNoAdsModal);
         document.getElementById('btn-noads-buy').addEventListener('click',purchaseNoAds);
         document.getElementById('noads-modal').addEventListener('click',e=>{if(e.target===document.getElementById('noads-modal'))closeNoAdsModal();});
-        document.getElementById('music-slider').addEventListener('input',e=>{AudioEngine.setMusicVolume(parseInt(e.target.value)/100);document.getElementById('music-val').textContent=e.target.value+'%';});
-        document.getElementById('sounds-slider').addEventListener('input',e=>{AudioEngine.setSfxVolume(parseInt(e.target.value)/100);document.getElementById('sounds-val').textContent=e.target.value+'%';});
-        document.getElementById('shake-slider').addEventListener('input',e=>{G.shakeStrength=parseInt(e.target.value);document.getElementById('shake-val').textContent=e.target.value+'%';});
+        document.getElementById('music-slider').addEventListener('input',e=>{AudioEngine.setMusicVolume(parseInt(e.target.value)/100);document.getElementById('music-val').textContent=e.target.value+'%';saveSettings();});
+        document.getElementById('sounds-slider').addEventListener('input',e=>{AudioEngine.setSfxVolume(parseInt(e.target.value)/100);document.getElementById('sounds-val').textContent=e.target.value+'%';saveSettings();});
+        document.getElementById('shake-slider').addEventListener('input',e=>{G.shakeStrength=parseInt(e.target.value);document.getElementById('shake-val').textContent=e.target.value+'%';saveSettings();});
+        document.getElementById('vibration-toggle').addEventListener('change',saveSettings);
         document.getElementById('btn-shuffle-hand').addEventListener('click',shuffleHand);
         document.getElementById('btn-clear').addEventListener('click',clearActiveWord);
         document.getElementById('btn-reroll').addEventListener('click',toggleRerollBtn);
@@ -4834,7 +4916,8 @@
                     e.stopPropagation();
                     AdManager.show(AdManager.placements.theme, () => { grantThemeTrial(id); setTheme(id); });
                 });
-                lock.appendChild(mark); lock.appendChild(txt); lock.appendChild(btn);
+                lock.appendChild(mark); lock.appendChild(txt);
+                if (ADS_ENABLED) lock.appendChild(btn);
                 card.appendChild(lock);
             } else if (!isThemePermanent(id)) {
                 const tag = document.createElement("span"); tag.className = "theme-trial";
@@ -5008,7 +5091,7 @@
         if(eb) eb.textContent=c.eyebrow;
         if(tl) tl.textContent=c.tagline;
     }
-    function boot(){try{G.currentTheme=localStorage.getItem('wordling-theme')||'wordling';}catch(e){G.currentTheme='wordling';}loadProgress();applyTheme(G.currentTheme);let savedPalette;try{savedPalette=localStorage.getItem('wordling-palette')||'coral-sky';}catch(e){savedPalette='coral-sky';}applyPalette(savedPalette);updateThemeButtons();loadPersistence();renderPresses();bindPressArrows();updateContinueButtonVisibility();initDict();bind();wrapTitleLetters();}
+    function boot(){try{G.currentTheme=localStorage.getItem('wordling-theme')||'wordling';}catch(e){G.currentTheme='wordling';}loadProgress();applyTheme(G.currentTheme);let savedPalette;try{savedPalette=localStorage.getItem('wordling-palette')||'coral-sky';}catch(e){savedPalette='coral-sky';}applyPalette(savedPalette);updateThemeButtons();loadPersistence();renderPresses();bindPressArrows();updateContinueButtonVisibility();initDict();bind();applySavedSettings();wrapTitleLetters();}
     document.addEventListener('visibilitychange', () => { if(document.hidden){ if(G.dragData){ cleanupDrag(); render(); } } else { const c=document.getElementById('game-container'); if(c){ c.classList.add('anim-kick'); void c.offsetHeight; c.classList.remove('anim-kick'); } } });
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 })();
