@@ -2593,7 +2593,7 @@
           test:c => c.event==='stageClear' && c.stage>=5 && c.rerollsUsed===0 },
         { id:'grammarian', kind:'glyph', label:'The Grammarian', hint:'Play a word with 4 or more vowels',
           test:c => c.event==='word' && c.word && (c.word.match(/[AEIOU]/g)||[]).length >= 4 },
-        { id:'novelist', kind:'glyph', label:'The Novelist', hint:'Play a word 7 letters or longer',
+        { id:'underdog', kind:'glyph', label:'The Underdog', hint:'Play a word 7 letters or longer',
           test:c => c.event==='word' && c.word && c.word.length >= 7 },
         { id:'bookends', kind:'glyph', label:'Bookends', hint:'Play a word that starts and ends with the same letter',
           test:c => c.event==='word' && c.word && c.word.length>2 && c.word[0]===c.word[c.word.length-1] },
@@ -2623,7 +2623,7 @@
 
     const DEFAULT_PROGRESS = {
         unlockedPresses: ['merchant_press'],
-        unlockedGlyphs: ['scrabble_master','vowel_anchor','consonant_charge','long_form','underdog'],
+        unlockedGlyphs: ['scrabble_master','vowel_anchor','consonant_charge','long_form','novelist'],
         unlockedConsumables: ['gold_ink','transmuter','cloner'],
         completedRuns: [],
         wins: 0,
@@ -2642,6 +2642,9 @@
         if (!p.unlockedPresses.includes('merchant_press')) p.unlockedPresses.unshift('merchant_press');
         if (!p.unlockedPresses.includes(p.selectedPress)) p.selectedPress = 'merchant_press';
         if (!Array.isArray(p.grantedThemes)) p.grantedThemes = [];
+        // Novelist moved into the starting kit. Without this line an existing
+        // save keeps its old list and still never meets a multiplier glyph.
+        if (!p.unlockedGlyphs.includes('novelist')) p.unlockedGlyphs.push('novelist');
         if (!saved || saved.wins === undefined) {
             let had = null;
             try { had = localStorage.getItem("wordling-theme"); } catch (e) {}
@@ -3484,6 +3487,11 @@
             } };
     }
     function makeConsumableOffer(def) { return { kind:'consumable', id:def.id, type:'seal', name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{ G.consumables.push({id:def.id}); } }; }
+    // The glyphs that multiply the whole word rather than adding to it. Carrying
+    // one of these is the difference between clearing stage 6 in two hands and
+    // not clearing it at all, so the shop guarantees access to one.
+    const XMULT_GLYPHS = new Set(['novelist', 'bookends', 'heavy_hitter']);
+    function hasMultiplierGlyph() { return (G.equippedGlyphs || []).some(g => XMULT_GLYPHS.has(g.id)); }
     function isGlyphUnlocked(id) { return !G.progress || G.progress.unlockedGlyphs.includes(id); }
     function isConsumableUnlocked(id) { return !G.progress || G.progress.unlockedConsumables.includes(id); }
     function generateShopGlyphOffers() {
@@ -3512,6 +3520,13 @@
         if (!boardFull && !picked.some(scores)) {
             const s = shuffle(pool.filter(scores))[0];
             if (s) picked[picked.length - 1] = s;
+        }
+        // by stage 3 a run without a multiplier glyph is already losing, and the
+        // player has no way to know that, so stop leaving it to the shuffle
+        const isXMult = o => o && o.kind === 'glyph' && XMULT_GLYPHS.has(o.id);
+        if (!boardFull && (G.currentStage || 1) >= 3 && !hasMultiplierGlyph() && !picked.some(isXMult)) {
+            const x = shuffle(pool.filter(isXMult))[0];
+            if (x) picked[picked.length - 1] = x;
         }
         return picked;
     }
