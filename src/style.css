@@ -1,0 +1,98 @@
+:root {
+  --bg: #12151c;
+  --hud: #8d96a8;
+  --hud-bright: #e6ebf4;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, sans-serif;
+  color: var(--hud);
+  /* The board handles its own gestures; never let the page pan or zoom. */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+#hud {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 14px 2px;
+  flex: 0 0 auto;
+}
+
+#hud button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--hud);
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+#hud button:hover {
+  color: var(--hud-bright);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+#hud button:active {
+  transform: scale(0.94);
+}
+
+#title {
+  flex: 1 1 auto;
+  text-align: center;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+#level-status {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  min-height: 13px;
+  color: #55607a;
+  transition: color 200ms ease;
+}
+
+#level-status.solved {
+  color: #7fd8a6;
+}
+
+#board {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  display: block;
+  touch-action: none;
+}
