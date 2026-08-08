@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:browser": "tsx scripts/browser-check.ts",
+    "build:artifact": "vite build && tsx scripts/build-artifact.ts",
     "gen": "tsx scripts/generate-levels.ts"
   },
   "devDependencies": {

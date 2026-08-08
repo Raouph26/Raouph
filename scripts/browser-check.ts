@@ -107,12 +107,19 @@ const failures: string[] = [];
 async function main(): Promise<void> {
   mkdirSync(OUT_DIR, { recursive: true });
 
-  server = spawn(
-    "npx",
-    ["vite", "--port", String(PORT), "--host", "127.0.0.1", "--strictPort"],
-    { cwd: new URL("..", import.meta.url).pathname, stdio: "ignore" },
-  );
-  await waitFor("vite dev server", async () => (await fetch(URL_BASE)).ok);
+  // TARGET_URL lets this run against a built single-file bundle (file://...)
+  // instead of the dev server, which is how the published page is verified.
+  const target = process.env.TARGET_URL;
+  if (target) {
+    console.log(`checking ${target}`);
+  } else {
+    server = spawn(
+      "npx",
+      ["vite", "--port", String(PORT), "--host", "127.0.0.1", "--strictPort"],
+      { cwd: new URL("..", import.meta.url).pathname, stdio: "ignore" },
+    );
+    await waitFor("vite dev server", async () => (await fetch(URL_BASE)).ok);
+  }
 
   browser = spawn(
     CHROME,
@@ -151,7 +158,7 @@ async function main(): Promise<void> {
     mobile: true,
   });
 
-  await cdp.send("Page.navigate", { url: URL_BASE });
+  await cdp.send("Page.navigate", { url: target ?? URL_BASE });
   await waitFor(
     "app boot",
     async () => (await cdp.evaluate<boolean>("typeof window.__game === 'function'")),
