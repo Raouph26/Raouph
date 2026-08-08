@@ -5,22 +5,37 @@ export interface Palette {
   shape: Record<ShapeId, string>;
   /** Drawn line colour, usually a touch softer than the node fill. */
   line: Record<ShapeId, string>;
+  /** Dots marking empty cells, so the grid's diagonals are legible. */
+  lattice: string;
+  /** Faint plate behind the grid that frames the play area. */
+  panel: string;
+  panelEdge: string;
   hubStroke: string;
+  /** Hub outline once its dot count is met. */
+  hubStrokeFull: string;
   hubFill: string;
   dotFilled: string;
   dotEmpty: string;
   terminalRing: string;
 }
 
+/**
+ * A single dark world rather than a themed page: the neutrals carry a blue
+ * bias so the warm coral reads as the one warm thing on screen.
+ */
 export const DEFAULT_PALETTE: Palette = {
-  background: "#12151c",
+  background: "#10131a",
   shape: { 0: "#ff7a63", 1: "#54c7dd", 2: "#f2c661" },
-  line: { 0: "#e0604c", 1: "#3fa9be", 2: "#d3a844" },
-  hubStroke: "#737d92",
-  hubFill: "#1a1e27",
-  dotFilled: "#dfe5f0",
-  dotEmpty: "#414a5c",
-  terminalRing: "#8d96a8",
+  line: { 0: "#d95a47", 1: "#3ba3b8", 2: "#cda23f" },
+  lattice: "#2f3648",
+  panel: "#151924",
+  panelEdge: "rgba(255, 255, 255, 0.045)",
+  hubStroke: "#6d7689",
+  hubStrokeFull: "#aab3c4",
+  hubFill: "#171b24",
+  dotFilled: "#e4e9f2",
+  dotEmpty: "#3c4455",
+  terminalRing: "#858ea1",
 };
 
 /** Number of sides and rotation that give each shape family its silhouette. */

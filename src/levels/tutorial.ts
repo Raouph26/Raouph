@@ -18,10 +18,10 @@ export const TUTORIAL_LEVELS: Level[] = [
   ]),
   // Diagonal moves are legal.
   parseLevel("1-2", [
-    "A...",
-    ".aa.",
-    "..a.",
-    "...A",
+    "A..",
+    ".a.",
+    "..a",
+    "..A",
   ]),
   // Two lines that never touch: each colour is its own puzzle.
   parseLevel("1-3", [

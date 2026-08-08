@@ -6,22 +6,32 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#12151c" />
+    <meta name="theme-color" content="#10131a" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <title>Lyne-like</title>
   </head>
   <body>
     <div id="app">
       <header id="hud">
-        <button id="prev" aria-label="Previous puzzle">&#8249;</button>
+        <button id="reset" type="button" aria-label="Reset puzzle">&#8635;</button>
         <div id="title">
           <span id="level-name">--</span>
           <span id="level-status"></span>
         </div>
-        <button id="reset" aria-label="Reset puzzle">&#8635;</button>
-        <button id="next" aria-label="Next puzzle">&#8250;</button>
+        <button id="mute" type="button" aria-label="Mute sound">&#9834;</button>
       </header>
+
       <canvas id="board"></canvas>
+
+      <nav id="nav">
+        <button id="prev" type="button" aria-label="Previous puzzle">
+          <span aria-hidden="true">&#8249;</span>
+        </button>
+        <span id="progress"></span>
+        <button id="next" type="button" aria-label="Next puzzle">
+          <span aria-hidden="true">&#8250;</span>
+        </button>
+      </nav>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

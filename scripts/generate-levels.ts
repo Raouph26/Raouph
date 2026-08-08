@@ -4,13 +4,37 @@ import { formatLevel } from "../src/core/level";
 import { solve } from "../src/core/solver";
 import { TUTORIAL_LEVELS } from "../src/levels/tutorial";
 
-/** Difficulty ramp: each tier widens the board and adds a line or hub traffic. */
-const TIERS: { count: number; spec: GenSpec }[] = [
-  { count: 4, spec: { width: 4, height: 4, shapes: 1, pathLength: 7, maxHubCapacity: 2 } },
-  { count: 4, spec: { width: 5, height: 5, shapes: 2, pathLength: 7, maxHubCapacity: 2 } },
-  { count: 5, spec: { width: 5, height: 5, shapes: 2, pathLength: 9, maxHubCapacity: 3 } },
-  { count: 5, spec: { width: 6, height: 6, shapes: 2, pathLength: 12, maxHubCapacity: 3 } },
-  { count: 6, spec: { width: 6, height: 6, shapes: 3, pathLength: 9, maxHubCapacity: 3 } },
+/**
+ * Difficulty ramp. The board is capped at 3 columns x 5 rows so it stays a
+ * single thumb-reachable object in portrait — every tier grows downward or
+ * adds a line rather than widening.
+ */
+const TIERS: { count: number; spec: GenSpec; minPieces: number }[] = [
+  {
+    count: 5,
+    minPieces: 6,
+    spec: { width: 3, height: 3, shapes: 1, pathLength: 6, maxHubCapacity: 2 },
+  },
+  {
+    count: 5,
+    minPieces: 8,
+    spec: { width: 3, height: 4, shapes: 1, pathLength: 9, maxHubCapacity: 2 },
+  },
+  {
+    count: 6,
+    minPieces: 9,
+    spec: { width: 3, height: 4, shapes: 2, pathLength: 6, maxHubCapacity: 3 },
+  },
+  {
+    count: 7,
+    minPieces: 11,
+    spec: { width: 3, height: 5, shapes: 2, pathLength: 8, maxHubCapacity: 3 },
+  },
+  {
+    count: 7,
+    minPieces: 12,
+    spec: { width: 3, height: 5, shapes: 3, pathLength: 6, maxHubCapacity: 3 },
+  },
 ];
 
 // Verify the hand-authored levels before spending time generating.
@@ -45,6 +69,14 @@ for (const [tierIdx, tier] of TIERS.entries()) {
       console.log(`tier ${tierIdx}: attempt exhausted (${Date.now() - started}ms)`);
       continue;
     }
+    // A walk that stalls early leaves a board too small to be a puzzle, and
+    // trimming empty edges shrinks it further. Discard those outright.
+    const pieces = level.cells.filter((c) => c.kind !== "empty").length;
+    if (pieces < tier.minPieces) {
+      index--;
+      continue;
+    }
+
     const rows = formatLevel(level);
     const signature = rows.join("/");
     if (emitted.some((e) => e.rows.join("/") === signature)) {

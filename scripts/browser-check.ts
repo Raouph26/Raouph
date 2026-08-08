@@ -45,11 +45,32 @@ class Cdp {
     number,
     { resolve: (value: any) => void; reject: (err: Error) => void }
   >();
+  /** Anything the page threw or logged as an error, collected for the report. */
+  readonly pageErrors: string[] = [];
 
   async connect(wsUrl: string): Promise<void> {
     this.socket = new WebSocket(wsUrl);
     this.socket.addEventListener("message", (event) => {
       const message = JSON.parse(String(event.data));
+
+      if (message.method === "Runtime.exceptionThrown") {
+        const details = message.params?.exceptionDetails;
+        this.pageErrors.push(
+          details?.exception?.description ?? details?.text ?? "unknown exception",
+        );
+        return;
+      }
+      if (
+        message.method === "Runtime.consoleAPICalled" &&
+        message.params?.type === "error"
+      ) {
+        const text = (message.params.args ?? [])
+          .map((a: any) => a.value ?? a.description ?? "")
+          .join(" ");
+        this.pageErrors.push(`console.error: ${text}`);
+        return;
+      }
+
       const entry = this.pending.get(message.id);
       if (!entry) return;
       this.pending.delete(message.id);
@@ -217,6 +238,8 @@ async function main(): Promise<void> {
     }
 
     if ([0, 3, 20].includes(levelIndex)) {
+      // Let the win animation reach its settled state before capturing.
+      await delay(1400);
       const shot = await cdp.send("Page.captureScreenshot", { format: "png" });
       writeFileSync(
         new URL(`level-${level.id}-solved.png`, OUT_DIR),
@@ -227,9 +250,13 @@ async function main(): Promise<void> {
 
   // Also capture an untouched board so the default look can be reviewed.
   await cdp.evaluate("window.__loadLevel(20)");
-  await delay(80);
+  // Long enough for the staggered entrance to finish blooming in.
+  await delay(1200);
   const fresh = await cdp.send("Page.captureScreenshot", { format: "png" });
   writeFileSync(new URL("level-fresh.png", OUT_DIR), Buffer.from(fresh.data, "base64"));
+
+  // Audio starts inside the simulated press, so a synthesis error surfaces here.
+  for (const error of cdp.pageErrors) failures.push(`page error: ${error}`);
 }
 
 main()
