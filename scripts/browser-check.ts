@@ -2,16 +2,16 @@
  * End-to-end check: launches the real app in Chromium and solves levels with
  * simulated finger drags, then asserts the game reports them solved.
  *
- * This exercises the parts unit tests cannot reach — canvas layout, hit
- * testing, pointer capture and the fast-drag interpolation. It speaks the
+ * This exercises what unit tests cannot reach — canvas layout, hit testing,
+ * pointer capture, fast-drag interpolation and screen navigation. It speaks the
  * DevTools protocol directly so it needs no browser-automation dependency.
  */
 import { type ChildProcess, spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
-import { ALL_LEVELS } from "../src/levels";
+import { classicLevel, dailyLevel, todayKey } from "../src/core/chapters";
 import { solve } from "../src/core/solver";
 import { computeLayout } from "../src/render/renderer";
-import type { ShapeId } from "../src/core/types";
+import type { Level, ShapeId } from "../src/core/types";
 
 const CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const PORT = 5178;
@@ -19,7 +19,7 @@ const CDP_PORT = 9222;
 const URL_BASE = `http://127.0.0.1:${PORT}/`;
 const OUT_DIR = new URL("../.artifacts/", import.meta.url);
 /** Matches Renderer.padding; the test recomputes layout to find cell centres. */
-const BOARD_PADDING = 28;
+const BOARD_PADDING = 34;
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -33,7 +33,7 @@ async function waitFor(
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     if (await probe().catch(() => false)) return;
-    await delay(250);
+    await delay(200);
   }
   throw new Error(`timed out waiting for ${label}`);
 }
@@ -45,7 +45,6 @@ class Cdp {
     number,
     { resolve: (value: any) => void; reject: (err: Error) => void }
   >();
-  /** Anything the page threw or logged as an error, collected for the report. */
   readonly pageErrors: string[] = [];
 
   async connect(wsUrl: string): Promise<void> {
@@ -93,7 +92,6 @@ class Cdp {
     });
   }
 
-  /** Evaluates an expression in the page and returns its value. */
   async evaluate<T>(expression: string): Promise<T> {
     const result = await this.send("Runtime.evaluate", {
       expression,
@@ -119,17 +117,29 @@ class Cdp {
       pointerType: "mouse",
     });
   }
+
+  async screenshot(name: string): Promise<void> {
+    const shot = await this.send("Page.captureScreenshot", { format: "png" });
+    writeFileSync(new URL(name, OUT_DIR), Buffer.from(shot.data, "base64"));
+  }
 }
 
 let server: ChildProcess | undefined;
 let browser: ChildProcess | undefined;
 const failures: string[] = [];
 
+interface Target {
+  label: string;
+  mode: "classic" | "daily";
+  chapter: number;
+  stage: number;
+  level: Level;
+  shot?: string;
+}
+
 async function main(): Promise<void> {
   mkdirSync(OUT_DIR, { recursive: true });
 
-  // TARGET_URL lets this run against a built single-file bundle (file://...)
-  // instead of the dev server, which is how the published page is verified.
   const target = process.env.TARGET_URL;
   if (target) {
     console.log(`checking ${target}`);
@@ -180,18 +190,40 @@ async function main(): Promise<void> {
   });
 
   await cdp.send("Page.navigate", { url: target ?? URL_BASE });
-  await waitFor(
-    "app boot",
-    async () => (await cdp.evaluate<boolean>("typeof window.__game === 'function'")),
+  await waitFor("app boot", async () =>
+    cdp.evaluate<boolean>("typeof window.__startLevel === 'function'"),
   );
 
-  // A spread of levels: both tutorials and generated boards with 1-3 lines.
-  const targets = [0, 1, 2, 3, 8, 14, 20, ALL_LEVELS.length - 1];
+  // The menu screens are chrome, not canvas, so capture them for review.
+  await delay(400);
+  await cdp.screenshot("screen-menu.png");
+  await cdp.evaluate("document.getElementById('go-classic').click()");
+  await delay(300);
+  await cdp.screenshot("screen-chapters.png");
+  await cdp.evaluate("document.querySelector('.chapter').click()");
+  await delay(300);
+  await cdp.screenshot("screen-stages.png");
 
-  for (const levelIndex of targets) {
-    const level = ALL_LEVELS[levelIndex];
-    await cdp.evaluate(`window.__loadLevel(${levelIndex})`);
-    await delay(60);
+  const day = todayKey();
+  const targets: Target[] = [
+    { label: "c1-s1", mode: "classic", chapter: 1, stage: 1, level: classicLevel(1, 1), shot: "level-early.png" },
+    { label: "c2-s20", mode: "classic", chapter: 2, stage: 20, level: classicLevel(2, 20) },
+    { label: "c5-s32", mode: "classic", chapter: 5, stage: 32, level: classicLevel(5, 32), shot: "level-3x5.png" },
+    { label: "c6-s8", mode: "classic", chapter: 6, stage: 8, level: classicLevel(6, 8), shot: "level-three-colours.png" },
+    { label: "c11-s4", mode: "classic", chapter: 11, stage: 4, level: classicLevel(11, 4) },
+    { label: "c17-s9", mode: "classic", chapter: 17, stage: 9, level: classicLevel(17, 9) },
+    { label: "c20-s1", mode: "classic", chapter: 20, stage: 1, level: classicLevel(20, 1), shot: "level-late.png" },
+    { label: "daily-s3", mode: "daily", chapter: 1, stage: 3, level: dailyLevel(day, 3) },
+  ];
+
+  for (const item of targets) {
+    await cdp.evaluate(
+      `window.__startLevel(${JSON.stringify(item.mode)}, ${item.chapter}, ${item.stage})`,
+    );
+    // startLevel yields a frame before generating so the screen can paint.
+    await waitFor(`${item.label} to load`, async () =>
+      cdp.evaluate<boolean>("window.__game() !== null"),
+    );
 
     const rect = await cdp.evaluate<{
       left: number;
@@ -203,6 +235,7 @@ async function main(): Promise<void> {
         return { left: r.left, top: r.top, width: r.width, height: r.height }; })()`,
     );
 
+    const level = item.level;
     const layout = computeLayout(level, rect.width, rect.height, BOARD_PADDING);
     const screen = (cell: number) => ({
       x: rect.left + layout.ox + ((cell % level.width) + 0.5) * layout.cell,
@@ -211,12 +244,11 @@ async function main(): Promise<void> {
 
     const [solution] = solve(level, { limit: 1 }).solutions;
     if (!solution) {
-      failures.push(`level ${level.id}: solver found no solution`);
+      failures.push(`${item.label}: solver found no solution`);
       continue;
     }
 
-    for (const [shape, path] of solution as Map<ShapeId, number[]>) {
-      void shape;
+    for (const [, path] of solution as Map<ShapeId, number[]>) {
       const start = screen(path[0]);
       await cdp.mouse("mousePressed", start.x, start.y);
       for (const cell of path.slice(1)) {
@@ -229,31 +261,24 @@ async function main(): Promise<void> {
 
     await delay(60);
     const solved = await cdp.evaluate<boolean>("window.__game().solved");
-    const label = `level ${level.id} (index ${levelIndex}, ${level.width}x${level.height})`;
-    if (solved) {
-      console.log(`  ok   ${label}`);
-    } else {
+    const label = `${item.label} (${level.width}x${level.height})`;
+    if (solved) console.log(`  ok   ${label}`);
+    else {
       failures.push(label);
       console.log(`  FAIL ${label}`);
     }
 
-    if ([0, 3, 20].includes(levelIndex)) {
-      // Let the win animation reach its settled state before capturing.
-      await delay(1400);
-      const shot = await cdp.send("Page.captureScreenshot", { format: "png" });
-      writeFileSync(
-        new URL(`level-${level.id}-solved.png`, OUT_DIR),
-        Buffer.from(shot.data, "base64"),
-      );
+    if (item.shot) {
+      // Let the completion spin and win swell settle before capturing.
+      await delay(1500);
+      await cdp.screenshot(item.shot);
     }
   }
 
-  // Also capture an untouched board so the default look can be reviewed.
-  await cdp.evaluate("window.__loadLevel(20)");
-  // Long enough for the staggered entrance to finish blooming in.
-  await delay(1200);
-  const fresh = await cdp.send("Page.captureScreenshot", { format: "png" });
-  writeFileSync(new URL("level-fresh.png", OUT_DIR), Buffer.from(fresh.data, "base64"));
+  // A fresh board, for reviewing the resting state.
+  await cdp.evaluate("window.__startLevel('classic', 12, 5)");
+  await delay(1400);
+  await cdp.screenshot("level-fresh.png");
 
   // Audio starts inside the simulated press, so a synthesis error surfaces here.
   for (const error of cdp.pageErrors) failures.push(`page error: ${error}`);

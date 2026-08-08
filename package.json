@@ -9,8 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:browser": "tsx scripts/browser-check.ts",
-    "build:artifact": "vite build && tsx scripts/build-artifact.ts",
-    "gen": "tsx scripts/generate-levels.ts"
+    "validate": "tsx scripts/validate-chapters.ts",
+    "build:artifact": "vite build && tsx scripts/build-artifact.ts"
   },
   "devDependencies": {
     "@types/node": "^26.1.2",

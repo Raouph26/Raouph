@@ -16,6 +16,10 @@ const APPEAR_MS = duration(460);
 const APPEAR_STAGGER_MS = duration(58);
 const PULSE_MS = duration(620);
 const SOLVE_MS = duration(1500);
+/** One piece's full turn when its line closes. */
+const SPIN_MS = duration(560);
+/** Delay per piece along the line, so the turn travels rather than snapping. */
+const SPIN_STAGGER_MS = duration(46);
 /**
  * Time constant for the line catching up to the finger. Small enough to feel
  * immediate, large enough that the head glides instead of snapping.
@@ -39,6 +43,10 @@ export function easeInOutSine(t: number): number {
   return -(Math.cos(Math.PI * t) - 1) / 2;
 }
 
+export function easeInOutCubic(t: number): number {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
 /**
  * All animation state, kept entirely separate from the rules.
  *
@@ -54,6 +62,8 @@ export class ViewState {
   private firstCells = new Map<ShapeId, CellIndex>();
   /** Cell -> timestamp it was last reached, driving the ripple. */
   private pulses = new Map<CellIndex, number>();
+  /** Shape -> timestamp its line closed, driving the confirmation spin. */
+  private completions = new Map<ShapeId, number>();
   private solvedAt: number | null = null;
 
   reset(now: number): void {
@@ -61,6 +71,7 @@ export class ViewState {
     this.lengths.clear();
     this.firstCells.clear();
     this.pulses.clear();
+    this.completions.clear();
     this.solvedAt = null;
   }
 
@@ -76,8 +87,24 @@ export class ViewState {
     this.solvedAt = null;
   }
 
-  /** Eases every animated value toward the game's actual state. */
-  update(game: Game, now: number, dtMs: number): void {
+  /**
+   * Eases every animated value toward the game's actual state, and reports any
+   * line that closed this frame so the caller can sound it.
+   */
+  update(game: Game, now: number, dtMs: number): ShapeId[] {
+    const justCompleted: ShapeId[] = [];
+
+    for (const shape of game.shapes) {
+      const complete = game.isShapeComplete(shape);
+      if (complete && !this.completions.has(shape)) {
+        this.completions.set(shape, now);
+        justCompleted.push(shape);
+      } else if (!complete && this.completions.has(shape)) {
+        // Broken again by an edit; the spin should re-fire if it re-closes.
+        this.completions.delete(shape);
+      }
+    }
+
     for (const shape of game.shapes) {
       const path = game.pathFor(shape);
       const target = path.length;
@@ -103,6 +130,30 @@ export class ViewState {
     for (const [cell, at] of this.pulses) {
       if (now - at > PULSE_MS) this.pulses.delete(cell);
     }
+
+    return justCompleted;
+  }
+
+  /**
+   * Rotation in radians for a piece on a closed line. The turn travels from the
+   * line's start to its end, so the confirmation reads as the line itself
+   * acknowledging the connection rather than every piece twitching at once.
+   */
+  spinFor(shape: ShapeId, orderIndex: number, now: number): number {
+    const at = this.completions.get(shape);
+    if (at === undefined || SPIN_MS === 0) return 0;
+    const elapsed = now - at - orderIndex * SPIN_STAGGER_MS;
+    if (elapsed <= 0) return 0;
+    const t = clamp01(elapsed / SPIN_MS);
+    return easeInOutCubic(t) * Math.PI * 2;
+  }
+
+  private spinActive(game: Game, now: number): boolean {
+    for (const [shape, at] of this.completions) {
+      const span = SPIN_MS + game.pathFor(shape).length * SPIN_STAGGER_MS;
+      if (now - at < span) return true;
+    }
+    return false;
   }
 
   /** Animated point count for a line, where the fraction is a partial segment. */
@@ -141,6 +192,7 @@ export class ViewState {
   /** Lets the frame loop idle instead of burning battery on a static board. */
   isAnimating(game: Game, now: number): boolean {
     if (this.pulses.size > 0) return true;
+    if (this.spinActive(game, now)) return true;
     if (now - this.appearAt < APPEAR_MS + APPEAR_STAGGER_MS * 6) return true;
     if (this.solvedAt !== null && now - this.solvedAt < SOLVE_MS) return true;
     // A solved board keeps breathing, so it is never fully idle.

@@ -1,65 +1,91 @@
 import type { ShapeId } from "../core/types";
 
 export interface Palette {
+  /** Board ground, and the slightly lifted centre of the backdrop wash. */
   background: string;
+  backgroundLift: string;
   shape: Record<ShapeId, string>;
-  /** Drawn line colour, usually a touch softer than the node fill. */
+  /** Drawn line colour, a touch deeper than the piece it belongs to. */
   line: Record<ShapeId, string>;
-  /** Dots marking empty cells, so the grid's diagonals are legible. */
+  /** Soft disc behind a terminal, replacing a hard ring. */
+  terminalHalo: Record<ShapeId, string>;
   lattice: string;
-  /** Faint plate behind the grid that frames the play area. */
   panel: string;
   panelEdge: string;
-  hubStroke: string;
-  /** Hub outline once its dot count is met. */
-  hubStrokeFull: string;
+  hubRing: string;
+  hubRingFull: string;
   hubFill: string;
-  dotFilled: string;
-  dotEmpty: string;
-  terminalRing: string;
+  hubTick: string;
+  hubTickFull: string;
 }
 
 /**
- * A single dark world rather than a themed page: the neutrals carry a blue
- * bias so the warm coral reads as the one warm thing on screen.
+ * A dusk palette: deep indigo ground rather than near-black, with rose, seafoam
+ * and sand spread widely around the wheel so the three families stay separable
+ * for colour-blind players — the hues differ in warmth as well as position.
  */
 export const DEFAULT_PALETTE: Palette = {
-  background: "#10131a",
-  shape: { 0: "#ff7a63", 1: "#54c7dd", 2: "#f2c661" },
-  line: { 0: "#d95a47", 1: "#3ba3b8", 2: "#cda23f" },
-  lattice: "#2f3648",
-  panel: "#151924",
-  panelEdge: "rgba(255, 255, 255, 0.045)",
-  hubStroke: "#6d7689",
-  hubStrokeFull: "#aab3c4",
-  hubFill: "#171b24",
-  dotFilled: "#e4e9f2",
-  dotEmpty: "#3c4455",
-  terminalRing: "#858ea1",
+  background: "#191828",
+  backgroundLift: "#232134",
+  shape: { 0: "#e78d88", 1: "#5fc4b8", 2: "#dcb173" },
+  line: { 0: "#c9736f", 1: "#4aa79c", 2: "#c0965b" },
+  terminalHalo: {
+    0: "rgba(231, 141, 136, 0.26)",
+    1: "rgba(95, 196, 184, 0.26)",
+    2: "rgba(220, 177, 115, 0.26)",
+  },
+  lattice: "#3a3750",
+  panel: "#1f1e30",
+  panelEdge: "rgba(255, 255, 255, 0.05)",
+  hubRing: "#6b6785",
+  hubRingFull: "#b0abc8",
+  hubFill: "#141322",
+  hubTick: "#605b80",
+  hubTickFull: "#f0edfa",
 };
 
-/** Number of sides and rotation that give each shape family its silhouette. */
+/**
+ * Sides and rotation per family. Silhouettes are picked to be unmistakable at
+ * a glance and — unlike a circle — to visibly turn, since a completed line
+ * spins its pieces as confirmation.
+ */
 const SHAPE_GEOMETRY: Record<ShapeId, { sides: number; rotation: number }> = {
   0: { sides: 3, rotation: -Math.PI / 2 },
-  1: { sides: 4, rotation: -Math.PI / 2 },
-  2: { sides: 4, rotation: -Math.PI / 4 },
+  1: { sides: 4, rotation: -Math.PI / 4 },
+  2: { sides: 6, rotation: -Math.PI / 2 },
 };
 
-export function tracePolygon(
+/**
+ * Regular polygon with rounded corners. Softening every vertex is what keeps
+ * the board feeling calm rather than sharp.
+ */
+export function traceRoundedPolygon(
   ctx: CanvasRenderingContext2D,
   cx: number,
   cy: number,
   radius: number,
   sides: number,
   rotation: number,
+  cornerFactor = 0.28,
 ): void {
-  ctx.beginPath();
+  const points: [number, number][] = [];
   for (let i = 0; i < sides; i++) {
     const angle = rotation + (i * 2 * Math.PI) / sides;
-    const x = cx + Math.cos(angle) * radius;
-    const y = cy + Math.sin(angle) * radius;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
+    points.push([cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius]);
+  }
+
+  const mid = (a: [number, number], b: [number, number]): [number, number] => [
+    (a[0] + b[0]) / 2,
+    (a[1] + b[1]) / 2,
+  ];
+  const corner = radius * cornerFactor;
+
+  ctx.beginPath();
+  const start = mid(points[sides - 1], points[0]);
+  ctx.moveTo(start[0], start[1]);
+  for (let i = 0; i < sides; i++) {
+    const next = mid(points[i], points[(i + 1) % sides]);
+    ctx.arcTo(points[i][0], points[i][1], next[0], next[1], corner);
   }
   ctx.closePath();
 }
@@ -70,16 +96,30 @@ export function traceShape(
   cx: number,
   cy: number,
   radius: number,
+  spin = 0,
 ): void {
   const { sides, rotation } = SHAPE_GEOMETRY[shape];
-  tracePolygon(ctx, cx, cy, radius, sides, rotation);
+  traceRoundedPolygon(ctx, cx, cy, radius, sides, rotation + spin);
 }
 
-export function traceOctagon(
+/**
+ * Hub face: a ring carrying one tick per required pass, filling as they are
+ * used. Reading the count around the rim leaves the middle clear, so crossing
+ * lines never obscure it.
+ */
+export function traceHubTick(
   ctx: CanvasRenderingContext2D,
   cx: number,
   cy: number,
   radius: number,
+  index: number,
+  total: number,
 ): void {
-  tracePolygon(ctx, cx, cy, radius, 8, Math.PI / 8);
+  // Wide gaps so the arcs read as separate marks to be counted, not as a
+  // broken ring. A single pass draws most of the circle.
+  const gap = total === 1 ? 1.1 : 0.52;
+  const sweep = (2 * Math.PI) / total - gap;
+  const start = -Math.PI / 2 + index * ((2 * Math.PI) / total) - sweep / 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, start, start + sweep);
 }

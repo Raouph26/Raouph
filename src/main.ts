@@ -1,71 +1,248 @@
 import "./style.css";
 import { AudioEngine } from "./audio/audio";
+import {
+  CHAPTER_COUNT,
+  DAILY_STAGES,
+  STAGES_PER_CHAPTER,
+  classicId,
+  classicLevel,
+  dailyId,
+  dailyLevel,
+  todayKey,
+} from "./core/chapters";
 import { Game } from "./core/game";
-import type { CellIndex } from "./core/types";
-import { ALL_LEVELS } from "./levels";
+import type { CellIndex, Level } from "./core/types";
+import { Progress } from "./progress";
 import { ViewState } from "./render/animation";
 import { Renderer, cellAt } from "./render/renderer";
 
-const canvas = document.querySelector<HTMLCanvasElement>("#board")!;
-const levelName = document.querySelector<HTMLElement>("#level-name")!;
-const levelStatus = document.querySelector<HTMLElement>("#level-status")!;
-const progressLabel = document.querySelector<HTMLElement>("#progress")!;
-const prevButton = document.querySelector<HTMLButtonElement>("#prev")!;
-const nextButton = document.querySelector<HTMLButtonElement>("#next")!;
-const resetButton = document.querySelector<HTMLButtonElement>("#reset")!;
-const muteButton = document.querySelector<HTMLButtonElement>("#mute")!;
+const $ = <T extends HTMLElement>(id: string): T =>
+  document.getElementById(id) as T;
 
+const canvas = $<HTMLCanvasElement>("board");
 const renderer = new Renderer(canvas);
 const view = new ViewState();
 const audio = new AudioEngine();
+const progress = new Progress();
 
-const PROGRESS_KEY = "lyne-like.solved";
-const INDEX_KEY = "lyne-like.index";
-const MUTED_KEY = "lyne-like.muted";
+type ScreenName = "menu" | "chapters" | "stages" | "game";
+type Mode = "classic" | "daily";
 
-function readStored<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw === null ? fallback : (JSON.parse(raw) as T);
-  } catch {
-    return fallback;
-  }
+interface Slot {
+  mode: Mode;
+  chapter: number;
+  stage: number;
 }
 
-const solved = new Set(readStored<string[]>(PROGRESS_KEY, []));
-let index = clampIndex(readStored<number>(INDEX_KEY, 0));
-let game = new Game(ALL_LEVELS[index]);
+let slot: Slot = { mode: "classic", chapter: 1, stage: 1 };
+let game: Game | null = null;
 let announcedSolved = false;
+const day = todayKey();
 
-function clampIndex(value: number): number {
-  if (!Number.isFinite(value)) return 0;
-  return Math.min(ALL_LEVELS.length - 1, Math.max(0, Math.floor(value)));
+// --- screens ---------------------------------------------------------------
+
+function showScreen(name: ScreenName): void {
+  for (const screen of ["menu", "chapters", "stages", "game"] as ScreenName[]) {
+    $(`screen-${screen}`).hidden = screen !== name;
+  }
+  if (name !== "game") stopLoop();
 }
 
-function persist(): void {
-  try {
-    localStorage.setItem(PROGRESS_KEY, JSON.stringify([...solved]));
-    localStorage.setItem(INDEX_KEY, String(index));
-    localStorage.setItem(MUTED_KEY, JSON.stringify(audio.isMuted));
-  } catch {
-    // Private-mode storage failures are not worth interrupting play for.
+function levelIdFor(target: Slot): string {
+  return target.mode === "classic"
+    ? classicId(target.chapter, target.stage)
+    : dailyId(day, target.stage);
+}
+
+function buildLevel(target: Slot): Level {
+  return target.mode === "classic"
+    ? classicLevel(target.chapter, target.stage)
+    : dailyLevel(day, target.stage);
+}
+
+function stageCount(mode: Mode): number {
+  return mode === "classic" ? STAGES_PER_CHAPTER : DAILY_STAGES;
+}
+
+function isUnlocked(target: Slot): boolean {
+  return target.mode === "classic"
+    ? progress.isStageUnlocked(target.chapter, target.stage)
+    : progress.isDailyStageUnlocked(day, target.stage);
+}
+
+/**
+ * The hardest boards take a moment to generate. Building the next stage while
+ * the player is still on this one means the wait almost never lands during a
+ * tap, since players move through stages in order.
+ */
+function prefetch(target: Slot): void {
+  if (target.stage < 1 || target.stage > stageCount(target.mode)) return;
+  const idle =
+    window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 220));
+  idle(() => {
+    try {
+      buildLevel(target);
+    } catch {
+      // A prefetch failure is harmless; the real load will report it.
+    }
+  });
+}
+
+function prefetchNext(target: Slot): void {
+  prefetch({ ...target, stage: target.stage + 1 });
+}
+
+/** The stage a player opening this list is most likely to tap next. */
+function prefetchLikely(mode: Mode, chapter: number): void {
+  const total = stageCount(mode);
+  for (let stage = 1; stage <= total; stage++) {
+    const candidate: Slot = { mode, chapter, stage };
+    if (!progress.isSolved(levelIdFor(candidate))) {
+      prefetch(candidate);
+      return;
+    }
   }
 }
 
-// --- frame loop ------------------------------------------------------------
+// --- menu ------------------------------------------------------------------
+
+function renderMenu(): void {
+  const solvedTotal = progress.totalClassicSolved();
+  $("classic-meta").textContent = `${solvedTotal} / ${CHAPTER_COUNT * STAGES_PER_CHAPTER} solved`;
+  const dailyDone = progress.dailySolvedCount(day);
+  $("daily-meta").textContent =
+    dailyDone === DAILY_STAGES
+      ? "today complete"
+      : `${dailyDone} / ${DAILY_STAGES} today`;
+  const muteLabel = progress.muted ? "Sound off" : "Sound on";
+  $("menu-mute").textContent = muteLabel;
+}
+
+function renderChapters(): void {
+  const list = $("chapter-list");
+  list.replaceChildren();
+
+  let unlockedCount = 0;
+  for (let chapter = 1; chapter <= CHAPTER_COUNT; chapter++) {
+    const unlocked = progress.isChapterUnlocked(chapter);
+    if (unlocked) unlockedCount++;
+    const done = progress.chapterSolvedCount(chapter);
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "chapter";
+    button.disabled = !unlocked;
+    button.classList.toggle("is-locked", !unlocked);
+    button.classList.toggle("is-complete", done === STAGES_PER_CHAPTER);
+
+    const index = document.createElement("span");
+    index.className = "chapter-index";
+    index.textContent = String(chapter).padStart(2, "0");
+
+    const body = document.createElement("span");
+    body.className = "chapter-body";
+    // Named even when locked: a wall of "Locked" tells the player nothing and
+    // makes the game look shut rather than long.
+    const name = document.createElement("span");
+    name.className = "chapter-name";
+    name.textContent = `Chapter ${chapter}`;
+    const meter = document.createElement("span");
+    meter.className = "meter";
+    const fill = document.createElement("span");
+    fill.className = "meter-fill";
+    fill.style.width = `${(done / STAGES_PER_CHAPTER) * 100}%`;
+    meter.append(fill);
+    body.append(name, meter);
+
+    const count = document.createElement("span");
+    count.className = "chapter-count";
+    count.textContent = unlocked ? `${done}/${STAGES_PER_CHAPTER}` : "\u{1F512}";
+
+    button.append(index, body, count);
+    if (unlocked) {
+      button.addEventListener("click", () => openStages("classic", chapter));
+    }
+    list.append(button);
+  }
+
+  $("chapters-meta").textContent = `${unlockedCount} open`;
+}
+
+function renderStages(mode: Mode, chapter: number): void {
+  const grid = $("stage-grid");
+  grid.replaceChildren();
+
+  const total = stageCount(mode);
+  for (let stage = 1; stage <= total; stage++) {
+    const target: Slot = { mode, chapter, stage };
+    const id = levelIdFor(target);
+    const unlocked = isUnlocked(target);
+    const done = progress.isSolved(id);
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "stage";
+    button.disabled = !unlocked;
+    button.classList.toggle("is-solved", done);
+    button.classList.toggle("is-locked", !unlocked);
+    button.textContent = unlocked ? String(stage) : "";
+    button.setAttribute("aria-label", `Stage ${stage}`);
+    if (unlocked) button.addEventListener("click", () => startLevel(target));
+    grid.append(button);
+  }
+
+  const solvedHere =
+    mode === "classic"
+      ? progress.chapterSolvedCount(chapter)
+      : progress.dailySolvedCount(day);
+  $("stages-title").textContent = mode === "classic" ? `Chapter ${chapter}` : "Daily";
+  $("stages-meta").textContent = `${solvedHere}/${total}`;
+}
+
+function openStages(mode: Mode, chapter: number): void {
+  slot = { mode, chapter, stage: slot.stage };
+  renderStages(mode, chapter);
+  showScreen("stages");
+  // Build the likely next tap while the player is still reading the grid.
+  prefetchLikely(mode, chapter);
+}
+
+// --- game ------------------------------------------------------------------
+
+function startLevel(target: Slot): void {
+  slot = target;
+  showScreen("game");
+
+  // Yield a frame before generating so the screen swap paints first; the
+  // hardest boards take long enough that a tap would otherwise feel stuck.
+  $("level-name").textContent = "…";
+  $("level-status").textContent = "";
+  window.setTimeout(() => {
+    game = new Game(buildLevel(target));
+    announcedSolved = false;
+    view.reset(performance.now());
+    syncChrome();
+    kick();
+    prefetchNext(target);
+  }, 0);
+}
 
 let running = false;
 let lastFrame = 0;
 
 function frame(now: number): void {
+  if (!game) {
+    running = false;
+    return;
+  }
   const dt = lastFrame === 0 ? 16 : Math.min(64, now - lastFrame);
   lastFrame = now;
 
-  view.update(game, now, dt);
+  for (const shape of view.update(game, now, dt)) {
+    audio.lineComplete(game.pathFor(shape).length);
+  }
   renderer.draw(game, view, now);
-  syncChrome();
 
-  // Idle out once everything has settled, so a static board costs nothing.
   if (view.isAnimating(game, now) || game.activeShape !== null) {
     requestAnimationFrame(frame);
   } else {
@@ -73,45 +250,44 @@ function frame(now: number): void {
   }
 }
 
-/** Starts the loop if it has idled out. Safe to call on every interaction. */
 function kick(): void {
-  if (running) return;
+  if (running || !game) return;
   running = true;
   lastFrame = 0;
   requestAnimationFrame(frame);
 }
 
+function stopLoop(): void {
+  running = false;
+}
+
 function syncChrome(): void {
+  if (!game) return;
+  const total = stageCount(slot.mode);
   const done = game.solved;
-  levelName.textContent = game.level.id;
-  levelStatus.textContent = done
+  $("level-name").textContent =
+    slot.mode === "classic" ? `${slot.chapter} — ${slot.stage}` : `Daily ${slot.stage}`;
+  const status = $("level-status");
+  status.textContent = done
     ? "solved"
-    : solved.has(game.level.id)
+    : progress.isSolved(levelIdFor(slot))
       ? "cleared"
       : "";
-  levelStatus.classList.toggle("is-solved", done);
-  progressLabel.textContent = `${index + 1} / ${ALL_LEVELS.length}`;
-  prevButton.disabled = index === 0;
-  nextButton.disabled = index === ALL_LEVELS.length - 1;
+  status.classList.toggle("is-solved", done);
+  $("progress").textContent = `${slot.stage} / ${total}`;
+  ($("prev") as HTMLButtonElement).disabled = slot.stage <= 1;
+  ($("next") as HTMLButtonElement).disabled =
+    slot.stage >= total || !isUnlocked({ ...slot, stage: slot.stage + 1 });
 }
 
-function loadLevel(next: number): void {
-  index = clampIndex(next);
-  game = new Game(ALL_LEVELS[index]);
-  announcedSolved = false;
-  view.reset(performance.now());
-  persist();
-  kick();
-}
-
-/** Called after any move; fires the win moment exactly once. */
 function checkSolved(): void {
-  if (!game.solved || announcedSolved) return;
+  if (!game || !game.solved || announcedSolved) return;
   announcedSolved = true;
-  solved.add(game.level.id);
+  progress.markSolved(levelIdFor(slot));
   view.markSolved(performance.now());
   audio.solved();
-  persist();
+  syncChrome();
+  prefetchNext(slot);
 }
 
 // --- input -----------------------------------------------------------------
@@ -123,20 +299,19 @@ function pointOf(event: PointerEvent): { x: number; y: number } {
   return { x: event.clientX - rect.left, y: event.clientY - rect.top };
 }
 
-/** Reacts to a cell being added to a line: ripple plus a rising note. */
 function onReached(cell: CellIndex): void {
-  const shape = game.activeShape;
-  if (shape === null) return;
+  if (!game || game.activeShape === null) return;
   view.pulse(cell, performance.now());
-  audio.note(game.pathFor(shape).length - 1);
+  audio.note(game.pathFor(game.activeShape).length - 1);
 }
 
 /**
  * A fast swipe reports a pointer position several cells from the last sample.
- * Walking the straight line between them and feeding every crossed cell keeps
- * the line with the finger, since the game only accepts single-step moves.
+ * Walking the straight line between them keeps the drawn line with the finger,
+ * since the game only ever accepts single-step moves.
  */
 function dragAlong(from: { x: number; y: number }, to: { x: number; y: number }): void {
+  if (!game) return;
   const layout = renderer.layoutFor(game.level);
   const distance = Math.hypot(to.x - from.x, to.y - from.y);
   const steps = Math.max(1, Math.ceil((distance / layout.cell) * 2));
@@ -161,9 +336,9 @@ function dragAlong(from: { x: number; y: number }, to: { x: number; y: number })
 }
 
 canvas.addEventListener("pointerdown", (event) => {
+  if (!game) return;
   event.preventDefault();
   canvas.setPointerCapture(event.pointerId);
-  // Browsers only allow audio to start inside a gesture.
   audio.unlock();
 
   const point = pointOf(event);
@@ -172,22 +347,17 @@ canvas.addEventListener("pointerdown", (event) => {
   if (cell === null) return;
 
   const effect = game.beginAt(cell);
-  if (effect === "start") {
-    // Restarting a line un-solves the board, so the win can fire again.
+  if (effect === "start" || effect === "truncate") {
     announcedSolved = game.solved;
     if (!game.solved) view.clearSolved();
-    view.pulse(cell, performance.now());
-    audio.note(0, { gain: 0.07, duration: 0.9 });
-  } else if (effect === "truncate") {
-    announcedSolved = game.solved;
-    if (!game.solved) view.clearSolved();
-    audio.note(0, { gain: 0.05, duration: 0.7 });
+    if (effect === "start") view.pulse(cell, performance.now());
+    audio.note(0, { gain: 0.05, duration: 1.1 });
   }
   if (effect !== "none") kick();
 });
 
 canvas.addEventListener("pointermove", (event) => {
-  if (game.activeShape === null || !lastPoint) return;
+  if (!game || game.activeShape === null || !lastPoint) return;
   event.preventDefault();
   const point = pointOf(event);
   dragAlong(lastPoint, point);
@@ -200,7 +370,7 @@ function endDrag(event: PointerEvent): void {
   if (canvas.hasPointerCapture(event.pointerId)) {
     canvas.releasePointerCapture(event.pointerId);
   }
-  game.release();
+  game?.release();
   lastPoint = null;
   checkSolved();
   kick();
@@ -211,45 +381,83 @@ canvas.addEventListener("pointercancel", endDrag);
 
 // --- chrome ----------------------------------------------------------------
 
-function resetLevel(): void {
+$("go-classic").addEventListener("click", () => {
+  audio.unlock();
+  renderChapters();
+  showScreen("chapters");
+});
+
+$("go-daily").addEventListener("click", () => {
+  audio.unlock();
+  openStages("daily", 1);
+});
+
+$("chapters-back").addEventListener("click", () => {
+  renderMenu();
+  showScreen("menu");
+});
+
+$("stages-back").addEventListener("click", () => {
+  if (slot.mode === "classic") {
+    renderChapters();
+    showScreen("chapters");
+  } else {
+    renderMenu();
+    showScreen("menu");
+  }
+});
+
+$("game-back").addEventListener("click", () => {
+  renderStages(slot.mode, slot.chapter);
+  showScreen("stages");
+});
+
+$("reset").addEventListener("click", () => {
+  if (!game) return;
   game.reset();
   announcedSolved = false;
   view.reset(performance.now());
+  syncChrome();
   kick();
-}
+});
 
-prevButton.addEventListener("click", () => loadLevel(index - 1));
-nextButton.addEventListener("click", () => loadLevel(index + 1));
-resetButton.addEventListener("click", resetLevel);
+$("prev").addEventListener("click", () => {
+  if (slot.stage > 1) startLevel({ ...slot, stage: slot.stage - 1 });
+});
 
-muteButton.addEventListener("click", () => {
+$("next").addEventListener("click", () => {
+  const next = { ...slot, stage: slot.stage + 1 };
+  if (next.stage <= stageCount(slot.mode) && isUnlocked(next)) startLevel(next);
+});
+
+$("menu-mute").addEventListener("click", () => {
   audio.unlock();
-  const muted = !audio.isMuted;
-  audio.setMuted(muted);
-  muteButton.classList.toggle("is-muted", muted);
-  muteButton.setAttribute("aria-label", muted ? "Unmute sound" : "Mute sound");
-  persist();
+  progress.muted = !progress.muted;
+  audio.setMuted(progress.muted);
+  progress.save();
+  renderMenu();
 });
 
 window.addEventListener("keydown", (event) => {
-  if (event.key === "ArrowLeft") loadLevel(index - 1);
-  else if (event.key === "ArrowRight") loadLevel(index + 1);
-  else if (event.key === "r" || event.key === "R") resetLevel();
+  if ($("screen-game").hidden) return;
+  if (event.key === "ArrowLeft") $("prev").click();
+  else if (event.key === "ArrowRight") $("next").click();
+  else if (event.key === "r" || event.key === "R") $("reset").click();
 });
 
-if (readStored<boolean>(MUTED_KEY, false)) {
-  audio.setMuted(true);
-  muteButton.classList.add("is-muted");
-}
+new ResizeObserver(() => {
+  if (!$("screen-game").hidden) kick();
+}).observe(canvas);
 
-new ResizeObserver(() => kick()).observe(canvas);
-view.reset(performance.now());
-kick();
+if (progress.muted) audio.setMuted(true);
+renderMenu();
+showScreen("menu");
 
 // Exposed so the browser-driven smoke test can drive real games.
 Object.assign(window, {
   __game: () => game,
-  __loadLevel: loadLevel,
-  __checkSolved: checkSolved,
+  __startLevel: (mode: Mode, chapter: number, stage: number) =>
+    startLevel({ mode, chapter, stage }),
+  __showScreen: showScreen,
   __renderer: renderer,
 });

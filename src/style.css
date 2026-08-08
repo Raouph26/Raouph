@@ -1,19 +1,24 @@
 /*
- * The game commits to a single dark world rather than following the viewer's
- * theme, so every colour is painted explicitly and nothing is inherited.
+ * A dusk world, committed to on purpose rather than following the viewer's
+ * theme — so every colour is painted here and nothing is inherited.
  *
- * No webfont is loaded on purpose: the chrome is about six words long, and a
- * 100 kB face would dwarf the entire game. The elegance is carried by scale,
- * weight and letter-spacing instead.
+ * No webfont is loaded: the chrome is a few dozen words, and a face would cost
+ * more than the entire game. Hierarchy is carried by scale, weight and
+ * letter-spacing instead.
  */
 :root {
-  --bg: #10131a;
-  --ink: #8f98ab;
-  --ink-dim: #4e5769;
-  --ink-bright: #e4e9f2;
+  --bg: #191828;
+  --bg-lift: #232134;
+  --surface: #221f33;
+  --surface-hi: #2a2740;
+  --hairline: rgba(255, 255, 255, 0.07);
+  --ink: #b8b2d0;
+  --ink-dim: #6f6a8c;
+  --ink-bright: #ece9f6;
+  --rose: #e78d88;
+  --seafoam: #5fc4b8;
+  --sand: #dcb173;
   --good: #7fd8a6;
-  --hairline: rgba(255, 255, 255, 0.06);
-  --tap: rgba(255, 255, 255, 0.05);
   color-scheme: dark;
 }
 
@@ -33,13 +38,17 @@ body {
   font-family: ui-rounded, "SF Pro Rounded", "Avenir Next", system-ui, -apple-system,
     "Segoe UI", sans-serif;
   color: var(--ink);
-  touch-action: none;
+  touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 
 #app {
+  height: 100dvh;
+}
+
+.screen {
   display: flex;
   flex-direction: column;
   height: 100dvh;
@@ -47,23 +56,319 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* --- top bar -------------------------------------------------------------- */
+.screen[hidden] {
+  display: none;
+}
 
-#hud,
-#nav {
+/* --- shared bar ----------------------------------------------------------- */
+
+.bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  flex: 0 0 auto;
   gap: 8px;
-  padding: 8px 12px;
+  flex: 0 0 auto;
+  padding: 10px 10px 6px;
 }
 
-#hud {
-  padding-top: 14px;
+.bar h2 {
+  flex: 1 1 auto;
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-indent: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink);
 }
+
+.bar-meta {
+  min-width: 44px;
+  text-align: right;
+  padding-right: 8px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 16px 28px;
+}
+
+/* --- buttons -------------------------------------------------------------- */
+
+button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ink);
+  border-radius: 50%;
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.icon:hover:not(:disabled) {
+  color: var(--ink-bright);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.icon:active:not(:disabled) {
+  transform: scale(0.9);
+}
+
+.icon:disabled {
+  opacity: 0.22;
+  cursor: default;
+}
+
+/* --- menu ----------------------------------------------------------------- */
+
+#screen-menu {
+  justify-content: center;
+  gap: 40px;
+  padding-inline: 26px;
+}
+
+.brand {
+  text-align: center;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  text-transform: uppercase;
+  color: var(--ink-bright);
+}
+
+.brand p {
+  margin: 12px 0 0;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  color: var(--ink-dim);
+}
+
+.menu-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 20px 22px;
+  text-align: left;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  transition:
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.card:hover {
+  background: var(--surface-hi);
+}
+
+.card:active {
+  transform: scale(0.985);
+}
+
+.card-title {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--ink-bright);
+}
+
+.card-sub {
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+
+.card-meta {
+  margin-top: 4px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--seafoam);
+  font-variant-numeric: tabular-nums;
+}
+
+.ghost {
+  align-self: center;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  transition: color 160ms ease;
+}
+
+.ghost:hover {
+  color: var(--ink);
+}
+
+/* --- chapters ------------------------------------------------------------- */
+
+.chapter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chapter {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  /* Buttons centre their text by default, which breaks the row rhythm. */
+  text-align: left;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  transition:
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.chapter:hover:not(:disabled) {
+  background: var(--surface-hi);
+}
+
+.chapter:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.chapter.is-locked {
+  opacity: 0.34;
+  cursor: default;
+}
+
+.chapter-index {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.chapter.is-complete .chapter-index {
+  color: var(--good);
+}
+
+.chapter-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+
+.chapter-name {
+  font-size: 14px;
+  color: var(--ink-bright);
+}
+
+.meter {
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+
+.meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--seafoam);
+  transition: width 320ms ease;
+}
+
+.chapter-count {
+  font-size: 12px;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- stages --------------------------------------------------------------- */
+
+.stage-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.stage {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  font-size: 15px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  transition:
+    background 160ms ease,
+    transform 160ms ease,
+    color 160ms ease;
+}
+
+.stage:hover:not(:disabled) {
+  background: var(--surface-hi);
+  color: var(--ink-bright);
+}
+
+.stage:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.stage.is-solved {
+  background: rgba(95, 196, 184, 0.14);
+  border-color: rgba(95, 196, 184, 0.3);
+  color: var(--seafoam);
+}
+
+.stage.is-locked {
+  opacity: 0.22;
+  cursor: default;
+}
+
+/* --- game ----------------------------------------------------------------- */
 
 #title {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -74,9 +379,8 @@ body {
 #level-name {
   font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.26em;
-  /* Letter-spacing pads the right edge; this re-centres the text optically. */
-  text-indent: 0.26em;
+  letter-spacing: 0.2em;
+  text-indent: 0.2em;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
@@ -95,54 +399,6 @@ body {
   color: var(--good);
 }
 
-/* --- buttons -------------------------------------------------------------- */
-
-button {
-  appearance: none;
-  border: none;
-  background: transparent;
-  color: var(--ink);
-  font: inherit;
-  font-size: 20px;
-  line-height: 1;
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  cursor: pointer;
-  transition:
-    color 160ms ease,
-    background 160ms ease,
-    opacity 160ms ease,
-    transform 160ms ease;
-}
-
-button:hover:not(:disabled) {
-  color: var(--ink-bright);
-  background: var(--tap);
-}
-
-button:active:not(:disabled) {
-  transform: scale(0.9);
-}
-
-button:disabled {
-  opacity: 0.22;
-  cursor: default;
-}
-
-button:focus-visible {
-  outline: 2px solid var(--ink);
-  outline-offset: 2px;
-}
-
-#mute.is-muted {
-  color: var(--ink-dim);
-}
-
-/* --- board ---------------------------------------------------------------- */
-
 #board {
   flex: 1 1 auto;
   width: 100%;
@@ -151,33 +407,28 @@ button:focus-visible {
   touch-action: none;
 }
 
-/* --- bottom nav ----------------------------------------------------------- */
-
 #nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  padding: 6px 12px 12px;
   border-top: 1px solid var(--hairline);
-  padding-bottom: 12px;
-}
-
-#nav button {
-  font-size: 26px;
 }
 
 #progress {
   font-size: 11px;
-  letter-spacing: 0.18em;
-  text-indent: 0.18em;
+  letter-spacing: 0.16em;
+  text-indent: 0.16em;
   color: var(--ink-dim);
   font-variant-numeric: tabular-nums;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  button {
-    transition: none;
-  }
-  button:active:not(:disabled) {
-    transform: none;
-  }
-  #level-status {
-    transition: none;
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }

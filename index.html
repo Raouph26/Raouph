@@ -6,32 +6,80 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#10131a" />
+    <meta name="theme-color" content="#191828" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <title>Lyne-like</title>
+    <title>Filament</title>
   </head>
   <body>
     <div id="app">
-      <header id="hud">
-        <button id="reset" type="button" aria-label="Reset puzzle">&#8635;</button>
-        <div id="title">
-          <span id="level-name">--</span>
-          <span id="level-status"></span>
+      <section id="screen-menu" class="screen">
+        <div class="brand">
+          <h1>Filament</h1>
+          <p>Draw the quiet lines.</p>
         </div>
-        <button id="mute" type="button" aria-label="Mute sound">&#9834;</button>
-      </header>
 
-      <canvas id="board"></canvas>
+        <div class="menu-cards">
+          <button class="card" id="go-classic" type="button">
+            <span class="card-title">Classic</span>
+            <span class="card-sub">20 chapters &middot; 640 puzzles</span>
+            <span class="card-meta" id="classic-meta"></span>
+          </button>
+          <button class="card" id="go-daily" type="button">
+            <span class="card-title">Daily</span>
+            <span class="card-sub">32 puzzles &middot; a new set each day</span>
+            <span class="card-meta" id="daily-meta"></span>
+          </button>
+        </div>
 
-      <nav id="nav">
-        <button id="prev" type="button" aria-label="Previous puzzle">
-          <span aria-hidden="true">&#8249;</span>
-        </button>
-        <span id="progress"></span>
-        <button id="next" type="button" aria-label="Next puzzle">
-          <span aria-hidden="true">&#8250;</span>
-        </button>
-      </nav>
+        <button class="ghost" id="menu-mute" type="button">Sound on</button>
+      </section>
+
+      <section id="screen-chapters" class="screen" hidden>
+        <header class="bar">
+          <button class="icon" id="chapters-back" type="button" aria-label="Back">
+            &#8249;
+          </button>
+          <h2>Classic</h2>
+          <span class="bar-meta" id="chapters-meta"></span>
+        </header>
+        <div class="scroll"><div id="chapter-list" class="chapter-list"></div></div>
+      </section>
+
+      <section id="screen-stages" class="screen" hidden>
+        <header class="bar">
+          <button class="icon" id="stages-back" type="button" aria-label="Back">
+            &#8249;
+          </button>
+          <h2 id="stages-title">Chapter 1</h2>
+          <span class="bar-meta" id="stages-meta"></span>
+        </header>
+        <div class="scroll"><div id="stage-grid" class="stage-grid"></div></div>
+      </section>
+
+      <section id="screen-game" class="screen" hidden>
+        <header class="bar">
+          <button class="icon" id="game-back" type="button" aria-label="Back">
+            &#8249;
+          </button>
+          <div id="title">
+            <span id="level-name">--</span>
+            <span id="level-status"></span>
+          </div>
+          <button class="icon" id="reset" type="button" aria-label="Reset puzzle">
+            &#8635;
+          </button>
+        </header>
+        <canvas id="board"></canvas>
+        <nav id="nav">
+          <button class="icon" id="prev" type="button" aria-label="Previous puzzle">
+            &#8249;
+          </button>
+          <span id="progress"></span>
+          <button class="icon" id="next" type="button" aria-label="Next puzzle">
+            &#8250;
+          </button>
+        </nav>
+      </section>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

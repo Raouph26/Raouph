@@ -10,8 +10,8 @@
 
 /** Semitone offsets of a major pentatonic scale — no minor seconds, no tritone. */
 const PENTATONIC = [0, 2, 4, 7, 9];
-/** A3. Low enough to stay warm rather than chiming. */
-const ROOT_HZ = 220;
+/** G3. Low enough that the melody sits warm rather than bright. */
+const ROOT_HZ = 196;
 /** Notes climb as a line grows, then wrap so long lines never turn shrill. */
 const STEPS_BEFORE_WRAP = 13;
 
@@ -144,46 +144,43 @@ export class AudioEngine {
     if (!ctx || !master || !wet || this.muted) return;
 
     const now = ctx.currentTime;
-    const peak = options.gain ?? 0.13;
-    const duration = options.duration ?? 1.5;
+    const peak = options.gain ?? 0.12;
+    const duration = options.duration ?? 2.4;
     const frequency = frequencyForStep(step);
 
+    // A slow swell rather than a struck attack. The sharp onset and the added
+    // octave are exactly what read as "piano"; both are gone, leaving a soft
+    // pad that blooms into the note.
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(peak, now + 0.012);
+    gain.gain.exponentialRampToValueAtTime(peak, now + 0.075);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
     const filter = ctx.createBiquadFilter();
     filter.type = "lowpass";
-    filter.frequency.value = 2400;
+    filter.frequency.value = 1250;
+    filter.Q.value = 0.7;
     filter.connect(gain);
 
-    const osc = ctx.createOscillator();
-    osc.type = "sine";
-    osc.frequency.value = frequency;
-    osc.connect(filter);
-
-    // A quiet octave above adds body without brightening the tone much.
-    const shimmer = ctx.createOscillator();
-    shimmer.type = "sine";
-    shimmer.frequency.value = frequency * 2;
-    const shimmerGain = ctx.createGain();
-    shimmerGain.gain.value = 0.16;
-    shimmer.connect(shimmerGain);
-    shimmerGain.connect(filter);
+    // Two triangles a few cents apart: the slow beating between them is what
+    // gives the tone its warmth and movement.
+    for (const detune of [-6, 6]) {
+      const osc = ctx.createOscillator();
+      osc.type = "triangle";
+      osc.frequency.value = frequency;
+      osc.detune.value = detune;
+      osc.connect(filter);
+      osc.start(now);
+      osc.stop(now + duration + 0.1);
+    }
 
     gain.connect(master);
     gain.connect(wet);
-
-    osc.start(now);
-    shimmer.start(now);
-    osc.stop(now + duration + 0.1);
-    shimmer.stop(now + duration + 0.1);
   }
 
   /** Undoing a step answers with the same note, quieter and shorter. */
   retract(step: number): void {
-    this.note(Math.max(0, step - 1), { gain: 0.05, duration: 0.7 });
+    this.note(Math.max(0, step - 1), { gain: 0.045, duration: 1.1 });
   }
 
   /** Blocked moves stay silent on purpose: a buzzer would break the calm. */
@@ -195,8 +192,19 @@ export class AudioEngine {
     const steps = [0, 2, 4, 7];
     for (const [i, step] of steps.entries()) {
       window.setTimeout(
-        () => this.note(step, { gain: 0.11, duration: 2.6 }),
-        i * 130,
+        () => this.note(step, { gain: 0.1, duration: 3.4 }),
+        i * 190,
+      );
+    }
+  }
+
+  /** One note per piece as a finished line spins, echoing how it was drawn. */
+  lineComplete(length: number): void {
+    const notes = Math.min(5, Math.max(2, Math.round(length / 2)));
+    for (let i = 0; i < notes; i++) {
+      window.setTimeout(
+        () => this.note(2 + i * 2, { gain: 0.07, duration: 2.2 }),
+        i * 85,
       );
     }
   }

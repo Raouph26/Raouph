@@ -191,9 +191,18 @@ export interface GenerateOptions {
   attempts?: number;
   /** Reject boards with more than one solution. */
   requireUnique?: boolean;
+  /** Search ceiling per candidate. Bounds work without consulting the clock. */
+  maxNodes?: number;
 }
 
-/** Retries `generateCandidate` until one survives the solver. */
+/**
+ * Retries `generateCandidate` until one survives the solver.
+ *
+ * Both limits are counted in work, never in elapsed time. Levels are generated
+ * on the player's device, and a wall-clock budget would let a slow phone give
+ * up sooner than a fast one — producing a different puzzle for the same level
+ * id. Counting attempts and search nodes keeps every device in agreement.
+ */
 export function generateLevel(
   spec: GenSpec,
   rng: () => number,
@@ -202,6 +211,7 @@ export function generateLevel(
 ): Level | null {
   const attempts = options.attempts ?? 400;
   const requireUnique = options.requireUnique ?? true;
+  const maxNodes = options.maxNodes ?? 120_000;
 
   for (let i = 0; i < attempts; i++) {
     const level = generateCandidate(spec, rng, id);
@@ -209,7 +219,7 @@ export function generateLevel(
 
     const { solutions, exhausted } = solve(level, {
       limit: requireUnique ? 2 : 1,
-      maxNodes: 400_000,
+      maxNodes,
     });
     if (exhausted || solutions.length === 0) continue;
     if (requireUnique && solutions.length !== 1) continue;

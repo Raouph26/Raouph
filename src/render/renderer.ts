@@ -10,7 +10,7 @@ import {
 import {
   type Palette,
   DEFAULT_PALETTE,
-  traceOctagon,
+  traceHubTick,
   traceShape,
 } from "./palette";
 
@@ -117,8 +117,30 @@ export class Renderer {
     const size = this.resize();
     const layout = this.layoutFor(level);
 
-    ctx.fillStyle = palette.background;
+    // A soft wash lifts the centre so the ground has depth instead of reading
+    // as flat black behind the board.
+    const wash = ctx.createRadialGradient(
+      size.width / 2,
+      size.height * 0.46,
+      0,
+      size.width / 2,
+      size.height * 0.46,
+      Math.max(size.width, size.height) * 0.75,
+    );
+    wash.addColorStop(0, palette.backgroundLift);
+    wash.addColorStop(1, palette.background);
+    ctx.fillStyle = wash;
     ctx.fillRect(0, 0, size.width, size.height);
+
+    // Pieces on a closed line spin in the order they were drawn, so the spin
+    // needs each piece's position along its own path.
+    const order = new Map<CellIndex, { shape: ShapeId; index: number }>();
+    for (const shape of game.shapes) {
+      if (!game.isShapeComplete(shape)) continue;
+      for (const [i, cell] of game.pathFor(shape).entries()) {
+        if (!order.has(cell)) order.set(cell, { shape, index: i });
+      }
+    }
 
     // The plate frames the board, which is what makes an empty cell read as
     // part of a grid rather than as a stray speck on the background.
@@ -139,9 +161,10 @@ export class Renderer {
       }
     }
     for (const [i, cell] of level.cells.entries()) {
-      if (cell.kind === "node") {
-        this.drawNode(level, layout, view, i, cell.shape, cell.terminal, now);
-      }
+      if (cell.kind !== "node") continue;
+      const seat = order.get(i);
+      const spin = seat ? view.spinFor(seat.shape, seat.index, now) : 0;
+      this.drawNode(level, layout, view, i, cell.shape, cell.terminal, now, spin);
     }
   }
 
@@ -264,6 +287,7 @@ export class Renderer {
     shape: ShapeId,
     terminal: boolean,
     now: number,
+    spin: number,
   ): void {
     const { ctx, palette } = this;
     const appear = view.cellAppear(level, i, now);
@@ -288,16 +312,29 @@ export class Renderer {
     ctx.save();
     ctx.globalAlpha = clamp01(appear);
 
+    // Terminals wear a halo rather than a hard ring — the same information,
+    // carried by light. It has to fall off to nothing at the edge, or it reads
+    // as a flat disc sitting on the board instead of a glow around the piece.
     if (terminal) {
-      ctx.strokeStyle = palette.terminalRing;
-      ctx.lineWidth = Math.max(1.5, layout.cell * 0.032);
+      const outer = layout.cell * 0.44 * scale;
+      const halo = ctx.createRadialGradient(x, y, outer * 0.3, x, y, outer);
+      halo.addColorStop(0, palette.terminalHalo[shape]);
+      halo.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = halo;
       ctx.beginPath();
-      ctx.arc(x, y, layout.cell * 0.38 * scale, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.arc(x, y, outer, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     ctx.fillStyle = palette.shape[shape];
-    traceShape(ctx, shape, x, y, layout.cell * (terminal ? 0.26 : 0.22) * scale);
+    traceShape(
+      ctx,
+      shape,
+      x,
+      y,
+      layout.cell * (terminal ? 0.25 : 0.21) * scale,
+      spin,
+    );
     ctx.fill();
     ctx.restore();
   }
@@ -323,31 +360,22 @@ export class Renderer {
     ctx.save();
     ctx.globalAlpha = clamp01(appear);
 
-    // Opaque backing keeps the dot count readable under crossing lines.
+    // Solid centre so crossing lines pass behind rather than through the face.
     ctx.fillStyle = palette.hubFill;
-    traceOctagon(ctx, x, y, radius);
+    ctx.beginPath();
+    ctx.arc(x, y, radius * 0.72, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = used === capacity ? palette.hubStrokeFull : palette.hubStroke;
-    ctx.lineWidth = Math.max(1.5, layout.cell * 0.028);
-    traceOctagon(ctx, x, y, radius);
-    ctx.stroke();
-
-    const dotRadius = Math.max(1.5, layout.cell * 0.045);
-    const ring = layout.cell * 0.13;
+    // The count lives as one arc per required pass, around the rim. Reading it
+    // on the edge keeps the middle clear no matter how many lines cross, and
+    // there is deliberately no ring behind the arcs — an outline the same
+    // weight as the marks makes them impossible to count at a glance.
+    ctx.lineCap = "round";
+    ctx.lineWidth = Math.max(2.5, layout.cell * 0.072) * (1 + 0.12 * pulse);
     for (let d = 0; d < capacity; d++) {
-      let dx = 0;
-      let dy = 0;
-      if (capacity > 1) {
-        const angle = -Math.PI / 2 + (d * 2 * Math.PI) / capacity;
-        dx = Math.cos(angle) * ring;
-        dy = Math.sin(angle) * ring;
-      }
-      const filled = d < used;
-      ctx.fillStyle = filled ? palette.dotFilled : palette.dotEmpty;
-      ctx.beginPath();
-      ctx.arc(x + dx, y + dy, dotRadius * (filled ? 1 + 0.25 * pulse : 1), 0, Math.PI * 2);
-      ctx.fill();
+      ctx.strokeStyle = d < used ? palette.hubTickFull : palette.hubTick;
+      traceHubTick(ctx, x, y, radius * 0.82, d, capacity);
+      ctx.stroke();
     }
     ctx.restore();
   }
