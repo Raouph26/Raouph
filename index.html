@@ -14,19 +14,22 @@
     <div id="app">
       <section id="screen-menu" class="screen">
         <div class="brand">
+          <canvas id="brand-mark" width="132" height="132" aria-hidden="true"></canvas>
           <h1>Filament</h1>
-          <p>Draw the quiet lines.</p>
+          <p>Draw the quiet lines</p>
         </div>
 
         <div class="menu-cards">
-          <button class="card" id="go-classic" type="button">
+          <button class="card card-primary" id="go-classic" type="button">
             <span class="card-title">Classic</span>
             <span class="card-sub">20 chapters &middot; 640 puzzles</span>
+            <span class="card-bar"><span class="card-bar-fill" id="classic-fill"></span></span>
             <span class="card-meta" id="classic-meta"></span>
           </button>
           <button class="card" id="go-daily" type="button">
             <span class="card-title">Daily</span>
-            <span class="card-sub">32 puzzles &middot; a new set each day</span>
+            <span class="card-sub">32 puzzles &middot; new set every day</span>
+            <span class="card-bar"><span class="card-bar-fill" id="daily-fill"></span></span>
             <span class="card-meta" id="daily-meta"></span>
           </button>
         </div>

@@ -5,6 +5,8 @@ export interface Palette {
   background: string;
   backgroundLift: string;
   shape: Record<ShapeId, string>;
+  /** Fill for a piece no line reaches yet, sitting behind its outline. */
+  shapeHollow: Record<ShapeId, string>;
   /** Drawn line colour, a touch deeper than the piece it belongs to. */
   line: Record<ShapeId, string>;
   /** Soft disc behind a terminal, replacing a hard ring. */
@@ -28,6 +30,11 @@ export const DEFAULT_PALETTE: Palette = {
   background: "#191828",
   backgroundLift: "#232134",
   shape: { 0: "#e78d88", 1: "#5fc4b8", 2: "#dcb173" },
+  shapeHollow: {
+    0: "rgba(231, 141, 136, 0.16)",
+    1: "rgba(95, 196, 184, 0.16)",
+    2: "rgba(220, 177, 115, 0.16)",
+  },
   line: { 0: "#c9736f", 1: "#4aa79c", 2: "#c0965b" },
   terminalHalo: {
     0: "rgba(231, 141, 136, 0.26)",
@@ -115,10 +122,10 @@ export function traceHubTick(
   index: number,
   total: number,
 ): void {
-  // Wide gaps so the arcs read as separate marks to be counted, not as a
-  // broken ring. A single pass draws most of the circle.
-  const gap = total === 1 ? 1.1 : 0.52;
-  const sweep = (2 * Math.PI) / total - gap;
+  // Each tick is a short arc of fixed length, spaced evenly around the rim.
+  // Dividing the whole circle instead would make two passes read as a ring
+  // with two notches; short marks are countable at a glance.
+  const sweep = Math.min(0.95, (2 * Math.PI) / total - 0.55);
   const start = -Math.PI / 2 + index * ((2 * Math.PI) / total) - sweep / 2;
   ctx.beginPath();
   ctx.arc(cx, cy, radius, start, start + sweep);

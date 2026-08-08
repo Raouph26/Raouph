@@ -26,7 +26,7 @@ export interface Layout {
  * Cap on cell size. Boards are at most 3 columns, so without a cap a short
  * puzzle would render with absurdly large pieces on a tall screen.
  */
-export const MAX_CELL = 108;
+export const MAX_CELL = 124;
 
 export function computeLayout(
   level: Level,
@@ -160,11 +160,28 @@ export class Renderer {
         this.drawHub(level, layout, view, i, cell.capacity, hubPasses.get(i) ?? 0, now);
       }
     }
+    // Which pieces a line already runs through. Everything else is still to do,
+    // and is drawn hollow so the remaining work reads at a glance.
+    const covered = new Set<CellIndex>();
+    for (const shape of game.shapes) {
+      for (const cell of game.pathFor(shape)) covered.add(cell);
+    }
+
     for (const [i, cell] of level.cells.entries()) {
       if (cell.kind !== "node") continue;
       const seat = order.get(i);
       const spin = seat ? view.spinFor(seat.shape, seat.index, now) : 0;
-      this.drawNode(level, layout, view, i, cell.shape, cell.terminal, now, spin);
+      this.drawNode(
+        level,
+        layout,
+        view,
+        i,
+        cell.shape,
+        cell.terminal,
+        now,
+        spin,
+        covered.has(i),
+      );
     }
   }
 
@@ -288,6 +305,7 @@ export class Renderer {
     terminal: boolean,
     now: number,
     spin: number,
+    connected: boolean,
   ): void {
     const { ctx, palette } = this;
     const appear = view.cellAppear(level, i, now);
@@ -326,16 +344,21 @@ export class Renderer {
       ctx.fill();
     }
 
-    ctx.fillStyle = palette.shape[shape];
-    traceShape(
-      ctx,
-      shape,
-      x,
-      y,
-      layout.cell * (terminal ? 0.25 : 0.21) * scale,
-      spin,
-    );
-    ctx.fill();
+    // Outline means "still to connect", solid means "done". This is the main
+    // way a player reads what is left without tracing every line by eye.
+    const radius = layout.cell * (terminal ? 0.3 : 0.27) * scale;
+    traceShape(ctx, shape, x, y, radius, spin);
+
+    if (connected) {
+      ctx.fillStyle = palette.shape[shape];
+      ctx.fill();
+    } else {
+      ctx.fillStyle = palette.shapeHollow[shape];
+      ctx.fill();
+      ctx.strokeStyle = palette.shape[shape];
+      ctx.lineWidth = Math.max(2, layout.cell * 0.038);
+      ctx.stroke();
+    }
     ctx.restore();
   }
 

@@ -206,14 +206,14 @@ async function main(): Promise<void> {
 
   const day = todayKey();
   const targets: Target[] = [
-    { label: "c1-s1", mode: "classic", chapter: 1, stage: 1, level: classicLevel(1, 1), shot: "level-early.png" },
-    { label: "c2-s20", mode: "classic", chapter: 2, stage: 20, level: classicLevel(2, 20) },
-    { label: "c5-s32", mode: "classic", chapter: 5, stage: 32, level: classicLevel(5, 32), shot: "level-3x5.png" },
+    { label: "c1-s1", mode: "classic", chapter: 1, stage: 1, level: classicLevel(1, 1), shot: "level-tutorial-1.png" },
+    { label: "c1-s9", mode: "classic", chapter: 1, stage: 9, level: classicLevel(1, 9), shot: "level-tutorial-hub.png" },
+    { label: "c1-s12", mode: "classic", chapter: 1, stage: 12, level: classicLevel(1, 12), shot: "level-3x5.png" },
     { label: "c6-s8", mode: "classic", chapter: 6, stage: 8, level: classicLevel(6, 8), shot: "level-three-colours.png" },
     { label: "c11-s4", mode: "classic", chapter: 11, stage: 4, level: classicLevel(11, 4) },
     { label: "c17-s9", mode: "classic", chapter: 17, stage: 9, level: classicLevel(17, 9) },
     { label: "c20-s1", mode: "classic", chapter: 20, stage: 1, level: classicLevel(20, 1), shot: "level-late.png" },
-    { label: "daily-s3", mode: "daily", chapter: 1, stage: 3, level: dailyLevel(day, 3) },
+    { label: "daily-s28", mode: "daily", chapter: 1, stage: 28, level: dailyLevel(day, 28), shot: "level-daily.png" },
   ];
 
   for (const item of targets) {

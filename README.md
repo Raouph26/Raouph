@@ -35,11 +35,17 @@ Press a terminal and drag. Drag backwards to undo a step. Press any piece
 already on a line to grab it there and cut everything after it. Press a terminal
 again to start that line over.
 
-- **Classic** — 20 chapters of 32 stages. Chapters 1–5 are three columns wide
-  and use two colours; the third colour arrives at chapter 6, and boards grow
-  from there. A chapter opens once 20 of the previous chapter's 32 are solved,
-  so one hard puzzle never walls off the rest.
-- **Daily** — 32 hard stages, reseeded from the calendar date.
+A piece drawn **hollow** has no line through it yet; a **solid** piece is done.
+That is the main way to read what is left without tracing every line by eye.
+
+- **Classic** — 20 chapters of 32 stages. The first twelve stages of chapter 1
+  are authored, not generated: each introduces exactly one idea, because the
+  generator has no concept of teaching. Chapters 1–5 are three columns wide and
+  use two colours; the third colour arrives at chapter 6, and boards grow from
+  there. A chapter opens once 20 of the previous chapter's 32 are solved, so one
+  hard puzzle never walls off the rest.
+- **Daily** — 32 stages, reseeded from the calendar date. Capped at four columns:
+  a wider board with three colours stops being a puzzle and becomes a search.
 
 ## Running it
 

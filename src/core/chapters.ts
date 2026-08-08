@@ -1,4 +1,5 @@
 import { type GenSpec, generateLevel, mulberry32 } from "./generator";
+import { TUTORIAL_LEVELS, TUTORIAL_STAGES } from "./tutorial";
 import type { Level } from "./types";
 
 export const CHAPTER_COUNT = 20;
@@ -33,11 +34,14 @@ interface Band {
  * interesting kind of hard: more constraints interacting, not more spaghetti.
  */
 const CHAPTERS: Band[] = [
-  { width: 3, height: 3, shapes: 1, lenMin: 5, lenMax: 7, hub: 2, minPieces: 6 },
-  { width: 3, height: 4, shapes: 1, lenMin: 7, lenMax: 9, hub: 2, minPieces: 8 },
-  { width: 3, height: 4, shapes: 2, lenMin: 5, lenMax: 7, hub: 2, minPieces: 9 },
-  { width: 3, height: 5, shapes: 2, lenMin: 6, lenMax: 8, hub: 3, minPieces: 11 },
-  { width: 3, height: 5, shapes: 2, lenMin: 8, lenMax: 9, hub: 3, minPieces: 12 },
+  // Chapter 1's first twelve stages are the authored tutorial; these bands
+  // cover what follows, so they pick up where the teaching left off rather
+  // than dropping back to trivial boards.
+  { width: 3, height: 4, shapes: 2, lenMin: 6, lenMax: 7, hub: 2, minPieces: 10 },
+  { width: 3, height: 5, shapes: 2, lenMin: 6, lenMax: 8, hub: 2, minPieces: 11 },
+  { width: 3, height: 5, shapes: 2, lenMin: 7, lenMax: 8, hub: 3, minPieces: 12 },
+  { width: 3, height: 5, shapes: 2, lenMin: 8, lenMax: 9, hub: 3, minPieces: 13 },
+  { width: 3, height: 5, shapes: 2, lenMin: 8, lenMax: 9, hub: 3, minPieces: 14 },
   // Third colour.
   { width: 3, height: 5, shapes: 3, lenMin: 5, lenMax: 6, hub: 3, minPieces: 12 },
   { width: 3, height: 5, shapes: 3, lenMin: 6, lenMax: 7, hub: 3, minPieces: 13 },
@@ -56,15 +60,20 @@ const CHAPTERS: Band[] = [
   { width: 6, height: 6, shapes: 3, lenMin: 8, lenMax: 9, hub: 3, minPieces: 20 },
 ];
 
-/** Daily puzzles skip the ramp and sit at the top of the viable range. */
+/**
+ * Daily puzzles are hard, but hard has to stay *readable*. A 5x6 board with
+ * three colours is mostly clutter — the difficulty stops being a puzzle and
+ * starts being a search. Four columns keeps every piece in one glance while
+ * the third colour and hub traffic supply the challenge.
+ */
 const DAILY_BAND: Band = {
-  width: 5,
+  width: 4,
   height: 6,
   shapes: 3,
-  lenMin: 8,
-  lenMax: 9,
+  lenMin: 6,
+  lenMax: 8,
   hub: 3,
-  minPieces: 19,
+  minPieces: 14,
 };
 
 function bandSpec(band: Band, progress: number): GenSpec {
@@ -158,10 +167,18 @@ export function todayKey(date = new Date()): string {
 }
 
 export function classicLevel(chapter: number, stage: number): Level {
+  // The authored opening is returned as-is; it is the one part of the
+  // catalogue that is designed rather than searched for.
+  if (chapter === 1 && stage <= TUTORIAL_STAGES) return TUTORIAL_LEVELS[stage - 1];
+
   const id = classicId(chapter, stage);
   return cached(id, () => {
     const band = CHAPTERS[Math.min(CHAPTERS.length, Math.max(1, chapter)) - 1];
-    const progress = (stage - 1) / (STAGES_PER_CHAPTER - 1);
+    // Chapter 1's generated stages start after the tutorial, so the ramp is
+    // measured across the stages that are actually generated.
+    const offset = chapter === 1 ? TUTORIAL_STAGES : 0;
+    const span = STAGES_PER_CHAPTER - offset - 1;
+    const progress = span <= 0 ? 1 : (stage - offset - 1) / span;
     return generateDeterministic(
       bandSpec(band, progress),
       band.minPieces,

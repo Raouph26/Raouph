@@ -14,7 +14,11 @@ import { Game } from "./core/game";
 import type { CellIndex, Level } from "./core/types";
 import { Progress } from "./progress";
 import { ViewState } from "./render/animation";
+import { DEFAULT_PALETTE, traceHubTick, traceShape } from "./render/palette";
 import { Renderer, cellAt } from "./render/renderer";
+
+/** The brand mark only ever uses the first two families. */
+type ShapeIdLike = 0 | 1;
 
 const $ = <T extends HTMLElement>(id: string): T =>
   document.getElementById(id) as T;
@@ -106,16 +110,82 @@ function prefetchLikely(mode: Mode, chapter: number): void {
 
 // --- menu ------------------------------------------------------------------
 
+/**
+ * The menu mark, drawn in the game's own language rather than set as an icon:
+ * two lines crossing at a hub, which is the core mechanic in miniature.
+ */
+function drawBrandMark(): void {
+  const mark = document.getElementById("brand-mark") as HTMLCanvasElement | null;
+  const ctx = mark?.getContext("2d");
+  if (!mark || !ctx) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  const size = 132;
+  mark.width = size * dpr;
+  mark.height = size * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, size, size);
+
+  const mid = size / 2;
+  const reach = size * 0.32;
+  const corners: [number, number][] = [
+    [mid - reach, mid - reach],
+    [mid + reach, mid + reach],
+    [mid + reach, mid - reach],
+    [mid - reach, mid + reach],
+  ];
+
+  ctx.lineCap = "round";
+  ctx.lineWidth = 6;
+  for (const [shape, pair] of [
+    [0, [corners[0], corners[1]]],
+    [1, [corners[2], corners[3]]],
+  ] as [ShapeIdLike, [number, number][]][]) {
+    ctx.strokeStyle = DEFAULT_PALETTE.line[shape];
+    ctx.beginPath();
+    ctx.moveTo(pair[0][0], pair[0][1]);
+    ctx.lineTo(pair[1][0], pair[1][1]);
+    ctx.stroke();
+  }
+
+  // Hub face, matching the board: a clear centre with arcs around the rim.
+  ctx.fillStyle = DEFAULT_PALETTE.hubFill;
+  ctx.beginPath();
+  ctx.arc(mid, mid, 15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = DEFAULT_PALETTE.hubTickFull;
+  for (let d = 0; d < 2; d++) {
+    traceHubTick(ctx, mid, mid, 17, d, 2);
+    ctx.stroke();
+  }
+
+  for (const [shape, point] of [
+    [0, corners[0]],
+    [0, corners[1]],
+    [1, corners[2]],
+    [1, corners[3]],
+  ] as [ShapeIdLike, [number, number]][]) {
+    ctx.fillStyle = DEFAULT_PALETTE.shape[shape];
+    traceShape(ctx, shape, point[0], point[1], 15);
+    ctx.fill();
+  }
+}
+
 function renderMenu(): void {
+  const classicTotal = CHAPTER_COUNT * STAGES_PER_CHAPTER;
   const solvedTotal = progress.totalClassicSolved();
-  $("classic-meta").textContent = `${solvedTotal} / ${CHAPTER_COUNT * STAGES_PER_CHAPTER} solved`;
+  $("classic-meta").textContent = `${solvedTotal} of ${classicTotal} solved`;
+  $("classic-fill").style.width = `${(solvedTotal / classicTotal) * 100}%`;
+
   const dailyDone = progress.dailySolvedCount(day);
   $("daily-meta").textContent =
     dailyDone === DAILY_STAGES
-      ? "today complete"
-      : `${dailyDone} / ${DAILY_STAGES} today`;
-  const muteLabel = progress.muted ? "Sound off" : "Sound on";
-  $("menu-mute").textContent = muteLabel;
+      ? "Today complete"
+      : `${dailyDone} of ${DAILY_STAGES} today`;
+  $("daily-fill").style.width = `${(dailyDone / DAILY_STAGES) * 100}%`;
+
+  $("menu-mute").textContent = progress.muted ? "Sound off" : "Sound on";
 }
 
 function renderChapters(): void {
@@ -156,7 +226,7 @@ function renderChapters(): void {
 
     const count = document.createElement("span");
     count.className = "chapter-count";
-    count.textContent = unlocked ? `${done}/${STAGES_PER_CHAPTER}` : "\u{1F512}";
+    count.textContent = unlocked ? `${done}/${STAGES_PER_CHAPTER}` : "Locked";
 
     button.append(index, body, count);
     if (unlocked) {
@@ -450,6 +520,7 @@ new ResizeObserver(() => {
 }).observe(canvas);
 
 if (progress.muted) audio.setMuted(true);
+drawBrandMark();
 renderMenu();
 showScreen("menu");
 

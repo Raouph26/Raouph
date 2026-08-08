@@ -7,6 +7,7 @@ import {
   dailyLevel,
   todayKey,
 } from "../src/core/chapters";
+import { TUTORIAL_LEVELS, TUTORIAL_STAGES } from "../src/core/tutorial";
 import { assertWellFormed, formatLevel, shapesIn } from "../src/core/level";
 import { isSolved } from "../src/core/rules";
 import { solve } from "../src/core/solver";
@@ -29,6 +30,41 @@ function expectPlayable(id: string, level: Level): void {
   ).toBe(1);
   expect(isSolved(level, solutions[0])).toBe(true);
 }
+
+describe("tutorial opening", () => {
+  it("fills the first stages of chapter 1", () => {
+    expect(TUTORIAL_STAGES).toBeGreaterThanOrEqual(10);
+    expect(TUTORIAL_STAGES).toBeLessThan(STAGES_PER_CHAPTER);
+  });
+
+  for (const [i, level] of TUTORIAL_LEVELS.entries()) {
+    it(`stage ${i + 1} is a playable, unique puzzle`, () => {
+      expectPlayable(`tutorial ${i + 1}`, level);
+    });
+  }
+
+  it("is what chapter 1 actually serves", () => {
+    for (let stage = 1; stage <= TUTORIAL_STAGES; stage++) {
+      expect(formatLevel(classicLevel(1, stage))).toEqual(
+        formatLevel(TUTORIAL_LEVELS[stage - 1]),
+      );
+    }
+  });
+
+  it("grows in size, so the opening ramps", () => {
+    const pieces = TUTORIAL_LEVELS.map(
+      (level) => level.cells.filter((c) => c.kind !== "empty").length,
+    );
+    expect(pieces[pieces.length - 1]).toBeGreaterThan(pieces[0] + 6);
+  });
+
+  it("holds hubs back until the mechanics are taught", () => {
+    const firstHub = TUTORIAL_LEVELS.findIndex((level) =>
+      level.cells.some((c) => c.kind === "hub"),
+    );
+    expect(firstHub).toBeGreaterThanOrEqual(6);
+  });
+});
 
 describe("classic catalogue", () => {
   const chapters = [1, 2, 5, 6, 9, 13, 17, 20];
