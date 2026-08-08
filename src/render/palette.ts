@@ -21,35 +21,183 @@ export interface Palette {
   hubTickFull: string;
 }
 
+function rgbOf(hex: string): [number, number, number] {
+  const value = hex.replace("#", "");
+  return [
+    parseInt(value.slice(0, 2), 16),
+    parseInt(value.slice(2, 4), 16),
+    parseInt(value.slice(4, 6), 16),
+  ];
+}
+
+function withAlpha(hex: string, alpha: number): string {
+  const [r, g, b] = rgbOf(hex);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function darken(hex: string, amount: number): string {
+  const [r, g, b] = rgbOf(hex);
+  const scale = 1 - amount;
+  const channel = (c: number) =>
+    Math.round(Math.max(0, Math.min(255, c * scale)))
+      .toString(16)
+      .padStart(2, "0");
+  return `#${channel(r)}${channel(g)}${channel(b)}`;
+}
+
 /**
- * A dusk palette: deep indigo ground rather than near-black, with rose, seafoam
- * and sand spread widely around the wheel so the three families stay separable
- * for colour-blind players — the hues differ in warmth as well as position.
+ * A theme is written as a handful of grounds plus three accents; every derived
+ * value — hollow fills, halos, line colours — is computed from those. Hand
+ * tuning sixty hex values per theme would drift out of step almost immediately.
  */
-export const DEFAULT_PALETTE: Palette = {
-  background: "#191828",
-  backgroundLift: "#232134",
-  shape: { 0: "#e78d88", 1: "#5fc4b8", 2: "#dcb173" },
-  shapeHollow: {
-    0: "rgba(231, 141, 136, 0.16)",
-    1: "rgba(95, 196, 184, 0.16)",
-    2: "rgba(220, 177, 115, 0.16)",
+export interface ThemeSpec {
+  id: string;
+  name: string;
+  /** Fully-cleared chapters required before this theme can be chosen. */
+  unlockChapters: number;
+  background: string;
+  backgroundLift: string;
+  panel: string;
+  lattice: string;
+  hubFill: string;
+  hubTick: string;
+  hubTickFull: string;
+  /** Interface greys, applied as CSS custom properties. */
+  surface: string;
+  surfaceHi: string;
+  ink: string;
+  inkDim: string;
+  inkBright: string;
+  accents: [string, string, string];
+}
+
+export function paletteFor(spec: ThemeSpec): Palette {
+  const [a, b, c] = spec.accents;
+  return {
+    background: spec.background,
+    backgroundLift: spec.backgroundLift,
+    shape: { 0: a, 1: b, 2: c },
+    shapeHollow: {
+      0: withAlpha(a, 0.16),
+      1: withAlpha(b, 0.16),
+      2: withAlpha(c, 0.16),
+    },
+    line: { 0: darken(a, 0.14), 1: darken(b, 0.14), 2: darken(c, 0.14) },
+    terminalHalo: {
+      0: withAlpha(a, 0.26),
+      1: withAlpha(b, 0.26),
+      2: withAlpha(c, 0.26),
+    },
+    lattice: spec.lattice,
+    panel: spec.panel,
+    panelEdge: "rgba(255, 255, 255, 0.05)",
+    hubRing: spec.hubTick,
+    hubRingFull: spec.hubTickFull,
+    hubFill: spec.hubFill,
+    hubTick: spec.hubTick,
+    hubTickFull: spec.hubTickFull,
+  };
+}
+
+/**
+ * Five moods, each committing to one ground. Accents are always spread widely
+ * around the wheel — never three neighbours — so the families stay separable
+ * for colour-blind players in every theme, not just the first.
+ */
+export const THEMES: ThemeSpec[] = [
+  {
+    id: "dusk",
+    name: "Dusk",
+    unlockChapters: 0,
+    background: "#191828",
+    backgroundLift: "#232134",
+    panel: "#1f1e30",
+    lattice: "#3a3750",
+    hubFill: "#141322",
+    hubTick: "#605b80",
+    hubTickFull: "#f0edfa",
+    surface: "#221f33",
+    surfaceHi: "#2a2740",
+    ink: "#b8b2d0",
+    inkDim: "#6f6a8c",
+    inkBright: "#ece9f6",
+    accents: ["#e78d88", "#5fc4b8", "#dcb173"],
   },
-  line: { 0: "#c9736f", 1: "#4aa79c", 2: "#c0965b" },
-  terminalHalo: {
-    0: "rgba(231, 141, 136, 0.26)",
-    1: "rgba(95, 196, 184, 0.26)",
-    2: "rgba(220, 177, 115, 0.26)",
+  {
+    id: "ember",
+    name: "Ember",
+    unlockChapters: 5,
+    background: "#1d1815",
+    backgroundLift: "#2a221d",
+    panel: "#241e1a",
+    lattice: "#463a31",
+    hubFill: "#171310",
+    hubTick: "#6f5c4c",
+    hubTickFull: "#f6ede3",
+    surface: "#28211c",
+    surfaceHi: "#332a23",
+    ink: "#c9b8a6",
+    inkDim: "#7d6b5c",
+    inkBright: "#f4ece3",
+    accents: ["#e8895f", "#7fb8a4", "#e6c46a"],
   },
-  lattice: "#3a3750",
-  panel: "#1f1e30",
-  panelEdge: "rgba(255, 255, 255, 0.05)",
-  hubRing: "#6b6785",
-  hubRingFull: "#b0abc8",
-  hubFill: "#141322",
-  hubTick: "#605b80",
-  hubTickFull: "#f0edfa",
-};
+  {
+    id: "tide",
+    name: "Tide",
+    unlockChapters: 10,
+    background: "#101d24",
+    backgroundLift: "#182a33",
+    panel: "#14232b",
+    lattice: "#2c4550",
+    hubFill: "#0c171d",
+    hubTick: "#4d6d7a",
+    hubTickFull: "#e6f2f5",
+    surface: "#17272f",
+    surfaceHi: "#1f333d",
+    ink: "#a4bfc9",
+    inkDim: "#5f7d88",
+    inkBright: "#e4f0f4",
+    accents: ["#ef8d7a", "#5fbcd4", "#cfd47a"],
+  },
+  {
+    id: "orchid",
+    name: "Orchid",
+    unlockChapters: 15,
+    background: "#1e1526",
+    backgroundLift: "#2a1d34",
+    panel: "#241a2d",
+    lattice: "#453055",
+    hubFill: "#170f1e",
+    hubTick: "#6b5080",
+    hubTickFull: "#f3eafa",
+    surface: "#281c33",
+    surfaceHi: "#33243f",
+    ink: "#c0acce",
+    inkDim: "#7a6288",
+    inkBright: "#efe6f6",
+    accents: ["#e888b4", "#68c6b0", "#e3bd76"],
+  },
+  {
+    id: "slate",
+    name: "Slate",
+    unlockChapters: 20,
+    background: "#16191d",
+    backgroundLift: "#1f242a",
+    panel: "#1a1e23",
+    lattice: "#343c45",
+    hubFill: "#111417",
+    hubTick: "#5a646f",
+    hubTickFull: "#eef1f4",
+    surface: "#1e2329",
+    surfaceHi: "#262c33",
+    ink: "#aeb6bf",
+    inkDim: "#6a737d",
+    inkBright: "#eaeef2",
+    accents: ["#d98a80", "#7fb4bf", "#cbb787"],
+  },
+];
+
+export const DEFAULT_PALETTE: Palette = paletteFor(THEMES[0]);
 
 /**
  * Sides and rotation per family. Silhouettes are picked to be unmistakable at

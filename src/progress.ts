@@ -7,8 +7,11 @@ import {
   dailyId,
 } from "./core/chapters";
 
+import { THEMES } from "./render/palette";
+
 const SOLVED_KEY = "quiet-lines.solved";
 const MUTED_KEY = "quiet-lines.muted";
+const THEME_KEY = "quiet-lines.theme";
 
 function readJson<T>(key: string, fallback: T): T {
   try {
@@ -29,6 +32,7 @@ function readJson<T>(key: string, fallback: T): T {
 export class Progress {
   private solved = new Set<string>(readJson<string[]>(SOLVED_KEY, []));
   muted = readJson<boolean>(MUTED_KEY, false);
+  themeId = readJson<string>(THEME_KEY, THEMES[0].id);
 
   isSolved(id: string): boolean {
     return this.solved.has(id);
@@ -44,6 +48,7 @@ export class Progress {
     try {
       localStorage.setItem(SOLVED_KEY, JSON.stringify([...this.solved]));
       localStorage.setItem(MUTED_KEY, JSON.stringify(this.muted));
+      localStorage.setItem(THEME_KEY, JSON.stringify(this.themeId));
     } catch {
       // Private-mode storage failures are not worth interrupting play for.
     }
@@ -95,5 +100,26 @@ export class Progress {
   isDailyStageUnlocked(dayKey: string, stage: number): boolean {
     if (stage <= 1) return true;
     return this.solved.has(dailyId(dayKey, stage - 1));
+  }
+
+  /** Chapters finished outright — the currency themes are bought with. */
+  clearedChapters(): number {
+    let count = 0;
+    for (let chapter = 1; chapter <= CHAPTER_COUNT; chapter++) {
+      if (this.chapterSolvedCount(chapter) === STAGES_PER_CHAPTER) count++;
+    }
+    return count;
+  }
+
+  isThemeUnlocked(id: string): boolean {
+    const theme = THEMES.find((t) => t.id === id);
+    if (!theme) return false;
+    return this.clearedChapters() >= theme.unlockChapters;
+  }
+
+  /** Falls back to the default if a saved theme is no longer earned. */
+  activeTheme(): (typeof THEMES)[number] {
+    const chosen = THEMES.find((t) => t.id === this.themeId);
+    return chosen && this.isThemeUnlocked(chosen.id) ? chosen : THEMES[0];
   }
 }

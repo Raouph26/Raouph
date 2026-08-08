@@ -6,6 +6,12 @@
  * scale, so any combination of them is consonant. A player can draw lines in
  * any order, at any speed, and never produce a sour interval. That is what
  * keeps a puzzle that can be failed repeatedly still feeling calm.
+ *
+ * There is deliberately no background bed. An earlier version held a drone
+ * through the reverb, and a *sustained* tone convolved with a noise impulse
+ * smears into audible hiss — the tail never decays, so the noise floor is
+ * always being re-excited. Only discrete notes are sent to the reverb now, and
+ * the silence between them is left alone.
  */
 
 /** Semitone offsets of a major pentatonic scale — no minor seconds, no tritone. */
@@ -27,7 +33,6 @@ export class AudioEngine {
   private master: GainNode | null = null;
   /** Reverb send. Shared by every voice so the space stays coherent. */
   private wet: GainNode | null = null;
-  private padNodes: OscillatorNode[] = [];
   private muted = false;
 
   get isMuted(): boolean {
@@ -59,15 +64,13 @@ export class AudioEngine {
     this.master = master;
 
     const reverb = ctx.createConvolver();
-    reverb.buffer = this.buildImpulseResponse(ctx, 2.6, 2.2);
+    reverb.buffer = this.buildImpulseResponse(ctx, 2.2, 2.6);
     reverb.connect(master);
 
     const wet = ctx.createGain();
-    wet.gain.value = 0.5;
+    wet.gain.value = 0.42;
     wet.connect(reverb);
     this.wet = wet;
-
-    this.startPad();
   }
 
   /**
@@ -89,48 +92,6 @@ export class AudioEngine {
       }
     }
     return buffer;
-  }
-
-  /** A slow, very quiet drone so silence between moves still feels inhabited. */
-  private startPad(): void {
-    const ctx = this.ctx;
-    const master = this.master;
-    const wet = this.wet;
-    if (!ctx || !master || !wet) return;
-
-    const padGain = ctx.createGain();
-    padGain.gain.value = 0;
-    padGain.gain.linearRampToValueAtTime(0.028, ctx.currentTime + 6);
-    padGain.connect(master);
-    padGain.connect(wet);
-
-    const filter = ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.value = 520;
-    filter.Q.value = 0.6;
-    filter.connect(padGain);
-
-    // Root, fifth and octave — an open voicing that never implies major or minor.
-    for (const [i, ratio] of [1, 1.5, 2].entries()) {
-      const osc = ctx.createOscillator();
-      osc.type = "sine";
-      osc.frequency.value = (ROOT_HZ / 2) * ratio;
-      osc.detune.value = (i - 1) * 6;
-      osc.connect(filter);
-      osc.start();
-      this.padNodes.push(osc);
-    }
-
-    // Slow filter drift keeps the drone from sounding static or synthetic.
-    const lfo = ctx.createOscillator();
-    lfo.type = "sine";
-    lfo.frequency.value = 0.05;
-    const lfoDepth = ctx.createGain();
-    lfoDepth.gain.value = 170;
-    lfo.connect(lfoDepth);
-    lfoDepth.connect(filter.frequency);
-    lfo.start();
-    this.padNodes.push(lfo);
   }
 
   /**

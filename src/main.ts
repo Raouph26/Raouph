@@ -13,23 +13,28 @@ import {
 import { Game } from "./core/game";
 import type { CellIndex, Level } from "./core/types";
 import { Progress } from "./progress";
-import { ViewState } from "./render/animation";
-import { DEFAULT_PALETTE, traceHubTick, traceShape } from "./render/palette";
+import { ViewState, clamp01, easeInOutCubic } from "./render/animation";
+import {
+  DEFAULT_PALETTE,
+  THEMES,
+  paletteFor,
+  traceHubTick,
+  traceShape,
+} from "./render/palette";
 import { Renderer, cellAt } from "./render/renderer";
-
-/** The brand mark only ever uses the first two families. */
-type ShapeIdLike = 0 | 1;
 
 const $ = <T extends HTMLElement>(id: string): T =>
   document.getElementById(id) as T;
 
 const canvas = $<HTMLCanvasElement>("board");
 const renderer = new Renderer(canvas);
-const view = new ViewState();
 const audio = new AudioEngine();
 const progress = new Progress();
 
-type ScreenName = "menu" | "chapters" | "stages" | "game";
+/** The brand mark only ever uses the first two families. */
+type ShapeIdLike = 0 | 1;
+
+type ScreenName = "menu" | "chapters" | "stages" | "themes" | "game";
 type Mode = "classic" | "daily";
 
 interface Slot {
@@ -38,18 +43,62 @@ interface Slot {
   stage: number;
 }
 
+/** How long the board takes to slide aside when a stage is finished. */
+const SWIPE_MS = 460;
+/** Pause after solving, so the spin and the chord land before moving on. */
+const ADVANCE_DELAY_MS = 1500;
+
 let slot: Slot = { mode: "classic", chapter: 1, stage: 1 };
 let game: Game | null = null;
+let view = new ViewState();
 let announcedSolved = false;
+let advanceTimer = 0;
 const day = todayKey();
+
+/** The outgoing board, still live, while it slides off screen. */
+interface Transition {
+  game: Game;
+  view: ViewState;
+  startedAt: number;
+  direction: 1 | -1;
+}
+let transition: Transition | null = null;
+
+// --- theme -----------------------------------------------------------------
+
+/**
+ * Themes drive the canvas and the interface from one definition, so the board
+ * and the chrome around it can never drift apart.
+ */
+function applyTheme(): void {
+  const theme = progress.activeTheme();
+  renderer.setPalette(paletteFor(theme));
+
+  const root = document.documentElement.style;
+  root.setProperty("--bg", theme.background);
+  root.setProperty("--bg-lift", theme.backgroundLift);
+  root.setProperty("--surface", theme.surface);
+  root.setProperty("--surface-hi", theme.surfaceHi);
+  root.setProperty("--ink", theme.ink);
+  root.setProperty("--ink-dim", theme.inkDim);
+  root.setProperty("--ink-bright", theme.inkBright);
+  root.setProperty("--accent", theme.accents[1]);
+
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute("content", theme.background);
+  drawBrandMark();
+}
 
 // --- screens ---------------------------------------------------------------
 
 function showScreen(name: ScreenName): void {
-  for (const screen of ["menu", "chapters", "stages", "game"] as ScreenName[]) {
-    $(`screen-${screen}`).hidden = screen !== name;
+  const screens: ScreenName[] = ["menu", "chapters", "stages", "themes", "game"];
+  for (const screen of screens) $(`screen-${screen}`).hidden = screen !== name;
+  if (name !== "game") {
+    cancelAdvance();
+    running = false;
   }
-  if (name !== "game") stopLoop();
 }
 
 function levelIdFor(target: Slot): string {
@@ -74,11 +123,6 @@ function isUnlocked(target: Slot): boolean {
     : progress.isDailyStageUnlocked(day, target.stage);
 }
 
-/**
- * The hardest boards take a moment to generate. Building the next stage while
- * the player is still on this one means the wait almost never lands during a
- * tap, since players move through stages in order.
- */
 function prefetch(target: Slot): void {
   if (target.stage < 1 || target.stage > stageCount(target.mode)) return;
   const idle =
@@ -119,6 +163,7 @@ function drawBrandMark(): void {
   const ctx = mark?.getContext("2d");
   if (!mark || !ctx) return;
 
+  const palette = paletteFor(progress.activeTheme());
   const dpr = window.devicePixelRatio || 1;
   const size = 132;
   mark.width = size * dpr;
@@ -141,20 +186,19 @@ function drawBrandMark(): void {
     [0, [corners[0], corners[1]]],
     [1, [corners[2], corners[3]]],
   ] as [ShapeIdLike, [number, number][]][]) {
-    ctx.strokeStyle = DEFAULT_PALETTE.line[shape];
+    ctx.strokeStyle = palette.line[shape];
     ctx.beginPath();
     ctx.moveTo(pair[0][0], pair[0][1]);
     ctx.lineTo(pair[1][0], pair[1][1]);
     ctx.stroke();
   }
 
-  // Hub face, matching the board: a clear centre with arcs around the rim.
-  ctx.fillStyle = DEFAULT_PALETTE.hubFill;
+  ctx.fillStyle = palette.hubFill;
   ctx.beginPath();
   ctx.arc(mid, mid, 15, 0, Math.PI * 2);
   ctx.fill();
   ctx.lineWidth = 5;
-  ctx.strokeStyle = DEFAULT_PALETTE.hubTickFull;
+  ctx.strokeStyle = palette.hubTickFull;
   for (let d = 0; d < 2; d++) {
     traceHubTick(ctx, mid, mid, 17, d, 2);
     ctx.stroke();
@@ -166,7 +210,7 @@ function drawBrandMark(): void {
     [1, corners[2]],
     [1, corners[3]],
   ] as [ShapeIdLike, [number, number]][]) {
-    ctx.fillStyle = DEFAULT_PALETTE.shape[shape];
+    ctx.fillStyle = palette.shape[shape];
     traceShape(ctx, shape, point[0], point[1], 15);
     ctx.fill();
   }
@@ -174,18 +218,70 @@ function drawBrandMark(): void {
 
 function renderMenu(): void {
   const classicTotal = CHAPTER_COUNT * STAGES_PER_CHAPTER;
-  const solvedTotal = progress.totalClassicSolved();
-  $("classic-meta").textContent = `${solvedTotal} of ${classicTotal} solved`;
-  $("classic-fill").style.width = `${(solvedTotal / classicTotal) * 100}%`;
+  $("classic-fill").style.width =
+    `${(progress.totalClassicSolved() / classicTotal) * 100}%`;
+  $("daily-fill").style.width =
+    `${(progress.dailySolvedCount(day) / DAILY_STAGES) * 100}%`;
 
-  const dailyDone = progress.dailySolvedCount(day);
-  $("daily-meta").textContent =
-    dailyDone === DAILY_STAGES
-      ? "Today complete"
-      : `${dailyDone} of ${DAILY_STAGES} today`;
-  $("daily-fill").style.width = `${(dailyDone / DAILY_STAGES) * 100}%`;
-
+  const unlockedThemes = THEMES.filter((t) => progress.isThemeUnlocked(t.id)).length;
+  $("themes-fill").style.width = `${(unlockedThemes / THEMES.length) * 100}%`;
   $("menu-mute").textContent = progress.muted ? "Sound off" : "Sound on";
+}
+
+function renderThemes(): void {
+  const list = $("theme-list");
+  list.replaceChildren();
+  const cleared = progress.clearedChapters();
+  const active = progress.activeTheme().id;
+
+  for (const theme of THEMES) {
+    const unlocked = progress.isThemeUnlocked(theme.id);
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "theme";
+    button.disabled = !unlocked;
+    button.classList.toggle("is-locked", !unlocked);
+    button.classList.toggle("is-active", unlocked && theme.id === active);
+
+    const swatches = document.createElement("span");
+    swatches.className = "theme-swatches";
+    swatches.style.background = theme.background;
+    for (const accent of theme.accents) {
+      const dot = document.createElement("span");
+      dot.className = "theme-dot";
+      dot.style.background = accent;
+      swatches.append(dot);
+    }
+
+    const body = document.createElement("span");
+    body.className = "theme-body";
+    const name = document.createElement("span");
+    name.className = "theme-name";
+    name.textContent = theme.name;
+    const note = document.createElement("span");
+    note.className = "theme-note";
+    note.textContent = unlocked
+      ? theme.id === active
+        ? "Selected"
+        : "Tap to use"
+      : `Clear ${theme.unlockChapters} chapters — ${cleared} done`;
+    body.append(name, note);
+
+    button.append(swatches, body);
+    if (unlocked) {
+      button.addEventListener("click", () => {
+        progress.themeId = theme.id;
+        progress.save();
+        applyTheme();
+        renderThemes();
+      });
+    }
+    list.append(button);
+  }
+
+  const unlockedCount = THEMES.filter((t) => progress.isThemeUnlocked(t.id)).length;
+  $("themes-meta").textContent = `${unlockedCount}/${THEMES.length}`;
 }
 
 function renderChapters(): void {
@@ -245,9 +341,8 @@ function renderStages(mode: Mode, chapter: number): void {
   const total = stageCount(mode);
   for (let stage = 1; stage <= total; stage++) {
     const target: Slot = { mode, chapter, stage };
-    const id = levelIdFor(target);
     const unlocked = isUnlocked(target);
-    const done = progress.isSolved(id);
+    const done = progress.isSolved(levelIdFor(target));
 
     const button = document.createElement("button");
     button.type = "button";
@@ -257,7 +352,7 @@ function renderStages(mode: Mode, chapter: number): void {
     button.classList.toggle("is-locked", !unlocked);
     button.textContent = unlocked ? String(stage) : "";
     button.setAttribute("aria-label", `Stage ${stage}`);
-    if (unlocked) button.addEventListener("click", () => startLevel(target));
+    if (unlocked) button.addEventListener("click", () => startLevel(target, 0));
     grid.append(button);
   }
 
@@ -273,24 +368,39 @@ function openStages(mode: Mode, chapter: number): void {
   slot = { mode, chapter, stage: slot.stage };
   renderStages(mode, chapter);
   showScreen("stages");
-  // Build the likely next tap while the player is still reading the grid.
   prefetchLikely(mode, chapter);
 }
 
 // --- game ------------------------------------------------------------------
 
-function startLevel(target: Slot): void {
+function startLevel(target: Slot, direction: 0 | 1 | -1): void {
+  cancelAdvance();
+  const outgoing = direction !== 0 && game ? { game, view } : null;
   slot = target;
   showScreen("game");
 
-  // Yield a frame before generating so the screen swap paints first; the
-  // hardest boards take long enough that a tap would otherwise feel stuck.
-  $("level-name").textContent = "…";
-  $("level-status").textContent = "";
+  if (!outgoing) {
+    // Yield a frame before generating so the screen swap paints first; the
+    // hardest boards take long enough that a tap would otherwise feel stuck.
+    $("level-name").textContent = "…";
+    $("level-status").textContent = "";
+  }
+
   window.setTimeout(() => {
     game = new Game(buildLevel(target));
-    announcedSolved = false;
+    view = new ViewState();
     view.reset(performance.now());
+    announcedSolved = false;
+
+    if (outgoing) {
+      transition = {
+        game: outgoing.game,
+        view: outgoing.view,
+        startedAt: performance.now(),
+        direction: direction === -1 ? -1 : 1,
+      };
+    }
+
     syncChrome();
     kick();
     prefetchNext(target);
@@ -311,6 +421,23 @@ function frame(now: number): void {
   for (const shape of view.update(game, now, dt)) {
     audio.lineComplete(game.pathFor(shape).length);
   }
+
+  if (transition) {
+    const width = canvas.clientWidth;
+    const eased = easeInOutCubic(clamp01((now - transition.startedAt) / SWIPE_MS));
+    const dir = transition.direction;
+
+    // Both boards stay live through the slide — the outgoing one keeps its win
+    // glow breathing instead of freezing into a snapshot.
+    transition.view.update(transition.game, now, dt);
+    renderer.beginFrame();
+    renderer.drawBoard(transition.game, transition.view, now, -eased * width * dir);
+    renderer.drawBoard(game, view, now, (1 - eased) * width * dir);
+    if (eased >= 1) transition = null;
+    requestAnimationFrame(frame);
+    return;
+  }
+
   renderer.draw(game, view, now);
 
   if (view.isAnimating(game, now) || game.activeShape !== null) {
@@ -325,10 +452,6 @@ function kick(): void {
   running = true;
   lastFrame = 0;
   requestAnimationFrame(frame);
-}
-
-function stopLoop(): void {
-  running = false;
 }
 
 function syncChrome(): void {
@@ -350,6 +473,28 @@ function syncChrome(): void {
     slot.stage >= total || !isUnlocked({ ...slot, stage: slot.stage + 1 });
 }
 
+function cancelAdvance(): void {
+  if (advanceTimer) {
+    window.clearTimeout(advanceTimer);
+    advanceTimer = 0;
+  }
+}
+
+/** Move on by itself, so a finished puzzle never needs a tap to leave. */
+function scheduleAdvance(): void {
+  cancelAdvance();
+  advanceTimer = window.setTimeout(() => {
+    advanceTimer = 0;
+    const next: Slot = { ...slot, stage: slot.stage + 1 };
+    if (next.stage <= stageCount(slot.mode)) {
+      startLevel(next, 1);
+    } else {
+      renderStages(slot.mode, slot.chapter);
+      showScreen("stages");
+    }
+  }, ADVANCE_DELAY_MS);
+}
+
 function checkSolved(): void {
   if (!game || !game.solved || announcedSolved) return;
   announcedSolved = true;
@@ -358,6 +503,7 @@ function checkSolved(): void {
   audio.solved();
   syncChrome();
   prefetchNext(slot);
+  scheduleAdvance();
 }
 
 // --- input -----------------------------------------------------------------
@@ -406,7 +552,8 @@ function dragAlong(from: { x: number; y: number }, to: { x: number; y: number })
 }
 
 canvas.addEventListener("pointerdown", (event) => {
-  if (!game) return;
+  // Ignore taps mid-slide, or they would land on the board arriving behind.
+  if (!game || transition) return;
   event.preventDefault();
   canvas.setPointerCapture(event.pointerId);
   audio.unlock();
@@ -418,6 +565,8 @@ canvas.addEventListener("pointerdown", (event) => {
 
   const effect = game.beginAt(cell);
   if (effect === "start" || effect === "truncate") {
+    // Editing a solved board means the player wants to keep playing with it.
+    cancelAdvance();
     announcedSolved = game.solved;
     if (!game.solved) view.clearSolved();
     if (effect === "start") view.pulse(cell, performance.now());
@@ -451,6 +600,15 @@ canvas.addEventListener("pointercancel", endDrag);
 
 // --- chrome ----------------------------------------------------------------
 
+function setMuted(muted: boolean): void {
+  progress.muted = muted;
+  audio.setMuted(muted);
+  progress.save();
+  $("menu-mute").textContent = muted ? "Sound off" : "Sound on";
+  $("game-mute").classList.toggle("is-muted", muted);
+  $("game-mute").setAttribute("aria-label", muted ? "Unmute sound" : "Mute sound");
+}
+
 $("go-classic").addEventListener("click", () => {
   audio.unlock();
   renderChapters();
@@ -460,6 +618,16 @@ $("go-classic").addEventListener("click", () => {
 $("go-daily").addEventListener("click", () => {
   audio.unlock();
   openStages("daily", 1);
+});
+
+$("go-themes").addEventListener("click", () => {
+  renderThemes();
+  showScreen("themes");
+});
+
+$("themes-back").addEventListener("click", () => {
+  renderMenu();
+  showScreen("menu");
 });
 
 $("chapters-back").addEventListener("click", () => {
@@ -482,30 +650,34 @@ $("game-back").addEventListener("click", () => {
   showScreen("stages");
 });
 
+$("game-mute").addEventListener("click", () => {
+  audio.unlock();
+  setMuted(!progress.muted);
+});
+
 $("reset").addEventListener("click", () => {
   if (!game) return;
+  cancelAdvance();
   game.reset();
   announcedSolved = false;
+  view = new ViewState();
   view.reset(performance.now());
   syncChrome();
   kick();
 });
 
 $("prev").addEventListener("click", () => {
-  if (slot.stage > 1) startLevel({ ...slot, stage: slot.stage - 1 });
+  if (slot.stage > 1) startLevel({ ...slot, stage: slot.stage - 1 }, -1);
 });
 
 $("next").addEventListener("click", () => {
   const next = { ...slot, stage: slot.stage + 1 };
-  if (next.stage <= stageCount(slot.mode) && isUnlocked(next)) startLevel(next);
+  if (next.stage <= stageCount(slot.mode) && isUnlocked(next)) startLevel(next, 1);
 });
 
 $("menu-mute").addEventListener("click", () => {
   audio.unlock();
-  progress.muted = !progress.muted;
-  audio.setMuted(progress.muted);
-  progress.save();
-  renderMenu();
+  setMuted(!progress.muted);
 });
 
 window.addEventListener("keydown", (event) => {
@@ -519,8 +691,9 @@ new ResizeObserver(() => {
   if (!$("screen-game").hidden) kick();
 }).observe(canvas);
 
-if (progress.muted) audio.setMuted(true);
-drawBrandMark();
+renderer.setPalette(DEFAULT_PALETTE);
+applyTheme();
+setMuted(progress.muted);
 renderMenu();
 showScreen("menu");
 
@@ -528,7 +701,10 @@ showScreen("menu");
 Object.assign(window, {
   __game: () => game,
   __startLevel: (mode: Mode, chapter: number, stage: number) =>
-    startLevel({ mode, chapter, stage }),
+    startLevel({ mode, chapter, stage }, 0),
   __showScreen: showScreen,
+  __cancelAdvance: cancelAdvance,
+  __stage: () => slot.stage,
+  __isSwiping: () => transition !== null,
   __renderer: renderer,
 });

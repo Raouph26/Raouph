@@ -111,11 +111,14 @@ export class Renderer {
     );
   }
 
-  draw(game: Game, view: ViewState, now: number): void {
+  setPalette(palette: Palette): void {
+    this.palette = palette;
+  }
+
+  /** Resizes and paints the ground. Call once per frame, before any board. */
+  beginFrame(): { width: number; height: number } {
     const { ctx, palette } = this;
-    const { level } = game;
     const size = this.resize();
-    const layout = this.layoutFor(level);
 
     // A soft wash lifts the centre so the ground has depth instead of reading
     // as flat black behind the board.
@@ -131,6 +134,26 @@ export class Renderer {
     wash.addColorStop(1, palette.background);
     ctx.fillStyle = wash;
     ctx.fillRect(0, 0, size.width, size.height);
+    return size;
+  }
+
+  draw(game: Game, view: ViewState, now: number): void {
+    this.beginFrame();
+    this.drawBoard(game, view, now);
+  }
+
+  /**
+   * Draws one board, optionally shifted sideways. Two boards drawn at opposing
+   * offsets in the same frame give the swipe between stages, with both still
+   * live rather than one being a frozen snapshot.
+   */
+  drawBoard(game: Game, view: ViewState, now: number, offsetX = 0): void {
+    const { ctx } = this;
+    const { level } = game;
+    const layout = this.layoutFor(level);
+
+    ctx.save();
+    ctx.translate(offsetX, 0);
 
     // Pieces on a closed line spin in the order they were drawn, so the spin
     // needs each piece's position along its own path.
@@ -183,6 +206,8 @@ export class Renderer {
         covered.has(i),
       );
     }
+
+    ctx.restore();
   }
 
   private drawPanel(

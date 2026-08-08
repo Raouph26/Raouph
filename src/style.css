@@ -6,6 +6,10 @@
  * more than the entire game. Hierarchy is carried by scale, weight and
  * letter-spacing instead.
  */
+/*
+ * These are the "Dusk" values; the active theme overwrites every one of them
+ * at runtime, so nothing here may be relied on as a fixed colour.
+ */
 :root {
   --bg: #191828;
   --bg-lift: #232134;
@@ -15,9 +19,7 @@
   --ink: #b8b2d0;
   --ink-dim: #6f6a8c;
   --ink-bright: #ece9f6;
-  --rose: #e78d88;
-  --seafoam: #5fc4b8;
-  --sand: #dcb173;
+  --accent: #5fc4b8;
   --good: #7fd8a6;
   color-scheme: dark;
 }
@@ -148,6 +150,44 @@ button:focus-visible {
   cursor: default;
 }
 
+/* Three bars, drawn in CSS rather than set as a character — the interface
+   carries no emoji anywhere. Muted strikes them through. */
+.mute-glyph {
+  position: relative;
+  width: 15px;
+  height: 14px;
+}
+
+.mute-glyph::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 3px;
+  height: 6px;
+  border-radius: 2px;
+  background: currentColor;
+  box-shadow:
+    6px -3px 0 currentColor,
+    12px -1px 0 currentColor;
+}
+
+#game-mute.is-muted {
+  color: var(--ink-dim);
+}
+
+#game-mute.is-muted .mute-glyph::after {
+  content: "";
+  position: absolute;
+  left: -2px;
+  top: 6px;
+  width: 19px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transform: rotate(-40deg);
+}
+
 /* --- menu ----------------------------------------------------------------- */
 
 #screen-menu {
@@ -168,7 +208,7 @@ button:focus-visible {
   width: 108px;
   height: 108px;
   /* The mark is the game's own imagery, so let it glow like the board does. */
-  filter: drop-shadow(0 0 26px rgba(95, 196, 184, 0.16));
+  filter: drop-shadow(0 0 26px color-mix(in srgb, var(--accent) 18%, transparent));
 }
 
 .brand h1 {
@@ -225,7 +265,7 @@ button:focus-visible {
 }
 
 .card-primary {
-  border-color: rgba(95, 196, 184, 0.28);
+  border-color: color-mix(in srgb, var(--accent) 32%, transparent);
 }
 
 .card-title {
@@ -235,12 +275,6 @@ button:focus-visible {
   text-indent: 0.18em;
   text-transform: uppercase;
   color: var(--ink-bright);
-}
-
-.card-sub {
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  color: var(--ink-dim);
 }
 
 .card-bar {
@@ -257,15 +291,8 @@ button:focus-visible {
   height: 100%;
   width: 0;
   border-radius: 999px;
-  background: var(--seafoam);
+  background: var(--accent);
   transition: width 400ms ease;
-}
-
-.card-meta {
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  color: var(--seafoam);
-  font-variant-numeric: tabular-nums;
 }
 
 .ghost {
@@ -285,6 +312,88 @@ button:focus-visible {
 .ghost:hover {
   color: var(--ink);
   border-color: rgba(255, 255, 255, 0.14);
+}
+
+/* --- themes --------------------------------------------------------------- */
+
+.theme-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.theme {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  text-align: left;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.theme:hover:not(:disabled) {
+  background: var(--surface-hi);
+}
+
+.theme:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.theme.is-active {
+  border-color: color-mix(in srgb, var(--accent) 42%, transparent);
+}
+
+.theme.is-locked {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* A miniature of the theme's own ground, carrying its three accents. */
+.theme-swatches {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 74px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--hairline);
+}
+
+.theme-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.theme-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.theme-name {
+  font-size: 15px;
+  color: var(--ink-bright);
+}
+
+.theme-note {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ink-dim);
+}
+
+.theme.is-active .theme-note {
+  color: var(--accent);
 }
 
 /* --- chapters ------------------------------------------------------------- */
@@ -358,7 +467,7 @@ button:focus-visible {
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: var(--seafoam);
+  background: var(--accent);
   transition: width 320ms ease;
 }
 
@@ -402,9 +511,9 @@ button:focus-visible {
 }
 
 .stage.is-solved {
-  background: rgba(95, 196, 184, 0.14);
-  border-color: rgba(95, 196, 184, 0.3);
-  color: var(--seafoam);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 34%, transparent);
+  color: var(--accent);
 }
 
 .stage.is-locked {

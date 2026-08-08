@@ -22,19 +22,30 @@
         <div class="menu-cards">
           <button class="card card-primary" id="go-classic" type="button">
             <span class="card-title">Classic</span>
-            <span class="card-sub">20 chapters &middot; 640 puzzles</span>
             <span class="card-bar"><span class="card-bar-fill" id="classic-fill"></span></span>
-            <span class="card-meta" id="classic-meta"></span>
           </button>
           <button class="card" id="go-daily" type="button">
             <span class="card-title">Daily</span>
-            <span class="card-sub">32 puzzles &middot; new set every day</span>
             <span class="card-bar"><span class="card-bar-fill" id="daily-fill"></span></span>
-            <span class="card-meta" id="daily-meta"></span>
+          </button>
+          <button class="card" id="go-themes" type="button">
+            <span class="card-title">Themes</span>
+            <span class="card-bar"><span class="card-bar-fill" id="themes-fill"></span></span>
           </button>
         </div>
 
         <button class="ghost" id="menu-mute" type="button">Sound on</button>
+      </section>
+
+      <section id="screen-themes" class="screen" hidden>
+        <header class="bar">
+          <button class="icon" id="themes-back" type="button" aria-label="Back">
+            &#8249;
+          </button>
+          <h2>Themes</h2>
+          <span class="bar-meta" id="themes-meta"></span>
+        </header>
+        <div class="scroll"><div id="theme-list" class="theme-list"></div></div>
       </section>
 
       <section id="screen-chapters" class="screen" hidden>
@@ -68,6 +79,9 @@
             <span id="level-name">--</span>
             <span id="level-status"></span>
           </div>
+          <button class="icon" id="game-mute" type="button" aria-label="Mute sound">
+            <span class="mute-glyph" aria-hidden="true"></span>
+          </button>
           <button class="icon" id="reset" type="button" aria-label="Reset puzzle">
             &#8635;
           </button>

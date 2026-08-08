@@ -35,6 +35,10 @@ Press a terminal and drag. Drag backwards to undo a step. Press any piece
 already on a line to grab it there and cut everything after it. Press a terminal
 again to start that line over.
 
+Solving a stage carries you to the next one by itself, with the finished board
+sliding away as the next arrives. Touching a solved board cancels that, so
+staying to admire or re-draw it is always possible.
+
 A piece drawn **hollow** has no line through it yet; a **solid** piece is done.
 That is the main way to read what is left without tracing every line by eye.
 
@@ -106,6 +110,26 @@ pentatonic scale, which has no minor seconds and no tritone, so any combination
 of them is consonant — lines drawn in any order, at any speed, cannot produce a
 sour interval. Illegal moves are deliberately silent; a buzzer is the fastest
 way to make a calm game stressful.
+
+There is no background bed, on purpose. An earlier build held an ambient drone
+through the reverb, and a *sustained* tone convolved with a noise impulse
+response smears into audible hiss — the tail never decays, so the noise floor is
+continuously re-excited. Only discrete notes reach the reverb now, and the
+silence between them is left alone.
+
+## Themes
+
+Five palettes, each written as a few grounds plus three accents; every derived
+value (hollow fills, halos, line colours) is computed from those, so a theme
+cannot drift out of step with itself. The same definition drives the canvas and
+the interface, so the board and the chrome around it always match.
+
+Accents are always spread widely around the wheel rather than being three
+neighbours, so the three families stay separable for colour-blind players in
+every theme, not only the default.
+
+A theme unlocks per five chapters *fully* cleared — 160 puzzles each, so these
+are long-haul rewards.
 
 ## Status
 

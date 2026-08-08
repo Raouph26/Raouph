@@ -261,6 +261,9 @@ async function main(): Promise<void> {
 
     await delay(60);
     const solved = await cdp.evaluate<boolean>("window.__game().solved");
+    // Solving now auto-advances; stop it so the next assertion and any
+    // screenshot still refer to the level under test.
+    await cdp.evaluate("window.__cancelAdvance()");
     const label = `${item.label} (${level.width}x${level.height})`;
     if (solved) console.log(`  ok   ${label}`);
     else {
@@ -279,6 +282,73 @@ async function main(): Promise<void> {
   await cdp.evaluate("window.__startLevel('classic', 12, 5)");
   await delay(1400);
   await cdp.screenshot("level-fresh.png");
+
+  // The themes screen, and that a locked theme cannot be chosen.
+  await cdp.evaluate("window.__showScreen('themes')");
+  await cdp.evaluate("document.getElementById('go-themes').click()");
+  await delay(350);
+  await cdp.screenshot("screen-themes.png");
+  const lockedThemes = await cdp.evaluate<number>(
+    "document.querySelectorAll('.theme.is-locked').length",
+  );
+  if (lockedThemes !== 4) {
+    failures.push(`expected 4 locked themes on a fresh save, saw ${lockedThemes}`);
+  }
+
+  // Solving should carry the player onward by itself, with a slide between.
+  await cdp.evaluate("window.__startLevel('classic', 1, 2)");
+  await waitFor("advance level to load", async () =>
+    cdp.evaluate<boolean>("window.__game() !== null"),
+  );
+  const advanceLevel = classicLevel(1, 2);
+  const advanceRect = await cdp.evaluate<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  }>(
+    `(() => { const r = document.querySelector('#board').getBoundingClientRect();
+      return { left: r.left, top: r.top, width: r.width, height: r.height }; })()`,
+  );
+  const advanceLayout = computeLayout(
+    advanceLevel,
+    advanceRect.width,
+    advanceRect.height,
+    BOARD_PADDING,
+  );
+  const advanceScreen = (cell: number) => ({
+    x:
+      advanceRect.left +
+      advanceLayout.ox +
+      ((cell % advanceLevel.width) + 0.5) * advanceLayout.cell,
+    y:
+      advanceRect.top +
+      advanceLayout.oy +
+      (Math.floor(cell / advanceLevel.width) + 0.5) * advanceLayout.cell,
+  });
+  for (const [, path] of solve(advanceLevel, { limit: 1 })
+    .solutions[0] as Map<ShapeId, number[]>) {
+    const start = advanceScreen(path[0]);
+    await cdp.mouse("mousePressed", start.x, start.y);
+    for (const cell of path.slice(1)) {
+      const point = advanceScreen(cell);
+      await cdp.mouse("mouseMoved", point.x, point.y);
+    }
+    const last = advanceScreen(path[path.length - 1]);
+    await cdp.mouse("mouseReleased", last.x, last.y);
+  }
+
+  // Catch the slide in flight, then confirm where it landed.
+  await delay(1650);
+  if (await cdp.evaluate<boolean>("window.__isSwiping()")) {
+    await cdp.screenshot("swipe-mid.png");
+  } else {
+    failures.push("no swipe was in flight shortly after the advance fired");
+  }
+  await delay(900);
+  const landedOn = await cdp.evaluate<number>("window.__stage()");
+  if (landedOn === 3) console.log("  ok   auto-advance moved to the next stage");
+  else failures.push(`auto-advance landed on stage ${landedOn}, expected 3`);
 
   // Audio starts inside the simulated press, so a synthesis error surfaces here.
   for (const error of cdp.pageErrors) failures.push(`page error: ${error}`);
