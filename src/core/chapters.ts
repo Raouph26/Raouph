@@ -26,6 +26,17 @@ interface Band {
    * puzzles. Measured per chapter rather than guessed.
    */
   minNodes: number;
+  /**
+   * Ask for a hub that all three lines cross — the most interesting thing the
+   * mechanic does, and one that only turns up in about a quarter of boards by
+   * chance. Requested from chapter 13 on, which roughly doubles how often it
+   * appears (measured: 24% of levels to 43%).
+   *
+   * A preference, not a guarantee: the request is dropped on the last relax
+   * pass, because insisting on it unconditionally costs far more generation
+   * time than the extra boards are worth.
+   */
+  hubColours?: number;
 }
 
 /**
@@ -57,14 +68,14 @@ const CHAPTERS: Band[] = [
   { width: 4, height: 5, shapes: 3, lenMin: 7, lenMax: 8, hub: 3, minPieces: 15, minNodes: 490 },
   { width: 4, height: 6, shapes: 3, lenMin: 6, lenMax: 7, hub: 3, minPieces: 15, minNodes: 520 },
   { width: 4, height: 6, shapes: 3, lenMin: 7, lenMax: 7, hub: 3, minPieces: 16, minNodes: 545 },
-  { width: 5, height: 5, shapes: 3, lenMin: 7, lenMax: 7, hub: 3, minPieces: 16, minNodes: 570 },
-  { width: 5, height: 5, shapes: 3, lenMin: 7, lenMax: 8, hub: 3, minPieces: 17, minNodes: 590 },
-  { width: 5, height: 6, shapes: 3, lenMin: 7, lenMax: 7, hub: 3, minPieces: 17, minNodes: 610 },
-  { width: 5, height: 6, shapes: 3, lenMin: 7, lenMax: 8, hub: 3, minPieces: 18, minNodes: 630 },
-  { width: 5, height: 6, shapes: 3, lenMin: 8, lenMax: 8, hub: 3, minPieces: 18, minNodes: 650 },
-  { width: 5, height: 6, shapes: 3, lenMin: 8, lenMax: 9, hub: 3, minPieces: 19, minNodes: 670 },
-  { width: 6, height: 6, shapes: 3, lenMin: 8, lenMax: 8, hub: 3, minPieces: 19, minNodes: 690 },
-  { width: 6, height: 6, shapes: 3, lenMin: 8, lenMax: 9, hub: 3, minPieces: 20, minNodes: 710 },
+  { width: 5, height: 5, shapes: 3, lenMin: 7, lenMax: 7, hub: 3, minPieces: 16, minNodes: 570, hubColours: 3 },
+  { width: 5, height: 5, shapes: 3, lenMin: 7, lenMax: 8, hub: 3, minPieces: 17, minNodes: 590, hubColours: 3 },
+  { width: 5, height: 6, shapes: 3, lenMin: 7, lenMax: 7, hub: 3, minPieces: 17, minNodes: 610, hubColours: 3 },
+  { width: 5, height: 6, shapes: 3, lenMin: 7, lenMax: 8, hub: 3, minPieces: 18, minNodes: 630, hubColours: 3 },
+  { width: 5, height: 6, shapes: 3, lenMin: 8, lenMax: 8, hub: 3, minPieces: 18, minNodes: 650, hubColours: 3 },
+  { width: 5, height: 6, shapes: 3, lenMin: 8, lenMax: 9, hub: 3, minPieces: 19, minNodes: 670, hubColours: 3 },
+  { width: 6, height: 6, shapes: 3, lenMin: 8, lenMax: 8, hub: 3, minPieces: 19, minNodes: 690, hubColours: 3 },
+  { width: 6, height: 6, shapes: 3, lenMin: 8, lenMax: 9, hub: 3, minPieces: 20, minNodes: 710, hubColours: 3 },
 ];
 
 /**
@@ -82,6 +93,7 @@ const DAILY_BAND: Band = {
   hub: 3,
   minPieces: 14,
   minNodes: 700,
+  hubColours: 3,
 };
 
 function bandSpec(band: Band, progress: number): GenSpec {
@@ -114,7 +126,7 @@ function hashString(text: string): number {
  */
 function generateDeterministic(
   spec: GenSpec,
-  band: Pick<Band, "minPieces" | "minNodes">,
+  band: Pick<Band, "minPieces" | "minNodes" | "hubColours">,
   seed: number,
   id: string,
 ): Level {
@@ -136,6 +148,8 @@ function generateDeterministic(
         attempts: 150,
         maxNodes: 90_000,
         minSearchNodes: nodeFloor,
+        // Dropped on the last pass so a stubborn seed still yields a board.
+        minHubColours: relax < 3 ? band.hubColours : undefined,
       });
       if (!level) continue;
       const pieces = level.cells.filter((c) => c.kind !== "empty").length;

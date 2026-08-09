@@ -9,7 +9,7 @@ import {
   xOf,
   yOf,
 } from "./types";
-import { crossingSegment, segKey } from "./rules";
+import { type Paths, crossingSegment, segKey } from "./rules";
 import { assertWellFormed } from "./level";
 import { solve } from "./solver";
 
@@ -202,6 +202,28 @@ export interface GenerateOptions {
    * the search backtrack. This is what stops trivial puzzles shipping.
    */
   minSearchNodes?: number;
+  /**
+   * Require at least one hub that the solution crosses with this many distinct
+   * colours. A hub carrying all three lines is the most interesting thing the
+   * mechanic can do, and it arises in only about a quarter of boards by chance.
+   */
+  minHubColours?: number;
+}
+
+/** The most distinct colours any single hub carries in this solution. */
+function widestHub(level: Level, path: Paths): number {
+  const perHub = new Map<CellIndex, Set<ShapeId>>();
+  for (const [shape, cells] of path) {
+    for (const cell of cells) {
+      if (level.cells[cell].kind !== "hub") continue;
+      let seen = perHub.get(cell);
+      if (!seen) perHub.set(cell, (seen = new Set()));
+      seen.add(shape);
+    }
+  }
+  let widest = 0;
+  for (const seen of perHub.values()) widest = Math.max(widest, seen.size);
+  return widest;
 }
 
 /**
@@ -233,6 +255,12 @@ export function generateLevel(
     if (exhausted || solutions.length === 0) continue;
     if (requireUnique && solutions.length !== 1) continue;
     if (nodesVisited < (options.minSearchNodes ?? 0)) continue;
+    if (
+      options.minHubColours &&
+      widestHub(level, solutions[0]) < options.minHubColours
+    ) {
+      continue;
+    }
     return level;
   }
   return null;

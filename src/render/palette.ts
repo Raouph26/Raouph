@@ -127,103 +127,56 @@ export function paletteFor(spec: ThemeSpec): Palette {
 }
 
 /**
- * Ten moods, each committing to one ground. Accents are always spread widely
- * around the wheel — never three neighbours — so the families stay separable
- * for colour-blind players in every theme, not just the first.
+ * Four moods, kept deliberately few and far apart. Ten near-neighbours read as
+ * one palette with the tint nudged; these change the ground *and* the accent
+ * triad, so switching is obvious rather than subtle — two on light grounds, two
+ * on dark, and no two sharing a colour scheme.
  *
- * One unlocks per chapter cleared, and `themeForChapter` gives each chapter its
- * own look so the game keeps changing as it is played.
+ * Accents stay spread widely around the wheel in every theme — never three
+ * neighbours — so the families remain separable for colour-blind players.
+ *
+ * `themeForChapter` cycles them, so consecutive chapters never look alike.
  */
 export const THEMES: ThemeSpec[] = [
   {
+    // Warm desert. Terracotta, deep teal, ochre on cream.
     id: "sandstone", name: "Sandstone", unlockChapters: 0, light: true,
-    background: "#f2e9dd", backgroundLift: "#f8f1e8", panel: "#ece0d1",
-    lattice: "#cbb9a4", hubFill: "#e3d4c1", hubTick: "#bda88f",
-    hubTickFull: "#5d5044", edge: "rgba(93, 80, 68, 0.13)",
-    surface: "#eae0d2", surfaceHi: "#f2ebe0",
-    ink: "#6f6355", inkDim: "#a2937f", inkBright: "#41382a",
-    accents: ["#c9836a", "#6fa79f", "#c0a061"],
+    background: "#f2e9dd", backgroundLift: "#f9f2e9",
+    panel: "#ebdecd", lattice: "#c9b69f", hubFill: "#e2d2bd", hubTick: "#b9a288",
+    hubTickFull: "#544838", edge: "rgba(84, 72, 56, 0.14)",
+    surface: "#e9dece", surfaceHi: "#f2eae0",
+    ink: "#6b5e4e", inkDim: "#a08f79", inkBright: "#3d3527",
+    accents: ["#c4714f", "#3f8a83", "#b8913c"],
   },
   {
+    // Deep sea night. Coral, pale teal, sand on navy.
     id: "harbour", name: "Harbour", unlockChapters: 0, light: false,
-    background: "#242e35", backgroundLift: "#2d3941", panel: "#28333b",
-    lattice: "#41505a", hubFill: "#1f282e", hubTick: "#5b6d78",
-    hubTickFull: "#dfe7ea", edge: "rgba(255, 255, 255, 0.06)",
-    surface: "#2a353d", surfaceHi: "#334049",
-    ink: "#a7b5bd", inkDim: "#6d7d87", inkBright: "#e2eaee",
-    accents: ["#d2907c", "#83c5be", "#c9b183"],
+    background: "#1b2a33", backgroundLift: "#24363f", panel: "#1f2f39",
+    lattice: "#3a5261", hubFill: "#16232b", hubTick: "#4f6d7d",
+    hubTickFull: "#dceaef", edge: "rgba(255, 255, 255, 0.07)",
+    surface: "#213139", surfaceHi: "#2a3d47",
+    ink: "#9fb6c1", inkDim: "#647e8b", inkBright: "#dfeaf0",
+    accents: ["#eb8f76", "#83c5be", "#e0c37f"],
   },
   {
-    id: "blossom", name: "Blossom", unlockChapters: 0, light: true,
-    background: "#f5eae7", backgroundLift: "#faf2f0", panel: "#efdedb",
-    lattice: "#d3b8b4", hubFill: "#e8d6d3", hubTick: "#c4a7a3",
-    hubTickFull: "#5f4f4d", edge: "rgba(95, 79, 77, 0.13)",
-    surface: "#eee1de", surfaceHi: "#f5ebe9",
-    ink: "#726160", inkDim: "#a89392", inkBright: "#453a39",
-    accents: ["#c8827f", "#7fa89b", "#c3a065"],
+    // Orchard morning. Plum, leaf green, amber on pale sage.
+    id: "orchard", name: "Orchard", unlockChapters: 0, light: true,
+    background: "#e9eee4", backgroundLift: "#f2f6ee", panel: "#dde5d5",
+    lattice: "#b3c0a7", hubFill: "#d5dfcc", hubTick: "#a3b296",
+    hubTickFull: "#485240", edge: "rgba(72, 82, 64, 0.14)",
+    surface: "#e0e8d9", surfaceHi: "#ebf0e6",
+    ink: "#5d6a55", inkDim: "#93a189", inkBright: "#353d30",
+    accents: ["#a2557d", "#4f8b58", "#c08a2e"],
   },
   {
-    id: "pine", name: "Pine", unlockChapters: 0, light: false,
-    background: "#232c29", backgroundLift: "#2c3733", panel: "#27312e",
-    lattice: "#3e4f49", hubFill: "#1e2624", hubTick: "#586b64",
-    hubTickFull: "#dfe8e4", edge: "rgba(255, 255, 255, 0.06)",
-    surface: "#293430", surfaceHi: "#323e3a",
-    ink: "#a5b6ae", inkDim: "#6c7e77", inkBright: "#e0eae5",
-    accents: ["#d1907a", "#7fb8ae", "#c7b184"],
-  },
-  {
-    id: "fog", name: "Fog", unlockChapters: 0, light: true,
-    background: "#eceef0", backgroundLift: "#f4f6f7", panel: "#e2e5e8",
-    lattice: "#b9c0c6", hubFill: "#dadee1", hubTick: "#a9b2b9",
-    hubTickFull: "#4e565c", edge: "rgba(78, 86, 92, 0.13)",
-    surface: "#e5e8ea", surfaceHi: "#eef0f2",
-    ink: "#616a70", inkDim: "#98a1a8", inkBright: "#394045",
-    accents: ["#c07f78", "#6ea3a2", "#b99b5f"],
-  },
-  {
-    id: "dusk", name: "Dusk", unlockChapters: 0, light: false,
-    background: "#2a2833", backgroundLift: "#34313f", panel: "#2f2c39",
-    lattice: "#4b4759", hubFill: "#232130", hubTick: "#655f77",
-    hubTickFull: "#e6e2ee", edge: "rgba(255, 255, 255, 0.06)",
-    surface: "#312e3c", surfaceHi: "#3a3747",
-    ink: "#b0a9be", inkDim: "#77708a", inkBright: "#e8e4f0",
-    accents: ["#cd8f8c", "#83b8b0", "#c6a97e"],
-  },
-  {
-    id: "clay", name: "Clay", unlockChapters: 0, light: false,
-    background: "#2e2723", backgroundLift: "#39312b", panel: "#332b26",
-    lattice: "#4f453d", hubFill: "#262019", hubTick: "#6b5d51",
-    hubTickFull: "#efe6dc", edge: "rgba(255, 255, 255, 0.06)",
-    surface: "#352d27", surfaceHi: "#3f3630",
-    ink: "#b8a99b", inkDim: "#7f7264", inkBright: "#eee3d8",
-    accents: ["#cf8b6d", "#7fada3", "#c6a86e"],
-  },
-  {
-    id: "linen", name: "Linen", unlockChapters: 0, light: true,
-    background: "#eef0e9", backgroundLift: "#f5f7f1", panel: "#e3e7dc",
-    lattice: "#bcc4b2", hubFill: "#dce1d5", hubTick: "#adb5a4",
-    hubTickFull: "#4f564a", edge: "rgba(79, 86, 74, 0.13)",
-    surface: "#e6eae0", surfaceHi: "#eff2ea",
-    ink: "#636b5d", inkDim: "#99a292", inkBright: "#3b4137",
-    accents: ["#c1806c", "#6fa392", "#b79a58"],
-  },
-  {
-    id: "slate", name: "Slate", unlockChapters: 0, light: false,
-    background: "#282c30", backgroundLift: "#31363b", panel: "#2c3135",
-    lattice: "#464d53", hubFill: "#22262a", hubTick: "#606870",
-    hubTickFull: "#e3e7ea", edge: "rgba(255, 255, 255, 0.06)",
-    surface: "#2e3338", surfaceHi: "#373d43",
-    ink: "#a9b0b7", inkDim: "#727a82", inkBright: "#e4e8ec",
-    accents: ["#cb8f87", "#84b0b3", "#c2ab80"],
-  },
-  {
+    // Midnight. Rose, cornflower, butter on deep indigo.
     id: "ink", name: "Ink", unlockChapters: 0, light: false,
-    background: "#222a35", backgroundLift: "#2b3441", panel: "#262f3a",
-    lattice: "#3f4c5c", hubFill: "#1c232c", hubTick: "#586679",
-    hubTickFull: "#dfe5ed", edge: "rgba(255, 255, 255, 0.06)",
-    surface: "#28313d", surfaceHi: "#313c4a",
-    ink: "#a5b0be", inkDim: "#6d798a", inkBright: "#e1e7ef",
-    accents: ["#cb8f84", "#7db1b8", "#c3ab7d"],
+    background: "#1c1e33", backgroundLift: "#26283f", panel: "#202239",
+    lattice: "#3c3f60", hubFill: "#16182a", hubTick: "#535780",
+    hubTickFull: "#e4e5f4", edge: "rgba(255, 255, 255, 0.07)",
+    surface: "#232540", surfaceHi: "#2c2f4c",
+    ink: "#a6a8c8", inkDim: "#6b6e94", inkBright: "#e6e7f5",
+    accents: ["#e58aa6", "#7fa6de", "#e0c878"],
   },
 ];
 

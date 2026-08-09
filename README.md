@@ -127,11 +127,15 @@ silence between them is left alone.
 
 ## Themes
 
-Ten palettes — four on light grounds, six on soft dark ones — each written as a
-few grounds plus three accents; every derived value (hollow fills, halos, line
-colours, hub marks) is computed from those, so a theme cannot drift out of step
-with itself. The same definition drives the canvas and the interface, so the
-board and the chrome around it always match.
+Four palettes — Sandstone, Harbour, Orchard, Ink — two on light grounds and two
+on dark. Each is written as a few grounds plus three accents; every derived
+value (hollow fills, halos, line colours, hub marks) is computed from those, so
+a theme cannot drift out of step with itself. The same definition drives the
+canvas and the interface, so the board and the chrome around it always match.
+
+Deliberately few and far apart: an earlier set of ten read as one palette with
+the tint nudged. Each of these changes the ground *and* the accent triad — no
+two share a colour scheme — so switching is obvious rather than subtle.
 
 The direction is Monument Valley's: its designers avoided heavily saturated
 hues but used desaturated ones at *any* brightness, which is why several themes
@@ -151,6 +155,19 @@ feature look broken rather than aspirational: on a new save every option a
 player could tap resolved to the same palette, so nothing appeared to happen.
 `ThemeSpec.unlockChapters` still exists — raise those values to reintroduce
 progression once the look is settled.
+
+## Hubs and three colours
+
+A hub may be crossed by any colour, so one carrying all three lines at once is
+legal and is the most interesting thing the mechanic does. It only arises in
+about a quarter of boards by chance, so from chapter 13 the generator asks for
+one; that roughly doubles the rate (24% of levels to 43%). It stays a
+preference rather than a guarantee — insisting costs far more generation time
+than the extra boards are worth.
+
+Measured with `npm run hubs`. The same measurement showed a hub crossed *twice
+by one line* never survives generation: those boards are almost always
+ambiguous, which matches what was found when hand-authoring the tutorial.
 
 ## Status
 
