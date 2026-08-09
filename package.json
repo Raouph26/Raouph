@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:browser": "tsx scripts/browser-check.ts",
     "validate": "tsx scripts/validate-chapters.ts",
+    "difficulty": "tsx scripts/measure-difficulty.ts",
     "build:artifact": "vite build && tsx scripts/build-artifact.ts"
   },
   "devDependencies": {

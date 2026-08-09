@@ -295,10 +295,11 @@ export class Renderer {
     if (points.length < 2) return;
 
     const complete = game.isShapeComplete(shape);
-    const solve = view.solveProgress(now);
-    // A solved board breathes: a slow swell that reads as settled, not idle.
+    // A solved board breathes, but in opacity rather than glow. Bloom is the
+    // signature of a neon look; this palette is after flat, quiet colour, so
+    // completion is carried by the line simply becoming its full hue.
     const breath = view.isSolvedLatched
-      ? 0.72 + 0.28 * easeInOutSine((Math.sin(now / 1750) + 1) / 2)
+      ? 0.88 + 0.12 * easeInOutSine((Math.sin(now / 2600) + 1) / 2)
       : 1;
 
     ctx.save();
@@ -307,11 +308,8 @@ export class Renderer {
     ctx.lineWidth = layout.cell * 0.1;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
+    ctx.globalAlpha = complete ? breath : 1;
     ctx.strokeStyle = complete ? palette.shape[shape] : palette.line[shape];
-    if (complete) {
-      ctx.shadowColor = palette.shape[shape];
-      ctx.shadowBlur = layout.cell * (0.22 + 0.34 * easeOutCubic(solve)) * breath;
-    }
 
     ctx.beginPath();
     for (const [i, point] of points.entries()) {

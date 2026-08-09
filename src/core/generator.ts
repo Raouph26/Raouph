@@ -193,6 +193,15 @@ export interface GenerateOptions {
   requireUnique?: boolean;
   /** Search ceiling per candidate. Bounds work without consulting the clock. */
   maxNodes?: number;
+  /**
+   * Reject boards the solver finds too easily.
+   *
+   * The nodes an exhaustive search burns proving a board has exactly one answer
+   * is a decent proxy for how much the player must think: a board with one
+   * forced route is found immediately, while one demanding real deduction makes
+   * the search backtrack. This is what stops trivial puzzles shipping.
+   */
+  minSearchNodes?: number;
 }
 
 /**
@@ -217,12 +226,13 @@ export function generateLevel(
     const level = generateCandidate(spec, rng, id);
     if (!level) continue;
 
-    const { solutions, exhausted } = solve(level, {
+    const { solutions, exhausted, nodesVisited } = solve(level, {
       limit: requireUnique ? 2 : 1,
       maxNodes,
     });
     if (exhausted || solutions.length === 0) continue;
     if (requireUnique && solutions.length !== 1) continue;
+    if (nodesVisited < (options.minSearchNodes ?? 0)) continue;
     return level;
   }
   return null;

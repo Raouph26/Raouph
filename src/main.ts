@@ -99,6 +99,18 @@ function applyTheme(): void {
   root.setProperty("--ink-dim", theme.inkDim);
   root.setProperty("--ink-bright", theme.inkBright);
   root.setProperty("--accent", theme.accents[1]);
+  // "Solved" used to be a fixed mint green, which fought every palette it sat
+  // in. It reads as the theme's own cool accent instead.
+  root.setProperty("--good", theme.accents[1]);
+  // A light ground needs dark hairlines and dark hover washes; white-on-white
+  // simply vanishes. Both come from the theme's own edge colour.
+  root.setProperty("--hairline", theme.edge);
+  root.setProperty(
+    "--hover",
+    theme.light ? "rgba(0, 0, 0, 0.045)" : "rgba(255, 255, 255, 0.05)",
+  );
+  root.setProperty("--sunken", theme.light ? "rgba(0, 0, 0, 0.08)" : "rgba(255, 255, 255, 0.07)");
+  document.documentElement.style.colorScheme = theme.light ? "light" : "dark";
 
   document
     .querySelector('meta[name="theme-color"]')

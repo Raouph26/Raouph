@@ -103,6 +103,14 @@ ambiguous — a long line has too many equivalent routings. Bigger boards with
 more, shorter lines stay fast to generate and are the more interesting kind of
 hard.
 
+**Boards must earn their place by being hard to solve.** Size alone does not
+make a puzzle: the generator will happily produce a board whose only route is
+forced, which plays as busywork. Each chapter sets a floor on the *search the
+solver burns* proving the board unique, and candidates below it are rejected.
+`npm run difficulty` reports the distribution per chapter — the floors were
+measured against it, not guessed. Before this existed chapter 1 sat at a median
+of 39 search nodes; it is now around 110, and chapter 12 went from 121 to 749.
+
 ## Audio
 
 Synthesised at runtime; there are no audio files. Notes come from a major
@@ -119,10 +127,17 @@ silence between them is left alone.
 
 ## Themes
 
-Ten palettes, each written as a few grounds plus three accents; every derived
-value (hollow fills, halos, line colours, hub marks) is computed from those, so
-a theme cannot drift out of step with itself. The same definition drives the
-canvas and the interface, so the board and the chrome around it always match.
+Ten palettes — four on light grounds, six on soft dark ones — each written as a
+few grounds plus three accents; every derived value (hollow fills, halos, line
+colours, hub marks) is computed from those, so a theme cannot drift out of step
+with itself. The same definition drives the canvas and the interface, so the
+board and the chrome around it always match.
+
+The direction is Monument Valley's: its designers avoided heavily saturated
+hues but used desaturated ones at *any* brightness, which is why several themes
+sit on cream or pale grey rather than near-black. Completed lines carry no
+bloom — glow is the signature of a neon look, and here completion is shown by
+the line simply reaching its full hue.
 
 Accents are always spread widely around the wheel rather than being three
 neighbours, so the three families stay separable for colour-blind players in

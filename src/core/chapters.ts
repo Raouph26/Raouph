@@ -19,6 +19,13 @@ interface Band {
   hub: number;
   /** Smallest board worth shipping, so a stalled walk is retried. */
   minPieces: number;
+  /**
+   * Least search the solver must burn proving the board unique. This is the
+   * difficulty dial that matters: without it the generator happily ships
+   * boards whose only route is forced, which play as busywork rather than
+   * puzzles. Measured per chapter rather than guessed.
+   */
+  minNodes: number;
 }
 
 /**
@@ -37,27 +44,27 @@ const CHAPTERS: Band[] = [
   // Chapter 1's first twelve stages are the authored tutorial; these bands
   // cover what follows, so they pick up where the teaching left off rather
   // than dropping back to trivial boards.
-  { width: 3, height: 4, shapes: 2, lenMin: 6, lenMax: 7, hub: 2, minPieces: 10 },
-  { width: 3, height: 5, shapes: 2, lenMin: 6, lenMax: 8, hub: 2, minPieces: 11 },
-  { width: 3, height: 5, shapes: 2, lenMin: 7, lenMax: 8, hub: 3, minPieces: 12 },
-  { width: 3, height: 5, shapes: 2, lenMin: 8, lenMax: 9, hub: 3, minPieces: 13 },
-  { width: 3, height: 5, shapes: 2, lenMin: 8, lenMax: 9, hub: 3, minPieces: 14 },
+  { width: 3, height: 4, shapes: 2, lenMin: 6, lenMax: 7, hub: 2, minPieces: 10, minNodes: 80 },
+  { width: 3, height: 5, shapes: 2, lenMin: 6, lenMax: 8, hub: 2, minPieces: 11, minNodes: 130 },
+  { width: 3, height: 5, shapes: 2, lenMin: 7, lenMax: 8, hub: 3, minPieces: 12, minNodes: 190 },
+  { width: 3, height: 5, shapes: 2, lenMin: 8, lenMax: 9, hub: 3, minPieces: 13, minNodes: 250 },
+  { width: 3, height: 5, shapes: 2, lenMin: 8, lenMax: 9, hub: 3, minPieces: 14, minNodes: 320 },
   // Third colour.
-  { width: 3, height: 5, shapes: 3, lenMin: 5, lenMax: 6, hub: 3, minPieces: 12 },
-  { width: 3, height: 5, shapes: 3, lenMin: 6, lenMax: 7, hub: 3, minPieces: 13 },
-  { width: 4, height: 5, shapes: 2, lenMin: 8, lenMax: 9, hub: 3, minPieces: 13 },
-  { width: 4, height: 5, shapes: 3, lenMin: 6, lenMax: 7, hub: 3, minPieces: 14 },
-  { width: 4, height: 5, shapes: 3, lenMin: 7, lenMax: 8, hub: 3, minPieces: 15 },
-  { width: 4, height: 6, shapes: 3, lenMin: 6, lenMax: 7, hub: 3, minPieces: 15 },
-  { width: 4, height: 6, shapes: 3, lenMin: 7, lenMax: 7, hub: 3, minPieces: 16 },
-  { width: 5, height: 5, shapes: 3, lenMin: 7, lenMax: 7, hub: 3, minPieces: 16 },
-  { width: 5, height: 5, shapes: 3, lenMin: 7, lenMax: 8, hub: 3, minPieces: 17 },
-  { width: 5, height: 6, shapes: 3, lenMin: 7, lenMax: 7, hub: 3, minPieces: 17 },
-  { width: 5, height: 6, shapes: 3, lenMin: 7, lenMax: 8, hub: 3, minPieces: 18 },
-  { width: 5, height: 6, shapes: 3, lenMin: 8, lenMax: 8, hub: 3, minPieces: 18 },
-  { width: 5, height: 6, shapes: 3, lenMin: 8, lenMax: 9, hub: 3, minPieces: 19 },
-  { width: 6, height: 6, shapes: 3, lenMin: 8, lenMax: 8, hub: 3, minPieces: 19 },
-  { width: 6, height: 6, shapes: 3, lenMin: 8, lenMax: 9, hub: 3, minPieces: 20 },
+  { width: 3, height: 5, shapes: 3, lenMin: 5, lenMax: 6, hub: 3, minPieces: 12, minNodes: 370 },
+  { width: 3, height: 5, shapes: 3, lenMin: 6, lenMax: 7, hub: 3, minPieces: 13, minNodes: 400 },
+  { width: 4, height: 5, shapes: 2, lenMin: 8, lenMax: 9, hub: 3, minPieces: 13, minNodes: 430 },
+  { width: 4, height: 5, shapes: 3, lenMin: 6, lenMax: 7, hub: 3, minPieces: 14, minNodes: 460 },
+  { width: 4, height: 5, shapes: 3, lenMin: 7, lenMax: 8, hub: 3, minPieces: 15, minNodes: 490 },
+  { width: 4, height: 6, shapes: 3, lenMin: 6, lenMax: 7, hub: 3, minPieces: 15, minNodes: 520 },
+  { width: 4, height: 6, shapes: 3, lenMin: 7, lenMax: 7, hub: 3, minPieces: 16, minNodes: 545 },
+  { width: 5, height: 5, shapes: 3, lenMin: 7, lenMax: 7, hub: 3, minPieces: 16, minNodes: 570 },
+  { width: 5, height: 5, shapes: 3, lenMin: 7, lenMax: 8, hub: 3, minPieces: 17, minNodes: 590 },
+  { width: 5, height: 6, shapes: 3, lenMin: 7, lenMax: 7, hub: 3, minPieces: 17, minNodes: 610 },
+  { width: 5, height: 6, shapes: 3, lenMin: 7, lenMax: 8, hub: 3, minPieces: 18, minNodes: 630 },
+  { width: 5, height: 6, shapes: 3, lenMin: 8, lenMax: 8, hub: 3, minPieces: 18, minNodes: 650 },
+  { width: 5, height: 6, shapes: 3, lenMin: 8, lenMax: 9, hub: 3, minPieces: 19, minNodes: 670 },
+  { width: 6, height: 6, shapes: 3, lenMin: 8, lenMax: 8, hub: 3, minPieces: 19, minNodes: 690 },
+  { width: 6, height: 6, shapes: 3, lenMin: 8, lenMax: 9, hub: 3, minPieces: 20, minNodes: 710 },
 ];
 
 /**
@@ -74,6 +81,7 @@ const DAILY_BAND: Band = {
   lenMax: 8,
   hub: 3,
   minPieces: 14,
+  minNodes: 700,
 };
 
 function bandSpec(band: Band, progress: number): GenSpec {
@@ -106,30 +114,43 @@ function hashString(text: string): number {
  */
 function generateDeterministic(
   spec: GenSpec,
-  minPieces: number,
+  band: Pick<Band, "minPieces" | "minNodes">,
   seed: number,
   id: string,
 ): Level {
   for (let relax = 0; relax < 4; relax++) {
     const relaxed: GenSpec = {
       ...spec,
-      pathLength: Math.max(4, spec.pathLength - relax),
+      pathLength: Math.max(4, spec.pathLength - Math.max(0, relax - 1)),
     };
+    // Both bars ease as the search gets desperate, so a stubborn seed degrades
+    // gently instead of dropping all the way to the trivial fallback.
+    const nodeFloor = Math.round(band.minNodes * (1 - relax * 0.28));
+    const pieceFloor = band.minPieces - relax;
+
     for (let attempt = 0; attempt < 4; attempt++) {
       const rng = mulberry32(seed + relax * 7717 + attempt * 104729);
       // Tight, deterministic budgets: a spec that resists is relaxed rather
       // than ground away at, which is what keeps the worst case bounded.
       const level = generateLevel(relaxed, rng, id, {
-        attempts: 110,
+        attempts: 150,
         maxNodes: 90_000,
+        minSearchNodes: nodeFloor,
       });
       if (!level) continue;
       const pieces = level.cells.filter((c) => c.kind !== "empty").length;
-      // Relaxing shrinks the board, so ease the bar as we go rather than
-      // rejecting forever and falling through to the trivial fallback.
-      if (pieces >= minPieces - relax * 2) return level;
+      if (pieces >= pieceFloor) return level;
     }
   }
+
+  // Last resort at the right size: drop the difficulty floor entirely rather
+  // than the board. An easy chapter-20 stage is a disappointment; a trivial
+  // 3x4 one in its place is a bug the player can see.
+  const atSize = generateLevel(spec, mulberry32(seed ^ 0x2545f491), id, {
+    attempts: 900,
+    maxNodes: 90_000,
+  });
+  if (atSize) return atSize;
 
   const fallback = generateLevel(
     { width: 3, height: 4, shapes: 1, pathLength: 7, maxHubCapacity: 2 },
@@ -179,12 +200,7 @@ export function classicLevel(chapter: number, stage: number): Level {
     const offset = chapter === 1 ? TUTORIAL_STAGES : 0;
     const span = STAGES_PER_CHAPTER - offset - 1;
     const progress = span <= 0 ? 1 : (stage - offset - 1) / span;
-    return generateDeterministic(
-      bandSpec(band, progress),
-      band.minPieces,
-      hashString(id),
-      id,
-    );
+    return generateDeterministic(bandSpec(band, progress), band, hashString(id), id);
   });
 }
 
@@ -194,7 +210,7 @@ export function dailyLevel(dayKey: string, stage: number): Level {
     const progress = (stage - 1) / (DAILY_STAGES - 1);
     return generateDeterministic(
       bandSpec(DAILY_BAND, progress),
-      DAILY_BAND.minPieces,
+      DAILY_BAND,
       hashString(id),
       id,
     );
