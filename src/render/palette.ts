@@ -9,8 +9,10 @@ export interface Palette {
   shapeHollow: Record<ShapeId, string>;
   /** Drawn line colour, a touch deeper than the piece it belongs to. */
   line: Record<ShapeId, string>;
-  /** Soft disc behind a terminal, replacing a hard ring. */
+  /** Soft glow behind a terminal. */
   terminalHalo: Record<ShapeId, string>;
+  /** Hard ring around a terminal — what actually makes an endpoint findable. */
+  terminalRing: Record<ShapeId, string>;
   lattice: string;
   panel: string;
   panelEdge: string;
@@ -33,6 +35,15 @@ function rgbOf(hex: string): [number, number, number] {
 function withAlpha(hex: string, alpha: number): string {
   const [r, g, b] = rgbOf(hex);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function lighten(hex: string, amount: number): string {
+  const [r, g, b] = rgbOf(hex);
+  const channel = (c: number) =>
+    Math.round(c + (255 - c) * amount)
+      .toString(16)
+      .padStart(2, "0");
+  return `#${channel(r)}${channel(g)}${channel(b)}`;
 }
 
 function darken(hex: string, amount: number): string {
@@ -88,21 +99,31 @@ export function paletteFor(spec: ThemeSpec): Palette {
       1: withAlpha(b, 0.26),
       2: withAlpha(c, 0.26),
     },
+    terminalRing: {
+      0: withAlpha(a, 0.85),
+      1: withAlpha(b, 0.85),
+      2: withAlpha(c, 0.85),
+    },
     lattice: spec.lattice,
     panel: spec.panel,
     panelEdge: "rgba(255, 255, 255, 0.05)",
     hubRing: spec.hubTick,
     hubRingFull: spec.hubTickFull,
-    hubFill: spec.hubFill,
-    hubTick: spec.hubTick,
+    // Lifted off the ground the theme specifies: an unmet hub still has to be
+    // countable, and on the warmer themes the raw value sank into the board.
+    hubFill: lighten(spec.hubFill, 0.06),
+    hubTick: lighten(spec.hubTick, 0.26),
     hubTickFull: spec.hubTickFull,
   };
 }
 
 /**
- * Five moods, each committing to one ground. Accents are always spread widely
+ * Ten moods, each committing to one ground. Accents are always spread widely
  * around the wheel — never three neighbours — so the families stay separable
  * for colour-blind players in every theme, not just the first.
+ *
+ * One unlocks per chapter cleared, and `themeForChapter` gives each chapter its
+ * own look so the game keeps changing as it is played.
  */
 export const THEMES: ThemeSpec[] = [
   {
@@ -126,7 +147,7 @@ export const THEMES: ThemeSpec[] = [
   {
     id: "ember",
     name: "Ember",
-    unlockChapters: 5,
+    unlockChapters: 1,
     background: "#1d1815",
     backgroundLift: "#2a221d",
     panel: "#241e1a",
@@ -144,7 +165,7 @@ export const THEMES: ThemeSpec[] = [
   {
     id: "tide",
     name: "Tide",
-    unlockChapters: 10,
+    unlockChapters: 2,
     background: "#101d24",
     backgroundLift: "#182a33",
     panel: "#14232b",
@@ -162,7 +183,7 @@ export const THEMES: ThemeSpec[] = [
   {
     id: "orchid",
     name: "Orchid",
-    unlockChapters: 15,
+    unlockChapters: 3,
     background: "#1e1526",
     backgroundLift: "#2a1d34",
     panel: "#241a2d",
@@ -180,7 +201,7 @@ export const THEMES: ThemeSpec[] = [
   {
     id: "slate",
     name: "Slate",
-    unlockChapters: 20,
+    unlockChapters: 4,
     background: "#16191d",
     backgroundLift: "#1f242a",
     panel: "#1a1e23",
@@ -195,9 +216,109 @@ export const THEMES: ThemeSpec[] = [
     inkBright: "#eaeef2",
     accents: ["#d98a80", "#7fb4bf", "#cbb787"],
   },
+  {
+    id: "moss",
+    name: "Moss",
+    unlockChapters: 5,
+    background: "#141d18",
+    backgroundLift: "#1d2a23",
+    panel: "#17221c",
+    lattice: "#31463a",
+    hubFill: "#101711",
+    hubTick: "#526b5c",
+    hubTickFull: "#e9f2eb",
+    surface: "#1a251f",
+    surfaceHi: "#223028",
+    ink: "#a9bfb0",
+    inkDim: "#647a6b",
+    inkBright: "#e6f0e9",
+    accents: ["#e59178", "#6fbfd0", "#d5c072"],
+  },
+  {
+    id: "cinder",
+    name: "Cinder",
+    unlockChapters: 6,
+    background: "#1a1718",
+    backgroundLift: "#252022",
+    panel: "#1f1b1c",
+    lattice: "#413839",
+    hubFill: "#141112",
+    hubTick: "#665a5c",
+    hubTickFull: "#f2ecec",
+    surface: "#241f20",
+    surfaceHi: "#2d2728",
+    ink: "#bcb0b2",
+    inkDim: "#736769",
+    inkBright: "#efe8e9",
+    accents: ["#e0837f", "#74bcb4", "#d9b478"],
+  },
+  {
+    id: "harbour",
+    name: "Harbour",
+    unlockChapters: 7,
+    background: "#141b26",
+    backgroundLift: "#1d2734",
+    panel: "#18202c",
+    lattice: "#33415a",
+    hubFill: "#10151d",
+    hubTick: "#556483",
+    hubTickFull: "#e9eef7",
+    surface: "#1c2432",
+    surfaceHi: "#242e3e",
+    ink: "#a9b5c9",
+    inkDim: "#64708a",
+    inkBright: "#e7ecf5",
+    accents: ["#eb8f8a", "#63c0c8", "#e0c07c"],
+  },
+  {
+    id: "clay",
+    name: "Clay",
+    unlockChapters: 8,
+    background: "#211a17",
+    backgroundLift: "#2d2420",
+    panel: "#261e1a",
+    lattice: "#4b3b34",
+    hubFill: "#191311",
+    hubTick: "#725c52",
+    hubTickFull: "#f6ece7",
+    surface: "#2a211d",
+    surfaceHi: "#342a25",
+    ink: "#c6b3a9",
+    inkDim: "#7b675e",
+    inkBright: "#f2e8e2",
+    accents: ["#df8f76", "#79b9ae", "#dcbe80"],
+  },
+  {
+    id: "nocturne",
+    name: "Nocturne",
+    unlockChapters: 9,
+    background: "#131627",
+    backgroundLift: "#1c2035",
+    panel: "#171b2c",
+    lattice: "#323a5c",
+    hubFill: "#0f111d",
+    hubTick: "#535c85",
+    hubTickFull: "#eaecf8",
+    surface: "#1b1f32",
+    surfaceHi: "#23283f",
+    ink: "#aab0cd",
+    inkDim: "#666d90",
+    inkBright: "#e8eaf7",
+    accents: ["#ee8fa2", "#63c1cd", "#d9c47e"],
+  },
 ];
 
 export const DEFAULT_PALETTE: Palette = paletteFor(THEMES[0]);
+
+/**
+ * The look a chapter wears when the player has not pinned a theme. Chapters
+ * cycle through the set, so the game keeps changing as it is played rather
+ * than looking identical for all 640 stages.
+ */
+export function themeForChapter(chapter: number): ThemeSpec {
+  const index = (Math.max(1, chapter) - 1) % THEMES.length;
+  return THEMES[index];
+}
 
 /**
  * Sides and rotation per family. Silhouettes are picked to be unmistakable at

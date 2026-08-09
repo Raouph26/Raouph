@@ -10,6 +10,7 @@ import { type ChildProcess, spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { classicLevel, dailyLevel, todayKey } from "../src/core/chapters";
 import { solve } from "../src/core/solver";
+import { THEMES } from "../src/render/palette";
 import { computeLayout } from "../src/render/renderer";
 import type { Level, ShapeId } from "../src/core/types";
 
@@ -288,11 +289,15 @@ async function main(): Promise<void> {
   await cdp.evaluate("document.getElementById('go-themes').click()");
   await delay(350);
   await cdp.screenshot("screen-themes.png");
+  // Derived from the source so adding a theme cannot leave this assertion stale.
+  const expectedLocked = THEMES.length - 1;
   const lockedThemes = await cdp.evaluate<number>(
     "document.querySelectorAll('.theme.is-locked').length",
   );
-  if (lockedThemes !== 4) {
-    failures.push(`expected 4 locked themes on a fresh save, saw ${lockedThemes}`);
+  if (lockedThemes !== expectedLocked) {
+    failures.push(
+      `expected ${expectedLocked} locked themes on a fresh save, saw ${lockedThemes}`,
+    );
   }
 
   // Solving should carry the player onward by itself, with a slide between.

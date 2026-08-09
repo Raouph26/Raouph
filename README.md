@@ -119,17 +119,18 @@ silence between them is left alone.
 
 ## Themes
 
-Five palettes, each written as a few grounds plus three accents; every derived
-value (hollow fills, halos, line colours) is computed from those, so a theme
-cannot drift out of step with itself. The same definition drives the canvas and
-the interface, so the board and the chrome around it always match.
+Ten palettes, each written as a few grounds plus three accents; every derived
+value (hollow fills, halos, line colours, hub marks) is computed from those, so
+a theme cannot drift out of step with itself. The same definition drives the
+canvas and the interface, so the board and the chrome around it always match.
 
 Accents are always spread widely around the wheel rather than being three
 neighbours, so the three families stay separable for colour-blind players in
 every theme, not only the default.
 
-A theme unlocks per five chapters *fully* cleared — 160 puzzles each, so these
-are long-haul rewards.
+**Every chapter wears its own theme**, cycling through the set, so the game keeps
+changing as it is played. Clearing a chapter unlocks the right to *pin* a theme
+and keep it everywhere — seeing a look and owning it are separate rewards.
 
 ## Status
 

@@ -355,11 +355,12 @@ export class Renderer {
     ctx.save();
     ctx.globalAlpha = clamp01(appear);
 
-    // Terminals wear a halo rather than a hard ring — the same information,
-    // carried by light. It has to fall off to nothing at the edge, or it reads
-    // as a flat disc sitting on the board instead of a glow around the piece.
+    // Terminals get both a glow and a hard ring. The glow alone was not enough
+    // to pick a line's two ends out of a dense board — a definite edge is what
+    // makes them findable at a glance, so the ring carries the meaning and the
+    // halo just softens it.
     if (terminal) {
-      const outer = layout.cell * 0.44 * scale;
+      const outer = layout.cell * 0.46 * scale;
       const halo = ctx.createRadialGradient(x, y, outer * 0.3, x, y, outer);
       halo.addColorStop(0, palette.terminalHalo[shape]);
       halo.addColorStop(1, "rgba(0, 0, 0, 0)");
@@ -367,6 +368,12 @@ export class Renderer {
       ctx.beginPath();
       ctx.arc(x, y, outer, 0, Math.PI * 2);
       ctx.fill();
+
+      ctx.strokeStyle = palette.terminalRing[shape];
+      ctx.lineWidth = Math.max(2, layout.cell * 0.032);
+      ctx.beginPath();
+      ctx.arc(x, y, layout.cell * 0.4 * scale, 0, Math.PI * 2);
+      ctx.stroke();
     }
 
     // Outline means "still to connect", solid means "done". This is the main

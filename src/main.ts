@@ -12,12 +12,14 @@ import {
 } from "./core/chapters";
 import { Game } from "./core/game";
 import type { CellIndex, Level } from "./core/types";
-import { Progress } from "./progress";
+import { AUTO_THEME, Progress } from "./progress";
 import { ViewState, clamp01, easeInOutCubic } from "./render/animation";
 import {
+  type ThemeSpec,
   DEFAULT_PALETTE,
   THEMES,
   paletteFor,
+  themeForChapter,
   traceHubTick,
   traceShape,
 } from "./render/palette";
@@ -67,11 +69,25 @@ let transition: Transition | null = null;
 // --- theme -----------------------------------------------------------------
 
 /**
+ * The theme in force: whatever the player pinned, otherwise the one belonging
+ * to the chapter being played. Daily follows the date so it also changes.
+ */
+function currentTheme(): ThemeSpec {
+  const pinned = progress.pinnedTheme();
+  if (pinned) return pinned;
+  if (slot.mode === "daily") {
+    const dayNumber = Number(day.replaceAll("-", "")) || 0;
+    return THEMES[dayNumber % THEMES.length];
+  }
+  return themeForChapter(slot.chapter);
+}
+
+/**
  * Themes drive the canvas and the interface from one definition, so the board
  * and the chrome around it can never drift apart.
  */
 function applyTheme(): void {
-  const theme = progress.activeTheme();
+  const theme = currentTheme();
   renderer.setPalette(paletteFor(theme));
 
   const root = document.documentElement.style;
@@ -163,7 +179,7 @@ function drawBrandMark(): void {
   const ctx = mark?.getContext("2d");
   if (!mark || !ctx) return;
 
-  const palette = paletteFor(progress.activeTheme());
+  const palette = paletteFor(currentTheme());
   const dpr = window.devicePixelRatio || 1;
   const size = 132;
   mark.width = size * dpr;
@@ -228,56 +244,96 @@ function renderMenu(): void {
   $("menu-mute").textContent = progress.muted ? "Sound off" : "Sound on";
 }
 
+function themeRow(options: {
+  name: string;
+  note: string;
+  accents: readonly string[];
+  background: string;
+  selected: boolean;
+  locked: boolean;
+  onPick?: () => void;
+}): HTMLButtonElement {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "theme";
+  button.disabled = options.locked;
+  button.classList.toggle("is-locked", options.locked);
+  button.classList.toggle("is-active", options.selected);
+
+  const swatches = document.createElement("span");
+  swatches.className = "theme-swatches";
+  swatches.style.background = options.background;
+  for (const accent of options.accents) {
+    const dot = document.createElement("span");
+    dot.className = "theme-dot";
+    dot.style.background = accent;
+    swatches.append(dot);
+  }
+
+  const body = document.createElement("span");
+  body.className = "theme-body";
+  const name = document.createElement("span");
+  name.className = "theme-name";
+  name.textContent = options.name;
+  const note = document.createElement("span");
+  note.className = "theme-note";
+  note.textContent = options.note;
+  body.append(name, note);
+
+  button.append(swatches, body);
+  if (options.onPick) button.addEventListener("click", options.onPick);
+  return button;
+}
+
 function renderThemes(): void {
   const list = $("theme-list");
   list.replaceChildren();
   const cleared = progress.clearedChapters();
-  const active = progress.activeTheme().id;
+  const pinned = progress.pinnedTheme();
 
-  for (const theme of THEMES) {
-    const unlocked = progress.isThemeUnlocked(theme.id);
-
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "theme";
-    button.disabled = !unlocked;
-    button.classList.toggle("is-locked", !unlocked);
-    button.classList.toggle("is-active", unlocked && theme.id === active);
-
-    const swatches = document.createElement("span");
-    swatches.className = "theme-swatches";
-    swatches.style.background = theme.background;
-    for (const accent of theme.accents) {
-      const dot = document.createElement("span");
-      dot.className = "theme-dot";
-      dot.style.background = accent;
-      swatches.append(dot);
-    }
-
-    const body = document.createElement("span");
-    body.className = "theme-body";
-    const name = document.createElement("span");
-    name.className = "theme-name";
-    name.textContent = theme.name;
-    const note = document.createElement("span");
-    note.className = "theme-note";
-    note.textContent = unlocked
-      ? theme.id === active
-        ? "Selected"
-        : "Tap to use"
-      : `Clear ${theme.unlockChapters} chapters — ${cleared} done`;
-    body.append(name, note);
-
-    button.append(swatches, body);
-    if (unlocked) {
-      button.addEventListener("click", () => {
-        progress.themeId = theme.id;
+  const following = themeForChapter(slot.chapter);
+  list.append(
+    themeRow({
+      name: "By chapter",
+      note: pinned ? "Tap to use" : `Following ${following.name}`,
+      accents: following.accents,
+      background: following.background,
+      selected: pinned === null,
+      locked: false,
+      onPick: () => {
+        progress.themeId = AUTO_THEME;
         progress.save();
         applyTheme();
         renderThemes();
-      });
-    }
-    list.append(button);
+      },
+    }),
+  );
+
+  for (const theme of THEMES) {
+    const unlocked = progress.isThemeUnlocked(theme.id);
+    const needed = theme.unlockChapters;
+    list.append(
+      themeRow({
+        name: theme.name,
+        note: unlocked
+          ? pinned?.id === theme.id
+            ? "Selected"
+            : "Tap to use"
+          : `Clear ${needed} chapter${needed === 1 ? "" : "s"} — ${cleared} done`,
+        accents: theme.accents,
+        background: theme.background,
+        selected: pinned?.id === theme.id,
+        locked: !unlocked,
+        onPick: unlocked
+          ? () => {
+              progress.themeId = theme.id;
+              progress.save();
+              applyTheme();
+              renderThemes();
+            }
+          : undefined,
+      }),
+    );
   }
 
   const unlockedCount = THEMES.filter((t) => progress.isThemeUnlocked(t.id)).length;
@@ -366,6 +422,7 @@ function renderStages(mode: Mode, chapter: number): void {
 
 function openStages(mode: Mode, chapter: number): void {
   slot = { mode, chapter, stage: slot.stage };
+  applyTheme();
   renderStages(mode, chapter);
   showScreen("stages");
   prefetchLikely(mode, chapter);
@@ -377,6 +434,8 @@ function startLevel(target: Slot, direction: 0 | 1 | -1): void {
   cancelAdvance();
   const outgoing = direction !== 0 && game ? { game, view } : null;
   slot = target;
+  // Each chapter wears its own look, so the theme is re-resolved on entry.
+  applyTheme();
   showScreen("game");
 
   if (!outgoing) {

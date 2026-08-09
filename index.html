@@ -39,52 +39,62 @@
 
       <section id="screen-themes" class="screen" hidden>
         <header class="bar">
-          <button class="icon" id="themes-back" type="button" aria-label="Back">
-            &#8249;
-          </button>
+          <div class="bar-side">
+            <button class="icon" id="themes-back" type="button" aria-label="Back">
+              &#8249;
+            </button>
+          </div>
           <h2>Themes</h2>
-          <span class="bar-meta" id="themes-meta"></span>
+          <div class="bar-side bar-side-end"><span class="bar-meta" id="themes-meta"></span></div>
         </header>
         <div class="scroll"><div id="theme-list" class="theme-list"></div></div>
       </section>
 
       <section id="screen-chapters" class="screen" hidden>
         <header class="bar">
-          <button class="icon" id="chapters-back" type="button" aria-label="Back">
-            &#8249;
-          </button>
+          <div class="bar-side">
+            <button class="icon" id="chapters-back" type="button" aria-label="Back">
+              &#8249;
+            </button>
+          </div>
           <h2>Classic</h2>
-          <span class="bar-meta" id="chapters-meta"></span>
+          <div class="bar-side bar-side-end"><span class="bar-meta" id="chapters-meta"></span></div>
         </header>
         <div class="scroll"><div id="chapter-list" class="chapter-list"></div></div>
       </section>
 
       <section id="screen-stages" class="screen" hidden>
         <header class="bar">
-          <button class="icon" id="stages-back" type="button" aria-label="Back">
-            &#8249;
-          </button>
+          <div class="bar-side">
+            <button class="icon" id="stages-back" type="button" aria-label="Back">
+              &#8249;
+            </button>
+          </div>
           <h2 id="stages-title">Chapter 1</h2>
-          <span class="bar-meta" id="stages-meta"></span>
+          <div class="bar-side bar-side-end"><span class="bar-meta" id="stages-meta"></span></div>
         </header>
         <div class="scroll"><div id="stage-grid" class="stage-grid"></div></div>
       </section>
 
       <section id="screen-game" class="screen" hidden>
         <header class="bar">
-          <button class="icon" id="game-back" type="button" aria-label="Back">
-            &#8249;
-          </button>
+          <div class="bar-side">
+            <button class="icon" id="game-back" type="button" aria-label="Back">
+              &#8249;
+            </button>
+          </div>
           <div id="title">
             <span id="level-name">--</span>
             <span id="level-status"></span>
           </div>
-          <button class="icon" id="game-mute" type="button" aria-label="Mute sound">
-            <span class="mute-glyph" aria-hidden="true"></span>
-          </button>
-          <button class="icon" id="reset" type="button" aria-label="Reset puzzle">
-            &#8635;
-          </button>
+          <div class="bar-side bar-side-end">
+            <button class="icon" id="game-mute" type="button" aria-label="Mute sound">
+              <span class="mute-glyph" aria-hidden="true"></span>
+            </button>
+            <button class="icon" id="reset" type="button" aria-label="Reset puzzle">
+              &#8635;
+            </button>
+          </div>
         </header>
         <canvas id="board"></canvas>
         <nav id="nav">

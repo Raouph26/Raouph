@@ -13,6 +13,9 @@ const SOLVED_KEY = "quiet-lines.solved";
 const MUTED_KEY = "quiet-lines.muted";
 const THEME_KEY = "quiet-lines.theme";
 
+/** Sentinel meaning "follow whichever chapter is being played". */
+export const AUTO_THEME = "auto";
+
 function readJson<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(key);
@@ -32,7 +35,7 @@ function readJson<T>(key: string, fallback: T): T {
 export class Progress {
   private solved = new Set<string>(readJson<string[]>(SOLVED_KEY, []));
   muted = readJson<boolean>(MUTED_KEY, false);
-  themeId = readJson<string>(THEME_KEY, THEMES[0].id);
+  themeId = readJson<string>(THEME_KEY, AUTO_THEME);
 
   isSolved(id: string): boolean {
     return this.solved.has(id);
@@ -117,9 +120,16 @@ export class Progress {
     return this.clearedChapters() >= theme.unlockChapters;
   }
 
-  /** Falls back to the default if a saved theme is no longer earned. */
-  activeTheme(): (typeof THEMES)[number] {
+  /**
+   * The theme the player has pinned, or null when following the chapter.
+   *
+   * Every chapter shows its own theme as you play it — that is what makes the
+   * game keep changing. Clearing chapters earns the right to *pin* one you
+   * liked and keep it everywhere, which is a different reward from seeing it.
+   */
+  pinnedTheme(): (typeof THEMES)[number] | null {
+    if (this.themeId === AUTO_THEME) return null;
     const chosen = THEMES.find((t) => t.id === this.themeId);
-    return chosen && this.isThemeUnlocked(chosen.id) ? chosen : THEMES[0];
+    return chosen && this.isThemeUnlocked(chosen.id) ? chosen : null;
   }
 }
