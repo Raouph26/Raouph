@@ -11,7 +11,7 @@ import {
   todayKey,
 } from "./core/chapters";
 import { Game } from "./core/game";
-import type { CellIndex, Level } from "./core/types";
+import { type CellIndex, type Level, inBounds, xOf, yOf } from "./core/types";
 import { AUTO_THEME, Progress } from "./progress";
 import { ViewState, clamp01, easeInOutCubic } from "./render/animation";
 import {
@@ -23,7 +23,7 @@ import {
   traceHubTick,
   traceShape,
 } from "./render/palette";
-import { Renderer, cellAt } from "./render/renderer";
+import { Renderer, cellAt, centerOf } from "./render/renderer";
 
 const $ = <T extends HTMLElement>(id: string): T =>
   document.getElementById(id) as T;
@@ -567,11 +567,36 @@ function checkSolved(): void {
 
 // --- input -----------------------------------------------------------------
 
-let lastPoint: { x: number; y: number } | null = null;
-
 function pointOf(event: PointerEvent): { x: number; y: number } {
   const rect = canvas.getBoundingClientRect();
   return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+}
+
+/**
+ * Where a press should grab. A press landing just outside a piece snaps to the
+ * nearest one, so starting a line does not demand precision that a fingertip
+ * cannot deliver. Only presses snap — dragging still follows the grid exactly.
+ */
+function pickStartCell(point: { x: number; y: number }): CellIndex | null {
+  if (!game) return null;
+  const level = game.level;
+  const layout = renderer.layoutFor(level);
+
+  const raw = cellAt(level, layout, point.x, point.y);
+  if (raw !== null && level.cells[raw].kind === "node") return raw;
+
+  let best: CellIndex | null = null;
+  let bestDistance = layout.cell * 0.7;
+  for (const [i, cell] of level.cells.entries()) {
+    if (cell.kind !== "node") continue;
+    const centre = centerOf(level, layout, i);
+    const distance = Math.hypot(centre.x - point.x, centre.y - point.y);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = i;
+    }
+  }
+  return best ?? raw;
 }
 
 function onReached(cell: CellIndex): void {
@@ -581,32 +606,55 @@ function onReached(cell: CellIndex): void {
 }
 
 /**
- * A fast swipe reports a pointer position several cells from the last sample.
- * Walking the straight line between them keeps the drawn line with the finger,
- * since the game only ever accepts single-step moves.
+ * Walks the line from its head towards `target`, one cell at a time.
+ *
+ * The obvious approach — sampling points along the straight screen path between
+ * two pointer events — is subtly broken: as soon as one sample lands on a cell
+ * that is not adjacent to the head, the game rejects it, and every later sample
+ * sits even further away, so the line stays stuck until the finger happens to
+ * come back beside the head. Stepping through the grid instead means every move
+ * attempted is adjacent by construction, so the line always keeps up.
  */
-function dragAlong(from: { x: number; y: number }, to: { x: number; y: number }): void {
+function stepToward(target: CellIndex): void {
   if (!game) return;
-  const layout = renderer.layoutFor(game.level);
-  const distance = Math.hypot(to.x - from.x, to.y - from.y);
-  const steps = Math.max(1, Math.ceil((distance / layout.cell) * 2));
+  const level = game.level;
 
-  for (let s = 1; s <= steps; s++) {
-    const t = s / steps;
-    const cell = cellAt(
-      game.level,
-      layout,
-      from.x + (to.x - from.x) * t,
-      from.y + (to.y - from.y) * t,
-    );
-    if (cell === null) continue;
-
+  // Bounded purely as a guard; a board is never this wide.
+  for (let guard = 0; guard < 64; guard++) {
     const shape = game.activeShape;
-    const effect = game.dragTo(cell);
-    if (effect === "extend") onReached(cell);
-    else if (effect === "retract" && shape !== null) {
-      audio.retract(game.pathFor(shape).length);
+    if (shape === null) return;
+    const path = game.pathFor(shape);
+    if (path.length === 0) return;
+
+    const head = path[path.length - 1];
+    if (head === target) return;
+
+    const hx = xOf(level, head);
+    const hy = yOf(level, head);
+    const dx = Math.sign(xOf(level, target) - hx);
+    const dy = Math.sign(yOf(level, target) - hy);
+
+    // Prefer the direct step; if it is blocked — a crossed diagonal, say — try
+    // going round the corner rather than stalling under the finger.
+    const candidates: [number, number][] = [[dx, dy]];
+    if (dx !== 0 && dy !== 0) candidates.push([dx, 0], [0, dy]);
+
+    let moved = false;
+    for (const [sx, sy] of candidates) {
+      if (sx === 0 && sy === 0) continue;
+      const nx = hx + sx;
+      const ny = hy + sy;
+      if (!inBounds(level, nx, ny)) continue;
+
+      const next = ny * level.width + nx;
+      const effect = game.dragTo(next);
+      if (effect === "none") continue;
+      if (effect === "extend") onReached(next);
+      else if (effect === "retract") audio.retract(game.pathFor(shape).length);
+      moved = true;
+      break;
     }
+    if (!moved) return;
   }
 }
 
@@ -617,9 +665,7 @@ canvas.addEventListener("pointerdown", (event) => {
   canvas.setPointerCapture(event.pointerId);
   audio.unlock();
 
-  const point = pointOf(event);
-  lastPoint = point;
-  const cell = cellAt(game.level, renderer.layoutFor(game.level), point.x, point.y);
+  const cell = pickStartCell(pointOf(event));
   if (cell === null) return;
 
   const effect = game.beginAt(cell);
@@ -635,11 +681,12 @@ canvas.addEventListener("pointerdown", (event) => {
 });
 
 canvas.addEventListener("pointermove", (event) => {
-  if (!game || game.activeShape === null || !lastPoint) return;
+  if (!game || game.activeShape === null) return;
   event.preventDefault();
+
   const point = pointOf(event);
-  dragAlong(lastPoint, point);
-  lastPoint = point;
+  const cell = cellAt(game.level, renderer.layoutFor(game.level), point.x, point.y);
+  if (cell !== null) stepToward(cell);
   checkSolved();
   kick();
 });
@@ -649,7 +696,6 @@ function endDrag(event: PointerEvent): void {
     canvas.releasePointerCapture(event.pointerId);
   }
   game?.release();
-  lastPoint = null;
   checkSolved();
   kick();
 }
@@ -765,5 +811,6 @@ Object.assign(window, {
   __cancelAdvance: cancelAdvance,
   __stage: () => slot.stage,
   __isSwiping: () => transition !== null,
+  __themeBackground: () => currentTheme().background,
   __renderer: renderer,
 });

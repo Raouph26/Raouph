@@ -23,10 +23,11 @@ export interface Layout {
 }
 
 /**
- * Cap on cell size. Boards are at most 3 columns, so without a cap a short
- * puzzle would render with absurdly large pieces on a tall screen.
+ * Cap on cell size. Narrow boards would otherwise stretch to the full width of
+ * a phone and render with pieces far too large to look composed — the board
+ * should sit as an object on the screen, not fill it.
  */
-export const MAX_CELL = 124;
+export const MAX_CELL = 88;
 
 export function computeLayout(
   level: Level,
@@ -76,7 +77,7 @@ export function cellAt(
 export class Renderer {
   private ctx: CanvasRenderingContext2D;
   private palette: Palette;
-  padding = 34;
+  padding = 30;
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -303,7 +304,7 @@ export class Renderer {
     ctx.save();
     // Deliberately narrower than the pieces: at this cell size a heavier line
     // swallows the triangles and they stop reading as their own shape.
-    ctx.lineWidth = layout.cell * 0.088;
+    ctx.lineWidth = layout.cell * 0.1;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.strokeStyle = complete ? palette.shape[shape] : palette.line[shape];
@@ -360,7 +361,7 @@ export class Renderer {
     // makes them findable at a glance, so the ring carries the meaning and the
     // halo just softens it.
     if (terminal) {
-      const outer = layout.cell * 0.46 * scale;
+      const outer = layout.cell * 0.48 * scale;
       const halo = ctx.createRadialGradient(x, y, outer * 0.3, x, y, outer);
       halo.addColorStop(0, palette.terminalHalo[shape]);
       halo.addColorStop(1, "rgba(0, 0, 0, 0)");
@@ -370,15 +371,15 @@ export class Renderer {
       ctx.fill();
 
       ctx.strokeStyle = palette.terminalRing[shape];
-      ctx.lineWidth = Math.max(2, layout.cell * 0.032);
+      ctx.lineWidth = Math.max(1.8, layout.cell * 0.036);
       ctx.beginPath();
-      ctx.arc(x, y, layout.cell * 0.4 * scale, 0, Math.PI * 2);
+      ctx.arc(x, y, layout.cell * 0.41 * scale, 0, Math.PI * 2);
       ctx.stroke();
     }
 
     // Outline means "still to connect", solid means "done". This is the main
     // way a player reads what is left without tracing every line by eye.
-    const radius = layout.cell * (terminal ? 0.3 : 0.27) * scale;
+    const radius = layout.cell * (terminal ? 0.25 : 0.24) * scale;
     traceShape(ctx, shape, x, y, radius, spin);
 
     if (connected) {
@@ -388,7 +389,7 @@ export class Renderer {
       ctx.fillStyle = palette.shapeHollow[shape];
       ctx.fill();
       ctx.strokeStyle = palette.shape[shape];
-      ctx.lineWidth = Math.max(2, layout.cell * 0.038);
+      ctx.lineWidth = Math.max(1.8, layout.cell * 0.042);
       ctx.stroke();
     }
     ctx.restore();

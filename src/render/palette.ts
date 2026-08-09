@@ -64,7 +64,12 @@ function darken(hex: string, amount: number): string {
 export interface ThemeSpec {
   id: string;
   name: string;
-  /** Fully-cleared chapters required before this theme can be chosen. */
+  /**
+   * Cleared chapters required before this theme can be pinned. All zero for
+   * now: gating them made the feature look broken, because on a new save every
+   * option a player could tap resolved to the same palette. Raise these to
+   * re-introduce progression once the look is settled.
+   */
   unlockChapters: number;
   background: string;
   backgroundLift: string;
@@ -147,7 +152,7 @@ export const THEMES: ThemeSpec[] = [
   {
     id: "ember",
     name: "Ember",
-    unlockChapters: 1,
+    unlockChapters: 0,
     background: "#1d1815",
     backgroundLift: "#2a221d",
     panel: "#241e1a",
@@ -165,7 +170,7 @@ export const THEMES: ThemeSpec[] = [
   {
     id: "tide",
     name: "Tide",
-    unlockChapters: 2,
+    unlockChapters: 0,
     background: "#101d24",
     backgroundLift: "#182a33",
     panel: "#14232b",
@@ -183,7 +188,7 @@ export const THEMES: ThemeSpec[] = [
   {
     id: "orchid",
     name: "Orchid",
-    unlockChapters: 3,
+    unlockChapters: 0,
     background: "#1e1526",
     backgroundLift: "#2a1d34",
     panel: "#241a2d",
@@ -201,7 +206,7 @@ export const THEMES: ThemeSpec[] = [
   {
     id: "slate",
     name: "Slate",
-    unlockChapters: 4,
+    unlockChapters: 0,
     background: "#16191d",
     backgroundLift: "#1f242a",
     panel: "#1a1e23",
@@ -219,7 +224,7 @@ export const THEMES: ThemeSpec[] = [
   {
     id: "moss",
     name: "Moss",
-    unlockChapters: 5,
+    unlockChapters: 0,
     background: "#141d18",
     backgroundLift: "#1d2a23",
     panel: "#17221c",
@@ -237,7 +242,7 @@ export const THEMES: ThemeSpec[] = [
   {
     id: "cinder",
     name: "Cinder",
-    unlockChapters: 6,
+    unlockChapters: 0,
     background: "#1a1718",
     backgroundLift: "#252022",
     panel: "#1f1b1c",
@@ -255,7 +260,7 @@ export const THEMES: ThemeSpec[] = [
   {
     id: "harbour",
     name: "Harbour",
-    unlockChapters: 7,
+    unlockChapters: 0,
     background: "#141b26",
     backgroundLift: "#1d2734",
     panel: "#18202c",
@@ -273,7 +278,7 @@ export const THEMES: ThemeSpec[] = [
   {
     id: "clay",
     name: "Clay",
-    unlockChapters: 8,
+    unlockChapters: 0,
     background: "#211a17",
     backgroundLift: "#2d2420",
     panel: "#261e1a",
@@ -291,7 +296,7 @@ export const THEMES: ThemeSpec[] = [
   {
     id: "nocturne",
     name: "Nocturne",
-    unlockChapters: 9,
+    unlockChapters: 0,
     background: "#131627",
     backgroundLift: "#1c2035",
     panel: "#171b2c",

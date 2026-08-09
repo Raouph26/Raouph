@@ -129,8 +129,13 @@ neighbours, so the three families stay separable for colour-blind players in
 every theme, not only the default.
 
 **Every chapter wears its own theme**, cycling through the set, so the game keeps
-changing as it is played. Clearing a chapter unlocks the right to *pin* a theme
-and keep it everywhere — seeing a look and owning it are separate rewards.
+changing as it is played, and any theme can be pinned to keep it everywhere.
+
+Themes are currently ungated. Gating them behind cleared chapters made the
+feature look broken rather than aspirational: on a new save every option a
+player could tap resolved to the same palette, so nothing appeared to happen.
+`ThemeSpec.unlockChapters` still exists — raise those values to reintroduce
+progression once the look is settled.
 
 ## Status
 

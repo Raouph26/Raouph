@@ -92,7 +92,7 @@ body {
 .bar h2 {
   margin: 0;
   text-align: center;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.22em;
   text-indent: 0.22em;
@@ -134,12 +134,12 @@ button:focus-visible {
 }
 
 .icon {
-  width: 54px;
-  height: 54px;
+  width: 48px;
+  height: 48px;
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  font-size: 27px;
+  font-size: 24px;
   line-height: 1;
   color: var(--ink);
   border-radius: 50%;
@@ -219,15 +219,15 @@ button:focus-visible {
 }
 
 #brand-mark {
-  width: 108px;
-  height: 108px;
+  width: 96px;
+  height: 96px;
   /* The mark is the game's own imagery, so let it glow like the board does. */
   filter: drop-shadow(0 0 26px color-mix(in srgb, var(--accent) 18%, transparent));
 }
 
 .brand h1 {
   margin: 0;
-  font-size: clamp(30px, 9vw, 38px);
+  font-size: clamp(27px, 8vw, 34px);
   font-weight: 300;
   letter-spacing: 0.34em;
   /* Letter-spacing pads the right edge; this re-centres the word optically. */
@@ -258,7 +258,7 @@ button:focus-visible {
   display: grid;
   justify-items: center;
   gap: 7px;
-  padding: 26px 26px 24px;
+  padding: 22px 24px 20px;
   text-align: center;
   border-radius: 22px;
   background: var(--surface);
@@ -283,7 +283,7 @@ button:focus-visible {
 }
 
 .card-title {
-  font-size: 23px;
+  font-size: 20px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-indent: 0.18em;
@@ -310,7 +310,7 @@ button:focus-visible {
 }
 
 .ghost {
-  padding: 15px 28px;
+  padding: 13px 26px;
   border-radius: 999px;
   border: 1px solid var(--hairline);
   font-size: 12px;
@@ -396,7 +396,7 @@ button:focus-visible {
 }
 
 .theme-name {
-  font-size: 17px;
+  font-size: 16px;
   color: var(--ink-bright);
 }
 
@@ -422,7 +422,7 @@ button:focus-visible {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 19px 18px;
+  padding: 17px 17px;
   /* Buttons centre their text by default, which breaks the row rhythm. */
   text-align: left;
   border-radius: 16px;
@@ -466,7 +466,7 @@ button:focus-visible {
 }
 
 .chapter-name {
-  font-size: 17px;
+  font-size: 16px;
   color: var(--ink-bright);
 }
 
@@ -547,7 +547,7 @@ button:focus-visible {
 }
 
 #level-name {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.2em;
   text-indent: 0.2em;

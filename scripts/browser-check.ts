@@ -20,7 +20,7 @@ const CDP_PORT = 9222;
 const URL_BASE = `http://127.0.0.1:${PORT}/`;
 const OUT_DIR = new URL("../.artifacts/", import.meta.url);
 /** Matches Renderer.padding; the test recomputes layout to find cell centres. */
-const BOARD_PADDING = 34;
+const BOARD_PADDING = 30;
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -289,16 +289,38 @@ async function main(): Promise<void> {
   await cdp.evaluate("document.getElementById('go-themes').click()");
   await delay(350);
   await cdp.screenshot("screen-themes.png");
-  // Derived from the source so adding a theme cannot leave this assertion stale.
-  const expectedLocked = THEMES.length - 1;
-  const lockedThemes = await cdp.evaluate<number>(
-    "document.querySelectorAll('.theme.is-locked').length",
+  // Picking a theme must actually repaint. This is exactly the bug that shipped
+  // once: every option a new save could tap resolved to the same palette, so
+  // the feature looked broken while behaving exactly as written.
+  const themeRows = await cdp.evaluate<number>(
+    "document.querySelectorAll('#theme-list .theme').length",
   );
-  if (lockedThemes !== expectedLocked) {
+  if (themeRows !== THEMES.length + 1) {
     failures.push(
-      `expected ${expectedLocked} locked themes on a fresh save, saw ${lockedThemes}`,
+      `expected ${THEMES.length + 1} theme rows (auto plus each), saw ${themeRows}`,
     );
   }
+
+  const beforeTheme = await cdp.evaluate<string>("window.__themeBackground()");
+  const beforeCss = await cdp.evaluate<string>(
+    "getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()",
+  );
+  // Row 0 is "By chapter"; row 3 is a distinctly different palette.
+  await cdp.evaluate("document.querySelectorAll('#theme-list .theme')[3].click()");
+  await delay(250);
+  const afterTheme = await cdp.evaluate<string>("window.__themeBackground()");
+  const afterCss = await cdp.evaluate<string>(
+    "getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()",
+  );
+
+  if (afterTheme === beforeTheme) {
+    failures.push(`picking a theme did not change the board palette (${afterTheme})`);
+  } else if (afterCss === beforeCss) {
+    failures.push(`picking a theme did not change the interface (${afterCss})`);
+  } else {
+    console.log(`  ok   theme switch repaints board and interface`);
+  }
+  await cdp.screenshot("screen-themes.png");
 
   // Solving should carry the player onward by itself, with a slide between.
   await cdp.evaluate("window.__startLevel('classic', 1, 2)");
