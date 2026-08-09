@@ -244,15 +244,30 @@ function drawBrandMark(): void {
   }
 }
 
-function renderMenu(): void {
-  const classicTotal = CHAPTER_COUNT * STAGES_PER_CHAPTER;
-  $("classic-fill").style.width =
-    `${(progress.totalClassicSolved() / classicTotal) * 100}%`;
-  $("daily-fill").style.width =
-    `${(progress.dailySolvedCount(day) / DAILY_STAGES) * 100}%`;
+/** The furthest classic stage still unsolved — where "Continue" resumes. */
+function resumeSlot(): Slot {
+  for (let chapter = 1; chapter <= CHAPTER_COUNT; chapter++) {
+    if (!progress.isChapterUnlocked(chapter)) break;
+    const stage = progress.furthestStage(chapter);
+    if (!progress.isSolved(classicId(chapter, stage))) {
+      return { mode: "classic", chapter, stage };
+    }
+  }
+  return { mode: "classic", chapter: 1, stage: 1 };
+}
 
-  const unlockedThemes = THEMES.filter((t) => progress.isThemeUnlocked(t.id)).length;
-  $("themes-fill").style.width = `${(unlockedThemes / THEMES.length) * 100}%`;
+function renderMenu(): void {
+  const resume = resumeSlot();
+  $("continue-meta").textContent =
+    `Chapter ${resume.chapter}  ·  Stage ${resume.stage}`;
+
+  const classicTotal = CHAPTER_COUNT * STAGES_PER_CHAPTER;
+  $("classic-meta").textContent = `${progress.totalClassicSolved()} / ${classicTotal}`;
+  const dailyDone = progress.dailySolvedCount(day);
+  $("daily-meta").textContent =
+    dailyDone === DAILY_STAGES ? "Complete" : `${dailyDone} / ${DAILY_STAGES}`;
+  $("themes-meta-menu").textContent = progress.pinnedTheme()?.name ?? "By chapter";
+
   $("menu-mute").textContent = progress.muted ? "Sound off" : "Sound on";
 }
 
@@ -392,7 +407,11 @@ function renderChapters(): void {
     count.className = "chapter-count";
     count.textContent = unlocked ? `${done}/${STAGES_PER_CHAPTER}` : "Locked";
 
-    button.append(index, body, count);
+    const chevron = document.createElement("span");
+    chevron.className = "chevron";
+    chevron.setAttribute("aria-hidden", "true");
+
+    button.append(index, body, count, chevron);
     if (unlocked) {
       button.addEventListener("click", () => openStages("classic", chapter));
     }
@@ -418,8 +437,15 @@ function renderStages(mode: Mode, chapter: number): void {
     button.disabled = !unlocked;
     button.classList.toggle("is-solved", done);
     button.classList.toggle("is-locked", !unlocked);
-    button.textContent = unlocked ? String(stage) : "";
-    button.setAttribute("aria-label", `Stage ${stage}`);
+    // Exactly one tile is ringed: the first playable stage not yet solved.
+    button.classList.toggle("is-current", unlocked && !done);
+    // Locked stages still show their number. A grid of blank tiles reads as
+    // broken rather than as content waiting to be earned.
+    button.textContent = String(stage);
+    button.setAttribute(
+      "aria-label",
+      unlocked ? `Stage ${stage}` : `Stage ${stage}, locked`,
+    );
     if (unlocked) button.addEventListener("click", () => startLevel(target, 0));
     grid.append(button);
   }
@@ -585,6 +611,38 @@ function pointOf(event: PointerEvent): { x: number; y: number } {
 }
 
 /**
+ * The cell a drag is actually asking for.
+ *
+ * Committing as soon as the pointer crosses a cell boundary makes diagonals
+ * nearly impossible: travelling from one cell to its diagonal neighbour, a
+ * finger inevitably clips the corner of an orthogonal neighbour on the way, so
+ * the line commits sideways and the diagonal is gone before the finger arrives.
+ *
+ * Requiring the pointer to reach the neighbourhood of a cell's centre fixes it.
+ * A straight diagonal drag passes about 0.7 cells from the orthogonal centres —
+ * comfortably outside this radius — while landing exactly on the diagonal one.
+ */
+const COMMIT_RADIUS = 0.42;
+
+function dragTargetFor(point: { x: number; y: number }): CellIndex | null {
+  if (!game) return null;
+  const level = game.level;
+  const layout = renderer.layoutFor(level);
+
+  let best: CellIndex | null = null;
+  let bestDistance = layout.cell * COMMIT_RADIUS;
+  for (let i = 0; i < level.cells.length; i++) {
+    const centre = centerOf(level, layout, i);
+    const distance = Math.hypot(centre.x - point.x, centre.y - point.y);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = i;
+    }
+  }
+  return best;
+}
+
+/**
  * Where a press should grab. A press landing just outside a piece snaps to the
  * nearest one, so starting a line does not demand precision that a fingertip
  * cannot deliver. Only presses snap — dragging still follows the grid exactly.
@@ -646,10 +704,15 @@ function stepToward(target: CellIndex): void {
     const dx = Math.sign(xOf(level, target) - hx);
     const dy = Math.sign(yOf(level, target) - hy);
 
-    // Prefer the direct step; if it is blocked — a crossed diagonal, say — try
-    // going round the corner rather than stalling under the finger.
+    // Prefer the direct step. Going round a blocked corner is only offered
+    // while catching up over distance: when the finger is on the very next
+    // cell, a diagonal it asked for must not quietly become an L instead.
+    const chebyshev = Math.max(
+      Math.abs(xOf(level, target) - hx),
+      Math.abs(yOf(level, target) - hy),
+    );
     const candidates: [number, number][] = [[dx, dy]];
-    if (dx !== 0 && dy !== 0) candidates.push([dx, 0], [0, dy]);
+    if (dx !== 0 && dy !== 0 && chebyshev > 1) candidates.push([dx, 0], [0, dy]);
 
     let moved = false;
     for (const [sx, sy] of candidates) {
@@ -696,8 +759,7 @@ canvas.addEventListener("pointermove", (event) => {
   if (!game || game.activeShape === null) return;
   event.preventDefault();
 
-  const point = pointOf(event);
-  const cell = cellAt(game.level, renderer.layoutFor(game.level), point.x, point.y);
+  const cell = dragTargetFor(pointOf(event));
   if (cell !== null) stepToward(cell);
   checkSolved();
   kick();
@@ -725,6 +787,11 @@ function setMuted(muted: boolean): void {
   $("game-mute").classList.toggle("is-muted", muted);
   $("game-mute").setAttribute("aria-label", muted ? "Unmute sound" : "Mute sound");
 }
+
+$("go-continue").addEventListener("click", () => {
+  audio.unlock();
+  startLevel(resumeSlot(), 0);
+});
 
 $("go-classic").addEventListener("click", () => {
   audio.unlock();

@@ -322,6 +322,75 @@ async function main(): Promise<void> {
   }
   await cdp.screenshot("screen-themes.png");
 
+  // A real finger sweeps continuously and wobbles; it does not teleport between
+  // cell centres the way the checks above do. That difference hid a bug where
+  // diagonal moves were near-impossible, because clipping the corner of an
+  // orthogonal neighbour committed the line sideways first.
+  //
+  // The boards here are deliberately dense: on a sparse one the mis-commit
+  // lands on an empty cell and is rejected anyway, so the bug stays hidden.
+  const wobbleTargets: [number, number][] = [
+    [1, 12],
+    [11, 4],
+    [17, 9],
+    [20, 1],
+  ];
+
+  for (const [chapter, stage] of wobbleTargets) {
+    await cdp.evaluate(`window.__startLevel('classic', ${chapter}, ${stage})`);
+    await waitFor(`c${chapter}-s${stage} to load`, async () =>
+      cdp.evaluate<boolean>("window.__game() !== null"),
+    );
+    const level = classicLevel(chapter, stage);
+    const rect = await cdp.evaluate<{
+      left: number;
+      top: number;
+      width: number;
+      height: number;
+    }>(
+      `(() => { const r = document.querySelector('#board').getBoundingClientRect();
+        return { left: r.left, top: r.top, width: r.width, height: r.height }; })()`,
+    );
+    const layout = computeLayout(level, rect.width, rect.height, BOARD_PADDING);
+    const at = (cell: number) => ({
+      x: rect.left + layout.ox + ((cell % level.width) + 0.5) * layout.cell,
+      y: rect.top + layout.oy + (Math.floor(cell / level.width) + 0.5) * layout.cell,
+    });
+
+    for (const [, path] of solve(level, { limit: 1 })
+      .solutions[0] as Map<ShapeId, number[]>) {
+      const first = at(path[0]);
+      await cdp.mouse("mousePressed", first.x, first.y);
+      let previous = first;
+      for (const cell of path.slice(1)) {
+        const next = at(cell);
+        const steps = 8;
+        for (let i = 1; i <= steps; i++) {
+          const t = i / steps;
+          // Perpendicular wobble of about a tenth of a cell, as a thumb does.
+          const wobble = Math.sin(t * Math.PI) * layout.cell * 0.13;
+          await cdp.mouse(
+            "mouseMoved",
+            previous.x + (next.x - previous.x) * t + wobble,
+            previous.y + (next.y - previous.y) * t - wobble,
+          );
+        }
+        previous = next;
+      }
+      await cdp.mouse("mouseReleased", previous.x, previous.y);
+    }
+
+    await delay(60);
+    const solved = await cdp.evaluate<boolean>("window.__game().solved");
+    await cdp.evaluate("window.__cancelAdvance()");
+    if (!solved) {
+      failures.push(`wobbling drag failed to solve c${chapter}-s${stage}`);
+    }
+  }
+  if (!failures.some((f) => f.startsWith("wobbling drag"))) {
+    console.log("  ok   diagonals survive continuous, wobbling drags");
+  }
+
   // Solving should carry the player onward by itself, with a slide between.
   await cdp.evaluate("window.__startLevel('classic', 1, 2)");
   await waitFor("advance level to load", async () =>
