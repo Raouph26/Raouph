@@ -2,9 +2,9 @@
 // The game is one big self-contained file, so there is very little to cache and
 // nothing to fetch at runtime. Bump CACHE when you deploy so players pick the
 // new build up instead of sitting on a stale one forever.
-const CACHE = 'wordspyre-v8';
+const CACHE = 'wordspyre-v9';
 const ASSETS = [
-  './', './index.html', './manifest.json',
+  './', './index.html', './manifest.json', './words.js',
   './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png',
   './sounds/tap.mp3', './sounds/recall.mp3', './sounds/pop.mp3', './sounds/submit.mp3',
   './sounds/button.mp3', './sounds/shuffle.mp3', './sounds/swipe.mp3', './sounds/glyph.mp3',
