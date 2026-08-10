@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WORDSPYRE</title>
+<meta name="description" content="A tactical word-building roguelite game.">
+<meta name="theme-color" content="#FF3B4E">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="/favicon-64.png">
+<!--
+  This page exists for store packagers, not for players.
+
+  PWABuilder and tools like it do not read the HTML and stop - they open the
+  page in a browser and wait for the network to go quiet before looking for the
+  manifest. index.html is the whole game: a large page that then pulls a word
+  list, thirteen sound effects and a service worker. That took long enough that
+  the scan timed out every time, and it reported "no manifest" for a site whose
+  manifest was fine.
+
+  This page loads the same manifest and registers the same service worker, but
+  nothing else, so a scanner is finished in milliseconds. Point the packager at
+  /app.html; the manifest's start_url still sends the built app to the game.
+
+  A person who lands here is sent straight to the game.
+-->
+<style>
+  html, body { margin: 0; height: 100%; background: #FF3B4E; }
+  main { height: 100%; display: flex; align-items: center; justify-content: center;
+         font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         color: #fff; font-weight: 800; letter-spacing: 2px; }
+  a { color: #fff; }
+</style>
+</head>
+<body>
+<main><a href="/index.html" id="go">WORDSPYRE &rsaquo; PLAY</a></main>
+<script>
+  // same worker the game uses, so a packager sees a real one
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    navigator.serviceWorker.register('/sw.js').catch(function () {});
+  }
+  // a real visitor never stays here. A scanner reports before this fires.
+  setTimeout(function () { location.replace('/index.html'); }, 1200);
+</script>
+</body>
+</html>
