@@ -2322,8 +2322,13 @@
                 } catch (e) {}
             }));
             this.ready = true;
-            // warm the menu track so the first play is not a cold fetch
-            try { this._track("menu", "music-menu").preload = "auto"; } catch (e) {}
+            // No music element is created here on purpose. Giving an <audio> a src
+            // opens a media request that stays open instead of completing, so the page
+            // never reached network idle and every site scanner - PWABuilder included
+            // - waited for it until it timed out. Browsers refuse to play audio before
+            // a user gesture anyway, so warming it bought nothing and cost every player
+            // a four megabyte download whether they stayed or not. The track is created
+            // and streamed on the first tap, which is the earliest it could sound.
         },
         // rate lets the caller bend the pitch; the scoring run uses it to climb
         play(name, rate) {
