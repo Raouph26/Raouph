@@ -44,3 +44,13 @@
   for = "/*.png"
   [headers.values]
     Cache-Control = "public, max-age=604800"
+
+# Android checks this file to decide whether the app owns the domain. It must
+# come back as JSON over https with no redirect, or the app opens with a browser
+# address bar across the top instead of looking like a real app.
+[[headers]]
+  for = "/.well-known/assetlinks.json"
+  [headers.values]
+    Content-Type = "application/json"
+    Cache-Control = "public, max-age=300"
+    Access-Control-Allow-Origin = "*"
