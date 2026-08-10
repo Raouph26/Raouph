@@ -1,0 +1,41 @@
+# Netlify serves this repo as-is. There is nothing to build - the game is one
+# self-contained index.html - so there is no build command, and the site root is
+# the publish directory.
+[build]
+  publish = "."
+
+# The three files that change on every deploy must never be served from a stale
+# cache, or a player keeps the old game long after a fix has gone out. This is
+# what made a fresh upload still look like the previous one.
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# The service worker decides when everything else updates, so it has to be the
+# freshest file of the lot.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Artwork and audio are content-stable: the filename changes when the file does.
+[[headers]]
+  for = "/sounds/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
