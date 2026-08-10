@@ -17,10 +17,15 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
+# The spec asks for application/manifest+json. Netlify serves .json files as
+# application/json, which most tools accept - but a strict store packager may
+# not, so it is stated explicitly rather than left to chance.
 [[headers]]
   for = "/manifest.json"
   [headers.values]
+    Content-Type = "application/manifest+json; charset=utf-8"
     Cache-Control = "public, max-age=0, must-revalidate"
+    Access-Control-Allow-Origin = "*"
 
 # The service worker decides when everything else updates, so it has to be the
 # freshest file of the lot.
