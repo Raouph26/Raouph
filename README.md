@@ -3,8 +3,12 @@
 A calm line-drawing puzzle game for phones. TypeScript + Canvas, no engine, no
 runtime dependencies, ~25 kB total.
 
-> "Filament" is a working title. The genre is open, but pick a name and art
-> direction you own before publishing.
+> **The name must change before release.** *Filament* (Beard Envy, 2020) is an
+> existing line-drawing puzzle game on Steam, Epic and Switch — same word, same
+> genre, which is the worst case for a clash. *Thrum* was searched and showed no
+> game or app using it; *Skein* is taken twice over (a Steam shooter and an App
+> Store arcade game). None of this is trademark clearance — a solicitor should
+> confirm whatever is chosen.
 
 ## The rules
 
@@ -127,15 +131,31 @@ silence between them is left alone.
 
 ## Themes
 
-Four palettes — Sandstone, Harbour, Orchard, Ink — two on light grounds and two
-on dark. Each is written as a few grounds plus three accents; every derived
-value (hollow fills, halos, line colours, hub marks) is computed from those, so
-a theme cannot drift out of step with itself. The same definition drives the
-canvas and the interface, so the board and the chrome around it always match.
+Five: Sandstone, Harbour, Orchard, Ink, Ember. **A theme is a material, not a
+colour scheme.** Recolouring alone reads as the same game with a filter over it,
+so each one also owns:
 
-Deliberately few and far apart: an earlier set of ten read as one palette with
-the tint nudged. Each of these changes the ground *and* the accent triad — no
-two share a colour scheme — so switching is obvious rather than subtle.
+- the **roundness of the pieces**, from Ink's near-sharp facets to Sandstone's
+  pebbles
+- the **weight of the lines** — Harbour draws heavy, Ink draws fine
+- whether the board sits on a **raised plate** or straight on the ground
+- how empty cells are **marked**: dots, open rings, or nothing at all
+- a slow **drift** of the theme's own colours behind everything, differing in
+  count, size and speed — Harbour has two vast slow currents, Ink has six small
+  wandering lights
+
+The colours still matter: every derived value (hollow fills, halos, line
+colours, hub marks) is computed from a few grounds plus three accents, so a
+theme cannot drift out of step with itself, and the same definition drives the
+canvas and the interface.
+
+One theme unlocks per chapter cleared — 0, 1, 2, 3, 4 — so the set is complete
+by chapter 5. Auto mode only cycles what has been earned, so an unlock visibly
+changes the game rather than quietly adding a row to a list.
+
+The drift means the board never fully idles. When nothing but the drift is
+moving the loop redraws at about 26fps rather than running flat out, and
+`prefers-reduced-motion` drops the drift and lets it idle completely.
 
 The direction is Monument Valley's: its designers avoided heavily saturated
 hues but used desaturated ones at *any* brightness, which is why several themes
@@ -149,12 +169,6 @@ every theme, not only the default.
 
 **Every chapter wears its own theme**, cycling through the set, so the game keeps
 changing as it is played, and any theme can be pinned to keep it everywhere.
-
-Themes are currently ungated. Gating them behind cleared chapters made the
-feature look broken rather than aspirational: on a new save every option a
-player could tap resolved to the same palette, so nothing appeared to happen.
-`ThemeSpec.unlockChapters` still exists — raise those values to reintroduce
-progression once the look is settled.
 
 ## Hubs and three colours
 

@@ -1,6 +1,7 @@
 import type { Game } from "../core/game";
 import { type CellIndex, type Level, type ShapeId, xOf, yOf } from "../core/types";
 import {
+  REDUCED_MOTION,
   type ViewState,
   clamp01,
   easeInOutSine,
@@ -117,7 +118,7 @@ export class Renderer {
   }
 
   /** Resizes and paints the ground. Call once per frame, before any board. */
-  beginFrame(): { width: number; height: number } {
+  beginFrame(now = 0): { width: number; height: number } {
     const { ctx, palette } = this;
     const size = this.resize();
 
@@ -135,11 +136,49 @@ export class Renderer {
     wash.addColorStop(1, palette.background);
     ctx.fillStyle = wash;
     ctx.fillRect(0, 0, size.width, size.height);
+
+    this.drawDrift(size, now);
     return size;
   }
 
+  /**
+   * Slow blobs of the theme's own colours wandering behind the board. This is
+   * most of what stops a theme reading as a filter over the same game: the
+   * ground is alive, at a speed that never asks to be watched.
+   */
+  private drawDrift(size: { width: number; height: number }, now: number): void {
+    const { ctx, palette } = this;
+    const { drift } = palette.style;
+    if (drift.count <= 0 || REDUCED_MOTION) return;
+
+    const span = Math.min(size.width, size.height);
+    const seconds = (now / 1000) * drift.speed;
+
+    ctx.save();
+    for (let i = 0; i < drift.count; i++) {
+      // Two incommensurable periods per blob, so the pattern never visibly
+      // repeats within a sitting.
+      const x =
+        size.width * (0.5 + 0.4 * Math.sin(seconds * 0.11 + i * 2.399));
+      const y =
+        size.height * (0.5 + 0.34 * Math.cos(seconds * 0.083 + i * 1.777));
+      const radius = span * drift.radius;
+
+      const colour = palette.shape[(i % 3) as ShapeId];
+      const blob = ctx.createRadialGradient(x, y, 0, x, y, radius);
+      blob.addColorStop(0, colour);
+      blob.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.globalAlpha = drift.alpha;
+      ctx.fillStyle = blob;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
   draw(game: Game, view: ViewState, now: number): void {
-    this.beginFrame();
+    this.beginFrame(now);
     this.drawBoard(game, view, now);
   }
 
@@ -218,6 +257,7 @@ export class Renderer {
     now: number,
   ): void {
     const { ctx, palette } = this;
+    if (palette.style.panel === "none") return;
     // Timed off the centre cell so the plate settles with the pieces on it.
     const centre = Math.floor(level.cells.length / 2);
     const appear = easeOutCubic(view.cellAppear(level, centre, now));
@@ -248,6 +288,9 @@ export class Renderer {
     now: number,
   ): void {
     const { ctx, palette } = this;
+    const mark = palette.style.lattice;
+    if (mark === "none") return;
+
     for (const [i, cell] of level.cells.entries()) {
       if (cell.kind !== "empty") continue;
       const appear = view.cellAppear(level, i, now);
@@ -255,10 +298,18 @@ export class Renderer {
 
       const { x, y } = centerOf(level, layout, i);
       ctx.globalAlpha = appear * 0.55;
-      ctx.fillStyle = palette.lattice;
-      ctx.beginPath();
-      ctx.arc(x, y, Math.max(1, layout.cell * 0.022), 0, Math.PI * 2);
-      ctx.fill();
+      if (mark === "rings") {
+        ctx.strokeStyle = palette.lattice;
+        ctx.lineWidth = Math.max(1, layout.cell * 0.016);
+        ctx.beginPath();
+        ctx.arc(x, y, layout.cell * 0.1, 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = palette.lattice;
+        ctx.beginPath();
+        ctx.arc(x, y, Math.max(1, layout.cell * 0.026), 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
     ctx.globalAlpha = 1;
   }
@@ -305,7 +356,7 @@ export class Renderer {
     ctx.save();
     // Deliberately narrower than the pieces: at this cell size a heavier line
     // swallows the triangles and they stop reading as their own shape.
-    ctx.lineWidth = layout.cell * 0.1;
+    ctx.lineWidth = layout.cell * 0.1 * palette.style.lineScale;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.globalAlpha = complete ? breath : 1;
@@ -378,7 +429,7 @@ export class Renderer {
     // Outline means "still to connect", solid means "done". This is the main
     // way a player reads what is left without tracing every line by eye.
     const radius = layout.cell * (terminal ? 0.25 : 0.24) * scale;
-    traceShape(ctx, shape, x, y, radius, spin);
+    traceShape(ctx, shape, x, y, radius, spin, palette.style.cornerFactor);
 
     if (connected) {
       ctx.fillStyle = palette.shape[shape];

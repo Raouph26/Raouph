@@ -13,7 +13,12 @@ import {
 import { Game } from "./core/game";
 import { type CellIndex, type Level, inBounds, xOf, yOf } from "./core/types";
 import { AUTO_THEME, Progress } from "./progress";
-import { ViewState, clamp01, easeInOutCubic } from "./render/animation";
+import {
+  REDUCED_MOTION,
+  ViewState,
+  clamp01,
+  easeInOutCubic,
+} from "./render/animation";
 import {
   type ThemeSpec,
   DEFAULT_PALETTE,
@@ -75,11 +80,12 @@ let transition: Transition | null = null;
 function currentTheme(): ThemeSpec {
   const pinned = progress.pinnedTheme();
   if (pinned) return pinned;
+  const unlocked = THEMES.filter((t) => progress.isThemeUnlocked(t.id)).length;
   if (slot.mode === "daily") {
     const dayNumber = Number(day.replaceAll("-", "")) || 0;
-    return THEMES[dayNumber % THEMES.length];
+    return THEMES[dayNumber % Math.max(1, unlocked)];
   }
-  return themeForChapter(slot.chapter);
+  return themeForChapter(slot.chapter, unlocked);
 }
 
 /**
@@ -318,7 +324,10 @@ function renderThemes(): void {
   const cleared = progress.clearedChapters();
   const pinned = progress.pinnedTheme();
 
-  const following = themeForChapter(slot.chapter);
+  const following = themeForChapter(
+    slot.chapter,
+    THEMES.filter((t) => progress.isThemeUnlocked(t.id)).length,
+  );
   list.append(
     themeRow({
       name: "By chapter",
@@ -507,11 +516,35 @@ function startLevel(target: Slot, direction: 0 | 1 | -1): void {
 let running = false;
 let lastFrame = 0;
 
+/** Frame budget while only the ambient drift is moving. */
+const DRIFT_FRAME_MS = 38;
+let lastDraw = 0;
+
 function frame(now: number): void {
-  if (!game) {
+  if (!game || $("screen-game").hidden) {
     running = false;
     return;
   }
+
+  // The board settles, but the ground keeps drifting, so the loop cannot simply
+  // idle out. When nothing but the drift is moving it redraws at about 26fps —
+  // plenty for a wash that takes half a minute to cross the screen, and a third
+  // of the work of running flat out.
+  const busy =
+    transition !== null || game.activeShape !== null || view.isAnimating(game, now);
+  if (!busy) {
+    if (REDUCED_MOTION) {
+      renderer.draw(game, view, now);
+      running = false;
+      return;
+    }
+    if (now - lastDraw < DRIFT_FRAME_MS) {
+      requestAnimationFrame(frame);
+      return;
+    }
+  }
+  lastDraw = now;
+
   const dt = lastFrame === 0 ? 16 : Math.min(64, now - lastFrame);
   lastFrame = now;
 
@@ -527,7 +560,7 @@ function frame(now: number): void {
     // Both boards stay live through the slide — the outgoing one keeps its win
     // glow breathing instead of freezing into a snapshot.
     transition.view.update(transition.game, now, dt);
-    renderer.beginFrame();
+    renderer.beginFrame(now);
     renderer.drawBoard(transition.game, transition.view, now, -eased * width * dir);
     renderer.drawBoard(game, view, now, (1 - eased) * width * dir);
     if (eased >= 1) transition = null;
@@ -536,12 +569,7 @@ function frame(now: number): void {
   }
 
   renderer.draw(game, view, now);
-
-  if (view.isAnimating(game, now) || game.activeShape !== null) {
-    requestAnimationFrame(frame);
-  } else {
-    running = false;
-  }
+  requestAnimationFrame(frame);
 }
 
 function kick(): void {

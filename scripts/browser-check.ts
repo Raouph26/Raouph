@@ -289,9 +289,9 @@ async function main(): Promise<void> {
   await cdp.evaluate("document.getElementById('go-themes').click()");
   await delay(350);
   await cdp.screenshot("screen-themes.png");
-  // Picking a theme must actually repaint. This is exactly the bug that shipped
-  // once: every option a new save could tap resolved to the same palette, so
-  // the feature looked broken while behaving exactly as written.
+  // Themes unlock one per cleared chapter, so a fresh save has exactly one and
+  // nothing to switch to. Grant chapter 1 and reload: this exercises the unlock
+  // rule and the repaint together.
   const themeRows = await cdp.evaluate<number>(
     "document.querySelectorAll('#theme-list .theme').length",
   );
@@ -300,13 +300,44 @@ async function main(): Promise<void> {
       `expected ${THEMES.length + 1} theme rows (auto plus each), saw ${themeRows}`,
     );
   }
+  const lockedAtStart = await cdp.evaluate<number>(
+    "document.querySelectorAll('#theme-list .theme.is-locked').length",
+  );
+  if (lockedAtStart !== THEMES.length - 1) {
+    failures.push(
+      `expected ${THEMES.length - 1} themes locked on a fresh save, saw ${lockedAtStart}`,
+    );
+  }
+
+  const clearedChapterOne = JSON.stringify(
+    Array.from({ length: 32 }, (_, i) => `c1-s${i + 1}`),
+  );
+  await cdp.evaluate(
+    `localStorage.setItem('quiet-lines.solved', ${JSON.stringify(clearedChapterOne)})`,
+  );
+  await cdp.send("Page.navigate", { url: target ?? URL_BASE });
+  await waitFor("reload after granting chapter 1", async () =>
+    cdp.evaluate<boolean>("typeof window.__startLevel === 'function'"),
+  );
+  await delay(300);
+  await cdp.evaluate("document.getElementById('go-themes').click()");
+  await delay(300);
+
+  const lockedAfter = await cdp.evaluate<number>(
+    "document.querySelectorAll('#theme-list .theme.is-locked').length",
+  );
+  if (lockedAfter !== THEMES.length - 2) {
+    failures.push(
+      `clearing a chapter should unlock one theme; ${lockedAfter} still locked`,
+    );
+  }
 
   const beforeTheme = await cdp.evaluate<string>("window.__themeBackground()");
   const beforeCss = await cdp.evaluate<string>(
     "getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()",
   );
-  // Row 0 is "By chapter"; row 3 is a distinctly different palette.
-  await cdp.evaluate("document.querySelectorAll('#theme-list .theme')[3].click()");
+  // Row 0 is "By chapter", row 1 the starter theme, row 2 the one just earned.
+  await cdp.evaluate("document.querySelectorAll('#theme-list .theme')[2].click()");
   await delay(250);
   const afterTheme = await cdp.evaluate<string>("window.__themeBackground()");
   const afterCss = await cdp.evaluate<string>(
@@ -318,7 +349,7 @@ async function main(): Promise<void> {
   } else if (afterCss === beforeCss) {
     failures.push(`picking a theme did not change the interface (${afterCss})`);
   } else {
-    console.log(`  ok   theme switch repaints board and interface`);
+    console.log("  ok   a cleared chapter unlocks a theme, and it repaints");
   }
   await cdp.screenshot("screen-themes.png");
 
