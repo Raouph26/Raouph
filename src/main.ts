@@ -11,6 +11,11 @@ import {
   todayKey,
 } from "./core/chapters";
 import { Game } from "./core/game";
+import { type Hint, nextHint } from "./core/hint";
+import { AdManager } from "./ads/manager";
+import { AdMobAds } from "./ads/admob";
+import { StubAds } from "./ads/stub";
+import { NoAds } from "./ads/provider";
 import { type CellIndex, type Level, inBounds, xOf, yOf } from "./core/types";
 import { AUTO_THEME, Progress } from "./progress";
 import {
@@ -38,6 +43,17 @@ const renderer = new Renderer(canvas);
 const audio = new AudioEngine();
 const progress = new Progress();
 
+/**
+ * Real ads inside the native shell, a visible fake everywhere else, so the
+ * pacing of every placement is testable in the browser.
+ */
+const ads = new AdManager(
+  (window as unknown as { Capacitor?: unknown }).Capacitor
+    ? new AdMobAds()
+    : new StubAds(),
+);
+void ads.initialise();
+
 /** The brand mark only ever uses the first two families. */
 type ShapeIdLike = 0 | 1;
 
@@ -60,6 +76,7 @@ let game: Game | null = null;
 let view = new ViewState();
 let announcedSolved = false;
 let advanceTimer = 0;
+let hint: Hint | null = null;
 const day = todayKey();
 
 /** The outgoing board, still live, while it slides off screen. */
@@ -497,6 +514,7 @@ function startLevel(target: Slot, direction: 0 | 1 | -1): void {
     view = new ViewState();
     view.reset(performance.now());
     announcedSolved = false;
+    hint = null;
 
     if (outgoing) {
       transition = {
@@ -562,13 +580,13 @@ function frame(now: number): void {
     transition.view.update(transition.game, now, dt);
     renderer.beginFrame(now);
     renderer.drawBoard(transition.game, transition.view, now, -eased * width * dir);
-    renderer.drawBoard(game, view, now, (1 - eased) * width * dir);
+    renderer.drawBoard(game, view, now, (1 - eased) * width * dir, hint);
     if (eased >= 1) transition = null;
     requestAnimationFrame(frame);
     return;
   }
 
-  renderer.draw(game, view, now);
+  renderer.draw(game, view, now, hint);
   requestAnimationFrame(frame);
 }
 
@@ -593,6 +611,9 @@ function syncChrome(): void {
       : "";
   status.classList.toggle("is-solved", done);
   $("progress").textContent = `${slot.stage} / ${total}`;
+  const freeHints = ads.freeHintsLeft;
+  $("hint-badge").textContent = freeHints > 0 ? String(freeHints) : "";
+  $("hint-badge").classList.toggle("is-empty", freeHints === 0);
   ($("prev") as HTMLButtonElement).disabled = slot.stage <= 1;
   ($("next") as HTMLButtonElement).disabled =
     slot.stage >= total || !isUnlocked({ ...slot, stage: slot.stage + 1 });
@@ -626,8 +647,17 @@ function checkSolved(): void {
   progress.markSolved(levelIdFor(slot));
   view.markSolved(performance.now());
   audio.solved();
+  hint = null;
   syncChrome();
   prefetchNext(slot);
+
+  // Only ever between stages. A takeover mid-gesture loses the line being
+  // drawn, which is the surest way to end a session permanently.
+  if (ads.recordSolve(Date.now())) {
+    cancelAdvance();
+    void ads.showInterstitial().then(() => scheduleAdvance());
+    return;
+  }
   scheduleAdvance();
 }
 
@@ -862,6 +892,22 @@ $("game-back").addEventListener("click", () => {
   showScreen("stages");
 });
 
+$("hint").addEventListener("click", async () => {
+  if (!game || game.solved) return;
+  audio.unlock();
+  const button = $("hint") as HTMLButtonElement;
+  button.disabled = true;
+  try {
+    if (await ads.requestHint()) {
+      hint = nextHint(game.level, game.paths);
+      syncChrome();
+      kick();
+    }
+  } finally {
+    button.disabled = false;
+  }
+});
+
 $("game-mute").addEventListener("click", () => {
   audio.unlock();
   setMuted(!progress.muted);
@@ -919,5 +965,16 @@ Object.assign(window, {
   __stage: () => slot.stage,
   __isSwiping: () => transition !== null,
   __themeBackground: () => currentTheme().background,
+  __hint: () => hint,
+  __freeHints: () => ads.freeHintsLeft,
+  // Test hooks: the automated checks solve dozens of stages in a row, which
+  // trips the interstitial cadence and covers the board mid-run.
+  __setAds: (enabled: boolean) =>
+    ads.setProvider(enabled ? new StubAds() : new NoAds()),
+  // Deliberately not returning the promise: it only settles when the ad is
+  // dismissed, and an awaiting caller would hang until then.
+  __previewAd: () => {
+    void new StubAds().showInterstitial();
+  },
   __renderer: renderer,
 });

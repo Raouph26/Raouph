@@ -51,7 +51,14 @@ class Cdp {
   async connect(wsUrl: string): Promise<void> {
     this.socket = new WebSocket(wsUrl);
     this.socket.addEventListener("message", (event) => {
-      const message = JSON.parse(String(event.data));
+      // A throw in this listener escapes to the socket internals and takes the
+      // whole process down, so nothing in here may be allowed to fail.
+      let message: any;
+      try {
+        message = JSON.parse(String(event.data));
+      } catch {
+        return;
+      }
 
       if (message.method === "Runtime.exceptionThrown") {
         const details = message.params?.exceptionDetails;
@@ -194,6 +201,19 @@ async function main(): Promise<void> {
   await waitFor("app boot", async () =>
     cdp.evaluate<boolean>("typeof window.__startLevel === 'function'"),
   );
+
+  // Start from a clean save. The browser profile persists between runs, so a
+  // previous run's progress would otherwise decide what is unlocked here.
+  await cdp.evaluate("localStorage.clear()");
+  await cdp.send("Page.navigate", { url: target ?? URL_BASE });
+  await waitFor("reload with a clean save", async () =>
+    cdp.evaluate<boolean>("typeof window.__startLevel === 'function'"),
+  );
+
+  // Solving dozens of stages in a row would trip the interstitial cadence and
+  // cover the board. Ads are exercised deliberately below and unit-tested for
+  // pacing; here they only get in the way.
+  await cdp.evaluate("window.__setAds(false)");
 
   // The menu screens are chrome, not canvas, so capture them for review.
   await delay(400);
@@ -353,6 +373,45 @@ async function main(): Promise<void> {
   }
   await cdp.screenshot("screen-themes.png");
 
+  // The hint button spends a free hint and marks a real next move on the board.
+  await cdp.evaluate("window.__startLevel('classic', 1, 12)");
+  await waitFor("hint level to load", async () =>
+    cdp.evaluate<boolean>("window.__game() !== null"),
+  );
+  const hintsBefore = await cdp.evaluate<number>("window.__freeHints()");
+  await cdp.evaluate("document.getElementById('hint').click()");
+  await delay(300);
+  const hintShown = await cdp.evaluate<boolean>("window.__hint() !== null");
+  const hintsAfter = await cdp.evaluate<number>("window.__freeHints()");
+
+  if (!hintShown) failures.push("pressing hint produced no hint");
+  else if (hintsAfter !== hintsBefore - 1) {
+    failures.push(`hint did not spend a free hint (${hintsBefore} -> ${hintsAfter})`);
+  } else {
+    console.log("  ok   hint spends a free hint and marks a move");
+  }
+  await cdp.screenshot("level-hint.png");
+
+  // The stand-in ad itself: it must take the screen and refuse to be dismissed
+  // before its timer runs out, exactly as a real one would.
+  void cdp.evaluate("window.__previewAd()");
+  await delay(400);
+  const adVisible = await cdp.evaluate<boolean>(
+    "document.querySelector('.ad-overlay') !== null",
+  );
+  const adLocked = await cdp.evaluate<boolean>(
+    "document.querySelector('.ad-action')?.disabled === true",
+  );
+  if (adVisible && adLocked) {
+    console.log("  ok   ad overlay takes the screen and holds it");
+  } else {
+    failures.push(
+      `ad overlay did not behave (visible=${adVisible}, locked=${adLocked})`,
+    );
+  }
+  await cdp.screenshot("screen-ad.png");
+  await cdp.evaluate("document.querySelector('.ad-overlay')?.remove()");
+
   // A real finger sweeps continuously and wobbles; it does not teleport between
   // cell centres the way the checks above do. That difference hid a bug where
   // diagonal moves were near-impossible, because clipping the corner of an
@@ -368,6 +427,10 @@ async function main(): Promise<void> {
   ];
 
   for (const [chapter, stage] of wobbleTargets) {
+    // Any lingering overlay would swallow every pointer event below.
+    await cdp.evaluate(
+      "window.__cancelAdvance(); document.querySelector('.ad-overlay')?.remove()",
+    );
     await cdp.evaluate(`window.__startLevel('classic', ${chapter}, ${stage})`);
     await waitFor(`c${chapter}-s${stage} to load`, async () =>
       cdp.evaluate<boolean>("window.__game() !== null"),

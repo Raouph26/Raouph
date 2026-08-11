@@ -183,6 +183,55 @@ Measured with `npm run hubs`. The same measurement showed a hub crossed *twice
 by one line* never survives generation: those boards are almost always
 ambiguous, which matches what was found when hand-authoring the tutorial.
 
+## Monetisation
+
+Ads go through `src/ads/`. Nothing in the game talks to an SDK: it calls an
+`AdProvider`, which is AdMob inside the native shell and a deliberately
+obstructive stub everywhere else. The stub takes over the screen and refuses to
+be dismissed early, so a placement that feels bad in the browser can be found
+before a real thirty-second video finds it for you.
+
+`AD_POLICY` in `src/ads/manager.ts` holds every dial:
+
+| Dial | Default | What it does |
+| --- | --- | --- |
+| `gracePeriodStages` | 6 | Stages a new player finishes before the first ad |
+| `interstitialEveryStages` | 4 | Cadence after that |
+| `minimumGapMs` | 100s | Floor on time between two interstitials |
+| `freeHints` | 3 | Hints given outright before a rewarded ad is asked for |
+
+Two placements only:
+
+- **Interstitial between stages.** Never mid-drag. A takeover during a gesture
+  loses the line being drawn, which ends sessions permanently.
+- **Rewarded video for a hint.** The hint is real — the solver marks one correct
+  next segment, chosen from the line with least progress. One segment, never the
+  whole answer, so it unsticks a player and hands the puzzle straight back.
+
+Worth knowing which way to turn the dials: interstitial revenue is impressions
+× eCPM, and impressions are sessions × session length. Tightening the cadence
+raises impressions per session and shortens sessions; past a point the second
+effect wins. Measure retention before cranking, rather than guessing in either
+direction.
+
+## Still needed before release
+
+Roughly in order:
+
+1. **A name.** See the note at the top — the current one is unusable.
+2. **The native shell.** Capacitor wrapping the web build. Nothing ships to
+   either store without it, and `AdMobAds` stays inert until it exists.
+3. **Consent and privacy.** Google UMP for GDPR/GPP, Apple's App Tracking
+   Transparency prompt, and a hosted privacy policy URL. Both stores reject
+   builds that serve personalised ads without these — this is a hard blocker,
+   not a polish item.
+4. **Store assets.** Icon, adaptive icon, splash, screenshots per device class,
+   listing copy.
+5. **Real ad unit ids.** `src/ads/admob.ts` currently uses Google's public test
+   ids, which always fill and earn nothing.
+6. **Analytics**, if the dials above are ever to be tuned on evidence rather
+   than taste.
+
 ## Status
 
 Playable end to end: menu, chapter and stage select, classic and daily,

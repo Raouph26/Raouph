@@ -1,4 +1,5 @@
 import type { Game } from "../core/game";
+import type { Hint } from "../core/hint";
 import { type CellIndex, type Level, type ShapeId, xOf, yOf } from "../core/types";
 import {
   REDUCED_MOTION,
@@ -177,9 +178,9 @@ export class Renderer {
     ctx.restore();
   }
 
-  draw(game: Game, view: ViewState, now: number): void {
+  draw(game: Game, view: ViewState, now: number, hint: Hint | null = null): void {
     this.beginFrame(now);
-    this.drawBoard(game, view, now);
+    this.drawBoard(game, view, now, 0, hint);
   }
 
   /**
@@ -187,7 +188,13 @@ export class Renderer {
    * offsets in the same frame give the swipe between stages, with both still
    * live rather than one being a frozen snapshot.
    */
-  drawBoard(game: Game, view: ViewState, now: number, offsetX = 0): void {
+  drawBoard(
+    game: Game,
+    view: ViewState,
+    now: number,
+    offsetX = 0,
+    hint: Hint | null = null,
+  ): void {
     const { ctx } = this;
     const { level } = game;
     const layout = this.layoutFor(level);
@@ -216,6 +223,8 @@ export class Renderer {
     for (const shape of game.shapes) {
       this.drawLine(game, layout, view, shape, now);
     }
+
+    if (hint) this.drawHint(level, layout, hint, now);
 
     const { hubPasses } = game.occupancy();
     for (const [i, cell] of level.cells.entries()) {
@@ -367,6 +376,41 @@ export class Renderer {
       if (i === 0) ctx.moveTo(point.x, point.y);
       else ctx.lineTo(point.x, point.y);
     }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  /**
+   * The hinted move: a pulsing dashed segment and a ring on the cell to reach.
+   * Drawn over the lines but under the pieces, so it reads as guidance laid on
+   * the board rather than as something already played.
+   */
+  private drawHint(
+    level: Level,
+    layout: Layout,
+    hint: Hint,
+    now: number,
+  ): void {
+    const { ctx, palette } = this;
+    const from = centerOf(level, layout, hint.from);
+    const to = centerOf(level, layout, hint.to);
+    const pulse = 0.55 + 0.45 * easeInOutSine((Math.sin(now / 480) + 1) / 2);
+
+    ctx.save();
+    ctx.globalAlpha = pulse;
+    ctx.strokeStyle = palette.shape[hint.shape];
+    ctx.lineWidth = layout.cell * 0.07;
+    ctx.lineCap = "round";
+    ctx.setLineDash([layout.cell * 0.1, layout.cell * 0.13]);
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.lineTo(to.x, to.y);
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+    ctx.lineWidth = layout.cell * 0.035;
+    ctx.beginPath();
+    ctx.arc(to.x, to.y, layout.cell * 0.42, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
   }

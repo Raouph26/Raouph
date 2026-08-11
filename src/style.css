@@ -205,6 +205,97 @@ button:focus-visible {
   transform: rotate(-40deg);
 }
 
+/* --- hint and ads -------------------------------------------------------- */
+
+.icon {
+  position: relative;
+}
+
+.hint-glyph {
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Free hints remaining. Hidden once they run out, when an ad takes over. */
+.hint-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.hint-badge.is-empty {
+  display: none;
+}
+
+/*
+ * The stand-in ad. Deliberately as obstructive as the real thing so placement
+ * decisions can be judged honestly before an SDK is wired in.
+ */
+.ad-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.ad-panel {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 320px;
+  padding: 32px 24px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  text-align: center;
+}
+
+.ad-label {
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-indent: 0.24em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.ad-body {
+  font-size: 15px;
+  color: var(--ink-bright);
+}
+
+.ad-action {
+  margin-top: 8px;
+  padding: 13px 24px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  transition: opacity 160ms ease;
+}
+
+.ad-action:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 /* --- menu ----------------------------------------------------------------- */
 
 #screen-menu {
