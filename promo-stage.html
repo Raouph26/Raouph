@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WORDSPYRE capture stage</title>
+<!--
+  A recording rig, not part of the game.
+
+  Playwright only scales video down, so recording a 432px-wide phone layout into
+  a 1080x1920 frame left the game sitting small in one corner. Scaling the page
+  itself is no good either: the game sizes everything in vw units, so a wider
+  viewport makes the tiles shrink relative to the frame.
+
+  The game therefore runs inside an iframe that really is 432x768 - so vw units
+  resolve to a phone - and the whole iframe is then scaled 2.5x to fill 1080x1920.
+  Layout stays exactly what a player sees; only the raster is bigger.
+-->
+<style>
+  html, body { margin: 0; padding: 0; width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+  #stage { position: absolute; top: 0; left: 0; width: 432px; height: 768px;
+           transform: scale(2.5); transform-origin: top left; border: 0; }
+  #hook {
+    position: absolute; left: 0; right: 0; top: 46%; z-index: 10; text-align: center;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-weight: 900; font-size: 56px; line-height: 1.2; padding: 0 48px; color: #fff;
+    -webkit-text-stroke: 14px rgba(10,12,20,0.85); paint-order: stroke fill;
+    text-shadow: 0 8px 24px rgba(0,0,0,0.55);
+    pointer-events: none; opacity: 0; transition: opacity .35s ease; letter-spacing: 0.5px;
+  }
+  #hook.show { opacity: 1; }
+</style>
+</head>
+<body>
+<iframe id="stage" src="/index.html"></iframe>
+<div id="hook"></div>
+</body>
+</html>
