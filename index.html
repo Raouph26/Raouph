@@ -2304,7 +2304,7 @@
         };
     const AudioEngine = {
         audioCtx: null, buffers: {}, sfxGain: 0.65, musicVol: 0.55,
-        music: {}, current: null, ducked: false, ready: false,
+        music: {}, current: null, ducked: false, ready: false, wasPlaying: false,
         _ensureContext() {
             if (!this.audioCtx) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) this.audioCtx = new AC(); }
             if (this.audioCtx && this.audioCtx.state === "suspended") this.audioCtx.resume();
@@ -2400,6 +2400,30 @@
         },
         setMusicVolume(v) { this.musicVol = v; if (this.current) { try { this.current.volume = this.ducked ? this._target() * 0.35 : this._target(); } catch (e) {} } },
         setSfxVolume(v) { this.sfxGain = v; },
+        // Minimising the app has to silence it. A hidden page keeps its <audio>
+        // playing, and its timers get throttled, so fading out the normal way can
+        // stall before it ever reaches the pause - the track then plays on under
+        // whatever the player switched to. So the pause here is immediate, and
+        // the volume swells back only on return.
+        suspendAll() {
+            const cur = this.current;
+            this.wasPlaying = !!(cur && !cur.paused);
+            if (cur) {
+                if (cur._fade) { clearInterval(cur._fade); cur._fade = null; }
+                try { cur.pause(); } catch (e) {}
+            }
+            if (this.audioCtx && this.audioCtx.state === 'running') { try { this.audioCtx.suspend(); } catch (e) {} }
+        },
+        resumeAll() {
+            if (this.audioCtx && this.audioCtx.state === 'suspended') { try { this.audioCtx.resume(); } catch (e) {} }
+            const cur = this.current;
+            if (!cur || !this.wasPlaying) return;
+            this.wasPlaying = false;
+            if (this.musicVol <= 0) return;
+            const to = this.ducked ? this._target() * 0.35 : this._target();
+            try { cur.volume = 0; } catch (e) {}
+            cur.play().then(() => this._fade(cur, to, 350)).catch(() => {});
+        },
         // ---- the names the rest of the game already calls -------------------
         playTap() { this.play("button"); },
         playTileTap() { this.play("tap"); },
@@ -5213,7 +5237,11 @@
         if(tl) tl.textContent=c.tagline;
     }
     function boot(){try{G.currentTheme=localStorage.getItem('wordling-theme')||'wordling';}catch(e){G.currentTheme='wordling';}loadProgress();applyTheme(G.currentTheme);let savedPalette;try{savedPalette=localStorage.getItem('wordling-palette')||'coral-sky';}catch(e){savedPalette='coral-sky';}applyPalette(savedPalette);updateThemeButtons();loadPersistence();renderPresses();bindPressArrows();updateContinueButtonVisibility();initDict();bind();applySavedSettings();wrapTitleLetters();}
-    document.addEventListener('visibilitychange', () => { if(document.hidden){ if(G.dragData){ cleanupDrag(); render(); } } else { const c=document.getElementById('game-container'); if(c){ c.classList.add('anim-kick'); void c.offsetHeight; c.classList.remove('anim-kick'); } } });
+    document.addEventListener('visibilitychange', () => { if(document.hidden){ AudioEngine.suspendAll(); if(G.dragData){ cleanupDrag(); render(); } } else { AudioEngine.resumeAll(); const c=document.getElementById('game-container'); if(c){ c.classList.add('anim-kick'); void c.offsetHeight; c.classList.remove('anim-kick'); } } });
+    // Android can hand the app straight to pagehide without a visibilitychange
+    // first, so the music is stopped from both.
+    window.addEventListener('pagehide', () => AudioEngine.suspendAll());
+    window.addEventListener('pageshow', () => { if (!document.hidden) AudioEngine.resumeAll(); });
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 })();
 </script>
