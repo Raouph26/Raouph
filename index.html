@@ -2461,7 +2461,24 @@
             if (cur) {
                 if (cur._fade) { clearInterval(cur._fade); cur._fade = null; }
                 try { cur.pause(); } catch (e) {}
+                // Pausing is not enough on Android: a paused <audio> still holds
+                // a media session, and the system keeps a notification chip in
+                // the status bar for as long as one exists. Only detaching the
+                // source gives it up. The position is kept so the track picks up
+                // where it left off rather than restarting on every return.
+                try {
+                    this.suspendedAt = cur.currentTime || 0;
+                    this.suspendedSrc = cur.getAttribute('src') || this.suspendedSrc;
+                    cur.removeAttribute('src');
+                    cur.load();
+                } catch (e) {}
             }
+            try {
+                if (navigator.mediaSession) {
+                    navigator.mediaSession.playbackState = 'none';
+                    navigator.mediaSession.metadata = null;
+                }
+            } catch (e) {}
             if (this.audioCtx && this.audioCtx.state === 'running') { try { this.audioCtx.suspend(); } catch (e) {} }
         },
         resumeAll() {
@@ -2470,6 +2487,14 @@
             if (!cur || !this.wasPlaying) return;
             this.wasPlaying = false;
             if (this.musicVol <= 0) return;
+            // Put back the source that was detached on the way out.
+            try {
+                if (!cur.getAttribute('src') && this.suspendedSrc) {
+                    cur.setAttribute('src', this.suspendedSrc);
+                    cur.load();
+                    cur.currentTime = this.suspendedAt || 0;
+                }
+            } catch (e) {}
             const to = this.ducked ? this._target() * 0.35 : this._target();
             try { cur.volume = 0; } catch (e) {}
             cur.play().then(() => this._fade(cur, to, 350)).catch(() => {});
