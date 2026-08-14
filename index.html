@@ -3034,7 +3034,7 @@
         clearActiveRun();
         G.removedLetters = new Set();
         if (G.gameMode==='daily' && G.dailyChallenge===1) G.removedLetters.add('E');
-        G.equippedGlyphs = []; G.bank = pressValue('startBank', 0); G.consumables = []; G.activeHazard = null; G.anchorTileId = null; G.mutedTileId = null; G.isEndless = false;
+        G.equippedGlyphs = []; G.bank = pressValue('startBank', 0); G.consumables = []; G.activeHazard = null; G.anchorTileId = null; G.mutedTileId = null; G.isEndless = false; G.victoryBanked = false;
         G.shopOffers = {glyphs:[], consumables:[]}; G.shopRerollCount = 0; G.shopRerollsUsedThisRun = 0;
         const seedSeals = pressValue('startSeals', 0);
         if (seedSeals > 0) {
@@ -3473,6 +3473,8 @@
     }
 
     function showStageClear(score) {
+        // Final stage of a normal run: decide first, shop after.
+        if (!isZenLike() && !G.isEndless && G.currentStage >= G.totalStages) { showVictoryChoice(); return; }
         checkMilestones({ event:'stageClear', bank:G.bank, stage:G.currentStage, rerollsUsed:G.shopRerollsUsedThisRun||0, noDiscards:(G.discardsUsedThisStage||0)===0 });
         G.phase='stageclear'; saveActiveRun();
         const draftDiv=document.getElementById('view-draft'); draftDiv.innerHTML=''; draftDiv.classList.remove('show');
@@ -3904,6 +3906,7 @@
         if (G.stageTargets[stage] === undefined) { const prev = G.stageTargets[stage-1] || G.stageTargets[G.stageTargets.length-1]; G.stageTargets[stage] = Math.floor(prev * (isZenLike() ? 1.25 : 1.6)); }
     }
     function showVictoryChoice() {
+        G.phase='victory'; saveActiveRun();
         const draftDiv=document.getElementById('view-draft'); draftDiv.innerHTML=''; draftDiv.classList.remove('show');
         const panel=document.createElement('div'); panel.className='draft-panel';
         const h2=document.createElement('h2'); h2.textContent='BOSS DEFEATED!'; panel.appendChild(h2);
@@ -3920,21 +3923,31 @@
         draftDiv.appendChild(panel); draftDiv.classList.remove('hidden');
         requestAnimationFrame(()=>requestAnimationFrame(()=>{AudioEngine.playSwipe();draftDiv.classList.add('show');}));
     }
-    function claimVictory() {
+    // Reaching the end of stage 8 is the win, whether the player then stops or
+    // pushes on. Banked once, from either branch.
+    function bankVictory() {
+        if (G.victoryBanked) return;
+        G.victoryBanked = true;
         winRun(G.activePressId);
-        clearActiveRun();
         recordLeaderboardScore(G.currentScore);
         updateMostStagesCleared(G.totalStages);
         addWin();
+    }
+    function claimVictory() {
+        bankVictory();
+        clearActiveRun();
         hideModal();
         document.getElementById('view-draft').classList.remove('show');
         returnToMenuUI();
         slideToView('view-difficulty','view-menu');
     }
     function goEndless() {
+        bankVictory();
         G.isEndless = true;
         ensureStageTarget(G.currentStage);
-        renderMap();
+        // The payout and shop for the stage just cleared, held back until the
+        // player said they wanted another one.
+        showStageClear(G.currentScore);
     }
 
     function showModal(type) {
@@ -4761,6 +4774,7 @@
         if (G.phase === 'map') renderMap();
         else if (G.phase === 'shop') { rehydrateShopOffers(); showResumedShop(); }
         else if (G.phase === 'stageclear') showStageClear(G.currentScore);
+        else if (G.phase === 'victory') showVictoryChoice();
     }
     function startClassicLikeRun(mode) {
         G.gameMode = mode;
@@ -5153,7 +5167,7 @@
             removedLetters: [...G.removedLetters],
             equippedGlyphs: G.equippedGlyphs, bank: G.bank, consumables: G.consumables,
             activeHazard: G.activeHazard, anchorTileId: G.anchorTileId, mutedTileId: G.mutedTileId,
-            shopOffers: G.shopOffers, shopRerollCount: G.shopRerollCount, freeShopRerolls: G.freeShopRerolls||0, revivedThisRun: !!G.revivedThisRun, phase: G.phase, benchSort: G.benchSort, drawSeq: G.drawSeq,
+            shopOffers: G.shopOffers, shopRerollCount: G.shopRerollCount, freeShopRerolls: G.freeShopRerolls||0, revivedThisRun: !!G.revivedThisRun, victoryBanked: !!G.victoryBanked, phase: G.phase, benchSort: G.benchSort, drawSeq: G.drawSeq,
             activePressId: G.activePressId, shopRerollsUsedThisRun: G.shopRerollsUsedThisRun
         };
     }
@@ -5313,6 +5327,60 @@
             if (el && el.parentNode) el.parentNode.removeChild(el);
         } else playStudioIntro();
     } catch (e) {}
+    // Android's back gesture closed the whole app, so one stray swipe mid-run
+    // dropped the player out of the game. A spare history entry is kept on the
+    // stack at all times: back pops it, we close whatever was on top instead,
+    // and push a fresh one ready for the next press. Returning false leaves the
+    // stack empty, which is what lets a back press on the menu still exit.
+    function handleBackPress() {
+        const shown = id => { const el = document.getElementById(id); return el && el.classList.contains('show'); };
+        // A finished run and an open shop are both decisions - back must not
+        // sneak past either of them.
+        if (shown('modal-overlay') || shown('view-draft')) return true;
+        for (const id of ['howto-modal', 'bug-modal', 'backup-modal', 'options-modal']) {
+            if (shown(id)) { document.getElementById(id).classList.remove('show'); return true; }
+        }
+        for (const id of ['view-stats', 'view-unlocks', 'view-themes', 'view-difficulty']) {
+            const v = document.getElementById(id);
+            // slideBack, not slideToView: it is what each panel's own CLOSE
+            // button calls, and it clears the menu's slide-left on the way.
+            if (v && !v.classList.contains('hidden')) { slideBack('view-menu', id); return true; }
+        }
+        // Mid-run: back goes to the menu. The run is already saved, so PLAY
+        // offers it straight back.
+        if (G.gameStarted) { returnToMenuUI(); return true; }
+        return false;
+    }
+    try {
+        history.pushState({ ws: 1 }, '');
+        window.addEventListener('popstate', () => {
+            let held = false;
+            try { held = handleBackPress(); } catch (e) { held = false; }
+            // Nothing to close: leave the stack empty so the next press exits.
+            // Going back a second time here would walk off the page instead,
+            // which in a browser tab means leaving the game altogether.
+            if (held) history.pushState({ ws: 1 }, '');
+        });
+    } catch (e) {}
+
+    // The installed app keeps its system bars until a package is built from the
+    // fullscreen manifest. Asking for fullscreen on the first touch gets the
+    // same result out of the build people already have, and is a no-op in a
+    // normal browser tab where the bars are not ours to take.
+    function goFullscreenIfInstalled() {
+        try {
+            const mm = window.matchMedia;
+            if (!mm || !(mm('(display-mode: standalone)').matches || mm('(display-mode: fullscreen)').matches)) return;
+            if (document.fullscreenElement) return;
+            const el = document.documentElement;
+            const req = el.requestFullscreen || el.webkitRequestFullscreen;
+            if (!req) return;
+            const r = req.call(el, { navigationUI: 'hide' });
+            if (r && r.catch) r.catch(() => {});
+        } catch (e) {}
+    }
+    document.addEventListener('pointerdown', goFullscreenIfInstalled, { once: true });
+
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 })();
 </script>
