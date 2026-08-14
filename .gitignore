@@ -1,0 +1,7 @@
+
+# Delivery artifacts, not part of the website. Netlify publishes the whole
+# repo, so anything sitting here is served to the internet and metered - the
+# two zips alone were 11.7MB of the 25MB site.
+*.zip
+store/
+promo/
