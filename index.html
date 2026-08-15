@@ -1952,6 +1952,12 @@
         #view-themes h2 { margin-bottom: 4px; }
         #view-themes #btn-back-themes { padding: 10px; margin-top: 6px !important; }
         #view-menu { gap: 15px; padding: 20px 20px; }
+        /* BACK UP SAVE and REPORT A BUG are pinned to the bottom corners, so they
+           take no part in centring the rest of the menu. Fullscreen handed the
+           page another ~130px of height and the block ended up sitting low, with
+           every bit of the slack above the title. Reserving the row's 57px
+           centres the menu in the space that is actually free. */
+        #view-menu { padding-bottom: calc(20px + 57px + env(safe-area-inset-bottom, 0px)); }
         #view-menu .menu-btn { padding: 16px 14px; width: min(310px, 84vw); font-size: 1.05rem; }
         #view-menu .menu-btn.play-btn { font-size: 1.28rem; }
         #view-difficulty { gap: 7px; padding: 12px 26px; }
@@ -1960,6 +1966,7 @@
             #view-menu h1 { font-size: clamp(1.4rem, 9.4vw, 2.5rem) !important; margin-bottom: 4px !important; }
             html[data-theme="cyber-arcade"] #view-menu h1 { font-size: clamp(1.3rem, 8.5vw, 2.3rem) !important; }
             #view-menu { gap: 8px; padding: 12px 20px; }
+            #view-menu { padding-bottom: calc(12px + 57px + env(safe-area-inset-bottom, 0px)); }
             #view-menu .menu-btn { padding: 11px 12px; width: min(290px, 84vw); font-size: 0.9rem; }
             #view-menu .menu-btn.play-btn { font-size: 1.05rem; }
             #view-difficulty { gap: 5px; padding: 8px 22px; }
@@ -1978,6 +1985,7 @@
             #bench-bar { margin: 0; }
             #view-menu h1 { font-size: clamp(1.3rem, 8vw, 2rem) !important; }
             #view-menu { gap: 6px; padding: 10px 18px; }
+            #view-menu { padding-bottom: calc(10px + 57px + env(safe-area-inset-bottom, 0px)); }
             #view-menu .menu-btn { padding: 9px 12px; font-size: 0.82rem; }
             #view-menu .menu-btn.play-btn { font-size: 0.95rem; }
             #view-difficulty { gap: 4px; padding: 6px 18px; }
