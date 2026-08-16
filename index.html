@@ -4804,6 +4804,16 @@
         AudioEngine.startMusic();
         render();
         // a run saved between stages must not resume onto a board that is already won
+        // A run the system kills can come back with nothing on the rack: the
+        // hand is emptied and refilled as one step, and a save landing between
+        // the two stores the empty half. Rather than strand the player on a
+        // dead board with no way out but abandoning the run, deal them back up.
+        if (G.phase === 'playing' && !(G.hand && G.hand.length)) {
+            drawToHand();
+            GlyphManager.onRoundStart(G.hand);
+            saveActiveRun();
+            render();
+        }
         if (G.phase === 'map') renderMap();
         else if (G.phase === 'shop') { rehydrateShopOffers(); showResumedShop(); }
         else if (G.phase === 'stageclear') showStageClear(G.currentScore);
