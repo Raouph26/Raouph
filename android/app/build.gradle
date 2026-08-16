@@ -32,7 +32,18 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Android will not install two packages that share an applicationId
+            // but were signed with different keys - it refuses outright with
+            // "App not installed" rather than replacing anything. The test build
+            // therefore gets its own id so it can sit beside the Play version
+            // instead of fighting it.
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-test"
+            resValue "string", "app_name", "WORDSPYRE TEST"
+        }
         release {
+            resValue "string", "app_name", "WORDSPYRE"
             minifyEnabled false          // one activity; nothing to shrink but plenty to break
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
