@@ -2,14 +2,14 @@ plugins { id 'com.android.application' }
 
 android {
     namespace 'com.wordspyre.game'
-    compileSdk 34
+    compileSdk 36
 
     defaultConfig {
         // Must stay exactly this: Play identifies the app by it, and a different
         // value would be a different app rather than an update to this one.
         applicationId "com.wordspyre.game"
         minSdk 24
-        targetSdk 34
+        targetSdk 36
 
         // Bumped by the workflow from the run number, so two builds can never
         // collide the way the hand-typed ones did.
