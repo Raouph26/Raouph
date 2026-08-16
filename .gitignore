@@ -5,3 +5,9 @@
 *.zip
 store/
 promo/
+
+# Built into the app by the workflow, not kept in the repo.
+android/app/src/main/assets/
+android/.gradle/
+android/build/
+android/app/build/

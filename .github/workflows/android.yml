@@ -1,0 +1,91 @@
+name: Build the Android app
+
+# The studio has no Android tooling on their machine, so the app is built here
+# on GitHub's runners - which already carry the Android SDK - and the finished
+# file is attached to the run for download.
+#
+# Without the signing secrets this produces a debug APK: sideload it to try the
+# real thing. With them it also produces the .aab that Play accepts.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'words.js'
+      - 'sounds/**'
+      - '*.png'
+      - 'android/**'
+      - '.github/workflows/android.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # The secrets context cannot be read from a step's `if`, so the one question
+    # that matters - has the upload key been added yet - is answered once here.
+    env:
+      HAS_UPLOAD_KEY: ${{ secrets.KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Put the game inside the app
+        run: |
+          set -eux
+          DEST=android/app/src/main/assets/www
+          rm -rf "$DEST"
+          mkdir -p "$DEST"
+          cp index.html words.js manifest.json "$DEST"/
+          cp ./*.png "$DEST"/
+          cp -r sounds "$DEST"/sounds
+          # sw.js is deliberately left out: it belongs to the website build.
+          # The page already skips registering it off http(s), and there is
+          # nothing to cache when every file is on the device to begin with.
+          du -sh "$DEST"
+          ls -la "$DEST"
+
+      - name: Build
+        working-directory: android
+        env:
+          # Version code climbs with the run number so two builds can never
+          # collide. Offset past the codes already burned on the old wrapper.
+          APP_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          set -eux
+          gradle --no-daemon assembleDebug \
+            -PappVersionCode=$((100 + APP_VERSION_CODE)) \
+            -PappVersionName=1.1.$APP_VERSION_CODE
+
+      - name: Sign and bundle for Play, if the key is available
+        if: env.HAS_UPLOAD_KEY == 'true'
+        working-directory: android
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          APP_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          set -eu
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.keystore"
+          export KEYSTORE_PATH="$RUNNER_TEMP/upload.keystore"
+          gradle --no-daemon bundleRelease \
+            -PappVersionCode=$((100 + APP_VERSION_CODE)) \
+            -PappVersionName=1.1.$APP_VERSION_CODE
+          rm -f "$RUNNER_TEMP/upload.keystore"
+
+      - name: Attach the results to this run
+        uses: actions/upload-artifact@v4
+        with:
+          name: wordspyre-app
+          if-no-files-found: error
+          path: |
+            android/app/build/outputs/apk/debug/*.apk
+            android/app/build/outputs/bundle/release/*.aab
