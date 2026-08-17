@@ -2412,13 +2412,56 @@
             src.stop(t + playFor + 0.02);
         },
         // ---- music: two streaming tracks that cross into each other --------
+        // How much of the end of a track overlaps its own beginning. Long
+        // enough to cover the silence an encoder leaves at both ends of an mp3,
+        // short enough that nobody hears two copies.
+        LOOP_XFADE: 1.1,
         _track(key, file) {
             if (this.music[key]) return this.music[key];
+            this.music[key] = this._make(key, file);
+            // A twin of the same track, used only to take over at the loop
+            // point. An mp3 carries a scrap of silence at each end, so letting
+            // the element loop itself leaves an audible hole every time round.
+            // Handing over to a second copy that is already playing hides it.
+            this.music[key + "#b"] = this._make(key, file);
+            return this.music[key];
+        },
+        _make(key, file) {
             const a = new Audio("sounds/" + file + ".mp3");
-            a.loop = true; a.preload = "none"; a.volume = 0;
+            a.loop = false; a.preload = "none"; a.volume = 0;
             a.dataset.track = key; a.style.display = "none";
+            a._key = key;
+            a.addEventListener("timeupdate", () => this._maybeHandOver(a));
+            // If the hand-over is ever missed - a stall, a seek, a slow frame -
+            // the track must still come back rather than stopping dead.
+            a.addEventListener("ended", () => { if (this.current === a) this._handOver(a, 0); });
             document.body.appendChild(a);
-            this.music[key] = a; return a;
+            return a;
+        },
+        _twinOf(el) {
+            const k = el._key;
+            return this.music[k] === el ? this.music[k + "#b"] : this.music[k];
+        },
+        _maybeHandOver(el) {
+            if (this.current !== el || el._handing) return;
+            const d = el.duration;
+            if (!isFinite(d) || d <= 0) return;
+            if (d - el.currentTime > this.LOOP_XFADE) return;
+            this._handOver(el, Math.round(this.LOOP_XFADE * 1000));
+        },
+        _handOver(el, ms) {
+            const twin = this._twinOf(el);
+            if (!twin || el._handing) return;
+            el._handing = true;
+            const to = this.ducked ? this._target() * 0.35 : this._target();
+            try { twin.currentTime = 0; } catch (e) {}
+            twin.volume = 0;
+            twin.play().then(() => {
+                this.current = twin;
+                this._fade(twin, to, ms || 250);
+                this._fade(el, 0, ms || 250, true);
+                setTimeout(() => { el._handing = false; }, (ms || 250) + 120);
+            }).catch(() => { el._handing = false; });
         },
         _fade(el, to, ms, thenPause) {
             if (!el) return;
@@ -2440,7 +2483,8 @@
             const next = this._track(which, file);
             if (this.current === next) { if (next.paused) { next.play().catch(() => {}); this._fade(next, this._target(), 400); } return; }
             const prev = this.current;
-            if (prev) this._fade(prev, 0, 420, true);
+            if (prev) { this._fade(prev, 0, 420, true); const pt = this._twinOf(prev);
+                        if (pt && !pt.paused) this._fade(pt, 0, 420, true); }
             this.current = next;
             next.preload = "auto";
             next.volume = 0;
@@ -2465,6 +2509,13 @@
         // the volume swells back only on return.
         suspendAll() {
             const cur = this.current;
+            // The loop twin can be mid-fade and is not this.current, so pausing
+            // only the current track would leave it playing behind everything.
+            Object.keys(this.music).forEach(k => {
+                const el = this.music[k];
+                if (el && el !== cur) { if (el._fade) { clearInterval(el._fade); el._fade = null; }
+                                        el._handing = false; try { el.pause(); } catch (e) {} }
+            });
             this.wasPlaying = !!(cur && !cur.paused);
             if (cur) {
                 if (cur._fade) { clearInterval(cur._fade); cur._fade = null; }
