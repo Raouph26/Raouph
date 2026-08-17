@@ -22,6 +22,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Needed to publish the build as a release; the default token is read-only.
+    permissions:
+      contents: write
     # The secrets context cannot be read from a step's `if`, so the one question
     # that matters - has the upload key been added yet - is answered once here.
     env:
@@ -89,3 +92,26 @@ jobs:
           path: |
             android/app/build/outputs/apk/debug/*.apk
             android/app/build/outputs/bundle/release/*.aab
+
+      # Artifacts can only be had as a zip, and only by someone signed in, which
+      # is a lot of tapping for the one thing the studio does after every build.
+      # The same files are published as a release too: two plain links, no zip,
+      # no sign-in, and "latest" always points at the newest one.
+      - name: Publish the files as a release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: build-${{ github.run_number }}
+        run: |
+          set -eu
+          mkdir -p out
+          cp android/app/build/outputs/apk/debug/*.apk "out/WORDSPYRE-test.apk"
+          if ls android/app/build/outputs/bundle/release/*.aab >/dev/null 2>&1; then
+            cp android/app/build/outputs/bundle/release/*.aab "out/WORDSPYRE-for-play.aab"
+          fi
+          gh release create "$TAG" out/* \
+            --title "Build ${{ github.run_number }}" \
+            --notes "Built from ${{ github.sha }}.
+
+          **WORDSPYRE-for-play.aab** - upload this one to Play Console.
+          **WORDSPYRE-test.apk** - install this one straight onto a phone to try it." \
+            --latest
