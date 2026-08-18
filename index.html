@@ -4340,7 +4340,24 @@
         if(source==='glyph') {
             if(!hasMoved){ showGlyphInfo(G.equippedGlyphs[index].id, index); return; }
             const targetEl=document.elementFromPoint(px,py); const targetSlot = targetEl ? targetEl.closest('.glyph-slot') : null;
-            if(targetSlot){ const allSlots=[...document.querySelectorAll('#glyph-slots .glyph-slot')]; const ti=allSlots.indexOf(targetSlot); if(ti>=0&&ti!==index){ const temp=G.equippedGlyphs[index]; G.equippedGlyphs[index]=G.equippedGlyphs[ti]; G.equippedGlyphs[ti]=temp; AudioEngine.playTap(); } }
+            if(targetSlot && !targetSlot.classList.contains('locked')){
+                const allSlots=[...document.querySelectorAll('#glyph-slots .glyph-slot')];
+                const ti=allSlots.indexOf(targetSlot);
+                if(ti>=0 && ti!==index){
+                    // Swapping with an empty slot used to write undefined into the
+                    // list, leaving a hole that every later pass over the glyphs
+                    // tripped over - which is what froze the board. A slot past the
+                    // last glyph has nothing to trade, so the glyph moves to the end
+                    // instead.
+                    if(ti < G.equippedGlyphs.length){
+                        const temp=G.equippedGlyphs[index]; G.equippedGlyphs[index]=G.equippedGlyphs[ti]; G.equippedGlyphs[ti]=temp;
+                    } else {
+                        G.equippedGlyphs.push(G.equippedGlyphs.splice(index,1)[0]);
+                    }
+                    AudioEngine.playTap();
+                    saveActiveRun();   // a rearranged board has to survive a reload
+                }
+            }
             renderGlyphsWithFlip();
             return;
         }
@@ -4846,6 +4863,10 @@
         G.benchSort = saved.benchSort || 'draw'; G.drawSeq = saved.drawSeq || 0; G.glyphSwapFrom = null;
         G.activePressId = saved.activePressId || (G.progress && G.progress.selectedPress) || 'merchant_press';
         G.shopRerollsUsedThisRun = saved.shopRerollsUsedThisRun || 0;
+        // Runs saved while the drag bug was live can carry gaps in this list.
+        // Anything without an id is not a glyph, and every pass over the board
+        // assumes there are none, so they are dropped on the way in.
+        G.equippedGlyphs = (G.equippedGlyphs || []).filter(g => g && g.id);
         G.rerollMode = false; G.rerollMarks = new Set(); G.isAnimating = false; G.modalType = null; G.dragData = null;
         G.gameStarted = true;
         document.getElementById('game-container').classList.remove('zen-mode');
