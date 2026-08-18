@@ -485,6 +485,75 @@ async function main(): Promise<void> {
     console.log("  ok   diagonals survive continuous, wobbling drags");
   }
 
+  // Lifting a finger mid-line and putting it back down must carry on from where
+  // it stopped. This broke because a hub could never be grabbed, so any line
+  // resting on one was stranded — and lines rest on hubs constantly.
+  let resumedOnHub = false;
+  for (const [chapter, stage] of [
+    [6, 8],
+    [11, 4],
+    [17, 9],
+  ] as [number, number][]) {
+    await cdp.evaluate(
+      "window.__cancelAdvance(); document.querySelector('.ad-overlay')?.remove()",
+    );
+    await cdp.evaluate(`window.__startLevel('classic', ${chapter}, ${stage})`);
+    await waitFor(`c${chapter}-s${stage} to load`, async () =>
+      cdp.evaluate<boolean>("window.__game() !== null"),
+    );
+    const level = classicLevel(chapter, stage);
+    const rect = await cdp.evaluate<{
+      left: number;
+      top: number;
+      width: number;
+      height: number;
+    }>(
+      `(() => { const r = document.querySelector('#board').getBoundingClientRect();
+        return { left: r.left, top: r.top, width: r.width, height: r.height }; })()`,
+    );
+    const layout = computeLayout(level, rect.width, rect.height, BOARD_PADDING);
+    const at = (cell: number) => ({
+      x: rect.left + layout.ox + ((cell % level.width) + 0.5) * layout.cell,
+      y: rect.top + layout.oy + (Math.floor(cell / level.width) + 0.5) * layout.cell,
+    });
+    const draw = async (path: number[]) => {
+      const start = at(path[0]);
+      await cdp.mouse("mousePressed", start.x, start.y);
+      let last = start;
+      for (const cell of path.slice(1)) {
+        last = at(cell);
+        await cdp.mouse("mouseMoved", last.x, last.y);
+      }
+      await cdp.mouse("mouseReleased", last.x, last.y);
+    };
+
+    for (const [, path] of solve(level, { limit: 1 })
+      .solutions[0] as Map<ShapeId, number[]>) {
+      // Stop on a hub where the line offers one, since that was the broken
+      // case; otherwise stop halfway.
+      let stop = path.findIndex(
+        (cell, i) => i > 0 && i < path.length - 1 && level.cells[cell].kind === "hub",
+      );
+      if (stop < 0) stop = Math.max(1, Math.floor(path.length / 2));
+      else resumedOnHub = true;
+
+      await draw(path.slice(0, stop + 1));
+      // Finger up. Now press the head again and finish the line.
+      await draw(path.slice(stop));
+    }
+
+    await delay(60);
+    const solved = await cdp.evaluate<boolean>("window.__game().solved");
+    await cdp.evaluate("window.__cancelAdvance()");
+    if (!solved) {
+      failures.push(`a line could not be resumed on c${chapter}-s${stage}`);
+    }
+  }
+  if (!resumedOnHub) failures.push("no resume test actually stopped on a hub");
+  if (!failures.some((f) => f.startsWith("a line could not") || f.startsWith("no resume"))) {
+    console.log("  ok   a line put down mid-draw can be picked up and finished");
+  }
+
   // Solving should carry the player onward by itself, with a slide between.
   await cdp.evaluate("window.__startLevel('classic', 1, 2)");
   await waitFor("advance level to load", async () =>

@@ -42,6 +42,11 @@ Press a terminal and drag. Drag backwards to undo a step. Press any piece
 already on a line to grab it there and cut everything after it. Press a terminal
 again to start that line over.
 
+**Lifting your finger does not end the line.** Press its head again — piece or
+hub — and it carries on from there, so a long line can be drawn in as many
+strokes as you like. The one exception is a hub two unfinished lines are both
+resting on: nothing says which of them you meant, so it stays ungrabbable.
+
 Solving a stage carries you to the next one by itself, with the finished board
 sliding away as the next arrives. Touching a solved board cancels that, so
 staying to admire or re-draw it is always possible.

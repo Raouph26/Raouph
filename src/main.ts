@@ -725,12 +725,15 @@ function pickStartCell(point: { x: number; y: number }): CellIndex | null {
   const layout = renderer.layoutFor(level);
 
   const raw = cellAt(level, layout, point.x, point.y);
-  if (raw !== null && level.cells[raw].kind === "node") return raw;
+  if (raw !== null && game.canGrabAt(raw)) return raw;
 
+  // Snap to the nearest cell that can actually be picked up. Snapping to the
+  // nearest *piece* was not enough: the piece under the thumb is often one no
+  // line can start from, and a line resting on a hub was unreachable entirely.
   let best: CellIndex | null = null;
   let bestDistance = layout.cell * 0.7;
-  for (const [i, cell] of level.cells.entries()) {
-    if (cell.kind !== "node") continue;
+  for (let i = 0; i < level.cells.length; i++) {
+    if (!game.canGrabAt(i)) continue;
     const centre = centerOf(level, layout, i);
     const distance = Math.hypot(centre.x - point.x, centre.y - point.y);
     if (distance < bestDistance) {
@@ -816,6 +819,11 @@ canvas.addEventListener("pointerdown", (event) => {
   if (cell === null) return;
 
   const effect = game.beginAt(cell);
+  if (effect === "resume") {
+    // Picking a line back up alters nothing, so no sound and no state reset.
+    kick();
+    return;
+  }
   if (effect === "start" || effect === "truncate") {
     // Editing a solved board means the player wants to keep playing with it.
     cancelAdvance();

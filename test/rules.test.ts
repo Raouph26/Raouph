@@ -189,3 +189,77 @@ describe("crossing", () => {
     expect(game.dragTo(indexOf(level, 2, 2))).toBe("none");
   });
 });
+
+describe("putting a line down and picking it up again", () => {
+  it("resumes from the head, keeping what was drawn", () => {
+    const game = new Game(parseLevel("t", ["Aaa", "..a", "..A"]));
+    play(game, [
+      [0, 0],
+      [1, 0],
+      [2, 0],
+    ]);
+    expect(game.activeShape).toBeNull();
+
+    expect(game.beginAt(indexOf(game.level, 2, 0))).toBe("resume");
+    expect(game.activeShape).toBe(0);
+    expect(game.pathFor(0)).toHaveLength(3);
+
+    // And carries on drawing from there.
+    expect(game.dragTo(indexOf(game.level, 2, 1))).toBe("extend");
+    expect(game.pathFor(0)).toHaveLength(4);
+  });
+
+  it("resumes a line left resting on a hub", () => {
+    // The bug: a hub was never grabbable, so a line stopped on one was stuck.
+    const game = new Game(parseLevel("h", ["A.B", ".2.", "B.A"]));
+    play(game, [
+      [0, 0],
+      [1, 1],
+    ]);
+    expect(game.activeShape).toBeNull();
+
+    expect(game.beginAt(indexOf(game.level, 1, 1))).toBe("resume");
+    expect(game.activeShape).toBe(0);
+    expect(game.dragTo(indexOf(game.level, 2, 2))).toBe("extend");
+    expect(game.isShapeComplete(0)).toBe(true);
+  });
+
+  it("refuses a hub two lines are both resting on", () => {
+    const game = new Game(parseLevel("h", ["A.B", ".2.", "B.A"]));
+    play(game, [
+      [0, 0],
+      [1, 1],
+    ]);
+    play(game, [
+      [2, 0],
+      [1, 1],
+    ]);
+    // Ambiguous: nothing says which line the player meant to continue.
+    expect(game.beginAt(indexOf(game.level, 1, 1))).toBe("none");
+  });
+
+  it("still truncates when grabbed mid-line", () => {
+    const game = new Game(parseLevel("t", ["Aaa", "..a", "..A"]));
+    play(game, [
+      [0, 0],
+      [1, 0],
+      [2, 0],
+      [2, 1],
+    ]);
+    expect(game.beginAt(indexOf(game.level, 1, 0))).toBe("truncate");
+    expect(game.pathFor(0)).toHaveLength(2);
+  });
+
+  it("knows what can be grabbed", () => {
+    const game = new Game(parseLevel("h", ["A.B", ".2.", "B.A"]));
+    // Terminals always; an untouched hub never.
+    expect(game.canGrabAt(indexOf(game.level, 0, 0))).toBe(true);
+    expect(game.canGrabAt(indexOf(game.level, 1, 1))).toBe(false);
+
+    play(game, [
+      [0, 0],
+      [1, 1],
+    ]);
+    expect(game.canGrabAt(indexOf(game.level, 1, 1))).toBe(true);
+  });
+});

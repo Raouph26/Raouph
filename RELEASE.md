@@ -77,12 +77,16 @@ who actually install, for 14 continuous days**, then apply for production access
 that cannot be shortened, so line up twelve people now. *Organisation* accounts
 (which need a D-U-N-S number) are exempt.
 
-Assets in this repository, all generated from the game by `npm run assets`:
+Everything to upload is gathered in **[`store-assets/`](store-assets/)**, with a
+README naming what each file is for. It is generated from the game by
+`npm run assets` — the same files `public/` gets, copied into one folder so you
+are not hunting through the source tree while the Console has you halfway
+through a form.
 
 | Play needs | Where it is |
 | --- | --- |
-| App icon, 512×512 | `public/icons/icon-512.png` |
-| Phone screenshots, 1080×1920 (2–8) | `public/screenshots/play-*.png` |
+| App icon, 512×512 | `store-assets/icons/icon-512.png` |
+| Phone screenshots, 1080×1920 (2–8) | `store-assets/screenshots/play-*.png` |
 | Feature graphic, 1024×500 | **Not generated — see below** |
 | Privacy policy URL | **You must write and host one** |
 

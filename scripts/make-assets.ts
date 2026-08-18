@@ -6,16 +6,20 @@
  * running build at Play's phone size, so they can never show a version that no
  * longer exists.
  *
- * Everything lands in public/, which Vite copies verbatim into dist/.
+ * Everything lands in public/, which Vite copies verbatim into dist/, and is
+ * then mirrored into store-assets/ — the same files, gathered in one folder to
+ * upload to the Play Console. Mirroring rather than generating twice is what
+ * stops the two from ever disagreeing.
  */
 import { type ChildProcess, spawn } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 
 const CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const PORT = 5179;
 const CDP_PORT = 9223;
 const URL_BASE = `http://127.0.0.1:${PORT}/`;
 const PUBLIC = new URL("../public/", import.meta.url);
+const STORE = new URL("../store-assets/", import.meta.url);
 
 /** Play wants 1080x1920 phone screenshots; 540x960 at 2x gives exactly that. */
 const SHOT_WIDTH = 540;
@@ -89,6 +93,17 @@ class Cdp {
   async shot(path: URL): Promise<void> {
     const result = await this.send("Page.captureScreenshot", { format: "png" });
     writeFileSync(path, Buffer.from(result.data, "base64"));
+  }
+}
+
+/** Copy one generated folder into store-assets/, so nothing is hand-assembled. */
+function mirror(folder: string): void {
+  const from = new URL(`${folder}/`, PUBLIC);
+  const to = new URL(`${folder}/`, STORE);
+  mkdirSync(to, { recursive: true });
+  for (const name of readdirSync(from).sort()) {
+    copyFileSync(new URL(name, from), new URL(name, to));
+    console.log(`  store   ${folder}/${name}`);
   }
 }
 
@@ -231,6 +246,11 @@ async function main(): Promise<void> {
   await delay(500);
   await cdp.shot(new URL("screenshots/play-5-themes.png", PUBLIC));
   console.log("  shot    play-5-themes.png");
+
+  // --- one folder to upload from --------------------------------------------
+
+  mirror("icons");
+  mirror("screenshots");
 }
 
 main()

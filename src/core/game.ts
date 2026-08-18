@@ -1,4 +1,4 @@
-import { type CellIndex, type Level, type ShapeId } from "./types";
+import type { CellIndex, Level, ShapeId } from "./types";
 import { shapesIn } from "./level";
 import {
   type Occupancy,
@@ -6,12 +6,20 @@ import {
   canExtend,
   computeOccupancy,
   emptyPaths,
+  isPathClosed,
   isShapeComplete,
   isSolved,
 } from "./rules";
 
 /** What a single input action changed, so the renderer/audio can react. */
-export type MoveEffect = "none" | "start" | "extend" | "retract" | "truncate";
+export type MoveEffect =
+  | "none"
+  | "start"
+  | "extend"
+  | "retract"
+  | "truncate"
+  /** Picked an unfinished line back up at its head to carry on drawing. */
+  | "resume";
 
 /**
  * Interactive state for one puzzle.
@@ -59,12 +67,22 @@ export class Game {
    * Pressing a terminal starts that line over from there. Pressing a node
    * already on its own line grabs the line at that point and cuts everything
    * after it, which is how you unwind a wrong turn without clearing the whole
-   * thing. Hubs are deliberately not grabbable: a shared hub belongs to more
-   * than one line, so there is no unambiguous line to pick up.
+   * thing. Pressing the head of an unfinished line — piece or hub — simply
+   * resumes it, so a line put down mid-draw can always be continued.
    */
   beginAt(cell: CellIndex): MoveEffect {
     const target = this.level.cells[cell];
-    if (target.kind !== "node") return "none";
+    if (target.kind === "empty") return "none";
+
+    // A line left resting on a hub can be picked up again from it. Only the
+    // head is unambiguous: a hub in the middle of a line, or shared by two,
+    // gives no way to tell which line was meant, so those stay ungrabbable.
+    if (target.kind === "hub") {
+      const resting = this.restingShapeAt(cell);
+      if (resting === null) return "none";
+      this.activeShape = resting;
+      return "resume";
+    }
 
     if (target.terminal) {
       this.activeShape = target.shape;
@@ -78,9 +96,38 @@ export class Game {
     if (at < 0) return "none";
 
     this.activeShape = target.shape;
-    if (at === path.length - 1) return "none";
+    // Pressing the head resumes rather than truncates: there is nothing after
+    // it to cut, and the player is asking to carry on from where they stopped.
+    if (at === path.length - 1) return "resume";
     path.length = at + 1;
     return "truncate";
+  }
+
+  /** The one unfinished line whose head rests here, if exactly one does. */
+  private restingShapeAt(cell: CellIndex): ShapeId | null {
+    let found: ShapeId | null = null;
+    for (const shape of this.shapes) {
+      const path = this.paths.get(shape);
+      if (!path || path.length === 0) continue;
+      if (path[path.length - 1] !== cell) continue;
+      if (isPathClosed(this.level, path)) continue;
+      if (found !== null) return null;
+      found = shape;
+    }
+    return found;
+  }
+
+  /**
+   * Whether a press here would pick anything up. Used to snap a press to the
+   * nearest thing that can actually be grabbed, rather than to the nearest
+   * piece — which may be one the player cannot start from at all.
+   */
+  canGrabAt(cell: CellIndex): boolean {
+    const target = this.level.cells[cell];
+    if (target.kind === "empty") return false;
+    if (target.kind === "hub") return this.restingShapeAt(cell) !== null;
+    if (target.terminal) return true;
+    return this.paths.get(target.shape)?.includes(cell) ?? false;
   }
 
   /** Drag onto `cell`. Dragging back onto the previous cell retracts one step. */
