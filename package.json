@@ -1,5 +1,5 @@
 {
-  "name": "lyne-like",
+  "name": "thrum",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -12,7 +12,8 @@
     "validate": "tsx scripts/validate-chapters.ts",
     "difficulty": "tsx scripts/measure-difficulty.ts",
     "hubs": "tsx scripts/analyse-hubs.ts",
-    "build:artifact": "vite build && tsx scripts/build-artifact.ts"
+    "build:artifact": "vite build && tsx scripts/build-artifact.ts",
+    "assets": "tsx scripts/make-assets.ts"
   },
   "devDependencies": {
     "@types/node": "^26.1.2",

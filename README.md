@@ -1,14 +1,17 @@
-# Filament
+# Thrum
 
 A calm line-drawing puzzle game for phones. TypeScript + Canvas, no engine, no
 runtime dependencies, ~25 kB total.
 
-> **The name must change before release.** *Filament* (Beard Envy, 2020) is an
-> existing line-drawing puzzle game on Steam, Epic and Switch — same word, same
-> genre, which is the worst case for a clash. *Thrum* was searched and showed no
-> game or app using it; *Skein* is taken twice over (a Steam shooter and an App
-> Store arcade game). None of this is trademark clearance — a solicitor should
-> confirm whatever is chosen.
+> Named *Thrum* after searching store listings for alternatives. *Filament*,
+> *Skein*, *Wend*, *Meander*, *Ravel* and *Tessel* are all taken, several by
+> games in this exact genre — *Filament* (Beard Envy, 2020) is itself a
+> line-drawing puzzle. Thrum returned no game or app. That is a store search,
+> **not trademark clearance**; confirm with a solicitor before spending money on
+> branding.
+>
+> **See [RELEASE.md](RELEASE.md) for packaging and store submission** — including
+> why a PWABuilder release cannot carry AdMob.
 
 ## The rules
 

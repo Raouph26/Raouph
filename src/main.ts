@@ -12,6 +12,7 @@ import {
 } from "./core/chapters";
 import { Game } from "./core/game";
 import { type Hint, nextHint } from "./core/hint";
+import { solve } from "./core/solver";
 import { AdManager } from "./ads/manager";
 import { AdMobAds } from "./ads/admob";
 import { StubAds } from "./ads/stub";
@@ -209,21 +210,15 @@ function prefetchLikely(mode: Mode, chapter: number): void {
  * The menu mark, drawn in the game's own language rather than set as an icon:
  * two lines crossing at a hub, which is the core mechanic in miniature.
  */
-function drawBrandMark(): void {
-  const mark = document.getElementById("brand-mark") as HTMLCanvasElement | null;
-  const ctx = mark?.getContext("2d");
-  if (!mark || !ctx) return;
-
-  const palette = paletteFor(currentTheme());
-  const dpr = window.devicePixelRatio || 1;
-  const size = 132;
-  mark.width = size * dpr;
-  mark.height = size * dpr;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, size, size);
-
+function paintMark(
+  ctx: CanvasRenderingContext2D,
+  size: number,
+  palette: ReturnType<typeof paletteFor>,
+  scale = 1,
+): void {
   const mid = size / 2;
-  const reach = size * 0.32;
+  const reach = size * 0.32 * scale;
+  const piece = size * 0.114 * scale;
   const corners: [number, number][] = [
     [mid - reach, mid - reach],
     [mid + reach, mid + reach],
@@ -232,7 +227,7 @@ function drawBrandMark(): void {
   ];
 
   ctx.lineCap = "round";
-  ctx.lineWidth = 6;
+  ctx.lineWidth = size * 0.045 * scale;
   for (const [shape, pair] of [
     [0, [corners[0], corners[1]]],
     [1, [corners[2], corners[3]]],
@@ -246,12 +241,12 @@ function drawBrandMark(): void {
 
   ctx.fillStyle = palette.hubFill;
   ctx.beginPath();
-  ctx.arc(mid, mid, 15, 0, Math.PI * 2);
+  ctx.arc(mid, mid, piece, 0, Math.PI * 2);
   ctx.fill();
-  ctx.lineWidth = 5;
+  ctx.lineWidth = size * 0.038 * scale;
   ctx.strokeStyle = palette.hubTickFull;
   for (let d = 0; d < 2; d++) {
-    traceHubTick(ctx, mid, mid, 17, d, 2);
+    traceHubTick(ctx, mid, mid, piece * 1.14, d, 2);
     ctx.stroke();
   }
 
@@ -262,9 +257,28 @@ function drawBrandMark(): void {
     [1, corners[3]],
   ] as [ShapeIdLike, [number, number]][]) {
     ctx.fillStyle = palette.shape[shape];
-    traceShape(ctx, shape, point[0], point[1], 15);
+    traceShape(ctx, shape, point[0], point[1], piece, 0, palette.style.cornerFactor);
     ctx.fill();
   }
+}
+
+/**
+ * The menu mark, drawn in the game's own language rather than set as an icon:
+ * two lines crossing at a hub, which is the core mechanic in miniature. The
+ * same routine paints the app icon, so the two can never drift apart.
+ */
+function drawBrandMark(): void {
+  const mark = document.getElementById("brand-mark") as HTMLCanvasElement | null;
+  const ctx = mark?.getContext("2d");
+  if (!mark || !ctx) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  const size = 132;
+  mark.width = size * dpr;
+  mark.height = size * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, size, size);
+  paintMark(ctx, size, paletteFor(currentTheme()));
 }
 
 /** The furthest classic stage still unsolved — where "Continue" resumes. */
@@ -951,6 +965,14 @@ new ResizeObserver(() => {
 
 renderer.setPalette(DEFAULT_PALETTE);
 applyTheme();
+
+// Registered late and failure-tolerant: offline play is a bonus, and a worker
+// that will not install must never stop the game loading.
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  window.addEventListener("load", () => {
+    void navigator.serviceWorker.register("sw.js").catch(() => undefined);
+  });
+}
 setMuted(progress.muted);
 renderMenu();
 showScreen("menu");
@@ -975,6 +997,33 @@ Object.assign(window, {
   // dismissed, and an awaiting caller would hang until then.
   __previewAd: () => {
     void new StubAds().showInterstitial();
+  },
+  /**
+   * Paints the app icon at an exact pixel size, for the asset generator.
+   * `safeZone` shrinks the mark for maskable icons, whose outer ~20% may be
+   * cropped to whatever shape the launcher prefers.
+   */
+  // Used by the asset generator to pose the board for store screenshots.
+  __solutionFor: (level: Level) => solve(level, { limit: 1 }).solutions[0] ?? null,
+  __repaint: () => {
+    lastDraw = 0;
+    kick();
+  },
+  __renderIcon: (size: number, safeZone = false) => {
+    const theme = THEMES[0];
+    const palette = paletteFor(theme);
+    document.body.innerHTML = "";
+    document.body.style.margin = "0";
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    canvas.style.cssText = `position:fixed;left:0;top:0;width:${size}px;height:${size}px`;
+    document.body.append(canvas);
+
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = theme.background;
+    ctx.fillRect(0, 0, size, size);
+    paintMark(ctx, size, palette, safeZone ? 0.72 : 1);
   },
   __renderer: renderer,
 });

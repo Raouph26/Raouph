@@ -1,0 +1,72 @@
+{
+  "id": "./",
+  "name": "Thrum",
+  "short_name": "Thrum",
+  "description": "A calm line-drawing puzzle game. Draw one line per colour through every piece, crossing only at hubs.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f2e9dd",
+  "theme_color": "#f2e9dd",
+  "categories": ["games", "puzzle", "entertainment"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/play-1-menu.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Main menu"
+    },
+    {
+      "src": "screenshots/play-2-puzzle.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "A puzzle in progress"
+    },
+    {
+      "src": "screenshots/play-3-solved.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "A solved board"
+    },
+    {
+      "src": "screenshots/play-4-chapters.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Twenty chapters"
+    },
+    {
+      "src": "screenshots/play-5-themes.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Unlockable themes"
+    }
+  ]
+}
