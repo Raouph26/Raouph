@@ -3,12 +3,11 @@
 A calm line-drawing puzzle game for phones. TypeScript + Canvas, no engine, no
 runtime dependencies, ~25 kB total.
 
-> Named *Thrum* after searching store listings for alternatives. *Filament*,
-> *Skein*, *Wend*, *Meander*, *Ravel* and *Tessel* are all taken, several by
-> games in this exact genre — *Filament* (Beard Envy, 2020) is itself a
-> line-drawing puzzle. Thrum returned no game or app. That is a store search,
-> **not trademark clearance**; confirm with a solicitor before spending money on
-> branding.
+> The name was settled after searching store listings. *Filament*, *Skein*,
+> *Wend*, *Meander*, *Ravel* and *Tessel* are all taken, several by games in
+> this exact genre — *Filament* (Beard Envy, 2020) is itself a line-drawing
+> puzzle. Thrum returned no game or app. That is a store search, **not trademark
+> clearance**; confirm with a solicitor before spending money on branding.
 >
 > **See [RELEASE.md](RELEASE.md) for packaging and store submission** — including
 > why a PWABuilder release cannot carry AdMob.
@@ -226,19 +225,20 @@ direction.
 
 Roughly in order:
 
-1. **A name.** See the note at the top — the current one is unusable.
-2. **The native shell.** Capacitor wrapping the web build. Nothing ships to
-   either store without it, and `AdMobAds` stays inert until it exists.
-3. **Consent and privacy.** Google UMP for GDPR/GPP, Apple's App Tracking
-   Transparency prompt, and a hosted privacy policy URL. Both stores reject
-   builds that serve personalised ads without these — this is a hard blocker,
-   not a polish item.
-4. **Store assets.** Icon, adaptive icon, splash, screenshots per device class,
-   listing copy.
-5. **Real ad unit ids.** `src/ads/admob.ts` currently uses Google's public test
-   ids, which always fill and earn nothing.
-6. **Analytics**, if the dials above are ever to be tuned on evidence rather
-   than taste.
+1. **A privacy policy**, written and hosted. Required even with no ads, because
+   progress is stored on the device and Play's Data safety form asks. Hard
+   blocker.
+2. **A 1024×500 feature graphic** — a marketing banner, the one store asset the
+   game cannot generate from itself.
+3. **The native shell**, *if you want ads*. AdMob cannot run inside a TWA, so a
+   PWABuilder release earns nothing; Capacitor is the alternative. See
+   [RELEASE.md](RELEASE.md).
+4. **Real ad unit ids**, in the same case. `src/ads/admob.ts` currently uses
+   Google's public test ids, which always fill and earn nothing.
+5. **Analytics**, if the ad dials are ever to be tuned on evidence rather than
+   taste.
+
+Icons and screenshots are done and sitting in [`store-assets/`](store-assets/).
 
 ## Status
 

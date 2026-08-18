@@ -333,7 +333,7 @@ async function main(): Promise<void> {
     Array.from({ length: 32 }, (_, i) => `c1-s${i + 1}`),
   );
   await cdp.evaluate(
-    `localStorage.setItem('quiet-lines.solved', ${JSON.stringify(clearedChapterOne)})`,
+    `localStorage.setItem('thrum.solved', ${JSON.stringify(clearedChapterOne)})`,
   );
   await cdp.send("Page.navigate", { url: target ?? URL_BASE });
   await waitFor("reload after granting chapter 1", async () =>

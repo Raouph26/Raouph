@@ -9,9 +9,9 @@ import {
 
 import { THEMES } from "./render/palette";
 
-const SOLVED_KEY = "quiet-lines.solved";
-const MUTED_KEY = "quiet-lines.muted";
-const THEME_KEY = "quiet-lines.theme";
+const SOLVED_KEY = "thrum.solved";
+const MUTED_KEY = "thrum.muted";
+const THEME_KEY = "thrum.theme";
 
 /** Sentinel meaning "follow whichever chapter is being played". */
 export const AUTO_THEME = "auto";

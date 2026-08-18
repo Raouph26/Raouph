@@ -188,7 +188,7 @@ async function main(): Promise<void> {
     ...Array.from({ length: 19 }, (_, i) => `c2-s${i + 1}`),
   ];
   await cdp.evaluate(
-    `localStorage.setItem('quiet-lines.solved', ${JSON.stringify(JSON.stringify(solved))})`,
+    `localStorage.setItem('thrum.solved', ${JSON.stringify(JSON.stringify(solved))})`,
   );
   await cdp.send("Page.navigate", { url: URL_BASE });
   await waitFor("app reboot", async () =>

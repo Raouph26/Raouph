@@ -21,7 +21,7 @@ export const AD_POLICY = {
   freeHints: 3,
 };
 
-const STORAGE_KEY = "quiet-lines.ads";
+const STORAGE_KEY = "thrum.ads";
 
 interface AdState {
   solvedSinceAd: number;

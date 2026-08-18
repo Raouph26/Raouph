@@ -27,7 +27,7 @@ const builtHtml = readFileSync(join(dist, "index.html"), "utf8");
 const bodyMatch = builtHtml.match(/<div id="app">[\s\S]*?<\/div>\s*(?=<script|<\/body>)/i);
 if (!bodyMatch) throw new Error("could not find #app markup in built index.html");
 
-const page = `<title>LYNE-like — a line-drawing puzzle</title>
+const page = `<title>Thrum</title>
 <style>
 /* The game commits to one dark world by design, so it paints its own ground
    rather than inheriting the viewer's theme. */
