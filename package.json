@@ -13,7 +13,7 @@
     "difficulty": "tsx scripts/measure-difficulty.ts",
     "hubs": "tsx scripts/analyse-hubs.ts",
     "build:artifact": "vite build && tsx scripts/build-artifact.ts",
-    "assets": "tsx scripts/make-assets.ts"
+    "assets": "tsx scripts/make-assets.ts && tsx scripts/pack-assets.ts"
   },
   "devDependencies": {
     "@types/node": "^26.1.2",

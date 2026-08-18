@@ -182,10 +182,13 @@ async function main(): Promise<void> {
     cdp.evaluate<boolean>("typeof window.__startLevel === 'function'"),
   );
 
-  // A save with some progress: locked rows and an empty menu photograph badly.
+  // A save deep enough to reach chapter 12, since one of the shots is taken
+  // there. An empty menu and a wall of locked rows photograph badly anyway.
   const solved = [
-    ...Array.from({ length: 32 }, (_, i) => `c1-s${i + 1}`),
-    ...Array.from({ length: 19 }, (_, i) => `c2-s${i + 1}`),
+    ...Array.from({ length: 11 }, (_, c) =>
+      Array.from({ length: 32 }, (_, i) => `c${c + 1}-s${i + 1}`),
+    ).flat(),
+    ...Array.from({ length: 8 }, (_, i) => `c12-s${i + 1}`),
   ];
   await cdp.evaluate(
     `localStorage.setItem('thrum.solved', ${JSON.stringify(JSON.stringify(solved))})`,
@@ -200,8 +203,10 @@ async function main(): Promise<void> {
   await cdp.shot(new URL("screenshots/play-1-menu.png", PUBLIC));
   console.log("  shot    play-1-menu.png");
 
-  // A puzzle part-solved, which shows the mechanic better than an empty board.
-  await cdp.evaluate("window.__startLevel('classic', 2, 20)");
+  // Two boards, deliberately from opposite ends of the ramp: an early chapter-1
+  // stage so a browser sees something they could obviously do, and a chapter-12
+  // one so they can see what the game grows into.
+  await cdp.evaluate("window.__startLevel('classic', 1, 14)");
   await waitFor("level", async () => cdp.evaluate<boolean>("window.__game() !== null"));
   await delay(900);
   await cdp.evaluate(`(() => {
@@ -222,8 +227,8 @@ async function main(): Promise<void> {
   await cdp.shot(new URL("screenshots/play-2-puzzle.png", PUBLIC));
   console.log("  shot    play-2-puzzle.png");
 
-  // A solved board, glowing.
-  await cdp.evaluate("window.__startLevel('classic', 4, 12)");
+  // The chapter-12 board, solved: bigger, three colours, and finished.
+  await cdp.evaluate("window.__startLevel('classic', 12, 9)");
   await waitFor("level", async () => cdp.evaluate<boolean>("window.__game() !== null"));
   await delay(600);
   await cdp.evaluate(`(() => {

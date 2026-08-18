@@ -3,3 +3,6 @@ dist/
 .artifacts/
 *.local
 .DS_Store
+
+# Built by npm run assets; regenerate rather than track a binary.
+thrum-store-assets.zip

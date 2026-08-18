@@ -6,6 +6,9 @@ game's menu mark and photographs the screenshots from the real running build,
 writes them into `public/`, and copies them here. Regenerate rather than edit;
 an edited file is silently overwritten on the next run.
 
+The same command also writes `thrum-store-assets.zip` at the repository root,
+which is this whole folder in one download.
+
 ## Icons
 
 | File | Size | Where it goes |
@@ -24,8 +27,8 @@ All 1080×1920 (Play's phone size), 2–8 required, five supplied.
 | File | What it shows |
 | --- | --- |
 | `screenshots/play-1-menu.png` | The main menu, on a save with progress — an empty menu photographs badly |
-| `screenshots/play-2-puzzle.png` | A board mid-solve, one line finished and one half-drawn |
-| `screenshots/play-3-solved.png` | A completed board |
+| `screenshots/play-2-puzzle.png` | Chapter 1 mid-solve: two colours, one board, obviously doable |
+| `screenshots/play-3-solved.png` | Chapter 12, solved: three colours, hubs, a darker theme — what the game grows into |
 | `screenshots/play-4-chapters.png` | Chapter select, showing the scale of the thing |
 | `screenshots/play-5-themes.png` | The themes screen |
 
