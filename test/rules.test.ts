@@ -3,6 +3,8 @@ import { parseLevel } from "../src/core/level";
 import { Game } from "../src/core/game";
 import { indexOf } from "../src/core/types";
 import { canExtend, crossingSegment, segKey } from "../src/core/rules";
+import { solve } from "../src/core/solver";
+import { MARK_BOARD } from "../src/render/mark";
 
 /** Drag a line through a list of (x, y) cells, returning the effects. */
 function play(game: Game, cells: [number, number][]): string[] {
@@ -187,6 +189,35 @@ describe("crossing", () => {
     ).toBe(true);
     game.dragTo(indexOf(level, 1, 1));
     expect(game.dragTo(indexOf(level, 2, 2))).toBe("none");
+  });
+});
+
+describe("the brand mark's board", () => {
+  const level = parseLevel("mark", MARK_BOARD);
+
+  it("is a real level, with all three families and a hub", () => {
+    const shapes = new Set(
+      level.cells.flatMap((cell) => (cell.kind === "node" ? [cell.shape] : [])),
+    );
+    expect(shapes.size).toBe(3);
+    expect(level.cells.some((cell) => cell.kind === "hub")).toBe(true);
+  });
+
+  it("has exactly one solution", () => {
+    // The mark is drawn from the solver's answer, so an ambiguous board would
+    // make the icon depend on search order — it would change without anyone
+    // touching the drawing code.
+    const { solutions } = solve(level, { limit: 4 });
+    expect(solutions).toHaveLength(1);
+  });
+
+  it("is solved by a line through the hub for every colour", () => {
+    const [solution] = solve(level, { limit: 1 }).solutions;
+    expect(solution.size).toBe(3);
+    for (const path of solution.values()) {
+      expect(path).toHaveLength(3);
+      expect(level.cells[path[1]].kind).toBe("hub");
+    }
   });
 });
 

@@ -32,6 +32,7 @@ import {
   paletteFor,
   themeForChapter,
 } from "./render/palette";
+import { MARK_THEME, paintMark } from "./render/mark";
 import { Renderer, cellAt, centerOf } from "./render/renderer";
 
 const $ = <T extends HTMLElement>(id: string): T =>
@@ -52,9 +53,6 @@ const ads = new AdManager(
     : new StubAds(),
 );
 void ads.initialise();
-
-/** The brand mark only ever uses the first two families. */
-type ShapeIdLike = 0 | 1;
 
 type ScreenName = "menu" | "chapters" | "stages" | "themes" | "game";
 type Mode = "classic" | "daily";
@@ -205,77 +203,9 @@ function prefetchLikely(mode: Mode, chapter: number): void {
 // --- menu ------------------------------------------------------------------
 
 /**
- * The menu mark and the app icon, painted by one routine so the two can never
- * drift apart. One line, drawn the way the game draws one: a terminal at each
- * end in the same colour, turning through a hub on the way.
- *
- * The previous mark was two lines crossing in a symmetric X. At icon size that
- * reads as a close button, not a puzzle — and the four-fold symmetry gave it no
- * silhouette to remember. A path that *turns* is what the game is actually
- * about, and it stays legible down to 48px where a crossing does not.
- *
- * Two deliberate liberties, both for legibility rather than truth: the hub is
- * rimmed in an accent instead of the board's neutral ink, because the mark
- * needs one warm point to be found by; and the rim is a closed ring rather than
- * the board's two arcs, which break into specks below about 64px.
- */
-function paintMark(
-  ctx: CanvasRenderingContext2D,
-  size: number,
-  palette: ReturnType<typeof paletteFor>,
-  scale = 1,
-): void {
-  // Laid out in fractions of the side and scaled about the centre, so the
-  // maskable variant insets into the safe zone without a second layout.
-  const at = (fx: number, fy: number): [number, number] => [
-    size * (0.5 + (fx - 0.5) * scale),
-    size * (0.5 + (fy - 0.5) * scale),
-  ];
-  const track: [number, number][] = [
-    at(0.22, 0.78),
-    at(0.46, 0.54),
-    at(0.46, 0.26),
-    at(0.79, 0.26),
-  ];
-  const [hubX, hubY] = at(0.46, 0.54);
-  const shape: ShapeIdLike = 1;
-
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.lineWidth = size * 0.155 * scale;
-  // One flat colour for the whole line, terminals included. On the board a line
-  // is drawn a shade deeper than its pieces, which at icon size reads as two
-  // different things joined rather than one line.
-  ctx.strokeStyle = palette.shape[shape];
-  ctx.beginPath();
-  ctx.moveTo(track[0][0], track[0][1]);
-  for (const [x, y] of track.slice(1)) ctx.lineTo(x, y);
-  ctx.stroke();
-
-  // Both ends carry the same colour, because one line has one colour.
-  ctx.fillStyle = palette.shape[shape];
-  for (const [x, y] of [track[0], track[track.length - 1]]) {
-    ctx.beginPath();
-    ctx.arc(x, y, size * 0.115 * scale, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  const hubRadius = size * 0.13 * scale;
-  ctx.fillStyle = palette.background;
-  ctx.beginPath();
-  ctx.arc(hubX, hubY, hubRadius, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.lineWidth = size * 0.05 * scale;
-  ctx.strokeStyle = palette.shape[0];
-  ctx.beginPath();
-  ctx.arc(hubX, hubY, hubRadius, 0, Math.PI * 2);
-  ctx.stroke();
-}
-
-/**
  * The menu mark, drawn in the game's own language rather than set as an icon:
- * two lines crossing at a hub, which is the core mechanic in miniature. The
- * same routine paints the app icon, so the two can never drift apart.
+ * a real board, solved. The same routine paints the app icon, so the two can
+ * never drift apart.
  */
 function drawBrandMark(): void {
   const mark = document.getElementById("brand-mark") as HTMLCanvasElement | null;
@@ -1028,7 +958,7 @@ Object.assign(window, {
     kick();
   },
   __renderIcon: (size: number, safeZone = false) => {
-    const theme = THEMES[0];
+    const theme = THEMES[MARK_THEME];
     const palette = paletteFor(theme);
     document.body.innerHTML = "";
     document.body.style.margin = "0";

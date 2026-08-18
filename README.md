@@ -85,6 +85,7 @@ src/core/       the game, independent of any rendering
   generator.ts  seeded generation, verified by the solver
   chapters.ts   the difficulty ramp and the level catalogue
 src/render/     canvas drawing, palette, animation state
+  mark.ts       the menu mark and app icon: one real board, solved
 src/audio/      procedural synthesis
 src/progress.ts solved state and unlock rules
 ```
@@ -121,6 +122,23 @@ solver burns* proving the board unique, and candidates below it are rejected.
 `npm run difficulty` reports the distribution per chapter — the floors were
 measured against it, not guessed. Before this existed chapter 1 sat at a median
 of 39 search nodes; it is now around 110, and chapter 12 went from 121 to 749.
+
+## The mark
+
+The menu mark and the app icon are one routine, and what they draw is a real
+3x3 level — three colours, six terminals, a hub in the middle crossed three
+times — solved by the actual solver at paint time. Nothing about it is a
+stylisation: the shapes, halos, terminal rings, hub arcs and palette are the
+game's own, at the game's own proportions.
+
+Drawing it from a solution rather than a hand-written path list means a mark
+that disagreed with the rules could not be drawn, and `test/rules.test.ts`
+holds the board to having exactly one solution — an ambiguous board would let
+the icon change with search order, without anyone touching the drawing code.
+
+The icon is pinned to Harbour rather than the opening theme: on cream the hub's
+arcs and the terminal halos all but vanish, and the hub is the point. The menu
+mark follows whatever theme is in force, so it restyles as the game does.
 
 ## Audio
 

@@ -313,8 +313,10 @@ button:focus-visible {
 }
 
 #brand-mark {
-  width: 96px;
-  height: 96px;
+  /* Larger than a plain glyph would need: the mark is a whole 3x3 board, and
+     below about 130px its shapes and hub arcs stop being readable. */
+  width: 132px;
+  height: 132px;
   /* The mark is the game's own imagery, so let it glow like the board does. */
   filter: drop-shadow(0 0 26px color-mix(in srgb, var(--accent) 18%, transparent));
 }
