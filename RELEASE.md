@@ -1,100 +1,128 @@
 # Shipping Thrum to Google Play
 
-Everything here uses only GitHub and PWABuilder. No other service is involved.
+Only GitHub and PWABuilder are involved. No other service.
+
+Written for an account that has **already published an app** (WORDSPYRE), which
+means production access is granted and the twelve-tester closed test does not
+apply again — that requirement is per account, not per app.
 
 ---
 
-## Read this first: ads and PWABuilder do not mix
+## Read this first: ads and PWABuilder cannot both happen
 
 PWABuilder packages a web app as a **Trusted Web Activity** — Chrome rendering
-your site full-screen inside an app. That has one consequence worth deciding on
-before you spend a fortnight on release:
+the site full-screen inside an app.
 
-- **AdMob cannot run in a TWA.** Chrome owns the whole surface, so native ad
-  views cannot be drawn over it. There is no supported way to do it.
-- **AdSense injected into the page is against policy** for app wrappers.
+- **AdMob cannot run in a TWA.** Chrome owns the entire surface, so a native
+  `AdView` has nowhere to be drawn. Chrome's own team confirms there is no
+  supported way: <https://github.com/GoogleChrome/android-browser-helper/issues/535>
+- **AdSense injected into the page instead is a policy violation.** It risks the
+  same Google account the other game earns on.
 
-So the ad code in `src/ads/` — the placement policy, the rewarded hints, the
-frequency caps — is all written and tested, but **a PWABuilder release cannot
-earn ad revenue**. Three honest options:
+So a PWABuilder release **cannot carry ads**. The choice:
 
 | Option | Ads | Effort |
 | --- | --- | --- |
-| **Ship the TWA now, no ads** | None | Ready today |
-| **Ship the TWA, charge for it** | None; paid or IAP | Ready today, plus Play billing |
-| **Switch to Capacitor** | Full AdMob | A native shell, plus an Android build toolchain |
+| **PWABuilder TWA** | None | Submit today |
+| **Native shell + WebView** | Full AdMob | An Android project, like `android/` in the WORDSPYRE repo |
 
-The ad layer already sits behind a provider interface, so switching to Capacitor
-later changes no game code — `AdMobAds` is written and waiting. Nothing here is
-wasted either way.
+Everything in `src/ads/` sits behind a provider interface, so switching later
+changes no game code — `AdMobAds` is written and waiting.
+
+The rest of this document assumes the PWABuilder route.
 
 ---
 
-## 1. Publish the site (once)
+## 1. Give Thrum its own repository
 
-The Android package is generated from a live HTTPS URL, so the game has to be
-hosted. GitHub Pages does it from this repository.
+`Raouph26/Raouph` holds WORDSPYRE on `main` — its own `index.html`,
+`manifest.json`, `sw.js` and `.well-known/`. Thrum has files by all those names.
+Merging the two would collide on every one of them, so Thrum gets a repository
+of its own.
 
-1. Push to `main`.
-2. Repository **Settings → Pages → Source: GitHub Actions**.
-3. The `Deploy` workflow runs tests, builds, and publishes.
-4. Your URL will be `https://<user>.github.io/<repo>/`.
+1. Create a **public** repository at <https://github.com/new>, named `thrum`.
+   Public matters: GitHub Pages needs a paid plan for private repositories.
+   Do not add a README, `.gitignore` or licence — the push below carries them.
+2. Push this branch into it as `main`:
 
-Confirm before continuing: opening that URL on a phone should offer "Add to
-Home screen", which means the manifest and service worker were found.
+   ```bash
+   git remote add thrum https://github.com/Raouph26/thrum.git
+   git push thrum HEAD:main
+   ```
 
-## 2. Generate the Android package
+## 2. Turn on Pages
 
-1. Go to **pwabuilder.com** and enter your Pages URL.
-2. It will report a score and list the manifest and service worker it found.
+In the new repository: **Settings → Pages → Source: GitHub Actions**.
+
+The `Deploy` workflow then runs on every push to `main`: it runs the tests,
+builds, and publishes. The site lands at:
+
+```
+https://raouph26.github.io/thrum/
+```
+
+Open that on a phone before going further. It must offer **"Add to Home
+screen"** — that is proof Play's packager will find the manifest and the service
+worker. If it does not, the deploy has not finished or Pages is not on yet.
+
+## 3. Fill in the contact address
+
+`public/privacy.html` carries the placeholder `CONTACT-EMAIL-HERE`. Replace it
+with the support address you will enter in the Play Console — Google requires a
+working contact method, and the two should match. Commit and push; the policy is
+then live at:
+
+```
+https://raouph26.github.io/thrum/privacy.html
+```
+
+## 4. Generate the Android package
+
+1. Go to **pwabuilder.com** and enter `https://raouph26.github.io/thrum/`.
+2. It reports a score and lists the manifest and service worker it found.
 3. **Package for stores → Android → Google Play**.
-4. Settings that matter:
-   - **Package ID**: `com.<you>.thrum` — permanent once published, choose carefully.
+4. The settings that matter:
+   - **Package ID**: `com.thrum.game` — matching the `com.wordspyre.game`
+     pattern. **Permanent once published.** A different value later is a
+     different app, not an update.
    - **App name**: Thrum
-   - **Signing key**: choose **"Create new"**, then **download the `.zip` and
-     keep `signing.keystore` and its passwords somewhere safe.** Losing that key
-     means you can never update the app again — a new package ID and a new
-     listing is the only recovery.
-5. You get an `.aab` for Play, plus the key and an `assetlinks.json`.
+   - **Signing key**: choose **"Create new"**, then download the `.zip` and keep
+     `signing.keystore` and its passwords somewhere you will still have them in
+     three years. Losing that key means the app can never be updated again — a
+     new package ID and a new listing is the only recovery. Store it wherever
+     the WORDSPYRE upload key lives.
+5. You get an `.aab` for Play, the signing key, and an `assetlinks.json`.
 
-## 3. Prove you own the site
+## 5. Prove you own the site
 
-The TWA hides the browser bar only if the site vouches for the app.
+Without this the app shows a browser address bar and looks broken.
 
-1. From the PWABuilder download, take `assetlinks.json`.
-2. Put it at `public/.well-known/assetlinks.json` in this repository.
-3. Push, and check it is live at
-   `https://<user>.github.io/<repo>/.well-known/assetlinks.json`.
+1. Take `assetlinks.json` from the PWABuilder download.
+2. Put it at `public/.well-known/assetlinks.json` in the `thrum` repository.
+3. Push, then confirm it is live:
+   `https://raouph26.github.io/thrum/.well-known/assetlinks.json`
 
-Skip this and the app shows a browser address bar — it will look broken.
+Vite copies `public/` verbatim, so no build change is needed.
 
-## 4. Play Console
+## 6. Create the listing
 
-**Before anything else, check what kind of account you have.** A *personal*
-account created after 13 November 2023 must run a closed test with **12 testers
-who actually install, for 14 continuous days**, then apply for production access
-(reviewed in up to about a week). That is roughly three weeks of calendar time
-that cannot be shortened, so line up twelve people now. *Organisation* accounts
-(which need a D-U-N-S number) are exempt.
+**Play Console → Create app.** Game, free, Puzzle.
 
-Everything to upload is gathered in **[`store-assets/`](store-assets/)**, with a
-README naming what each file is for. It is generated from the game by
-`npm run assets` — the same files `public/` gets, copied into one folder so you
-are not hunting through the source tree while the Console has you halfway
-through a form.
+Assets are all in [`store-assets/`](store-assets/), regenerated by
+`npm run assets`, and `thrum-store-assets.zip` at the repository root is the
+whole folder in one download.
 
-| Play needs | Where it is |
+| Play asks for | Where it is |
 | --- | --- |
 | App icon, 512×512 | `store-assets/icons/icon-512.png` |
-| Phone screenshots, 1080×1920 (2–8) | `store-assets/screenshots/play-*.png` |
-| Feature graphic, 1024×500 | **Not generated — see below** |
-| Privacy policy URL | **You must write and host one** |
+| Phone screenshots, 1080×1920 | `store-assets/screenshots/play-*.png` |
+| Feature graphic, 1024×500 | **You must make this** — a banner, not a game asset |
+| Privacy policy URL | `https://raouph26.github.io/thrum/privacy.html` |
 
-The feature graphic is a marketing banner, not a game asset; make one from the
-icon and a line of copy. The privacy policy is required even with no ads,
-because the app stores progress locally — the Data safety form asks about it.
+Put `play-3-solved.png` first. It is the strongest of the five — three colours,
+hubs, a dark theme — and the first screenshot is the one most people see.
 
-Suggested listing copy:
+### Listing copy
 
 > **Short description**
 > A calm line-drawing puzzle. One line per colour, through every piece.
@@ -112,25 +140,45 @@ Suggested listing copy:
 > • Five themes that change the whole feel, unlocked as you go
 > • Plays entirely offline
 
-## 5. Regenerating assets
+### The forms
 
-```bash
-npm run assets   # icons and screenshots, from the running game
-npm run build    # production build into dist/
-npm test         # rules, catalogue, ad pacing, hints
-npm run validate # generates and verifies all 672 levels
-```
+- **Data safety**: *no data collected, no data shared.* The game writes four
+  keys to local storage on the device and nothing is ever transmitted, and
+  Play counts only data that leaves the device as collection.
+- **Ads**: **No.** This build serves none, and the TWA cannot.
+- **Content rating**: answer honestly; a no-violence, no-purchase puzzle rates
+  Everyone / PEGI 3.
+- **Target audience**: 13+ avoids the extra Families programme paperwork, unless
+  you want the under-13 audience.
+- **Government apps / financial features / news**: no to all.
 
-Icons are painted by the same routine that draws the menu mark, and screenshots
-are captured from the real build, so neither can drift out of date.
+## 7. Upload and roll out
+
+**Production → Create new release → upload the `.aab`.** Release notes can be a
+line. Then roll out.
+
+Review is usually a few days. A first release for an established account is not
+re-reviewed as harshly as a new account's, but it is not instant either.
 
 ---
 
+## Regenerating anything
+
+```bash
+npm run assets   # icons, screenshots, and the zip — from the running game
+npm run build    # production build into dist/
+npm test         # rules, catalogue, ad pacing, hints, the mark's board
+npm run validate # generates and verifies all 672 levels
+npm run test:browser # drives real Chromium and solves boards with simulated drags
+```
+
+Icons are painted by the routine that draws the menu mark, and screenshots are
+captured from the real build, so neither can drift out of date.
+
 ## Still to do, in order
 
-1. **Decide ads vs TWA** — the table at the top
-2. **Write and host a privacy policy** (hard blocker)
+1. **Create `Raouph26/thrum`** and push (step 1) — everything else waits on it
+2. **Replace `CONTACT-EMAIL-HERE`** in `public/privacy.html`
 3. **Make a 1024×500 feature graphic**
-4. **Line up 12 testers**, if your account is personal and post-Nov-2023
-5. Confirm the name — *Thrum* searched clean, but that is not trademark
-   clearance
+4. Confirm the name — *Thrum* searched clean across store listings, but that is
+   not trademark clearance
