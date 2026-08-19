@@ -505,10 +505,27 @@
         @media (prefers-reduced-motion: reduce) { .tile-spark { display:none; } }
         @keyframes nodePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.6); } 50% { box-shadow: 0 0 0 14px rgba(255,255,255,0); } }
         @keyframes nodeSlideIn { 0% { opacity: 0; transform: translate(-50%,-50%) translateY(10px); } 100% { opacity: 1; transform: translate(-50%,-50%) translateY(0); } }
-        @keyframes hudPop { 0% { transform: scale(1); } 50% { transform: scale(1.25); color: var(--accent-2); } 100% { transform: scale(1); } }
+        @keyframes hudPop { 0% { transform: scale(1); } 45% { transform: scale(1.42); color: var(--accent-2); } 100% { transform: scale(1); } }
         @keyframes resourceTick { 0% { transform: translateY(0) scale(1); } 35% { transform: translateY(-7px) scale(1.2); } 62% { transform: translateY(1px) scale(0.94); } 100% { transform: translateY(0) scale(1); } }
-        @keyframes glyphGlow { 0% { box-shadow: 0 0 0 0 rgba(var(--accent-3-rgb),0.6); } 50% { box-shadow: 0 0 20px rgba(var(--accent-3-rgb),0.7); } 100% { box-shadow: 0 0 0 0 rgba(var(--accent-3-rgb),0); } }
-        @keyframes indicatorRise { 0% { opacity: 1; transform: translateY(0) scale(0.6); } 100% { opacity: 0; transform: translateY(-60px) scale(1.1); } }
+        /* A glow alone was too polite to notice. The slot now jumps as well, so
+           it is obvious WHICH glyph just paid out. */
+        @keyframes glyphGlow {
+            0%   { box-shadow: 0 0 0 0 rgba(var(--accent-3-rgb),0.6); transform: translateY(0) scale(1); }
+            30%  { box-shadow: 0 0 26px 6px rgba(var(--accent-3-rgb),0.85); transform: translateY(-7px) scale(1.16); }
+            60%  { box-shadow: 0 0 20px 3px rgba(var(--accent-3-rgb),0.6); transform: translateY(0) scale(1.04); }
+            100% { box-shadow: 0 0 0 0 rgba(var(--accent-3-rgb),0); transform: translateY(0) scale(1); }
+        }
+        /* The label used to shoot up and vanish inside 0.8s at 12px, down by the
+           glyph row, while the numbers it was explaining changed at the top of
+           the screen. It now punches in, HOLDS still long enough to be read,
+           and only then leaves. */
+        @keyframes indicatorRise {
+            0%   { opacity: 0; transform: translateY(6px) scale(0.5); }
+            14%  { opacity: 1; transform: translateY(-6px) scale(1.16); }
+            26%  { opacity: 1; transform: translateY(-10px) scale(1); }
+            70%  { opacity: 1; transform: translateY(-16px) scale(1); }
+            100% { opacity: 0; transform: translateY(-52px) scale(0.96); }
+        }
 
         .score-popup {
             position: absolute; pointer-events: none; font-weight: 900; font-size: 0.9rem; z-index: 40;
@@ -520,12 +537,14 @@
         .score-popup.mult-popup { background: var(--accent-2); color: var(--accent-2-text); border-radius: 50%; width:48px; height:48px; padding:0; line-height:48px; font-size:0.85rem; }
         .score-popup.total-popup { background: var(--panel-bg); color: var(--text); font-size:1.3rem; padding:7px 20px; border-radius:var(--radius-md); border: 2px solid var(--panel-border); }
         .glyph-indicator {
-            position: absolute; pointer-events: none; font-weight: 900; font-size: 0.75rem; z-index: 35;
-            animation: indicatorRise 0.8s ease-out forwards;
-            padding: 4px 10px; border-radius: var(--radius-sm); background: var(--panel-bg); color: var(--accent-3);
-            box-shadow: 0 4px 14px rgba(0,0,0,0.5); white-space: nowrap; border: 2px solid var(--panel-border);
+            position: absolute; pointer-events: none; font-weight: 900;
+            font-size: clamp(0.95rem, 3.8vw, 1.15rem); letter-spacing: 0.3px; z-index: 35;
+            animation: indicatorRise 1.15s cubic-bezier(0.2, 0.9, 0.25, 1) forwards;
+            padding: 6px 13px; border-radius: var(--radius-sm); background: var(--panel-bg); color: var(--accent-3);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.55); white-space: nowrap;
+            border: 3px solid var(--accent-3);
         }
-        .hud-value.pop { animation: hudPop 0.25s ease; }
+        .hud-value.pop { animation: hudPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
         #hud-times.highlight { color: var(--accent-3); text-shadow: 0 0 16px rgba(var(--accent-3-rgb),0.7); transform: scale(1.3); transition: all 0.3s ease; }
 
         .view-panel {
@@ -1046,7 +1065,25 @@
             z-index:2; pointer-events:none; white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,0.35);
             font-family: var(--font-main); letter-spacing:-0.2px; max-width: calc(100% - 4px); overflow:hidden; text-overflow:ellipsis;
         }
-        .active-tile .tile-badge { font-size:9px; padding:2px 5px; }
+        /* The word line is for reading the word. The badge sat directly on the
+           letter, and on a nine-letter word - 34px tiles - it covered a quarter
+           of the tile and the word could not be read at all; "+2✦" even
+           truncated to "+…", which says nothing. The tile's own colour already
+           carries the bonus (blue +10, gold x2, red +2 mult), so here the badge
+           becomes a corner pip in that same colour and the letter is left
+           alone. The rack still spells the bonus out in words. */
+        #active-word-line .tile-badge {
+            font-size: 0; line-height: 0; padding: 0; width: 9px; height: 9px;
+            border-radius: 50%; top: 2px; left: 2px; max-width: none; overflow: visible;
+            box-shadow: 0 0 0 1.5px rgba(255,255,255,0.9), 0 1px 2px rgba(0,0,0,0.4);
+        }
+        /* A full rack squeezes the tiles too, and "ANY" was coming out as "A…".
+           Same treatment once the bench is carrying more than a normal hand. */
+        #hand-rack.deep-pockets .tile-badge {
+            font-size: 0; line-height: 0; padding: 0; width: 9px; height: 9px;
+            border-radius: 50%; top: 2px; left: 2px; max-width: none; overflow: visible;
+            box-shadow: 0 0 0 1.5px rgba(255,255,255,0.9), 0 1px 2px rgba(0,0,0,0.4);
+        }
         .tile-badge.badge-wild { background: var(--accent-3); color: var(--accent-3-text); }
         .tile-badge.badge-finisher { background: var(--accent-1); color: var(--accent-1-text); }
         .tile-inner.wildcard { border: var(--outline-w) solid var(--accent-3) !important; box-shadow: 0 0 12px var(--accent-3); }
@@ -1082,7 +1119,7 @@
             touch-action: none;
         }
         .glyph-slot:active { transform: translateY(3px); }
-        .glyph-slot.active { animation: glyphGlow 0.5s ease; }
+        .glyph-slot.active { animation: glyphGlow 0.52s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 20; }
         .glyph-order-hint { font-size:0.66rem; font-weight:900; letter-spacing:0.6px; color: var(--accent-3); font-family: var(--font-main); text-align:center; }
         .draft-detail-actions .glyph-move-btn { width:118px; padding:11px 0; font-size:0.8rem; }
         .draft-detail-actions .glyph-move-btn:disabled { opacity:0.4; }
@@ -3022,11 +3059,18 @@
             }
         },
         onRoundStart(activeTiles) {
+            // Hand anything back first. The rune used to set type permanently,
+            // so a tile stayed wild for the rest of the run - and since every
+            // round converted another one, a hand could end up carrying four
+            // wildcards. They are lent for one round now, wherever they have
+            // got to since.
+            [].concat(G.hand || [], G.tileBag || [], G.discardPile || [], G.activeWord || [])
+              .forEach(t => { if (t && t.runeWild) { t.type = 'normal'; delete t.runeWild; } });
             if (!this.hasGlyph('wildcard_rune')) return;
             const candidates = (activeTiles||[]).filter(t=>t&&t.type==='normal');
             if (candidates.length===0) return;
             const picks = Math.min(candidates.length, scaleInt(1, glyphLevel('wildcard_rune')));
-            shuffle(candidates).slice(0, picks).forEach(t => { t.type = 'wildcard'; });
+            shuffle(candidates).slice(0, picks).forEach(t => { t.type = 'wildcard'; t.runeWild = true; });
         },
         calculateScoreModifiers(word, basePoints, baseMult) {
             let finalPoints = basePoints||0, finalMult = baseMult||1;
@@ -3155,7 +3199,18 @@
         const length=G.activeWord.length; const baseChips=getLengthBaseChips(length); const baseMult=getLengthBaseMult(length)+redAuraBonus;
         totalChips += baseChips;
         let word=letters.join(''), valid=false;
-        if(hasWildcard){ const patStr=pattern.join(''); for(let c=65;c<=90;c++){ const tw=patStr.replace(/\?/g,String.fromCharCode(c)); if(G.dictSet.has(tw)){ valid=true; word=tw; break; } } }
+        if(hasWildcard){
+            // Every blank is filled independently. The old code put the SAME
+            // letter in all of them, so ATTEMPT played with two wildcards was
+            // only ever tested as AATEMAT, BBTEMBT and so on - never the word
+            // the player had actually spelled out.
+            const patStr = pattern.join('');
+            const re = new RegExp('^' + patStr.replace(/\?/g, '[A-Z]') + '$');
+            const bucket = (G.dictByLen && G.dictByLen.get(patStr.length)) || [];
+            for (let i = 0; i < bucket.length; i++) {
+                if (re.test(bucket[i])) { valid = true; word = bucket[i]; break; }
+            }
+        }
         else if(letters.length>0) valid=G.dictSet.has(word);
         const mods = GlyphManager.calculateScoreModifiers(word, totalChips, baseMult);
         totalChips = mods.finalPoints; let totalMult = mods.finalMult;
@@ -3370,7 +3425,7 @@
         }
     }
     function spawnGlyphIndicator(glyphEl, text) { AudioEngine.playGlyph(); return spawnGlyphIndicatorSilent(glyphEl, text); }
-    function spawnGlyphIndicatorSilent(glyphEl, text) { const container = document.getElementById('game-container'); const rect = glyphEl.getBoundingClientRect(); const cr = container.getBoundingClientRect(); const indicator = document.createElement('span'); indicator.className = 'glyph-indicator'; indicator.textContent = text; indicator.style.left = (rect.left - cr.left + rect.width/2 - 30) + 'px'; indicator.style.top = (rect.top - cr.top - 10) + 'px'; container.appendChild(indicator); AudioEngine.playPopup(); setTimeout(() => { if(indicator.parentNode) indicator.remove(); }, 850); }
+    function spawnGlyphIndicatorSilent(glyphEl, text) { const container = document.getElementById('game-container'); const rect = glyphEl.getBoundingClientRect(); const cr = container.getBoundingClientRect(); const indicator = document.createElement('span'); indicator.className = 'glyph-indicator'; indicator.textContent = text; indicator.style.left = (rect.left - cr.left + rect.width/2 - 30) + 'px'; indicator.style.top = (rect.top - cr.top - 10) + 'px'; container.appendChild(indicator); AudioEngine.playPopup(); setTimeout(() => { if(indicator.parentNode) indicator.remove(); }, 1200); }
 
     function getWordLengthWarning(occ) {
         if (occ === 0) return null;
@@ -3460,7 +3515,9 @@
             if (effect.kind === 'points') { displayChips += effect.value; pointsEl.textContent = displayChips; pointsEl.classList.add('pop'); AudioEngine.playTick(1, 3); }
             else if (effect.kind === 'mult-add') { displayMult += effect.value; multEl.textContent = displayMult.toFixed(1); multEl.classList.add('pop'); AudioEngine.playTick(2, 3); }
             else if (effect.kind === 'mult-mul') { displayMult *= effect.value; multEl.textContent = displayMult.toFixed(1); multEl.classList.add('pop'); }
-            spawnGlyphIndicator(slotEl, effect.label); await sleep(350);
+            // 350ms ran the whole board together into one blur. Half a second
+            // each reads as a cascade, one glyph at a time.
+            spawnGlyphIndicator(slotEl, effect.label); await sleep(520);
             slotEl.classList.remove('active'); pointsEl.classList.remove('pop'); multEl.classList.remove('pop');
         }
 
@@ -3469,7 +3526,7 @@
             displayMult *= 1.5; multEl.textContent = displayMult.toFixed(1); multEl.classList.add('pop');
             const held = document.querySelectorAll('#hand-rack .tile-inner.italic-tile')[i];
             if (held) spawnGlyphIndicator(held, 'HELD x1.5');
-            await sleep(320); multEl.classList.remove('pop');
+            await sleep(460); multEl.classList.remove('pop');
         }
 
         await sleep(300); timesEl.classList.add('highlight');
@@ -4308,6 +4365,10 @@
     }
 
     function getTileClass(tile) { let cls='tile-inner'; if(tile.type==='wildcard') cls+=' wildcard'; else if(tile.type==='finisher') cls+=' finisher'; else if(tile.type==='italic') cls+=' italic-tile'+(tile.aura?' aura-'+tile.aura:''); else if(tile.aura) cls+=' aura-'+tile.aura; if(G.rerollMode&&G.rerollMarks.has(tile.id)) cls+=' marked-reroll'; if(isAnchorLocked(tile.id)) cls+=' anchor-locked'; if(isMutedTile(tile)) cls+=' muted-tile'; return cls; }
+    // A tile the Wildcard Rune has lent out keeps whatever letter it was dealt
+    // as, which read as a plain A or T with a badge nobody connected to it.
+    // It stands for any letter, so it is drawn as one.
+    function tileFace(tile) { return tile.type === 'wildcard' ? '*' : tile.letter; }
     function getTileBadge(tile) {
         if (tile.type === 'wildcard') return '<span class="tile-badge badge-wild">ANY</span>';
         if (tile.type === 'finisher') return '<span class="tile-badge badge-finisher">END x3</span>';
@@ -4521,18 +4582,18 @@
         const awl=document.getElementById('active-word-line');
         awl.dataset.len = String(Math.min(G.activeWord.length, 14));
         reconcileTileList(awl, G.activeWord, tile=>tile.id,
-            (tile,idx)=>{ const wrap=document.createElement('div'); wrap.className='active-tile'; wrap.dataset.tileId=tile.id; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>${getTileBadge(tile)}`; inner.onpointerdown=(e)=>{e.stopPropagation();onDragStart(e,'word',idx);}; wrap.appendChild(inner); return wrap; },
-            (wrap,tile,idx)=>{ const inner=wrap.firstElementChild; inner.className=getTileClass(tile); paintTileFace(inner, `<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>${getTileBadge(tile)}`); inner.onpointerdown=(e)=>{e.stopPropagation();onDragStart(e,'word',idx);}; }
+            (tile,idx)=>{ const wrap=document.createElement('div'); wrap.className='active-tile'; wrap.dataset.tileId=tile.id; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.innerHTML=`<span class="tile-letter">${tileFace(tile)}</span><span class="tile-chips">${tile.chips}</span>${getTileBadge(tile)}`; inner.onpointerdown=(e)=>{e.stopPropagation();onDragStart(e,'word',idx);}; wrap.appendChild(inner); return wrap; },
+            (wrap,tile,idx)=>{ const inner=wrap.firstElementChild; inner.className=getTileClass(tile); paintTileFace(inner, `<span class="tile-letter">${tileFace(tile)}</span><span class="tile-chips">${tile.chips}</span>${getTileBadge(tile)}`); inner.onpointerdown=(e)=>{e.stopPropagation();onDragStart(e,'word',idx);}; }
         );
         const hr=document.getElementById('hand-rack');
         const handSlots=[]; for(let i=0;i<getHandSize();i++) handSlots.push(G.hand[i]||null);
         reconcileTileList(hr, handSlots, tile=>tile&&tile.id,
-            (tile,idx)=>{ const wrap=document.createElement('div'); wrap.className='hand-tile-wrap'; if(tile){ wrap.dataset.tileId=tile.id; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.style.animationDelay=tileIdleDelay(tile.id); inner.innerHTML=`<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>${getTileBadge(tile)}`; inner.onpointerdown=(e)=>onDragStart(e,'hand',idx); wrap.appendChild(inner); } else { wrap.classList.add('empty-slot'); } return wrap; },
+            (tile,idx)=>{ const wrap=document.createElement('div'); wrap.className='hand-tile-wrap'; if(tile){ wrap.dataset.tileId=tile.id; const inner=document.createElement('div'); inner.className=getTileClass(tile); inner.style.animationDelay=tileIdleDelay(tile.id); inner.innerHTML=`<span class="tile-letter">${tileFace(tile)}</span><span class="tile-chips">${tile.chips}</span>${getTileBadge(tile)}`; inner.onpointerdown=(e)=>onDragStart(e,'hand',idx); wrap.appendChild(inner); } else { wrap.classList.add('empty-slot'); } return wrap; },
             (wrap,tile,idx)=>{ if(!tile){ if(wrap.firstElementChild) wrap.innerHTML=''; wrap.classList.add('empty-slot'); delete wrap.dataset.tileId; return; }
               wrap.classList.remove('empty-slot'); wrap.dataset.tileId=tile.id;
               let inner=wrap.firstElementChild;
               if(!inner){ inner=document.createElement('div'); inner.style.animationDelay=tileIdleDelay(tile.id); wrap.appendChild(inner); }
-              inner.className=getTileClass(tile); paintTileFace(inner, `<span class="tile-letter">${tile.letter}</span><span class="tile-chips">${tile.chips}</span>${getTileBadge(tile)}`); inner.onpointerdown=(e)=>onDragStart(e,'hand',idx); }
+              inner.className=getTileClass(tile); paintTileFace(inner, `<span class="tile-letter">${tileFace(tile)}</span><span class="tile-chips">${tile.chips}</span>${getTileBadge(tile)}`); inner.onpointerdown=(e)=>onDragStart(e,'hand',idx); }
         );
         renderGlyphs();
         renderConsumables();
@@ -4704,7 +4765,16 @@
     }
     function initDict() {
         const list = (typeof window !== 'undefined' && window.DICTIONARY_WORDS) || '';
-        G.dictSet = new Set(list ? list.split(' ') : []);
+        const words = list ? list.split(' ') : [];
+        G.dictSet = new Set(words);
+        // A wildcard has to find a word that FITS A SHAPE, not one that can be
+        // looked up. Bucketing by length keeps that search to the few thousand
+        // words that could possibly match rather than all 172,849 of them.
+        G.dictByLen = new Map();
+        for (const w of words) {
+            const bucket = G.dictByLen.get(w.length);
+            if (bucket) bucket.push(w); else G.dictByLen.set(w.length, [w]);
+        }
         // words.js failing to load would silently make every word invalid, which
         // looks like a broken game rather than a missing file
         if (!G.dictSet.size) console.error('Wordspyre: words.js did not load, so no word will be accepted.');
