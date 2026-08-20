@@ -1059,31 +1059,26 @@
         .tile-inner.aura-red .tile-letter, .tile-inner.aura-red .tile-chips { color: var(--accent-2-text) !important; }
         .tile-inner.aura-gold { background: var(--accent-3) !important; border: var(--outline-w) solid var(--accent-3-shadow) !important; box-shadow: 0 4px 0 0 var(--accent-3-shadow) !important; }
         .tile-inner.aura-gold .tile-letter, .tile-inner.aura-gold .tile-chips { color: var(--accent-3-text) !important; }
+        /* A band across the top of the tile rather than a sticker on its face.
+           The old badge sat over the letter: on a nine-letter word - 34px tiles -
+           it covered a quarter of the tile and the word could not be read, and
+           "+2✦" truncated to "+…", which tells nobody anything. As a cap it says
+           what it does and leaves the letter alone. .tile-inner clips its own
+           overflow, so this has to sit inside the tile rather than float above. */
         .tile-badge {
-            position:absolute; top:2px; left:2px; font-size:8px; font-weight:900; line-height:1;
-            padding:2px 4px; border-radius:6px; background:rgba(255,255,255,0.95); color:#111;
-            z-index:2; pointer-events:none; white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,0.35);
-            font-family: var(--font-main); letter-spacing:-0.2px; max-width: calc(100% - 4px); overflow:hidden; text-overflow:ellipsis;
+            position:absolute; top:0; left:0; right:0; width:100%;
+            font-size:clamp(7px, 2.1vw, 10px); font-weight:900; line-height:1;
+            padding:2px 0 3px; border-radius:0; background:rgba(255,255,255,0.95); color:#111;
+            z-index:2; pointer-events:none; white-space:nowrap; text-align:center;
+            box-shadow:0 1px 3px rgba(0,0,0,0.28);
+            font-family: var(--font-main); letter-spacing:-0.2px; overflow:hidden;
         }
-        /* The word line is for reading the word. The badge sat directly on the
-           letter, and on a nine-letter word - 34px tiles - it covered a quarter
-           of the tile and the word could not be read at all; "+2✦" even
-           truncated to "+…", which says nothing. The tile's own colour already
-           carries the bonus (blue +10, gold x2, red +2 mult), so here the badge
-           becomes a corner pip in that same colour and the letter is left
-           alone. The rack still spells the bonus out in words. */
-        #active-word-line .tile-badge {
-            font-size: 0; line-height: 0; padding: 0; width: 9px; height: 9px;
-            border-radius: 50%; top: 2px; left: 2px; max-width: none; overflow: visible;
-            box-shadow: 0 0 0 1.5px rgba(255,255,255,0.9), 0 1px 2px rgba(0,0,0,0.4);
-        }
-        /* A full rack squeezes the tiles too, and "ANY" was coming out as "A…".
-           Same treatment once the bench is carrying more than a normal hand. */
-        #hand-rack.deep-pockets .tile-badge {
-            font-size: 0; line-height: 0; padding: 0; width: 9px; height: 9px;
-            border-radius: 50%; top: 2px; left: 2px; max-width: none; overflow: visible;
-            box-shadow: 0 0 0 1.5px rgba(255,255,255,0.9), 0 1px 2px rgba(0,0,0,0.4);
-        }
+        /* the letter drops a touch so it stays centred in what is left */
+        .tile-inner .tile-badge ~ .tile-letter { transform: translateY(3px); }
+        /* Tiles get small on long words and on an overloaded bench, so the cap
+           tightens rather than turning into an unreadable smear. */
+        #active-word-line .tile-badge,
+        #hand-rack.deep-pockets .tile-badge { font-size: clamp(6px, 1.9vw, 9px); padding: 2px 0; }
         .tile-badge.badge-wild { background: var(--accent-3); color: var(--accent-3-text); }
         .tile-badge.badge-finisher { background: var(--accent-1); color: var(--accent-1-text); }
         .tile-inner.wildcard { border: var(--outline-w) solid var(--accent-3) !important; box-shadow: 0 0 12px var(--accent-3); }
@@ -3373,7 +3368,29 @@
         if (!w) msg.textContent = 'That would not open here. Tap COPY DETAILS and send them over instead.';
         else msg.textContent = 'The form is open in your browser. Thank you!';
     }
-    function showConfirmModal() { document.getElementById('confirm-modal').classList.add('show'); }
+    // The quit dialog, borrowed and reworded. onYes is swapped each time so the
+    // same two buttons can ask different questions.
+    let _confirmYes = null;
+    function askOverwrite(onYes) {
+        const m = document.getElementById('confirm-modal');
+        const saved = loadActiveRunState() || {};
+        const where = saved.gameMode === 'blitz' ? 'a Blitz run'
+                    : saved.gameMode === 'zen' ? 'a Zen run'
+                    : 'a run on stage ' + (saved.currentStage || 1);
+        m.querySelector('p').textContent = 'You already have ' + where + ' saved. Starting a new game deletes it.';
+        m.querySelector('#btn-confirm-quit').textContent = 'Start new';
+        m.querySelector('#btn-confirm-cancel').textContent = 'Keep it';
+        _confirmYes = onYes;
+        m.classList.add('show');
+    }
+    function showConfirmModal() {
+        const m = document.getElementById('confirm-modal');
+        m.querySelector('p').textContent = 'Quit Run? Your progress will be lost.';
+        m.querySelector('#btn-confirm-quit').textContent = 'Quit';
+        m.querySelector('#btn-confirm-cancel').textContent = 'Cancel';
+        _confirmYes = null;
+        m.classList.add('show');
+    }
     function hideConfirmModal() { document.getElementById('confirm-modal').classList.remove('show'); }
     function openOptionsModal() {
         pauseBlitz();
@@ -3610,7 +3627,19 @@
             }
             else showModal('game-over');
         }
-        else render();
+        else {
+            const tgt = G.stageTargets[G.currentStage];
+            const from = G.currentScore - payload.totalScore;
+            render();
+            const scorePill = document.getElementById('score-pill');
+            if (scorePill && payload.totalScore > 0) {
+                await new Promise(resolve => {
+                    animateValueCountUp(from, G.currentScore, 650, v => {
+                        scorePill.textContent = v.toLocaleString() + ' / ' + tgt.toLocaleString();
+                    }, resolve);
+                });
+            }
+        }
     }
 
     function showStageClear(score) {
@@ -3987,6 +4016,11 @@
             G.equippedGlyphs.splice(at,1);
             G.bank += value;
             AudioEngine.playSubmit();
+            // An upgrade offer points at a glyph on the board. Selling that glyph
+            // left the offer behind, still saying UPGRADE TO LVL 2 for something
+            // the player no longer owned.
+            G.shopOffers.glyphs = G.shopOffers.glyphs.filter(o =>
+                o.kind !== 'upgrade' || G.equippedGlyphs.some(eq => eq.id === o.id));
             // a freed slot should be buyable again if this shop had no glyphs left to offer
             if (!G.shopOffers.glyphs.some(o=>o.kind==='glyph')) G.shopOffers.glyphs = generateShopGlyphOffers();
             renderShop(container);
@@ -4370,14 +4404,16 @@
     // It stands for any letter, so it is drawn as one.
     function tileFace(tile) { return tile.type === 'wildcard' ? '*' : tile.letter; }
     function getTileBadge(tile) {
+        // Kept to two or three characters on purpose: these sit in a band across
+        // the top of the tile, and anything longer used to truncate to "+…".
         if (tile.type === 'wildcard') return '<span class="tile-badge badge-wild">ANY</span>';
-        if (tile.type === 'finisher') return '<span class="tile-badge badge-finisher">END x3</span>';
-        if (tile.type === 'italic') return '<span class="tile-badge badge-italic">HOLD x1.5</span>';
+        if (tile.type === 'finisher') return '<span class="tile-badge badge-finisher">x3</span>';
+        if (tile.type === 'italic') return '<span class="tile-badge badge-italic">x1.5</span>';
         if (isMutedTile(tile)) return '';
         const parts = [];
         if (tile.aura === 'blue') parts.push('+10');
         if (tile.aura === 'gold') parts.push('x2');
-        if (tile.aura === 'red') parts.push('+2✦');
+        if (tile.aura === 'red') parts.push('+2');
         if (tile.goldInk) parts.push('+20');
         if (parts.length === 0) return '';
         return '<span class="tile-badge badge-'+(tile.aura||'goldink')+'">'+parts.join(' ')+'</span>';
@@ -4832,10 +4868,18 @@
 
         document.getElementById('btn-back-themes').addEventListener('click',()=>slideBack('view-menu','view-themes'));
         document.getElementById('btn-sort-bench').addEventListener('click', cycleBenchSort);
-        document.getElementById('btn-mode-classic').addEventListener('click',()=>startClassicLikeRun('classic'));
-        document.getElementById('btn-mode-daily').addEventListener('click',()=>startClassicLikeRun('daily'));
-        document.getElementById('btn-mode-zen').addEventListener('click',()=>startZenRun());
-        document.getElementById('btn-mode-blitz').addEventListener('click',()=>startBlitzRun());
+        // Starting a mode wipes whatever run is saved, and the mode buttons sit
+        // right under CONTINUE RUN - easy to hit the wrong one and lose a stage 6
+        // board with no warning at all. Ask first, but only when there is
+        // actually something to lose.
+        const startFresh = go => () => {
+            if (!loadActiveRunState()) { go(); return; }
+            askOverwrite(go);
+        };
+        document.getElementById('btn-mode-classic').addEventListener('click',startFresh(()=>startClassicLikeRun('classic')));
+        document.getElementById('btn-mode-daily').addEventListener('click',startFresh(()=>startClassicLikeRun('daily')));
+        document.getElementById('btn-mode-zen').addEventListener('click',startFresh(()=>startZenRun()));
+        document.getElementById('btn-mode-blitz').addEventListener('click',startFresh(()=>startBlitzRun()));
         // a backgrounded WebView can stop the interval outright, so re-check
         // against the clock and re-arm the moment the page is on screen again
         document.addEventListener('visibilitychange', () => { if (document.hidden) pauseBlitz(); else resumeBlitz(); });
@@ -4893,7 +4937,11 @@
             if (!isThemeUnlocked(c.dataset.theme)) { renderThemeLocks(); AudioEngine.playError(); return; }
             applyTheme(c.dataset.theme); G.currentTheme=c.dataset.theme; if(c.dataset.palette) applyPalette(c.dataset.palette); updateThemeButtons(); renderThemeLocks(); AudioEngine.playTap(); }));
         document.getElementById('btn-confirm-cancel').addEventListener('click', hideConfirmModal);
-        document.getElementById('btn-confirm-quit').addEventListener('click', () => { hideConfirmModal(); goToMenu(); });
+        document.getElementById('btn-confirm-quit').addEventListener('click', () => {
+            hideConfirmModal();
+            const yes = _confirmYes; _confirmYes = null;
+            if (yes) yes(); else goToMenu();
+        });
         document.getElementById('btn-run-info').addEventListener('click',()=>{ renderRunInfo(); document.getElementById('run-info-modal').classList.add('show'); });
         document.getElementById('ri-hazard-row').addEventListener('click',()=>{ document.getElementById('ri-hazard-panel').classList.toggle('open'); });
         document.getElementById('btn-close-run-info').addEventListener('click',()=>document.getElementById('run-info-modal').classList.remove('show'));
