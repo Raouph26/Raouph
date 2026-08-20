@@ -1059,29 +1059,35 @@
         .tile-inner.aura-red .tile-letter, .tile-inner.aura-red .tile-chips { color: var(--accent-2-text) !important; }
         .tile-inner.aura-gold { background: var(--accent-3) !important; border: var(--outline-w) solid var(--accent-3-shadow) !important; box-shadow: 0 4px 0 0 var(--accent-3-shadow) !important; }
         .tile-inner.aura-gold .tile-letter, .tile-inner.aura-gold .tile-chips { color: var(--accent-3-text) !important; }
-        /* A band across the top of the tile rather than a sticker on its face.
-           The old badge sat over the letter: on a nine-letter word - 34px tiles -
-           it covered a quarter of the tile and the word could not be read, and
-           "+2✦" truncated to "+…", which tells nobody anything. As a cap it says
-           what it does and leaves the letter alone. .tile-inner clips its own
-           overflow, so this has to sit inside the tile rather than float above. */
+        /* The bonus is a small tag on the top-left corner - a hat the letter
+           wears. It went through a full-width band first, which read as a label
+           stuck across the tile and buried the letter; a corner tag says the
+           same thing in the dead space no letter uses. Kept to two or three
+           characters so it never has to shrink or truncate, outlined so it
+           reads on a gold, blue or red tile alike. .tile-inner clips its own
+           overflow, so it tucks into the corner rather than floating outside. */
         .tile-badge {
-            position:absolute; top:0; left:0; right:0; width:100%;
-            font-size:clamp(7px, 2.1vw, 10px); font-weight:900; line-height:1;
-            padding:2px 0 3px; border-radius:0; background:rgba(255,255,255,0.95); color:#111;
+            position:absolute; top:3px; left:3px; right:auto; width:auto;
+            font-size:clamp(7px, 2.2vw, 10px); font-weight:900; line-height:1;
+            padding:2px 4px; border-radius:999px; background:#fff; color:#111;
+            border:1.5px solid rgba(0,0,0,0.6);
             z-index:2; pointer-events:none; white-space:nowrap; text-align:center;
-            box-shadow:0 1px 3px rgba(0,0,0,0.28);
-            font-family: var(--font-main); letter-spacing:-0.2px; overflow:hidden;
+            box-shadow:0 1px 2px rgba(0,0,0,0.3);
+            font-family: var(--font-main); letter-spacing:-0.2px;
         }
-        /* the letter drops a touch so it stays centred in what is left */
-        .tile-inner .tile-badge ~ .tile-letter { transform: translateY(3px); }
-        /* Tiles get small on long words and on an overloaded bench, so the cap
-           tightens rather than turning into an unreadable smear. */
+        /* The letter is deliberately left where it is. Nudging it clear of the
+           tag put badged letters on a different baseline from plain ones, and a
+           word read as if it were jumping about. The tag shrinks instead. */
         #active-word-line .tile-badge,
-        #hand-rack.deep-pockets .tile-badge { font-size: clamp(6px, 1.9vw, 9px); padding: 2px 0; }
+        #hand-rack.deep-pockets .tile-badge {
+            font-size: 6px; padding: 1px 2px; top: 2px; left: 2px; border-width: 1px;
+        }
         .tile-badge.badge-wild { background: var(--accent-3); color: var(--accent-3-text); }
         .tile-badge.badge-finisher { background: var(--accent-1); color: var(--accent-1-text); }
         .tile-inner.wildcard { border: var(--outline-w) solid var(--accent-3) !important; box-shadow: 0 0 12px var(--accent-3); }
+        /* An asterisk hangs near the cap line, so left alone it reads as a
+           speck under the tag instead of the tile's letter. */
+        .tile-inner.wildcard .tile-letter { font-size: 1.5em; display: inline-block; transform: translateY(0.16em); }
         .tile-inner.finisher { border: var(--outline-w) solid var(--accent-1) !important; box-shadow: 0 0 12px var(--accent-1); }
         .tile-inner.italic-tile { border: var(--outline-w) solid #F59E0B !important; box-shadow: 0 0 12px rgba(245,158,11,0.75); }
         .tile-inner.italic-tile .tile-letter { font-style: italic; font-weight: 800; transform: skewX(-12deg); display: inline-block; }
@@ -2329,9 +2335,9 @@
             <div class="howto-showcase">
                 <div class="howto-tile-demo"><div class="tile-inner aura-blue"><span class="tile-letter">A</span><span class="tile-chips">1</span><span class="tile-badge badge-blue">+10</span></div><span class="howto-tile-caption">Flat bonus</span></div>
                 <div class="howto-tile-demo"><div class="tile-inner aura-gold"><span class="tile-letter">S</span><span class="tile-chips">1</span><span class="tile-badge badge-gold">x2</span></div><span class="howto-tile-caption">Chip x2</span></div>
-                <div class="howto-tile-demo"><div class="tile-inner aura-red"><span class="tile-letter">T</span><span class="tile-chips">1</span><span class="tile-badge badge-red">+2✦</span></div><span class="howto-tile-caption">Mult boost</span></div>
+                <div class="howto-tile-demo"><div class="tile-inner aura-red"><span class="tile-letter">T</span><span class="tile-chips">1</span><span class="tile-badge badge-red">+2</span></div><span class="howto-tile-caption">Mult boost</span></div>
                 <div class="howto-tile-demo"><div class="tile-inner wildcard"><span class="tile-letter">*</span><span class="tile-chips">0</span><span class="tile-badge badge-wild">ANY</span></div><span class="howto-tile-caption">Wildcard</span></div>
-                <div class="howto-tile-demo"><div class="tile-inner finisher"><span class="tile-letter">!</span><span class="tile-chips">0</span><span class="tile-badge badge-finisher">END x3</span></div><span class="howto-tile-caption">Play LAST</span></div>
+                <div class="howto-tile-demo"><div class="tile-inner finisher"><span class="tile-letter">!</span><span class="tile-chips">0</span><span class="tile-badge badge-finisher">x3</span></div><span class="howto-tile-caption">Play LAST</span></div>
             </div>
             <div class="howto-section-label">Glyph Colors</div>
             <div class="howto-glyph-guide">
@@ -2345,7 +2351,7 @@
             <div class="howto-row"><span class="howto-num">★</span><span>Put <b>+MULT</b> glyphs to the LEFT of <b>xMULT</b> glyphs. On 100 points: <b>+15 then x3 = 4,800</b>, but <b>x3 then +15 = 1,800</b>. Same glyphs, same word — order alone nearly triples it.</span></div>
             <div class="howto-section-label">Italic Tiles</div>
             <div class="howto-showcase">
-                <div class="howto-tile-demo"><div class="tile-inner italic-tile"><span class="tile-letter">E</span><span class="tile-chips">1</span><span class="tile-badge badge-italic">HOLD x1.5</span></div></div>
+                <div class="howto-tile-demo"><div class="tile-inner italic-tile"><span class="tile-letter">E</span><span class="tile-chips">1</span><span class="tile-badge badge-italic">x1.5</span></div></div>
             </div>
             <div class="howto-row"><span class="howto-num">★</span><span>Italic tiles are built to be <b>kept, not played</b>. Every Italic still sitting on your bench gives <b>x1.5 MULT</b> to the word you submit.</span></div>
             <div class="howto-row"><span class="howto-num">★</span><span><b>Do NOT play these letters on the board unless necessary</b> — holding them on your bench gives a 1.5x Multiplier to every played word!</span></div>
@@ -4404,8 +4410,8 @@
     // It stands for any letter, so it is drawn as one.
     function tileFace(tile) { return tile.type === 'wildcard' ? '*' : tile.letter; }
     function getTileBadge(tile) {
-        // Kept to two or three characters on purpose: these sit in a band across
-        // the top of the tile, and anything longer used to truncate to "+…".
+        // Kept to two or three characters on purpose: these sit in a tag on the
+        // tile's top corner, and anything longer used to truncate to "+…".
         if (tile.type === 'wildcard') return '<span class="tile-badge badge-wild">ANY</span>';
         if (tile.type === 'finisher') return '<span class="tile-badge badge-finisher">x3</span>';
         if (tile.type === 'italic') return '<span class="tile-badge badge-italic">x1.5</span>';
