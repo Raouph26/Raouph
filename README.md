@@ -22,6 +22,22 @@ or players keep the build they already cached.
 Wrapping for the stores: point Capacitor, Cordova or a Trusted Web Activity at
 the same folder. The manifest and icons are already the sizes both stores want.
 
+## Version numbers
+
+The file `VERSION` at the top of this repo is the only place a version is
+written. Both the Android build and the release tag read it.
+
+* **A mini fix** moves the last digit: `1.2.1` → `1.2.2` → `1.2.3`. These are
+  published as pre-releases, so they sit beside the real one without replacing
+  it.
+* **A release** — a build that is actually going to Play — moves the middle
+  digit and resets the last: `1.3.0`. That one is marked **latest**, so
+  `github.com/Raouph26/Raouph/releases/latest` always points at the last build
+  that was meant to ship.
+
+Play's version code is worked out from the name (`1.3.0` → `10300`), so it
+climbs by itself and never has to be typed.
+
 ## Analytics
 
 Every event goes through one funnel. To start receiving them, define this

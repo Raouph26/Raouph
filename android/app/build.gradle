@@ -1,5 +1,26 @@
 plugins { id 'com.android.application' }
 
+// One file at the top of the repo decides the version, and it is changed by
+// hand. It used to come from the GitHub run number, which climbs on every push
+// whether or not anything was released, so the number on the store had no
+// relation to what had actually shipped.
+//
+// Mini fixes move the last digit - 1.2.1, 1.2.2, 1.2.3. A release moves the
+// middle one and resets the last - 1.3.0.
+def versionFile = rootProject.file('../VERSION')
+if (!versionFile.exists()) {
+    throw new GradleException('VERSION is missing from the top of the repo')
+}
+def appVersionName = versionFile.text.trim()
+if (!(appVersionName ==~ /\d+\.\d+\.\d+/)) {
+    throw new GradleException("VERSION must read like 1.2.3, but reads: ${appVersionName}")
+}
+// Play will not take a version code it has already seen, and will not take one
+// lower than the last. Deriving it from the name keeps it climbing on its own:
+// 1.2.1 is 10201, 1.3.0 is 10300. Nothing to remember and nothing to type.
+def parts = appVersionName.tokenize('.')
+def appVersionCode = parts[0].toInteger() * 10000 + parts[1].toInteger() * 100 + parts[2].toInteger()
+
 android {
     namespace 'com.wordspyre.game'
     compileSdk 36
@@ -11,10 +32,8 @@ android {
         minSdk 24
         targetSdk 36
 
-        // Bumped by the workflow from the run number, so two builds can never
-        // collide the way the hand-typed ones did.
-        versionCode project.hasProperty('appVersionCode') ? appVersionCode.toInteger() : 20
-        versionName project.hasProperty('appVersionName') ? appVersionName : "1.1.0"
+        versionCode appVersionCode
+        versionName appVersionName
     }
 
     signingConfigs {

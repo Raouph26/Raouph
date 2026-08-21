@@ -54,17 +54,31 @@ jobs:
           du -sh "$DEST"
           ls -la "$DEST"
 
+      # The version is whatever the VERSION file at the top of the repo says.
+      # Gradle reads the same file, so there is one number in one place; this
+      # step only needs it for the release tag and title.
+      - name: Read the version
+        id: ver
+        run: |
+          set -eu
+          V=$(tr -d ' \t\r\n' < VERSION)
+          case "$V" in
+            [0-9]*.[0-9]*.[0-9]*) ;;
+            *) echo "VERSION must read like 1.2.3, but reads: $V" >&2; exit 1 ;;
+          esac
+          PATCH=${V##*.}
+          echo "name=$V" >> "$GITHUB_OUTPUT"
+          # x.y.0 is a release the studio asked for and becomes "latest"; a
+          # x.y.N is a mini fix and is published quietly beside it, so the
+          # bookmark keeps pointing at the last one they actually wanted.
+          if [ "$PATCH" = "0" ]; then echo "headline=true" >> "$GITHUB_OUTPUT";
+          else echo "headline=false" >> "$GITHUB_OUTPUT"; fi
+
       - name: Build
         working-directory: android
-        env:
-          # Version code climbs with the run number so two builds can never
-          # collide. Offset past the codes already burned on the old wrapper.
-          APP_VERSION_CODE: ${{ github.run_number }}
         run: |
           set -eux
-          gradle --no-daemon assembleDebug \
-            -PappVersionCode=$((100 + APP_VERSION_CODE)) \
-            -PappVersionName=1.1.$APP_VERSION_CODE
+          gradle --no-daemon assembleDebug
 
       - name: Sign and bundle for Play, if the key is available
         if: env.HAS_UPLOAD_KEY == 'true'
@@ -74,14 +88,11 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-          APP_VERSION_CODE: ${{ github.run_number }}
         run: |
           set -eu
           echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.keystore"
           export KEYSTORE_PATH="$RUNNER_TEMP/upload.keystore"
-          gradle --no-daemon bundleRelease \
-            -PappVersionCode=$((100 + APP_VERSION_CODE)) \
-            -PappVersionName=1.1.$APP_VERSION_CODE
+          gradle --no-daemon bundleRelease
           rm -f "$RUNNER_TEMP/upload.keystore"
 
       - name: Attach the results to this run
@@ -100,7 +111,9 @@ jobs:
       - name: Publish the files as a release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: build-${{ github.run_number }}
+          TAG: v${{ steps.ver.outputs.name }}
+          VERSION: ${{ steps.ver.outputs.name }}
+          HEADLINE: ${{ steps.ver.outputs.headline }}
         run: |
           set -eu
           mkdir -p out
@@ -108,10 +121,18 @@ jobs:
           if ls android/app/build/outputs/bundle/release/*.aab >/dev/null 2>&1; then
             cp android/app/build/outputs/bundle/release/*.aab "out/WORDSPYRE-for-play.aab"
           fi
-          gh release create "$TAG" out/* \
-            --title "Build ${{ github.run_number }}" \
-            --notes "Built from ${{ github.sha }}.
+          NOTES="Version $VERSION, built from ${{ github.sha }}.
 
           **WORDSPYRE-for-play.aab** - upload this one to Play Console.
-          **WORDSPYRE-test.apk** - install this one straight onto a phone to try it." \
-            --latest
+          **WORDSPYRE-test.apk** - install this one straight onto a phone to try it."
+          # Several fixes can land on one version before it is released, so a
+          # tag that already exists is refreshed rather than treated as a clash.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" out/* --clobber
+            gh release edit "$TAG" --title "WORDSPYRE $VERSION" --notes "$NOTES" \
+              --prerelease="$([ "$HEADLINE" = true ] && echo false || echo true)" \
+              --latest="$HEADLINE"
+          else
+            gh release create "$TAG" out/* --title "WORDSPYRE $VERSION" --notes "$NOTES" \
+              $([ "$HEADLINE" = true ] && echo --latest || echo --prerelease)
+          fi
