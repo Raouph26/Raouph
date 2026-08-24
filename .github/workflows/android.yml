@@ -12,6 +12,9 @@ on:
   push:
     branches: [main]
     paths:
+      # VERSION decides what the build calls itself, so a release that only
+      # changes the number still has to produce a build.
+      - 'VERSION'
       - 'index.html'
       - 'words.js'
       - 'sounds/**'
