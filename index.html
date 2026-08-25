@@ -1201,8 +1201,25 @@
         #consumable-slot[data-count="3"] .glyph-slot { width:34px; height:34px; }
         #action-slots-row.slots-tight #glyph-slots { gap:5px; }
         #action-slots-row.slots-tight #glyph-slots .glyph-slot { width:clamp(28px, 8.1vw, 44px); height:clamp(28px, 8.1vw, 44px); }
+        .length-level-grid {
+            display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin:2px 0 8px;
+        }
+        .length-level-cell {
+            background: var(--panel-bg); border:1px solid var(--panel-border); border-radius:8px;
+            padding:5px 2px; text-align:center; font-family: var(--font-main);
+        }
+        .length-level-cell .lll-len { display:block; font-size:0.66rem; font-weight:900; color: var(--text-soft); }
+        .length-level-cell .lll-lvl { display:block; font-size:0.9rem; font-weight:900; color: var(--text-main); }
+        .length-level-cell.is-levelled { border-color: var(--accent-3); }
+        .length-level-cell.is-levelled .lll-lvl { color: var(--accent-3); }
+        #ri-levels-hint { font-size:0.6rem; color: var(--text-soft); }
         .tile-inner.anchor-locked::after {
             content: '⚓'; position:absolute; top:2px; right:2px; font-size:0.6rem; line-height:1; z-index:2;
+        }
+        .banner-lvl {
+            display:inline-block; margin-left:6px; padding:1px 7px; border-radius:999px;
+            background: var(--accent-3); color: var(--accent-3-text);
+            font-size:0.68rem; font-weight:900; letter-spacing:0.4px; vertical-align:middle;
         }
         .tile-inner.muted-tile { filter: grayscale(0.7); opacity: 0.6; }
         .tile-inner.muted-tile::after {
@@ -2037,6 +2054,7 @@
             #hud-row .hud-box { padding: 4px 8px; }
             #resource-row .resource-box { padding: 4px 6px; }
             #score-banner { min-height: 14px; font-size: 0.78rem; }
+        .banner-lvl { font-size: 0.62rem; }
             #bench-bar { margin: 0; }
             #view-menu h1 { font-size: clamp(1.3rem, 8vw, 2rem) !important; }
             #view-menu { gap: 6px; padding: 10px 18px; }
@@ -2325,6 +2343,8 @@
         <div class="run-info-body">
             <div class="run-info-row"><span>Stage</span><span id="ri-stage">—</span></div>
             <div class="run-info-row"><span>Bag</span><span id="ri-bag">—</span></div>
+            <div class="run-info-row"><span>Word Levels</span><span id="ri-levels-hint">tap a length in the shop to level it</span></div>
+            <div class="length-level-grid" id="ri-levels"></div>
             <div class="run-info-row clickable" id="ri-hazard-row"><span>Boss Blind <span class="info-dot" id="ri-hazard-info">ⓘ</span></span><span id="ri-hazard">—</span></div>
             <div class="daily-info-panel" id="ri-hazard-panel"><p id="ri-hazard-desc"></p></div>
             <div class="run-info-row clickable" id="ri-daily-row"><span>Daily Run</span><span id="ri-daily">—</span></div>
@@ -2717,7 +2737,8 @@
         // ---- gambles. These can lose you the hand, and that is the point.
         { id:"all_in", name:"All In", type:"purple", color:"#A855F7", icon:"◆", desc:"x4 MULT on words of 7+ letters. Words of 4 letters or fewer score NOTHING." },
         { id:"bookie", name:"The Bookie", type:"purple", color:"#A855F7", icon:"◑", desc:"+6 Diamonds for every 5-letter word. Play a word shorter than 5 and the house takes the lot." },
-        { id:"superstition", name:"Superstition", type:"purple", color:"#A855F7", icon:"✵", desc:"x3 MULT on odd-length words. x0.5 MULT on even ones." }
+        { id:"superstition", name:"Superstition", type:"purple", color:"#A855F7", icon:"✵", desc:"x3 MULT on odd-length words. x0.5 MULT on even ones." },
+        { id:"sonnet", name:"The Sonnet", type:"red", color:"#EF4444", icon:"◐", desc:"x3 MULT if the played word is 4 or 5 letters." }
     ];
     const BASE_GLYPH_SLOTS = 4;
     const MAX_GLYPH_SLOTS = 6;   // the ceiling; maxGlyphSlots() is what to ask
@@ -2799,7 +2820,7 @@
         { id:"finisher_tile", name:"Finisher Tile", tileType:"finisher", icon:"!", color:SPECIAL_TILE_COLOR_FINISHER, desc:"Adds a Finisher (!) tile to your bag. Play it as the LAST letter of a word for a x3 score boost." },
         { id:"italic_tile", name:"Italic Tile", tileType:"italic", icon:"/", color:"#F59E0B", desc:"Adds an Italic tile to your bag. HOLD it on your bench: every Italic you keep gives x1.5 MULT to the word you play." }
     ];
-    const SHOP_PRICES = { glyph:6, void_seal:3, gold_ink:5, transmuter:4, cloner:5, wild_tile:7, finisher_tile:7, italic_tile:7,
+    const SHOP_PRICES = { glyph:6, manuscript:4, void_seal:3, gold_ink:5, transmuter:4, cloner:5, wild_tile:7, finisher_tile:7, italic_tile:7,
         doubling_seal:4, letterpress:5, gilding:6, scribes_seal:2, blot:5, reprint:4, the_flood:4, bookbinder:9 };
     const SHOP_REROLL_BASE_COST = 2;
     const NO_ADS_PRICE = 500;
@@ -2807,7 +2828,14 @@
     // offer anywhere; the AdManager, its placements and its analytics stay wired
     // so turning this back to true restores all four placements as they were.
     const ADS_ENABLED = false;
-    const CLASSIC_STAGE_TARGETS = [0, 300, 800, 2000, 5000, 12000, 30000, 45000, 75000];
+    // Retuned for the flattened curve. Length used to be paid twice, so scores
+    // were roughly three times what they are now at the top end; holding the old
+    // targets would have made every stage past 4 unreachable.
+    //
+    // The early stages are deliberately soft. Levelling is what makes a run
+    // strong, and a player needs two or three stages of breathing room to buy
+    // into a style before the targets start asking whether they committed.
+    const CLASSIC_STAGE_TARGETS = [0, 120, 400, 1100, 3000, 8000, 20000, 40000, 70000];
     // Zen has no fail state, so the targets exist to mark progress rather than to
     // squeeze. They sit far below the classic curve and climb far more gently.
     const ZEN_STAGE_TARGETS = [0, 100, 220, 380, 580, 820, 1100, 1450, 1850];
@@ -2893,6 +2921,8 @@
         { id:'bookie', kind:'glyph', label:'The Bookie', hint:'Play four 5-letter words in one run',
           progress:()=>[G.progress.stats.fiveLetterWords||0, 4],
           test:c => (G.progress.stats.fiveLetterWords||0) >= 4 },
+        { id:'sonnet', kind:'glyph', label:'The Sonnet', hint:'Play three 4-letter words in one stage',
+          test:c => c.event==='word' && (G.stageWords||[]).filter(w=>w.word&&w.word.length===4).length >= 3 },
         { id:'superstition', kind:'glyph', label:'Superstition', hint:'Play a 7-letter word and a 3-letter word in the same stage',
           test:c => c.event==='word' && (G.stageWords||[]).some(w=>w.word&&w.word.length>=7) && (G.stageWords||[]).some(w=>w.word&&w.word.length===3) },
         // ---- the bombs
@@ -3211,6 +3241,7 @@
                 case 'double_down': return dupCount>0 ? {kind:'mult-add', value:4*dupCount, label:'+'+(4*dupCount)+' MULT'} : null;
                 case 'double_trouble': return hasDoubledLetter(word) ? {kind:'mult-add', value:15, label:'+15 MULT'} : null;
                 case 'underdog': return (word&&word.length===3) ? {kind:'mult-mul', value:3, label:'x3 MULT'} : null;
+                case 'sonnet': return (wordLen===4||wordLen===5) ? {kind:'mult-mul', value:3, label:'x3 MULT'} : null;
                 // The current word counts towards the set, so a length you have not
                 // played before pays on the hand you discover it.
                 case 'archivist': { const seen=new Set(G.archivistLengths||[]); if (wordLen) seen.add(wordLen); const n=seen.size; return n ? {kind:'points', value:40*n, label:'+'+(40*n)+' PTS'} : null; }
@@ -3269,7 +3300,7 @@
         gameMode:'classic', dailyChallenge:null, isEndless:false, consumables:[], activeHazard:null, anchorTileId:null, mutedTileId:null,
         leaderboard:[], records:{highestWord:null, totalGoldEarned:0, mostStagesCleared:0},
         shopOffers:{glyphs:[], consumables:[]}, shopRerollCount:0, adsRemoved:false,
-        archivistLengths:[], serialTriggers:0, stageLetters:0, bonusHands:0, floodTiles:0, doubleNext:false
+        archivistLengths:[], serialTriggers:0, stageLetters:0, bonusHands:0, floodTiles:0, doubleNext:false, lengthLevels:null
     };
 
     function assignRandomAura() { const r=Math.random(); if(r<0.15) return 'blue'; if(r<0.22) return 'red'; if(r<0.26) return 'gold'; return null; }
@@ -3289,6 +3320,7 @@
         G.equippedGlyphs = []; G.bank = pressValue('startBank', 0); G.consumables = []; G.activeHazard = null; G.anchorTileId = null; G.mutedTileId = null; G.isEndless = false; G.victoryBanked = false;
         G.shopOffers = {glyphs:[], consumables:[]}; G.shopRerollCount = 0; G.shopRerollsUsedThisRun = 0;
         G.archivistLengths = []; G.serialTriggers = 0; G.stageLetters = 0; G.bonusHands = 0; G.floodTiles = 0; G.doubleNext = false;
+        G.lengthLevels = blankLengthLevels();
         const seedSeals = pressValue('startSeals', 0);
         if (seedSeals > 0) {
             const pool = shuffle(CONSUMABLE_DATABASE.filter(d=>G.progress.unlockedConsumables.includes(d.id)));
@@ -3305,8 +3337,46 @@
         G.currentStage = 1;
         resetStageState();
     }
-    function getLengthBaseChips(l) { if(l>=10) return 700; if(l===9) return 550; if(l===8) return 400; if(l===7) return 300; if(l===6) return 150; if(l===5) return 80; if(l===4) return 40; if(l===3) return 20; return 0; }
-    function getLengthBaseMult(l) { if(l>=10) return 15; if(l===9) return 12; if(l===8) return 10; if(l===7) return 8; if(l===6) return 5; if(l===5) return 3; if(l===4) return 2; if(l===3) return 1; return 1; }
+    // Word length used to be paid TWICE - once in chips, once in the multiplier -
+    // so score grew with length squared and the only question worth asking was
+    // "how long is my word". Every tester converged on 6+ letters and the same
+    // two glyphs, which is the correct play, not a failure of imagination.
+    //
+    // Length now pays once. Chips still climb hard, so finding a nine-letter word
+    // is still the best single thing you can do; the multiplier comes off your
+    // board instead. Anything that multiplies is now something you chose.
+    const LENGTH_BASE_CHIPS = { 3:20, 4:40, 5:80, 6:150, 7:300, 8:400, 9:550, 10:700 };
+    const LENGTH_BASE_MULT  = { 3:1,  4:2,  5:2,  6:3,   7:3,   8:4,   9:4,   10:5 };
+    // Each length keeps its own level, and levelling is bought, never earned by
+    // playing - if playing a length levelled it, spamming nine-letter words would
+    // make nine-letter words better and the problem gets worse. Buying it makes a
+    // playstyle something you commit Diamonds to. Short lengths gain far more in
+    // proportion, which is what lets a three-letter deck overtake by the end.
+    const LENGTH_LEVEL_GAIN = { 3:{c:25,m:2}, 4:{c:30,m:2}, 5:{c:35,m:2}, 6:{c:40,m:2},
+                                7:{c:45,m:2}, 8:{c:50,m:2}, 9:{c:55,m:2}, 10:{c:60,m:2} };
+    const MAX_LENGTH_LEVEL = 20;
+    function lengthKey(l) { return l >= 10 ? 10 : l; }
+    function lengthLevel(l) {
+        const k = lengthKey(l);
+        if (k < 3) return 1;
+        return (G.lengthLevels && G.lengthLevels[k]) || 1;
+    }
+    function levelLength(l) {
+        const k = lengthKey(l);
+        if (!G.lengthLevels) G.lengthLevels = {};
+        G.lengthLevels[k] = Math.min(MAX_LENGTH_LEVEL, (G.lengthLevels[k] || 1) + 1);
+    }
+    function getLengthBaseChips(l) {
+        const k = lengthKey(l); const base = LENGTH_BASE_CHIPS[k];
+        if (base === undefined) return 0;
+        return base + (lengthLevel(k) - 1) * LENGTH_LEVEL_GAIN[k].c;
+    }
+    function getLengthBaseMult(l) {
+        const k = lengthKey(l); const base = LENGTH_BASE_MULT[k];
+        if (base === undefined) return 1;
+        return base + (lengthLevel(k) - 1) * LENGTH_LEVEL_GAIN[k].m;
+    }
+    function blankLengthLevels() { const o = {}; for (let i = 3; i <= 10; i++) o[i] = 1; return o; }
     function calcScore() {
         let totalChips=0, hasWildcard=false, redAuraBonus=0; const letters=[]; const pattern=[];
         const vowelDrought = G.gameMode==='daily' && G.dailyChallenge===2;
@@ -3906,6 +3976,23 @@
         }
     }
     function shopPrice(id) { const inflated = G.gameMode==='daily' && G.dailyChallenge===7; const base = SHOP_PRICES[id]||0; return inflated ? base*2 : base; }
+    // A Manuscript levels one word length for the rest of the run. This is the
+    // piece the game never had: a way to invest in a playstyle rather than just
+    // play the one the maths already favours.
+    const MANUSCRIPT_LENGTHS = [3,4,5,6,7,8,9,10];
+    function manuscriptId(len) { return 'ms_' + len; }
+    function manuscriptName(len) { return len >= 10 ? '10+ LETTER MANUSCRIPT' : len + '-LETTER MANUSCRIPT'; }
+    function manuscriptDesc(len) {
+        const g = LENGTH_LEVEL_GAIN[len];
+        const label = len >= 10 ? 'words of 10 or more letters' : len + '-letter words';
+        return 'Level up ' + label + ': +' + g.c + ' Chips and +' + g.m + ' MULT, for the rest of the run.';
+    }
+    function makeManuscriptOffer(len) {
+        return { kind:'manuscript', id:manuscriptId(len), type:'manuscript', length:len,
+                 name:manuscriptName(len), desc:manuscriptDesc(len),
+                 color:'#F59E0B', icon:'\u2261', price:shopPrice('manuscript'),
+                 apply:()=>{ levelLength(len); } };
+    }
     function makeGlyphOffer(g) { return { kind:'glyph', id:g.id, type:g.type, name:g.name, desc:g.desc, color:g.color, icon:g.icon, price:shopPrice('glyph'), apply:()=>{ G.equippedGlyphs.push({id:g.id}); } }; }
     function makeTileOffer(def) { return { kind:'tile', id:def.id, type:'tile', name:def.name, desc:def.desc, color:def.color, icon:def.icon, price:shopPrice(def.id), apply:()=>{
         if (def.tileType === 'italic') {
@@ -3945,7 +4032,8 @@
         compound_interest: l => "+1 MULT for every 5 Diamonds in your bank, up to +" + scaleInt(25, l) + ".",
         all_in:            l => "x" + scaleNum(4, l) + " MULT on words of 7+ letters. Words of 4 letters or fewer score NOTHING.",
         bookie:            l => "+" + scaleInt(6, l) + " Diamonds for every 5-letter word. Play a word shorter than 5 and the house takes the lot.",
-        superstition:      l => "x" + scaleNum(3, l) + " MULT on odd-length words. x0.5 MULT on even ones."
+        superstition:      l => "x" + scaleNum(3, l) + " MULT on odd-length words. x0.5 MULT on even ones.",
+        sonnet:            l => "x" + scaleNum(3, l) + " MULT if the played word is 4 or 5 letters."
     };
     function describeGlyph(id, lvl) {
         const f = LEVEL_DESC[id];
@@ -3969,7 +4057,7 @@
     // The glyphs that multiply the whole word rather than adding to it. Carrying
     // one of these is the difference between clearing stage 6 in two hands and
     // not clearing it at all, so the shop guarantees access to one.
-    const XMULT_GLYPHS = new Set(['novelist', 'bookends', 'heavy_hitter']);
+    const XMULT_GLYPHS = new Set(['novelist', 'bookends', 'heavy_hitter', 'sonnet', 'underdog']);
     function hasMultiplierGlyph() { return (G.equippedGlyphs || []).some(g => XMULT_GLYPHS.has(g.id)); }
     function isGlyphUnlocked(id) { return !G.progress || G.progress.unlockedGlyphs.includes(id); }
     function isConsumableUnlocked(id) { return !G.progress || G.progress.unlockedConsumables.includes(id); }
@@ -3986,6 +4074,7 @@
             if (G.equippedGlyphs.length < maxGlyphSlots()) pool.push(makeGlyphOffer(g));
         });
         SPECIAL_TILE_DATABASE.forEach(def=>{ pool.push(makeTileOffer(def)); });
+        MANUSCRIPT_LENGTHS.forEach(len=>{ pool.push(makeManuscriptOffer(len)); });
         const slots = Math.max(1, 3 + pressValue('shopGlyphDelta', 0));
         const picked = shuffle(pool).slice(0, slots);
         const boardFull = G.equippedGlyphs.length >= maxGlyphSlots();
@@ -3999,6 +4088,13 @@
         if (!boardFull && !picked.some(scores)) {
             const s = shuffle(pool.filter(scores))[0];
             if (s) picked[picked.length - 1] = s;
+        }
+        // Every shop shows at least one Manuscript. Levelling is the main way a
+        // run gets stronger now, so leaving it to the shuffle would let a player
+        // go four stages without ever being offered the core mechanic.
+        if (!picked.some(o => o && o.kind === 'manuscript')) {
+            const m = shuffle(pool.filter(o => o && o.kind === 'manuscript'))[0];
+            if (m) picked[0] = m;
         }
         // by stage 3 a run without a multiplier glyph is already losing, and the
         // player has no way to know that, so stop leaving it to the shuffle
@@ -4024,6 +4120,10 @@
                     return canOverclock(g.id) ? makeUpgradeOffer(g) : null;
                 }
                 return makeGlyphOffer(g);
+            }
+            if (o.kind === 'manuscript' || /^ms_\d+$/.test(o.id || '')) {
+                const len = parseInt(String(o.id).slice(3), 10);
+                return MANUSCRIPT_LENGTHS.indexOf(len) !== -1 ? makeManuscriptOffer(len) : null;
             }
             const t = SPECIAL_TILE_DATABASE.find(x=>x.id===o.id); return t ? makeTileOffer(t) : null;
         }).filter(Boolean);
@@ -4069,6 +4169,13 @@
                 const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
                 const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); card.dataset.gtype=familyOf(item.id, item.type); setIcon(card, item.id, item.icon);
                 const price=document.createElement('span'); price.className='draft-card-price'; price.innerHTML='<span class="diamond-icon"></span>'+item.price; card.appendChild(price);
+                if (item.kind === 'manuscript') {
+                    card.classList.add('is-upgrade');
+                    const flag=document.createElement('span'); flag.className='upgrade-flag';
+                    const at = lengthLevel(item.length);
+                    flag.textContent = at >= MAX_LENGTH_LEVEL ? 'MAX' : 'LVL '+(at+1);
+                    card.appendChild(flag);
+                }
                 if (item.kind === 'upgrade') {
                     card.classList.add('is-upgrade');
                     card.dataset.lvl = item.upgradeTo;
@@ -4108,6 +4215,13 @@
                 const wrap=document.createElement('div'); wrap.className='draft-card-wrap';
                 const card=document.createElement('div'); card.className='draft-card has-glyph'; card.style.setProperty('--glyph-color', item.color); card.dataset.gtype=familyOf(item.id, item.type); setIcon(card, item.id, item.icon);
                 const price=document.createElement('span'); price.className='draft-card-price'; price.innerHTML='<span class="diamond-icon"></span>'+item.price; card.appendChild(price);
+                if (item.kind === 'manuscript') {
+                    card.classList.add('is-upgrade');
+                    const flag=document.createElement('span'); flag.className='upgrade-flag';
+                    const at = lengthLevel(item.length);
+                    flag.textContent = at >= MAX_LENGTH_LEVEL ? 'MAX' : 'LVL '+(at+1);
+                    card.appendChild(flag);
+                }
                 if (item.kind === 'upgrade') {
                     card.classList.add('is-upgrade');
                     card.dataset.lvl = item.upgradeTo;
@@ -4187,6 +4301,20 @@
         const icon=document.createElement('div'); icon.className='draft-detail-icon has-glyph'; icon.style.setProperty('--glyph-color', item.color); setIcon(icon, item.id, item.icon);
         const name=document.createElement('div'); name.className='draft-detail-name'; name.style.setProperty('--glyph-color', item.color); name.textContent=item.name;
         const desc=document.createElement('div'); desc.className='draft-detail-desc'; desc.textContent=item.desc;
+        if (item.kind === 'manuscript') {
+            const from = lengthLevel(item.length), to = Math.min(MAX_LENGTH_LEVEL, from + 1);
+            const chipsNow = getLengthBaseChips(item.length), multNow = getLengthBaseMult(item.length);
+            const g = LENGTH_LEVEL_GAIN[item.length];
+            desc.textContent = '';
+            const step=document.createElement('div'); step.className='upgrade-step';
+            step.innerHTML = '<span class="lvl-from">LVL ' + from + '</span><span class="lvl-arrow">\u2192</span>' +
+                '<span class="lvl-to">LVL ' + to + '</span>';
+            const now=document.createElement('div'); now.className='upgrade-line is-now';
+            now.innerHTML = '<b>NOW</b><span>' + chipsNow + ' Chips x' + multNow + ' MULT</span>';
+            const next=document.createElement('div'); next.className='upgrade-line is-next';
+            next.innerHTML = '<b>AFTER</b><span>' + (chipsNow + g.c) + ' Chips x' + (multNow + g.m) + ' MULT</span>';
+            desc.appendChild(step); desc.appendChild(now); desc.appendChild(next);
+        }
         if (item.kind === 'upgrade') {
             const from = glyphLevel(item.id), to = item.upgradeTo;
             name.textContent = item.name;
@@ -4211,7 +4339,7 @@
             if (G.bank < item.price || inventoryFull) return;
             G.bank -= item.price; item.apply(); AudioEngine.playSubmit();
             Analytics.track('shop_purchase', { kind: kind, id: item.id, price: item.price, stage: G.currentStage, bankAfter: G.bank });
-            const offers = (kind==='glyph'||kind==='tile'||kind==='upgrade') ? G.shopOffers.glyphs : G.shopOffers.consumables;
+            const offers = (kind==='consumable') ? G.shopOffers.consumables : G.shopOffers.glyphs;
             const idx = offers.findIndex(o=>o.id===item.id);
             if (idx!==-1) offers.splice(idx,1);
             renderShop(container);
@@ -4396,6 +4524,20 @@
         const hzRow = document.getElementById('ri-hazard-row');
         if (hzDesc) hzDesc.textContent = hz ? hz.desc : (isZen ? 'Zen runs have no Boss Blinds.' : 'No Boss Blind on this stage.');
         if (hzRow) hzRow.classList.toggle('has-boss', !!hz);
+        const grid = document.getElementById('ri-levels');
+        if (grid) {
+            grid.innerHTML = '';
+            for (let len = 3; len <= 10; len++) {
+                const lv = lengthLevel(len);
+                const cell = document.createElement('div');
+                cell.className = 'length-level-cell' + (lv > 1 ? ' is-levelled' : '');
+                cell.innerHTML = '<span class="lll-len">' + (len >= 10 ? '10+' : len) + '</span>' +
+                                 '<span class="lll-lvl">' + lv + '</span>';
+                cell.title = (len >= 10 ? '10+ letter' : len + '-letter') + ' words: ' +
+                             getLengthBaseChips(len) + ' chips x' + getLengthBaseMult(len) + ' MULT';
+                grid.appendChild(cell);
+            }
+        }
         const dailyRow = document.getElementById('ri-daily-row');
         if (G.gameMode === 'daily') {
             const challenge = DAILY_CHALLENGES.find(c => c.id === G.dailyChallenge);
@@ -4831,7 +4973,13 @@
         let blitzWhy = null;
         if (G.gameMode==='blitz' && p.occ>0 && p.valid) blitzWhy = blitzRejection(p.word);
         if(p.occ===0) sb.textContent='—'; else if(!p.valid) sb.textContent='INVALID WORD';
-        else if(blitzWhy) sb.textContent=blitzWhy.toUpperCase(); else sb.textContent='READY';
+        else if(blitzWhy) sb.textContent=blitzWhy.toUpperCase();
+        else {
+            const lv = lengthLevel(p.occ);
+            const label = p.occ >= 10 ? '10+ LETTER' : p.occ + '-LETTER';
+            sb.innerHTML = 'READY <span class="banner-lvl">' + label +
+                (lv > 1 ? ' \u00B7 LVL ' + lv : '') + '</span>';
+        }
         const sortBtn=document.getElementById('btn-sort-bench'); if(sortBtn) sortBtn.textContent = BENCH_SORT_LABELS[G.benchSort||'draw'];
         const clearBtn=document.getElementById('btn-clear'); if(clearBtn) clearBtn.textContent = G.rerollMode ? 'CANCEL' : 'RECALL';
         sb.classList.toggle('invalid',p.occ>0&&(!p.valid||!!blitzWhy));
@@ -5206,6 +5354,8 @@
         G.archivistLengths = Array.isArray(saved.archivistLengths) ? saved.archivistLengths : [];
         G.serialTriggers = saved.serialTriggers || 0; G.stageLetters = saved.stageLetters || 0;
         G.bonusHands = saved.bonusHands || 0; G.doubleNext = !!saved.doubleNext; G.floodTiles = saved.floodTiles || 0;
+        // A run saved before levels existed has none, and every length starts at 1.
+        G.lengthLevels = Object.assign(blankLengthLevels(), saved.lengthLevels || {});
         // Runs saved while the drag bug was live can carry gaps in this list.
         // Anything without an id is not a glyph, and every pass over the board
         // assumes there are none, so they are dropped on the way in.
@@ -5629,7 +5779,7 @@
             activePressId: G.activePressId, shopRerollsUsedThisRun: G.shopRerollsUsedThisRun,
             archivistLengths: G.archivistLengths||[], serialTriggers: G.serialTriggers||0,
             stageLetters: G.stageLetters||0, bonusHands: G.bonusHands||0,
-            doubleNext: !!G.doubleNext, floodTiles: G.floodTiles||0
+            doubleNext: !!G.doubleNext, floodTiles: G.floodTiles||0, lengthLevels: G.lengthLevels || blankLengthLevels()
         };
     }
     function saveActiveRun() {
