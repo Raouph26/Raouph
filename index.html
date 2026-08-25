@@ -2368,6 +2368,11 @@
             <div class="howto-row"><span class="howto-num">2</span><span>Tap SUBMIT to play a valid word. Chips × Multiplier = the points you score.</span></div>
             <div class="howto-row"><span class="howto-num">3</span><span>HANDS is how many words you can submit this stage — reach the target score before they run out.</span></div>
             <div class="howto-row"><span class="howto-num">4</span><span>REROLL: mark up to 3 tiles, then confirm to swap them for brand new letters. SHUFFLE just reorders your current hand.</span></div>
+            <div class="howto-section-label">Word Levels — the important one</div>
+            <div class="howto-row"><span class="howto-num">★</span><span>Every word <b>length</b> has its own level. A <b>MANUSCRIPT</b> in the shop levels one length for the rest of the run — more Chips <i>and</i> more MULT, every time you play that length.</span></div>
+            <div class="howto-row"><span class="howto-num">★</span><span>Short lengths gain the most. A 3-letter word starts at 25 points; poured full of Manuscripts it passes <b>19,000</b>. Pick a length, feed it, and it carries your run.</span></div>
+            <div class="howto-row"><span class="howto-num">★</span><span>Spreading Manuscripts across every length gets you nowhere. <b>Depth beats breadth.</b> Check RUN INFO to see where your levels are.</span></div>
+            <div class="howto-row"><span class="howto-num">★</span><span>Boss Blinds on stages 3, 6 and 8 attack a one-trick run — <b>The Editor</b> bans long words, <b>The Minimalist</b> bans short ones, <b>The Echo</b> stops you playing the same length twice in a row. Keep a second length alive.</span></div>
             <div class="howto-section-label">Letter Bonuses</div>
             <div class="howto-showcase">
                 <div class="howto-tile-demo"><div class="tile-inner aura-blue"><span class="tile-letter">A</span><span class="tile-chips">1</span><span class="tile-badge badge-blue">+10</span></div><span class="howto-tile-caption">Flat bonus</span></div>
@@ -2704,7 +2709,6 @@
     const GLYPH_DATABASE = [
         { id:"scavenger", name:"The Scavenger", type:"green", color:"#22C55E", icon:"↺", desc:"+2 Discards per stage." },
         { id:"perfectionist", name:"The Perfectionist", type:"green", color:"#22C55E", icon:"✓", desc:"+1 Hand per stage." },
-        { id:"recycler", name:"The Recycler", type:"green", color:"#22C55E", icon:"♻", desc:"Discarding 3 Vowels at once refunds 1 Discard (Max 1/round)." },
         { id:"deep_pockets", name:"Deep Pockets", type:"green", color:"#22C55E", icon:"▦", desc:"Start each round with +2 extra tiles in tray." },
         { id:"vowel_anchor", name:"Vowel Anchor", type:"blue", color:"#3B82F6", icon:"⚓", desc:"+15 Base Points for every Vowel played." },
         { id:"consonant_charge", name:"Consonant Charge", type:"blue", color:"#3B82F6", icon:"⚡", desc:"+10 Base Points for every Consonant played." },
@@ -2717,27 +2721,18 @@
         { id:"double_down", name:"Double Down", type:"red", color:"#EF4444", icon:"⚔", desc:"+2 MULT for every repeated letter in the played word." },
         { id:"underdog", name:"Underdog", type:"red", color:"#EF4444", icon:"▲", desc:"x3 MULT if the played word is exactly 3 letters long." },
         { id:"wildcard_rune", name:"Wildcard Rune", type:"purple", color:"#A855F7", icon:"✦", desc:"At round start, 1 random tile in active hand becomes Wild." },
-        { id:"duplicator", name:"Duplicator", type:"purple", color:"#A855F7", icon:"⧉", desc:"Playing a 5-letter word duplicates its highest-scoring letter into bag." },
         { id:"vowel_shifter", name:"Vowel Shifter", type:"purple", color:"#A855F7", icon:"⇄", desc:"'Y' counts as both Vowel and Consonant for scoring." },
-        { id:"alchemy", name:"Golden Touch", type:"purple", color:"#A855F7", icon:"⚗", desc:"Scoring 100+ Points in a single hand grants +2 Diamonds to your Bank." },
         { id:"insurance_policy", name:"Insurance Policy", type:"green", color:"#22C55E", icon:"☂", desc:"Fall short by 15% or less and the stage clears anyway. Consumed when it saves you." },
         { id:"piggy_bank", name:"Piggy Bank", type:"green", color:"#22C55E", icon:"◉", desc:"Earn a second helping of interest at the end of every stage." },
-        { id:"double_trouble", name:"Double Trouble", type:"red", color:"#EF4444", icon:"‼", desc:"+15 MULT if the played word has two identical letters side by side." },
-        { id:"middle_child", name:"Middle Child", type:"blue", color:"#3B82F6", icon:"◈", desc:"Odd words of 5+ letters score their middle tile at x1.5." },
         // ---- engines. Everything above is a fixed number, which is why one build
         // won: the length curve pays twice (chips AND mult), so the only question
         // worth asking was "how long is my word". These grow as you play them, so a
         // style that starts weak can overtake the long word by the end of a run.
         { id:"archivist", name:"The Archivist", type:"blue", color:"#3B82F6", icon:"☷", desc:"The first time you play a word of each length, gain +40 Base Points for the rest of the run." },
         { id:"cascade", name:"Cascade", type:"red", color:"#EF4444", icon:"≡", desc:"+1 MULT for every letter played this stage, this word included." },
-        { id:"serial", name:"The Serial", type:"red", color:"#EF4444", icon:"⋮", desc:"+3 MULT, and +3 more for every 3-letter word you play. Lasts the whole run." },
         { id:"hoarder", name:"The Hoarder", type:"blue", color:"#3B82F6", icon:"▤", desc:"+25 Base Points for every tile left on your bench." },
-        { id:"understudy", name:"The Understudy", type:"blue", color:"#3B82F6", icon:"↕", desc:"Words of 4 letters or fewer earn the Base Points of a word 3 letters longer." },
-        { id:"compound_interest", name:"Compound Interest", type:"green", color:"#22C55E", icon:"◎", desc:"+1 MULT for every 5 Diamonds in your bank, up to +25." },
         // ---- gambles. These can lose you the hand, and that is the point.
         { id:"all_in", name:"All In", type:"purple", color:"#A855F7", icon:"◆", desc:"x4 MULT on words of 7+ letters. Words of 4 letters or fewer score NOTHING." },
-        { id:"bookie", name:"The Bookie", type:"purple", color:"#A855F7", icon:"◑", desc:"+6 Diamonds for every 5-letter word. Play a word shorter than 5 and the house takes the lot." },
-        { id:"superstition", name:"Superstition", type:"purple", color:"#A855F7", icon:"✵", desc:"x3 MULT on odd-length words. x0.5 MULT on even ones." },
         { id:"sonnet", name:"The Sonnet", type:"red", color:"#EF4444", icon:"◐", desc:"x3 MULT if the played word is 4 or 5 letters." }
     ];
     const BASE_GLYPH_SLOTS = 4;
@@ -2796,20 +2791,17 @@
         }
     }
     const CONSUMABLE_DATABASE = [
-        { id:"void_seal", name:"Void Seal", icon:"⊘", color:CONSUMABLE_COLOR, desc:"Permanently remove up to 2 letter types from your bag." },
-        { id:"gold_ink", name:"Gold Ink", icon:"✪", color:CONSUMABLE_COLOR, desc:"Mark 1 letter type gold — that tile grants +20 Base Points whenever played." },
-        { id:"transmuter", name:"Transmuter", icon:"⇌", color:CONSUMABLE_COLOR, desc:"Convert 1 Consonant tile in your bag into a Vowel of your choice." },
-        { id:"cloner", name:"Cloner", icon:"⧉", color:CONSUMABLE_COLOR, desc:"Duplicate an existing tile in your bag." },
-        // The four above quietly edit the bag: slow, invisible, and never worth a
-        // slot next to a glyph. These are meant to be spent on the spot and felt.
+        // Every seal changes what is in front of you the moment you tap it. The
+        // four that edited the bag are gone: you paid, nothing happened on screen,
+        // and by the time the tile turned up you had forgotten buying it.
         { id:"doubling_seal", name:"Doubling Seal", icon:"◫", color:CONSUMABLE_COLOR, desc:"Your next word scores TWICE." },
         { id:"letterpress", name:"Letterpress", icon:"⌸", color:CONSUMABLE_COLOR, desc:"Your three weakest bench tiles become any letter you choose." },
-        { id:"gilding", name:"Gilding", icon:"❖", color:CONSUMABLE_COLOR, desc:"Every tile on your bench turns gold — x2 chips, permanently." },
+        { id:"gilding", name:"Gilding", icon:"❖", color:CONSUMABLE_COLOR, desc:"Every tile on your bench turns gold - x2 chips - until the end of this stage." },
         { id:"scribes_seal", name:"Scribe's Seal", icon:"⟳", color:CONSUMABLE_COLOR, desc:"Throw your whole bench away and draw a fresh one. Costs no Hand and no Discard." },
         { id:"blot", name:"Blot", icon:"⬢", color:CONSUMABLE_COLOR, desc:"Cancel this stage's Boss Blind outright." },
         { id:"reprint", name:"Reprint", icon:"⊞", color:CONSUMABLE_COLOR, desc:"+1 Hand for this stage." },
         { id:"the_flood", name:"The Flood", icon:"⋰", color:CONSUMABLE_COLOR, desc:"Draw 4 extra tiles onto your bench for the rest of this stage." },
-        { id:"bookbinder", name:"Bookbinder", icon:"⌗", color:CONSUMABLE_COLOR, desc:"+1 Hand on every stage for the rest of the run." }
+        { id:"the_blank", name:"The Blank", icon:"\u2B1A", color:CONSUMABLE_COLOR, desc:"Two tiles on your bench become Wildcards for this stage - they can be any letter." },
     ];
     // A seal you cannot stockpile is never exciting, and one is not a collection.
     const MAX_CONSUMABLES = 3;
@@ -2821,7 +2813,7 @@
         { id:"italic_tile", name:"Italic Tile", tileType:"italic", icon:"/", color:"#F59E0B", desc:"Adds an Italic tile to your bag. HOLD it on your bench: every Italic you keep gives x1.5 MULT to the word you play." }
     ];
     const SHOP_PRICES = { glyph:6, manuscript:4, void_seal:3, gold_ink:5, transmuter:4, cloner:5, wild_tile:7, finisher_tile:7, italic_tile:7,
-        doubling_seal:4, letterpress:5, gilding:6, scribes_seal:2, blot:5, reprint:4, the_flood:4, bookbinder:9 };
+        doubling_seal:4, letterpress:5, gilding:4, scribes_seal:2, blot:5, reprint:4, the_flood:4, the_blank:5 };
     const SHOP_REROLL_BASE_COST = 2;
     const NO_ADS_PRICE = 500;
     // One switch for every ad touchpoint. false = the player never sees an ad
@@ -2864,18 +2856,12 @@
     // Gating the shop to unlocked items left twelve glyphs with no route at all.
     // Every glyph now has a stated feat behind it, and the Unlocks tab reads this table.
     const MILESTONES = [
-        { id:'double_trouble', kind:'glyph', label:'Double Trouble', hint:'Play a 5+ letter word with two identical letters side by side',
-          test:c => c.event==='word' && c.word && c.word.length>=5 && /([A-Za-z])\1/.test(c.word) },
         { id:'piggy_bank', kind:'glyph', label:'Piggy Bank', hint:'Clear a stage holding 15 or more Diamonds',
           test:c => c.event==='stageClear' && c.bank>=15 },
         { id:'insurance_policy', kind:'glyph', label:'Insurance Policy', hint:'Fall short of a target by less than 20%',
           test:c => c.event==='stageFail' && c.shortfallPct < 0.20 },
-        { id:'middle_child', kind:'glyph', label:'Middle Child', hint:'Score over 1,000 with an odd-length word',
-          test:c => c.event==='word' && c.score>1000 && c.word && c.word.length % 2 === 1 },
         { id:'heavy_hitter', kind:'glyph', label:'Heavy Hitter', hint:'Play a word with two or more of J, Q, X or Z',
           test:c => c.event==='word' && c.word && (c.word.match(/[JQXZ]/g)||[]).length >= 2 },
-        { id:'void_seal', kind:'consumable', label:'Void Seal', hint:'Clear stage 5 without rerolling the shop',
-          test:c => c.event==='stageClear' && c.stage>=5 && c.rerollsUsed===0 },
         { id:'grammarian', kind:'glyph', label:'The Grammarian', hint:'Play a word with 4 or more vowels',
           test:c => c.event==='word' && c.word && (c.word.match(/[AEIOU]/g)||[]).length >= 4 },
         { id:'underdog', kind:'glyph', label:'The Underdog', hint:'Play a word 7 letters or longer',
@@ -2886,19 +2872,12 @@
           test:c => c.event==='word' && c.word && (c.word.length - new Set(c.word.split('')).size) >= 3 },
         { id:'vowel_shifter', kind:'glyph', label:'Vowel Shifter', hint:'Play a word containing Y',
           test:c => c.event==='word' && c.word && c.word.indexOf('Y') !== -1 },
-        { id:'alchemy', kind:'glyph', label:'Golden Touch', hint:'Score 500 or more with a single word',
-          test:c => c.event==='word' && c.score >= 500 },
-        { id:'duplicator', kind:'glyph', label:'Duplicator', hint:'Play three 5-letter words in one stage',
-          test:c => c.event==='word' && (G.stageWords||[]).filter(w=>w.word && w.word.length===5).length >= 3 },
         { id:'wildcard_rune', kind:'glyph', label:'Wildcard Rune', hint:'Play a special tile',
           progress:()=>[G.progress.stats.specialTilesPlayed||0, 1],
           test:c => (G.progress.stats.specialTilesPlayed||0) >= 1 },
         { id:'scavenger', kind:'glyph', label:'The Scavenger', hint:'Discard 25 letters in total',
           progress:()=>[G.progress.stats.lettersDiscarded||0, 25],
           test:c => (G.progress.stats.lettersDiscarded||0) >= 25 },
-        { id:'recycler', kind:'glyph', label:'The Recycler', hint:'Discard 60 letters in total',
-          progress:()=>[G.progress.stats.lettersDiscarded||0, 60],
-          test:c => (G.progress.stats.lettersDiscarded||0) >= 60 },
         { id:'perfectionist', kind:'glyph', label:'The Perfectionist', hint:'Clear a stage without using a single discard',
           test:c => c.event==='stageClear' && c.noDiscards===true },
         { id:'deep_pockets', kind:'glyph', label:'Deep Pockets', hint:'Reach stage 4 in any run',
@@ -2910,30 +2889,19 @@
           test:c => c.event==='word' && new Set((G.stageWords||[]).map(w=>w.word&&w.word.length).filter(Boolean)).size >= 4 },
         { id:'cascade', kind:'glyph', label:'Cascade', hint:'Play 20 letters in a single stage',
           test:c => c.event==='word' && (G.stageWords||[]).reduce((n,w)=>n+((w.word||'').length),0) >= 20 },
-        { id:'serial', kind:'glyph', label:'The Serial', hint:'Play three 3-letter words in one stage',
-          test:c => c.event==='word' && (G.stageWords||[]).filter(w=>w.word&&w.word.length===3).length >= 3 },
         { id:'hoarder', kind:'glyph', label:'The Hoarder', hint:'Clear a stage with 7 or more tiles still on your bench',
           test:c => c.event==='stageClear' && (G.hand||[]).filter(Boolean).length >= 7 },
-        { id:'compound_interest', kind:'glyph', label:'Compound Interest', hint:'Hold 40 Diamonds at once',
-          test:c => (G.bank||0) >= 40 },
         { id:'all_in', kind:'glyph', label:'All In', hint:'Score 10,000 or more with a single word',
           test:c => c.event==='word' && c.score >= 10000 },
-        { id:'bookie', kind:'glyph', label:'The Bookie', hint:'Play four 5-letter words in one run',
-          progress:()=>[G.progress.stats.fiveLetterWords||0, 4],
-          test:c => (G.progress.stats.fiveLetterWords||0) >= 4 },
         { id:'sonnet', kind:'glyph', label:'The Sonnet', hint:'Play three 4-letter words in one stage',
           test:c => c.event==='word' && (G.stageWords||[]).filter(w=>w.word&&w.word.length===4).length >= 3 },
-        { id:'superstition', kind:'glyph', label:'Superstition', hint:'Play a 7-letter word and a 3-letter word in the same stage',
-          test:c => c.event==='word' && (G.stageWords||[]).some(w=>w.word&&w.word.length>=7) && (G.stageWords||[]).some(w=>w.word&&w.word.length===3) },
         // ---- the bombs
         { id:'doubling_seal', kind:'consumable', label:'Doubling Seal', hint:'Clear any stage in a single hand',
           test:c => c.event==='stageClear' && (G.stageWords||[]).length === 1 },
-        { id:'scribes_seal', kind:'consumable', label:"Scribe's Seal", hint:'Use every Discard on one stage and still clear it',
-          test:c => c.event==='stageClear' && G.rerollsLeft === 0 },
-        { id:'reprint', kind:'consumable', label:'Reprint', hint:'Clear a stage on your final Hand',
-          test:c => c.event==='stageClear' && G.playsLeft === 0 },
         { id:'blot', kind:'consumable', label:'Blot', hint:'Clear a Boss Blind stage',
-          test:c => c.event==='stageClear' && c.stage % 4 === 0 },
+          test:c => c.event==='stageClear' && !!G.activeHazard },
+        { id:'the_blank', kind:'consumable', label:'The Blank', hint:'Play a word using two Wildcards at once',
+          test:c => c.event==='word' && (c.wildsPlayed||0) >= 2 },
         { id:'the_flood', kind:'consumable', label:'The Flood', hint:'Play a word 8 letters or longer',
           test:c => c.event==='word' && c.word && c.word.length >= 8 },
         { id:'letterpress', kind:'consumable', label:'Letterpress', hint:'Use 5 Ink Seals in total',
@@ -2948,8 +2916,8 @@
 
     const DEFAULT_PROGRESS = {
         unlockedPresses: ['merchant_press'],
-        unlockedGlyphs: ['scrabble_master','vowel_anchor','consonant_charge','long_form','novelist','understudy','underdog'],
-        unlockedConsumables: ['gold_ink','transmuter','cloner','doubling_seal'],
+        unlockedGlyphs: ['scrabble_master','vowel_anchor','consonant_charge','long_form','novelist','underdog','sonnet'],
+        unlockedConsumables: ['doubling_seal','scribes_seal','reprint'],
         completedRuns: [],
         wins: 0,
         grantedThemes: [],
@@ -2973,8 +2941,8 @@
         // Understudy and Underdog are the short-word build's two halves, and the
         // Doubling Seal is the seal that teaches what a seal is for. An existing
         // save would otherwise never meet any of them.
-        ['understudy','underdog'].forEach(id => { if (!p.unlockedGlyphs.includes(id)) p.unlockedGlyphs.push(id); });
-        if (!p.unlockedConsumables.includes('doubling_seal')) p.unlockedConsumables.push('doubling_seal');
+        ['underdog','sonnet'].forEach(id => { if (!p.unlockedGlyphs.includes(id)) p.unlockedGlyphs.push(id); });
+        ['doubling_seal','scribes_seal','reprint'].forEach(id => { if (!p.unlockedConsumables.includes(id)) p.unlockedConsumables.push(id); });
         if (!saved || saved.wins === undefined) {
             let had = null;
             try { had = localStorage.getItem("wordling-theme"); } catch (e) {}
@@ -3119,11 +3087,18 @@
         { id:7, name:"Inflation", desc:"All items in the Shop cost double their normal price." }
     ];
     function getTodaysChallenge() { return DAILY_CHALLENGES[new Date().getDay()]; }
+    // Two blinds a run was not enough pressure to make anyone keep a second
+    // plan. These three attack the length a player has committed to, which is
+    // the whole point: a run that can only spell one length now has a stage it
+    // cannot answer.
     const HAZARD_DATABASE = {
-        wall: { name:"The Wall", icon:"🧱", desc:"Words under 5 letters score 0 and are rejected." },
-        taxman: { name:"The Taxman", icon:"💰", desc:"Discarding costs 2 Diamonds from the bank." },
-        mute: { name:"The Static", icon:"🔇", desc:"1 random tile in your hand is muted (scores 0) until played or discarded." },
-        anchor: { name:"The Anchor", icon:"⚓", desc:"The first tile you place cannot be removed." }
+        wall: { name:"The Wall", icon:"\u25A4", desc:"Words under 5 letters are rejected." },
+        taxman: { name:"The Taxman", icon:"\u25C8", desc:"Discarding costs 2 Diamonds from the bank." },
+        mute: { name:"The Static", icon:"\u2298", desc:"1 random tile in your hand is muted (scores 0) until played or discarded." },
+        anchor: { name:"The Anchor", icon:"\u22A5", desc:"The first tile you place cannot be removed." },
+        editor: { name:"The Editor", icon:"\u232B", desc:"Words of 6 letters or more are rejected. Find a shorter way." },
+        minimalist: { name:"The Minimalist", icon:"\u25B3", desc:"Words of 4 letters or fewer are rejected." },
+        echo: { name:"The Echo", icon:"\u21BB", desc:"You cannot play the same word length twice in a row." }
     };
     const VOWEL_LETTERS = new Set(['A','E','I','O','U']);
     const RARE_LETTERS = new Set(['Q','X','Z','J','V']);
@@ -3148,7 +3123,7 @@
     const MAX_GLYPH_LEVEL = 3;
     const LEVEL_SCALE = { 1: 1, 2: 1.5, 3: 2 };
     // a glyph with no numeric knob cannot be overclocked, so it is never offered
-    const UNSCALABLE_GLYPHS = new Set(["vowel_shifter", "duplicator"]);
+    const UNSCALABLE_GLYPHS = new Set(["vowel_shifter"]);
     function glyphLevel(id) {
         const eq = (G.equippedGlyphs || []).find(g => g.id === id);
         return eq && eq.lvl ? Math.min(MAX_GLYPH_LEVEL, eq.lvl) : 1;
@@ -3239,32 +3214,21 @@
                 // a JAZZ into x8 - rare enough to be a spike, not a plan.
                 case 'heavy_hitter': { if (!rareCount) return null; const v=Math.pow(2,rareCount); return {kind:'mult-mul', value:v, label:'x'+v+' MULT'}; }
                 case 'double_down': return dupCount>0 ? {kind:'mult-add', value:4*dupCount, label:'+'+(4*dupCount)+' MULT'} : null;
-                case 'double_trouble': return hasDoubledLetter(word) ? {kind:'mult-add', value:15, label:'+15 MULT'} : null;
                 case 'underdog': return (word&&word.length===3) ? {kind:'mult-mul', value:3, label:'x3 MULT'} : null;
                 case 'sonnet': return (wordLen===4||wordLen===5) ? {kind:'mult-mul', value:3, label:'x3 MULT'} : null;
                 // The current word counts towards the set, so a length you have not
                 // played before pays on the hand you discover it.
                 case 'archivist': { const seen=new Set(G.archivistLengths||[]); if (wordLen) seen.add(wordLen); const n=seen.size; return n ? {kind:'points', value:40*n, label:'+'+(40*n)+' PTS'} : null; }
                 case 'cascade': { const n=(G.stageLetters||0)+wordLen; return n>0 ? {kind:'mult-add', value:n, label:'+'+n+' MULT'} : null; }
-                case 'serial': { const v=3*(1+(G.serialTriggers||0)); return {kind:'mult-add', value:v, label:'+'+v+' MULT'}; }
                 // The bench as it stands at submit time - the played word has already
                 // left it, so this is exactly what the player chose not to spend.
                 case 'hoarder': { const n=(G.hand||[]).length; return n>0 ? {kind:'points', value:25*n, label:'+'+(25*n)+' PTS'} : null; }
-                case 'understudy': { if (!wordLen || wordLen>4) return null; const v=getLengthBaseChips(Math.min(10,wordLen+3))-getLengthBaseChips(wordLen); return {kind:'points', value:v, label:'+'+v+' PTS'}; }
-                case 'compound_interest': { const v=Math.min(25, Math.floor((G.bank||0)/5)); return v>0 ? {kind:'mult-add', value:v, label:'+'+v+' MULT'} : null; }
                 case 'all_in': { if (!wordLen) return null; if (wordLen>=7) return {kind:'mult-mul', value:4, label:'x4 MULT'}; if (wordLen<=4) return {kind:'mult-mul', value:0, label:'x0 MULT'}; return null; }
-                case 'superstition': { if (!wordLen) return null; return wordLen%2===1 ? {kind:'mult-mul', value:3, label:'x3 MULT'} : {kind:'mult-mul', value:0.5, label:'x0.5 MULT'}; }
                 // The Bookie pays in Diamonds, not points - see onWordScored.
                 default: return null;
             }
         },
-        onDiscardEvent(discardedTiles) {
-            if (!this.hasGlyph('recycler') || G.recyclerUsedThisStage) return;
-            if (discardedTiles.length===3 && discardedTiles.every(t=>t&&isVowelLetter(t.letter))) {
-                G.rerollsLeft += scaleInt(1, glyphLevel('recycler'));
-                G.recyclerUsedThisStage = true;
-            }
-        },
+        onDiscardEvent() { /* The Recycler was the only glyph that watched discards. */ },
         onWordScored(word, finalScore, playedTiles) {
             const len = (word||'').length;
             // Cascade counts letters, not words, so a stage builds towards one big
@@ -3273,20 +3237,7 @@
             if (!Array.isArray(G.archivistLengths)) G.archivistLengths = [];
             // Only while equipped: buying it late should not hand you a full set.
             if (this.hasGlyph('archivist') && len && G.archivistLengths.indexOf(len) === -1) G.archivistLengths.push(len);
-            if (this.hasGlyph('serial') && len === 3) G.serialTriggers = (G.serialTriggers||0) + 1;
-            if (this.hasGlyph('bookie')) {
-                if (len === 5) G.bank += scaleInt(6, glyphLevel('bookie'));
-                else if (len > 0 && len < 5) G.bank = 0;
-            }
             G.doubleNext = false;
-            if (this.hasGlyph('alchemy') && finalScore>=100) G.bank += scaleInt(2, glyphLevel('alchemy'));
-            if (this.hasGlyph('duplicator') && word && word.length===5 && playedTiles && playedTiles.length) {
-                const normalTiles = playedTiles.filter(t=>t&&t.type==='normal');
-                if (normalTiles.length) {
-                    const best = normalTiles.reduce((a,b)=>(b.chips||0)>(a.chips||0)?b:a);
-                    G.tileBag.push({id:'t_dup_'+Math.random().toString(36).slice(2,11)+'_'+Date.now(), letter:best.letter, chips:best.chips, type:'normal', aura:assignRandomAura()});
-                }
-            }
         }
     };
 
@@ -3312,6 +3263,10 @@
         // them to the discard pile keeps the 98-tile pool whole; dropping them cost the
         // player ~10 tiles per stage and starved the bag by stage 7.
         if (!isZenLike()) { const carry=[...G.hand, ...G.activeWord].filter(t=>t&&t.id); if(carry.length) G.discardPile.push(...carry); }
+        // Gilding lasts the stage, so it is lifted here rather than left on tiles
+        // that have long since cycled back through the bag.
+        [].concat(G.hand||[], G.tileBag||[], G.discardPile||[], G.activeWord||[])
+          .forEach(t => { if (t && t.stageGold) { t.aura = null; delete t.stageGold; } });
         G.currentScore=0; G.discardsUsedThisStage=0; G.stageLetters=0; G.doubleNext=false; G.floodTiles=0; G.playsLeft=((G.gameMode==='daily'&&G.dailyChallenge===4)?2:(4+((G.currentStage||1)>=5?1:0)+((G.currentStage||1)>=7?1:0)))+(G.bonusHands||0); G.rerollsLeft=3; G.activeWord=[]; G.hand=[]; G.stageWords=[]; G.isAnimating=false; G.rerollMode=false; G.rerollMarks.clear(); G.anchorTileId=null; G.mutedTileId=null; drawToHand(); }
     function startRun() {
         clearActiveRun();
@@ -3646,9 +3601,17 @@
     function spawnGlyphIndicator(glyphEl, text) { AudioEngine.playGlyph(); return spawnGlyphIndicatorSilent(glyphEl, text); }
     function spawnGlyphIndicatorSilent(glyphEl, text) { const container = document.getElementById('game-container'); const rect = glyphEl.getBoundingClientRect(); const cr = container.getBoundingClientRect(); const indicator = document.createElement('span'); indicator.className = 'glyph-indicator'; indicator.textContent = text; indicator.style.left = (rect.left - cr.left + rect.width/2 - 30) + 'px'; indicator.style.top = (rect.top - cr.top - 10) + 'px'; container.appendChild(indicator); AudioEngine.playPopup(); setTimeout(() => { if(indicator.parentNode) indicator.remove(); }, 1200); }
 
+    function lastPlayedLength() {
+        const w = (G.stageWords || []);
+        const last = w[w.length - 1];
+        return last && last.word ? last.word.length : 0;
+    }
     function getWordLengthWarning(occ) {
         if (occ === 0) return null;
         if (G.activeHazard === 'wall' && occ < 5) return 'The Wall requires 5+ letters!';
+        if (G.activeHazard === 'editor' && occ >= 6) return 'The Editor rejects 6+ letters!';
+        if (G.activeHazard === 'minimalist' && occ <= 4) return 'The Minimalist rejects 4 letters or fewer!';
+        if (G.activeHazard === 'echo' && occ === lastPlayedLength()) return 'The Echo: not the same length twice!';
         if (G.gameMode==='daily' && G.dailyChallenge===5 && occ !== 5) return 'The Sniper requires EXACTLY 5 letters!';
         return null;
     }
@@ -3757,7 +3720,8 @@
         G.stageWords.push({word:payload.word, score:payload.totalScore});
         if (payload.occ === 5) bumpStat('fiveLetterWords', 1);
         checkMilestones({ event:'word', word:payload.word, score:payload.totalScore,
-            goldPlayed: tilesCopy.filter(t => t && t.aura === 'gold').length });
+            goldPlayed: tilesCopy.filter(t => t && t.aura === 'gold').length,
+            wildsPlayed: tilesCopy.filter(t => t && t.type === 'wildcard').length });
         updateHighestWord(payload.word, payload.totalScore);
         GlyphManager.onWordScored(payload.word, payload.totalScore, tilesCopy);
         AudioEngine.playSubmit(); vibrate(18);
@@ -3926,7 +3890,7 @@
         G.records.totalGoldEarned += (base + Math.max(0,G.playsLeft) + Math.max(0,G.rerollsLeft) + interest + piggy);
         saveRecords();
         // Nobody buys a seal they have never held. Every Boss Blind hands one over.
-        if (G.currentStage % 4 === 0 && (G.consumables||[]).length < getMaxConsumables()) {
+        if (isBossStage(G.currentStage) && (G.consumables||[]).length < getMaxConsumables()) {
             const pool = CONSUMABLE_DATABASE.filter(d => isConsumableUnlocked(d.id));
             if (pool.length) {
                 const gift = shuffle(pool)[0];
@@ -4014,25 +3978,16 @@
         heavy_hitter:      l => "x" + scaleNum(2, l) + " MULT for EVERY rare letter (Q, X, Z, J, V) - they multiply together.",
         double_down:       l => "+" + scaleScore(4, l) + " MULT for every repeated letter in the played word.",
         underdog:          l => "x" + scaleNum(3, l) + " MULT if the played word is exactly 3 letters long.",
-        double_trouble:    l => "+" + scaleScore(15, l) + " MULT if the played word has two identical letters side by side.",
-        middle_child:      l => "Odd words of 5+ letters score their middle tile at x" + scaleNum(1.5, l) + ".",
         scavenger:         l => "+" + scaleInt(2, l) + " Discards per stage.",
         perfectionist:     l => "+" + scaleInt(1, l) + " Hand per stage.",
         deep_pockets:      l => "Start each round with +" + scaleInt(2, l) + " extra tiles in tray.",
-        recycler:          l => "Discarding 3 Vowels at once refunds " + scaleInt(1, l) + " Discard (Max 1/round).",
-        alchemy:           l => "Scoring 100+ Points in a single hand grants +" + scaleInt(2, l) + " Diamonds to your Bank.",
         insurance_policy:  l => "Fall short by " + Math.round(scaleNum(0.15, l) * 100) + "% or less and the stage clears anyway. Consumed when it saves you.",
         piggy_bank:        l => "Earn a second helping of interest at the end of every stage, up to " + scaleInt(5, l) + ".",
         wildcard_rune:     l => "At round start, " + scaleInt(1, l) + " random tile in active hand becomes Wild.",
         archivist:         l => "The first time you play a word of each length, gain +" + scaleScore(40, l) + " Base Points for the rest of the run.",
         cascade:           l => "+" + scaleScore(1, l) + " MULT for every letter played this stage, this word included.",
-        serial:            l => "+" + scaleScore(3, l) + " MULT, and +" + scaleScore(3, l) + " more for every 3-letter word you play. Lasts the whole run.",
         hoarder:           l => "+" + scaleScore(25, l) + " Base Points for every tile left on your bench.",
-        understudy:        l => "Words of 4 letters or fewer earn the Base Points of a word 3 letters longer.",
-        compound_interest: l => "+1 MULT for every 5 Diamonds in your bank, up to +" + scaleInt(25, l) + ".",
         all_in:            l => "x" + scaleNum(4, l) + " MULT on words of 7+ letters. Words of 4 letters or fewer score NOTHING.",
-        bookie:            l => "+" + scaleInt(6, l) + " Diamonds for every 5-letter word. Play a word shorter than 5 and the house takes the lot.",
-        superstition:      l => "x" + scaleNum(3, l) + " MULT on odd-length words. x0.5 MULT on even ones.",
         sonnet:            l => "x" + scaleNum(3, l) + " MULT if the played word is 4 or 5 letters."
     };
     function describeGlyph(id, lvl) {
@@ -4579,7 +4534,7 @@
             slot.title = def.name+' — '+def.desc;
             const stat = document.createElement('span'); stat.className='glyph-stat'; stat.style.color=def.color; setIcon(stat, def.id, def.icon);
             slot.appendChild(stat);
-            slot.addEventListener('click', (e) => { e.stopPropagation(); useConsumable(idx); });
+            slot.addEventListener('click', (e) => { e.stopPropagation(); showSealCard(idx); });
             container.appendChild(slot);
         });
         container.dataset.count = String(Math.min(3, held.length));
@@ -4688,40 +4643,42 @@
         draftDiv.appendChild(panel); draftDiv.classList.remove('hidden');
         requestAnimationFrame(()=>requestAnimationFrame(()=>{AudioEngine.playSwipe();draftDiv.classList.add('show');}));
     }
+    // A seal is read before it is spent. Tapping one in the pouch opens its
+    // card; USE is a second, deliberate tap. Tapping used to spend it outright,
+    // which was survivable with one slot and a trap with three.
+    function showSealCard(invIndex) {
+        if (G.isAnimating) return;
+        const held = (G.consumables||[])[invIndex]; if (!held) return;
+        const def = CONSUMABLE_DATABASE.find(c => c.id === held.id); if (!def) return;
+        const draftDiv = document.getElementById('view-draft');
+        draftDiv.innerHTML = ''; draftDiv.classList.remove('show');
+        const panel = document.createElement('div'); panel.className = 'draft-panel';
+        const wrap = document.createElement('div'); wrap.className = 'draft-detail';
+        const icon = document.createElement('div'); icon.className = 'draft-detail-icon has-glyph';
+        icon.style.setProperty('--glyph-color', def.color); setIcon(icon, def.id, def.icon);
+        const name = document.createElement('div'); name.className = 'draft-detail-name';
+        name.style.setProperty('--glyph-color', def.color); name.textContent = def.name;
+        const desc = document.createElement('div'); desc.className = 'draft-detail-desc'; desc.textContent = def.desc;
+        const actions = document.createElement('div'); actions.className = 'draft-detail-actions';
+        const back = document.createElement('button'); back.className = 'menu-btn'; back.textContent = 'BACK';
+        back.addEventListener('click', () => { AudioEngine.playTap(); draftDiv.classList.remove('show'); });
+        const use = document.createElement('button'); use.className = 'draft-btn'; use.textContent = 'USE';
+        use.addEventListener('click', () => { draftDiv.classList.remove('show'); useConsumable(invIndex); });
+        actions.appendChild(back); actions.appendChild(use);
+        wrap.appendChild(icon); wrap.appendChild(name); wrap.appendChild(desc); wrap.appendChild(actions);
+        panel.appendChild(wrap); draftDiv.appendChild(panel); draftDiv.classList.remove('hidden');
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{ AudioEngine.playSwipe(); draftDiv.classList.add('show'); }));
+    }
     function useConsumable(invIndex) {
         if (G.isAnimating) return;
         const held = G.consumables[invIndex]; if (!held) return;
         bumpStat('inkSealsUsed', 1);
-        if (held.id === 'void_seal') {
-            showLetterPicker({ title:'VOID SEAL', hint:'Pick up to 2 letter types to remove', filter:'all', maxPicks:2, onConfirm:(letters)=>{
-                letters.forEach(l => { G.removedLetters.add(l); G.tileBag = G.tileBag.filter(t => !(t.letter===l && t.type==='normal')); G.discardPile = G.discardPile.filter(t => !(t.letter===l && t.type==='normal')); });
-                G.consumables.splice(invIndex,1);
-                render();
-            }});
-        } else if (held.id === 'gold_ink') {
-            showLetterPicker({ title:'GOLD INK', hint:'Pick 1 letter type to mark gold', filter:'all', maxPicks:1, onConfirm:(letters)=>{
-                const letter=letters[0];
-                const target = G.tileBag.find(t=>t.letter===letter && t.type==='normal') || G.discardPile.find(t=>t.letter===letter && t.type==='normal');
-                if (target) target.goldInk = true;
-                G.consumables.splice(invIndex,1);
-                render();
-            }});
-        } else if (held.id === 'transmuter') {
-            showLetterPicker({ title:'TRANSMUTER', hint:'Pick 1 Consonant to convert', filter:'consonant', maxPicks:1, onConfirm:(letters)=>{
-                const fromLetter=letters[0];
-                showVowelPicker((vowel)=>{
-                    const target = G.tileBag.find(t=>t.letter===fromLetter && t.type==='normal') || G.discardPile.find(t=>t.letter===fromLetter && t.type==='normal');
-                    if (target) { target.letter=vowel; const dist=TILE_DIST.find(d=>d.letter===vowel); target.chips=dist?dist.chips:1; }
-                    G.consumables.splice(invIndex,1);
-                    render();
-                });
-            }});
-        } else if (held.id === 'doubling_seal') {
+        if (held.id === 'doubling_seal') {
             G.doubleNext = true; spendSeal(invIndex, 'NEXT WORD SCORES TWICE');
         } else if (held.id === 'gilding') {
             const hit = (G.hand||[]).filter(t => t && t.type === 'normal' && t.aura !== 'gold');
             if (!hit.length) { showHazardWarning('Nothing on your bench to gild.'); return; }
-            hit.forEach(t => { t.aura = 'gold'; });
+            hit.forEach(t => { t.aura = 'gold'; t.stageGold = true; });
             spendSeal(invIndex, hit.length + ' TILES GILDED');
         } else if (held.id === 'scribes_seal') {
             const dump = (G.hand||[]).filter(Boolean);
@@ -4738,9 +4695,13 @@
             if (getHandSize() >= 14) { showHazardWarning('Your bench is already as wide as it goes.'); return; }
             G.floodTiles = (G.floodTiles||0) + 4; drawToHand();
             spendSeal(invIndex, 'THE FLOOD');
-        } else if (held.id === 'bookbinder') {
-            G.bonusHands = (G.bonusHands||0) + 1; G.playsLeft += 1;
-            spendSeal(invIndex, '+1 HAND EVERY STAGE');
+        } else if (held.id === 'the_blank') {
+            const plain = (G.hand||[]).filter(t => t && t.type === 'normal');
+            if (plain.length < 2) { showHazardWarning('The Blank needs two ordinary tiles.'); return; }
+            // runeWild is the Wildcard Rune's own flag, and the sweep at the top of
+            // onRoundStart hands the tiles back when the next stage starts.
+            shuffle(plain).slice(0, 2).forEach(t => { t.type = 'wildcard'; t.runeWild = true; });
+            spendSeal(invIndex, 'TWO WILDCARDS');
         } else if (held.id === 'letterpress') {
             const bench = (G.hand||[]).filter(t => t && t.type === 'normal');
             if (bench.length < 3) { showHazardWarning('Letterpress needs 3 ordinary tiles on the bench.'); return; }
@@ -4750,17 +4711,8 @@
                      .forEach(t => { t.letter = letter; t.chips = dist ? dist.chips : 1; });
                 spendSeal(invIndex, 'THREE ' + letter + "'S");
             });
-        } else if (held.id === 'cloner') {
-            showLetterPicker({ title:'CLONER', hint:'Pick 1 letter type to duplicate', filter:'all', maxPicks:1, onConfirm:(letters)=>{
-                const letter=letters[0];
-                const target = G.tileBag.find(t=>t.letter===letter && t.type==='normal') || G.discardPile.find(t=>t.letter===letter && t.type==='normal');
-                if (target) G.tileBag.push({id:'t_clone_'+Math.random().toString(36).slice(2,11)+'_'+Date.now(), letter:target.letter, chips:target.chips, type:'normal', aura:assignRandomAura()});
-                G.consumables.splice(invIndex,1);
-                render();
-            }});
         }
     }
-
     function getTileClass(tile) { let cls='tile-inner'; if(tile.type==='wildcard') cls+=' wildcard'; else if(tile.type==='finisher') cls+=' finisher'; else if(tile.type==='italic') cls+=' italic-tile'+(tile.aura?' aura-'+tile.aura:''); else if(tile.aura) cls+=' aura-'+tile.aura; if(G.rerollMode&&G.rerollMarks.has(tile.id)) cls+=' marked-reroll'; if(isAnchorLocked(tile.id)) cls+=' anchor-locked'; if(isMutedTile(tile)) cls+=' muted-tile'; return cls; }
     // A tile the Wildcard Rune has lent out keeps whatever letter it was dealt
     // as, which read as a plain A or T with a badge nobody connected to it.
@@ -5090,7 +5042,9 @@
         document.getElementById('map-header').innerHTML='<span class="header-badge">'+modeName+' RUN - STAGE '+G.currentStage+'/'+G.totalStages+'</span>';
         const ladder=document.getElementById('map-ladder');
         layoutWindingNodes(ladder, G.totalStages, G.currentStage, (i) => {
-            const isBoss = i % 4 === 0;
+            // Boss Blinds moved to every third stage plus the finale, and the map
+            // was still drawing skulls on the old every-fourth pattern.
+            const isBoss = isBossStage(i);
             if (i < G.currentStage) return { state:'completed', icon:'✓', label:null };
             if (i === G.currentStage) return { state:'current', icon: isBoss?'☠':String(i), label:'Target: '+G.stageTargets[i].toLocaleString() };
             return { state:'upcoming', icon: isBoss?'☠':String(i), label:null };
@@ -5106,7 +5060,19 @@
         G.phase='map'; saveActiveRun();
     }
     function showMap() { resetStageState(); renderMap(); }
-    function rollStageHazard() { G.activeHazard = null; if (isZenLike()) return; if (G.currentStage % 4 === 0) { const hazards=['wall','taxman','mute','anchor']; G.activeHazard = hazards[Math.floor(Math.random()*hazards.length)]; } }
+    // Every third stage, and always the last one. Two Boss Blinds in eight stages
+    // let a single-length run walk the whole game without ever being asked a
+    // question it could not answer.
+    function isBossStage(stage) {
+        if (isZenLike()) return false;
+        return stage % 3 === 0 || stage === (G.totalStages || 8);
+    }
+    function rollStageHazard() {
+        G.activeHazard = null;
+        if (isZenLike() || !isBossStage(G.currentStage)) return;
+        const hazards = ['wall','taxman','mute','anchor','editor','minimalist','echo'];
+        G.activeHazard = hazards[Math.floor(Math.random()*hazards.length)];
+    }
     function showHazardToast() {
         const b=document.getElementById('hazard-banner'); if(!b) return;
         const hz=HAZARD_DATABASE[G.activeHazard]; if(!hz) { b.classList.add('hidden'); return; }
@@ -5359,7 +5325,11 @@
         // Runs saved while the drag bug was live can carry gaps in this list.
         // Anything without an id is not a glyph, and every pass over the board
         // assumes there are none, so they are dropped on the way in.
-        G.equippedGlyphs = (G.equippedGlyphs || []).filter(g => g && g.id);
+        // A run saved before the cut can be carrying a glyph that no longer
+        // exists. Scoring would skip it but the board would draw a blank slot,
+        // so it is dropped on the way in.
+        G.equippedGlyphs = (G.equippedGlyphs || [])
+            .filter(g => g && g.id && GLYPH_DATABASE.some(d => d.id === g.id));
         G.rerollMode = false; G.rerollMarks = new Set(); G.isAnimating = false; G.modalType = null; G.dragData = null;
         G.gameStarted = true;
         document.getElementById('game-container').classList.remove('zen-mode');
