@@ -692,7 +692,11 @@
         .draft-btn.sell-btn { background: var(--accent-2); border-color: var(--accent-2-shadow); color: var(--accent-2-text); box-shadow: 0 5px 0 0 var(--accent-2-shadow); }
         .draft-btn.sell-btn:active { box-shadow: 0 0 0 0 var(--accent-2-shadow); }
         .draft-detail-actions .menu-btn, .draft-detail-actions .draft-btn { width: 118px; padding: 13px 0; font-size: 0.9rem; }
-        #view-game { padding: 10px 16px 12px; gap:4px; display:flex; flex-direction:column; justify-content: flex-start; }
+        /* The board is centred in whatever height the phone gives it. Anchored to
+           the top it left a quarter of the screen empty underneath; shoved to the
+           bottom it left the same hole in the middle. Centred, the leftover splits
+           evenly and reads as breathing room rather than a gap. */
+        #view-game { padding: 10px 16px 12px; gap:4px; display:flex; flex-direction:column; justify-content: center; }
         .hidden { display: none !important; }
         /* screens inside a run: enter from below, leave upward */
         .screen-enter { animation: screenIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both; }
@@ -932,8 +936,8 @@
         #progress-wrap { height:14px; background: rgba(0,0,0,0.4); border-radius:var(--radius-sm); overflow:hidden; border: var(--outline-w) solid var(--panel-border); }
         #progress-fill { height:100%; background: linear-gradient(90deg, var(--accent-1), var(--accent-2)); transition:width 0.4s; width:0%; }
         #score-pill { align-self:center; font-weight:900; font-size:0.9rem; color: var(--text); background: var(--panel-bg); border: var(--outline-w) solid var(--panel-border); padding:3px 17px; border-radius:var(--radius-sm); font-family: var(--font-numeric); box-shadow: var(--readout-shadow); text-shadow: var(--number-shadow); }
-        #hud-row { display:flex; align-items:center; gap:10px; justify-content:center; flex-shrink:0; margin:3px 0; }
-        .hud-box { flex:1; max-width:130px; text-align:center; font-weight:900; padding:9px 12px; border-radius: var(--panel-radius); border: var(--outline-w) solid var(--panel-border); box-shadow: var(--readout-shadow); background: var(--panel-bg); }
+        #hud-row { display:flex; align-items:center; gap:10px; justify-content:center; flex-shrink:0; margin:5px 0; }
+        .hud-box { flex:1; max-width:140px; text-align:center; font-weight:900; padding:11px 12px; border-radius: var(--panel-radius); border: var(--outline-w) solid var(--panel-border); box-shadow: var(--readout-shadow); background: var(--panel-bg); }
         #box-points .hud-label { color: var(--accent-1); } #box-mults .hud-label { color: var(--accent-2); }
         .hud-label { font-size:0.68rem; letter-spacing:2px; text-transform:uppercase; font-weight:900; font-family: var(--font-main); }
         .hud-value { font-size:1.9rem; line-height:1.1; color: var(--text); font-weight:900; letter-spacing:-0.5px; transition: color 0.2s; font-family: var(--font-numeric); text-shadow: var(--number-shadow); }
@@ -970,7 +974,7 @@
             clip-path: polygon(50% 0%, 100% 38%, 50% 100%, 0% 38%);
             box-shadow: inset 0 1px 1px rgba(255,255,255,0.7);
         }
-        #bench-bar { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-shrink:0; width:100%; min-height:22px; padding:2px 0; }
+        #bench-bar { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-shrink:0; width:100%; min-height:22px; padding:4px 0; }
         .bench-chip {
             flex-shrink:0; padding:3px 9px; font-size:0.56rem; font-weight:900; letter-spacing:0.8px;
             font-family: var(--font-main); color: var(--cap-color); background: var(--cap-bg);
@@ -981,21 +985,19 @@
         /* Everything the player touches lives below this. It eats the slack, so
            the bench and the buttons sit at the bottom of whatever phone this is
            rather than floating in the middle with a void underneath. */
-        #play-spacer { flex: 1.15 1 auto; min-height: 0; }
-        /* The slack is split rather than dumped in one place: a little above the
-           banner, the rest above the word line, so the score cluster and the
-           board each get room instead of one hole in the middle of the screen. */
-        #top-spacer { flex: 0.85 1 auto; min-height: 0; }
+        /* Everything is centred as one block. Two spacers used to shove the board
+           to the bottom, which only moved the empty quarter of the screen rather
+           than filling it - the elements below grow to take it up instead. */
         #score-banner { text-align:center; font-weight:900; font-size:0.9rem; min-height:20px; color: var(--text); text-shadow: 0 1px 4px rgba(0,0,0,0.4); font-family: var(--font-main); }
         #score-banner.invalid { color: var(--accent-2); }
 
         #active-word-line {
             display: flex; flex-wrap: nowrap; align-items: center; justify-content: center;
-            gap: 6px; padding: 8px 6px; min-height: 70px; width: 100%;
+            gap: 6px; padding: 8px 6px; min-height: 74px; width: 100%;
             flex-shrink: 0; margin: 4px 0;
         }
         .active-tile {
-            flex: 0 1 auto; width: clamp(52px, 13vw, 68px); min-width: 0; aspect-ratio: 1 / 1;
+            flex: 0 1 auto; width: clamp(52px, 13.4vw, 68px); min-width: 0; aspect-ratio: 1 / 1;
             height: auto; transition: all 0.2s ease;
         }
         .active-tile .tile-inner {
@@ -1030,12 +1032,12 @@
         #active-word-line[data-len="13"] .tile-chips,
         #active-word-line[data-len="14"] .tile-chips { font-size: 7px; bottom: 1px; right: 2px; }
 
-        #hand-rack { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 10px 6px; width: 100%; flex-shrink: 0; min-height: 136px; }
-        .hand-tile-wrap { width: clamp(52px, 13vw, 68px); height: clamp(52px, 13vw, 68px); flex-shrink: 0; }
+        #hand-rack { display: flex; flex-wrap: wrap; justify-content: center; gap: 11px; padding: 8px 6px; width: 100%; flex-shrink: 1; min-height: 0; }
+        .hand-tile-wrap { width: clamp(52px, 13.4vw, 68px); height: clamp(52px, 13.4vw, 68px); flex-shrink: 0; }
         /* Deep Pockets deals 12 tiles; at phone widths only 5 fit per flex row, which
            spills a third row over the controls. Lock it to a 2x6 grid instead. */
         #hand-rack.deep-pockets { display: grid; grid-template-columns: repeat(var(--bench-cols, 6), 1fr); gap: 6px; justify-items: center; align-content: center; }
-        #hand-rack.deep-pockets .hand-tile-wrap { width: 100%; max-width: clamp(52px, 13vw, 68px); height: auto; aspect-ratio: 1 / 1; }
+        #hand-rack.deep-pockets .hand-tile-wrap { width: 100%; max-width: clamp(52px, 13.4vw, 68px); height: auto; aspect-ratio: 1 / 1; }
         #hand-rack.deep-pockets[data-cols="7"] .hand-tile-wrap { max-width: clamp(42px, 11.4vw, 58px); }
         #hand-rack.deep-pockets[data-cols="7"] .tile-inner { font-size: clamp(1.05rem, 3.4vw, 1.45rem); }
         #hand-rack.deep-pockets[data-cols="7"] .tile-chips { font-size: 9px; bottom: 2px; right: 4px; }
@@ -1125,7 +1127,7 @@
             top: 0; left: 0; margin: 0;
         }
 
-        #action-slots-row { padding:4px 0 !important; display:flex; align-items:center; justify-content:center; flex-shrink:0; width:100%; }
+        #action-slots-row { padding:5px 0 !important; display:flex; align-items:center; justify-content:center; flex-shrink:0; width:100%; }
         #glyph-slots { flex: 0 1 auto; min-width: 0; justify-content:center; }
         #glyph-slots { display:flex; gap:10px; transition: margin 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .glyph-slot {
@@ -1204,12 +1206,22 @@
         }
         /* Six glyphs and three seals on a 390px phone is 9 slots in one row, so
            both sides give ground rather than the row scrolling off the screen. */
-        /* The seals sit on the utility row now, so they no longer have to shrink
-           to share a line with six glyphs. All three stay at a thumb-sized 46px. */
-        #consumable-slot.has-item { width:auto; opacity:1; margin-left:0; gap:6px; }
-        #consumable-slot .glyph-slot,
-        #consumable-slot[data-count="2"] .glyph-slot,
-        #consumable-slot[data-count="3"] .glyph-slot { width:46px; height:46px; }
+        /* Two seal slots, always on screen, always the same size - full when you
+           are holding one and outlined when you are not. A pouch that appears and
+           resizes as it fills reads as part of the glyph row; these are not
+           glyphs and the board should say so without being told. */
+        #consumable-slot { width:auto; opacity:1; margin-left:0; gap:7px; overflow:visible; }
+        #consumable-slot.has-item { width:auto; opacity:1; margin-left:0; gap:7px; }
+        #consumable-slot .glyph-slot { width:46px; height:46px; flex-shrink:0; }
+        #consumable-slot .seal-empty {
+            width:46px; height:46px; flex-shrink:0; border-radius: var(--panel-radius);
+            border: 2px dashed rgba(255,255,255,0.45); background: rgba(8,10,14,0.14);
+            display:grid; place-items:center;
+        }
+        #consumable-slot .seal-empty::after {
+            content:''; width:13px; height:13px; border-radius:4px;
+            border:2px dashed rgba(255,255,255,0.5);
+        }
         .length-level-grid {
             display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin:2px 0 8px;
         }
@@ -2337,9 +2349,7 @@
             <div id="blitz-count">0 / 6</div>
         </div>
         <div id="blitz-board"></div>
-        <div id="top-spacer"></div>
         <div id="score-banner">—</div>
-        <div id="play-spacer"></div>
         <div id="active-word-line"></div>
         <div id="hand-rack"></div>
         <div id="action-slots-row">
@@ -2816,7 +2826,7 @@
         { id:"the_blank", name:"The Blank", icon:"\u2B1A", color:CONSUMABLE_COLOR, desc:"Two tiles on your bench become Wildcards for this stage - they can be any letter." },
     ];
     // A seal you cannot stockpile is never exciting, and one is not a collection.
-    const MAX_CONSUMABLES = 3;
+    const MAX_CONSUMABLES = 2;
     const SPECIAL_TILE_COLOR_WILD = "#A855F7";
     const SPECIAL_TILE_COLOR_FINISHER = "#F59E0B";
     const SPECIAL_TILE_DATABASE = [
@@ -4543,20 +4553,30 @@
         if (!container) return;
         container.innerHTML = '';
         if (isZenLike()) { container.classList.remove('has-item'); return; }
+        // Both slots are drawn every time, full or empty. The pouch used to appear
+        // only when it had something in it and resize as it filled, which made the
+        // seals read as an extension of the glyph row. They are not glyphs.
         const held = (G.consumables||[]).filter(Boolean);
-        if (!held.length) { container.classList.remove('has-item'); container.removeAttribute('data-count'); return; }
-        held.forEach((item, idx) => {
-            const def = CONSUMABLE_DATABASE.find(c=>c.id===item.id);
-            if (!def) return;
+        const slots = getMaxConsumables();
+        for (let i = 0; i < slots; i++) {
+            const item = held[i];
+            const def = item && CONSUMABLE_DATABASE.find(c => c.id === item.id);
+            if (!def) {
+                const empty = document.createElement('div');
+                empty.className = 'seal-empty';
+                empty.title = 'Ink Seal slot — buy one in the shop';
+                container.appendChild(empty);
+                continue;
+            }
             const slot = document.createElement('div'); slot.className='glyph-slot has-glyph';
             slot.style.setProperty('--glyph-color', def.color);
             slot.title = def.name+' — '+def.desc;
             const stat = document.createElement('span'); stat.className='glyph-stat'; stat.style.color=def.color; setIcon(stat, def.id, def.icon);
             slot.appendChild(stat);
-            slot.addEventListener('click', (e) => { e.stopPropagation(); showSealCard(idx); });
+            slot.addEventListener('click', (e) => { e.stopPropagation(); showSealCard(i); });
             container.appendChild(slot);
-        });
-        container.dataset.count = String(Math.min(3, held.length));
+        }
+        container.dataset.count = String(slots);
         container.classList.add('has-item');
     }
     function getLetterCounts(filter) {
