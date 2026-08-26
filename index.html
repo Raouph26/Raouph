@@ -970,7 +970,7 @@
             clip-path: polygon(50% 0%, 100% 38%, 50% 100%, 0% 38%);
             box-shadow: inset 0 1px 1px rgba(255,255,255,0.7);
         }
-        #bench-bar { display:flex; align-items:center; justify-content:flex-start; gap:8px; flex-shrink:0; width:100%; min-height:22px; }
+        #bench-bar { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-shrink:0; width:100%; min-height:22px; padding:2px 0; }
         .bench-chip {
             flex-shrink:0; padding:3px 9px; font-size:0.56rem; font-weight:900; letter-spacing:0.8px;
             font-family: var(--font-main); color: var(--cap-color); background: var(--cap-bg);
@@ -978,6 +978,14 @@
             cursor:pointer; line-height:1.3; white-space:nowrap;
         }
         .bench-chip:active { transform: translateY(2px); }
+        /* Everything the player touches lives below this. It eats the slack, so
+           the bench and the buttons sit at the bottom of whatever phone this is
+           rather than floating in the middle with a void underneath. */
+        #play-spacer { flex: 1.15 1 auto; min-height: 0; }
+        /* The slack is split rather than dumped in one place: a little above the
+           banner, the rest above the word line, so the score cluster and the
+           board each get room instead of one hole in the middle of the screen. */
+        #top-spacer { flex: 0.85 1 auto; min-height: 0; }
         #score-banner { text-align:center; font-weight:900; font-size:0.9rem; min-height:20px; color: var(--text); text-shadow: 0 1px 4px rgba(0,0,0,0.4); font-family: var(--font-main); }
         #score-banner.invalid { color: var(--accent-2); }
 
@@ -1117,10 +1125,11 @@
             top: 0; left: 0; margin: 0;
         }
 
-        #action-slots-row { padding-top:6px !important; padding-bottom:6px !important; display:flex; align-items:center; justify-content:center; padding:10px 0; flex-shrink:0; }
+        #action-slots-row { padding:4px 0 !important; display:flex; align-items:center; justify-content:center; flex-shrink:0; width:100%; }
+        #glyph-slots { flex: 0 1 auto; min-width: 0; justify-content:center; }
         #glyph-slots { display:flex; gap:10px; transition: margin 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .glyph-slot {
-            width: 60px; height: 60px; border-radius: var(--panel-radius);
+            width: clamp(44px, 13.5vw, 60px); height: clamp(44px, 13.5vw, 60px); border-radius: var(--panel-radius);
             background: var(--panel-bg);
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; position: relative; font-weight: 900;
@@ -1195,12 +1204,12 @@
         }
         /* Six glyphs and three seals on a 390px phone is 9 slots in one row, so
            both sides give ground rather than the row scrolling off the screen. */
-        #consumable-slot.has-item { width:auto; opacity:1; margin-left:8px; gap:4px; }
-        #consumable-slot .glyph-slot { width:54px; height:54px; }
-        #consumable-slot[data-count="2"] .glyph-slot { width:42px; height:42px; }
-        #consumable-slot[data-count="3"] .glyph-slot { width:34px; height:34px; }
-        #action-slots-row.slots-tight #glyph-slots { gap:5px; }
-        #action-slots-row.slots-tight #glyph-slots .glyph-slot { width:clamp(28px, 8.1vw, 44px); height:clamp(28px, 8.1vw, 44px); }
+        /* The seals sit on the utility row now, so they no longer have to shrink
+           to share a line with six glyphs. All three stay at a thumb-sized 46px. */
+        #consumable-slot.has-item { width:auto; opacity:1; margin-left:0; gap:6px; }
+        #consumable-slot .glyph-slot,
+        #consumable-slot[data-count="2"] .glyph-slot,
+        #consumable-slot[data-count="3"] .glyph-slot { width:46px; height:46px; }
         .length-level-grid {
             display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin:2px 0 8px;
         }
@@ -1933,8 +1942,10 @@
             #blitz-clock.is-low, .blitz-slot.just-filled { animation: none; }
         }
         /* five and six slot boards still have to fit a 390px screen */
-        #glyph-slots[data-slots="5"] .glyph-slot { width: clamp(38px, 10vw, 52px); }
-        #glyph-slots[data-slots="6"] .glyph-slot { width: clamp(40px, 10.8vw, 52px); }
+        /* These were sized when the seals shared this row. They have their own
+           line now, so a full board of six can stay above the 44px a thumb needs. */
+        #glyph-slots[data-slots="5"] .glyph-slot { width: clamp(46px, 12.5vw, 58px); }
+        #glyph-slots[data-slots="6"] .glyph-slot { width: clamp(46px, 11.5vw, 54px); }
         /* a squeezed slot keeps its square; without this it stretches into a letterbox */
         #glyph-slots[data-slots="5"] .glyph-slot,
         #glyph-slots[data-slots="6"] .glyph-slot { height: auto; aspect-ratio: 1 / 1; }
@@ -2326,14 +2337,15 @@
             <div id="blitz-count">0 / 6</div>
         </div>
         <div id="blitz-board"></div>
+        <div id="top-spacer"></div>
         <div id="score-banner">—</div>
+        <div id="play-spacer"></div>
         <div id="active-word-line"></div>
         <div id="hand-rack"></div>
         <div id="action-slots-row">
             <div id="glyph-slots"></div>
-            <div id="consumable-slot"></div>
         </div>
-        <div id="bench-bar"><button class="bench-chip" id="btn-sort-bench" type="button">SORT: DRAW</button></div>
+        <div id="bench-bar"><button class="bench-chip" id="btn-sort-bench" type="button">SORT: DRAW</button><div id="consumable-slot"></div></div>
         <div id="controls-row"><button class="btn-action" id="btn-shuffle-hand">SHUFFLE</button><button class="btn-action" id="btn-clear">RECALL</button><button class="btn-action" id="btn-reroll">REROLL</button><button class="btn-action" id="btn-submit">SUBMIT</button></div>
     </div>
     <div id="view-draft" class="view-panel hidden"></div>
@@ -2827,7 +2839,10 @@
     // The early stages are deliberately soft. Levelling is what makes a run
     // strong, and a player needs two or three stages of breathing room to buy
     // into a style before the targets start asking whether they committed.
-    const CLASSIC_STAGE_TARGETS = [0, 120, 400, 1100, 3000, 8000, 20000, 40000, 70000];
+    // Tuned so a strong build spends three of its hands on every stage from 3
+    // onward rather than clearing in one and wasting the rest. Stage 1 is still a
+    // single word - it is where the game teaches itself.
+    const CLASSIC_STAGE_TARGETS = [0, 150, 1200, 9000, 26000, 80000, 135000, 235000, 330000];
     // Zen has no fail state, so the targets exist to mark progress rather than to
     // squeeze. They sit far below the classic curve and climb far more gently.
     const ZEN_STAGE_TARGETS = [0, 100, 220, 380, 580, 820, 1100, 1450, 1850];
@@ -3307,8 +3322,12 @@
     // make nine-letter words better and the problem gets worse. Buying it makes a
     // playstyle something you commit Diamonds to. Short lengths gain far more in
     // proportion, which is what lets a three-letter deck overtake by the end.
-    const LENGTH_LEVEL_GAIN = { 3:{c:25,m:2}, 4:{c:30,m:2}, 5:{c:35,m:2}, 6:{c:40,m:2},
-                                7:{c:45,m:2}, 8:{c:50,m:2}, 9:{c:55,m:2}, 10:{c:60,m:2} };
+    // Short lengths gain a multiplier point per level where long ones do not.
+    // Without that the strongest build stayed roughly three times the weakest all
+    // run, and there was no target that asked anything of it without locking the
+    // others out entirely.
+    const LENGTH_LEVEL_GAIN = { 3:{c:40,m:3}, 4:{c:45,m:3}, 5:{c:50,m:3}, 6:{c:50,m:2},
+                                7:{c:52,m:2}, 8:{c:55,m:2}, 9:{c:58,m:2}, 10:{c:60,m:2} };
     const MAX_LENGTH_LEVEL = 20;
     function lengthKey(l) { return l >= 10 ? 10 : l; }
     function lengthLevel(l) {
@@ -4539,9 +4558,6 @@
         });
         container.dataset.count = String(Math.min(3, held.length));
         container.classList.add('has-item');
-        // three seals and six glyphs do not both fit on a phone at full size
-        const row = document.getElementById('action-slots-row');
-        if (row) row.classList.toggle('slots-tight', held.length >= 2);
     }
     function getLetterCounts(filter) {
         const counts = {};
@@ -5055,7 +5071,25 @@
     function renderEndlessMap() {
         document.getElementById('map-header').innerHTML = '<span class="header-badge">ENDLESS — STAGE '+G.currentStage+'</span>';
         const ladder=document.getElementById('map-ladder');
-        layoutWindingNodes(ladder, 1, 1, () => ({ state:'current', icon:String(G.currentStage), label:'Target: '+G.stageTargets[G.currentStage].toLocaleString() }));
+        // Endless drew a single node floating on its own with no trail, which made
+        // the run look like it had stopped rather than carried on. It gets the same
+        // winding path as Classic: the two stages behind you, where you are, and
+        // two more ahead. Endless has no end, so the path ahead is generated as it
+        // is needed rather than read off a fixed list.
+        const WINDOW = 5, HERE = 3;                       // 2 behind, you, 2 ahead
+        const first = Math.max(1, G.currentStage - (HERE - 1));
+        const slotFor = i => first + (i - 1);
+        for (let i = 1; i <= WINDOW; i++) ensureStageTarget(slotFor(i));
+        layoutWindingNodes(ladder, WINDOW, G.currentStage - first + 1, (i) => {
+            const stage = slotFor(i);
+            const isBoss = stage % 3 === 0;
+            if (stage < G.currentStage) return { state:'completed', icon:'✓', label:null };
+            if (stage === G.currentStage) {
+                return { state:'current', icon: isBoss ? '☠' : String(stage),
+                         label:'Target: '+(G.stageTargets[stage]||0).toLocaleString() };
+            }
+            return { state:'upcoming', icon: isBoss ? '☠' : String(stage), label:null };
+        });
         document.getElementById('btn-start-stage').textContent='START STAGE '+G.currentStage; document.getElementById('btn-start-stage').onclick=startStage; hideScreen('view-game'); showScreen('view-map', true); document.getElementById('view-draft').classList.add('hidden');
         G.phase='map'; saveActiveRun();
     }
