@@ -677,6 +677,115 @@
         .press-card.locked .press-icon, .press-card.locked .press-name { filter: brightness(0.35) saturate(0.2); }
         .press-card.locked .press-perk, .press-card.locked .press-cost { display:none; }
         .press-lock { font-size:0.6rem; font-weight:700; color: var(--text-soft); font-family: var(--font-main); margin-top:5px; line-height:1.25; }
+        /* ------------------------------------------------ NEW RUN: press + stake */
+        #view-newrun {
+            align-items: center; gap: 9px; padding: 16px 16px; z-index: 11;
+            justify-content: flex-start; justify-content: safe center;
+            transform: translateX(110%); opacity: 0; pointer-events: none; overflow-y: auto;
+        }
+        #view-newrun.slide-in { transform: translateX(0); opacity: 1; pointer-events: auto; }
+        /* the arrows live in this padding rather than on top of the strip */
+        #view-newrun .press-rail-wrap { margin-top: 2px; padding: 0 38px; }
+        /* the press is a strip, not a card: art on the left, what it costs you on
+           the right, and the stakes it has already beaten stacked beside it */
+        /* one strip fills the rail exactly, so a card is never wider than the
+           space it has to be centred in */
+        #view-newrun #press-rail { padding: 8px 0; }
+        #view-newrun .press-card {
+            flex: 0 0 100%; width: auto; max-width: none;
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 11px; text-align: left;
+        }
+        #view-newrun .press-card .press-icon {
+            width: 50px; height: 50px; flex-shrink: 0; display: grid; place-items: center;
+            font-size: 1.5rem; border-radius: calc(var(--panel-radius) * 0.55);
+            background: var(--press-color, var(--accent-1)); color: #fff;
+        }
+        #view-newrun .press-card .press-body { flex: 1 1 auto; min-width: 0; }
+        #view-newrun .press-card .press-name { margin-top: 0; font-size: 0.9rem; line-height: 1.1; }
+        #view-newrun .press-card .press-perk,
+        #view-newrun .press-card .press-cost { margin-top: 2px; font-size: 0.62rem; }
+        #view-newrun .press-card .press-lock { margin-top: 2px; }
+        /* one strip is on screen at a time and it is the one that will be played,
+           so a tick saying "selected" is telling you something you can see */
+        #view-newrun .press-card.selected::after { content: none; }
+        .press-pips { display: flex; flex-direction: column; gap: 3px; flex-shrink: 0; }
+        .press-pips i {
+            width: 15px; height: 15px; border-radius: 5px; font-style: normal;
+            display: grid; place-items: center; font-size: 0.42rem; font-weight: 900;
+            font-family: var(--font-numeric);
+            background: rgba(127,127,127,0.18); color: var(--text-soft);
+        }
+        .press-pips i.is-won { background: var(--accent-3); color: var(--accent-3-text); }
+        #press-dots { display: flex; gap: 4px; justify-content: center; }
+        #press-dots b {
+            width: 6px; height: 6px; border-radius: 50%; background: var(--bg-text);
+            opacity: 0.45; transition: width 0.18s ease, opacity 0.18s ease;
+        }
+        #press-dots b.on { width: 17px; border-radius: 99px; opacity: 1; }
+        .stake-eyebrow {
+            font-family: var(--font-main); font-size: 0.55rem; font-weight: 900;
+            letter-spacing: 1.6px; color: var(--bg-text); opacity: 0.85; margin-top: 2px;
+        }
+        #stake-chips { display: flex; gap: 6px; width: 100%; max-width: 340px; }
+        .stake-chip {
+            flex: 1 1 0; aspect-ratio: 1 / 1; min-width: 0; padding: 0; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-numeric); font-size: 0.92rem; font-weight: 900;
+            border-radius: calc(var(--panel-radius) * 0.55);
+            background: var(--panel-bg); color: var(--text);
+            border: var(--outline-w) solid var(--panel-border);
+            box-shadow: 0 4px 0 0 var(--panel-shadow-color);
+            transition: transform 0.14s ease;
+        }
+        .stake-chip:active { transform: translateY(3px); box-shadow: 0 1px 0 0 var(--panel-shadow-color); }
+        /* gold means you have beaten it on THIS press - the wall you are filling in */
+        .stake-chip.is-won {
+            background: var(--accent-3); color: var(--accent-3-text);
+            border-color: var(--accent-3-shadow); box-shadow: 0 4px 0 0 var(--accent-3-shadow);
+        }
+        .stake-chip.is-locked {
+            opacity: 0.45; box-shadow: none; cursor: pointer;
+        }
+        .stake-chip.is-viewing { outline: 3px solid var(--bg-text); outline-offset: 2px; }
+        #stake-rule {
+            width: 100%; max-width: 340px; text-align: left;
+            background: var(--panel-bg); color: var(--text);
+            border: var(--outline-w) solid var(--panel-border);
+            border-radius: var(--panel-radius); padding: 12px 13px;
+            box-shadow: 0 4px 0 0 var(--panel-shadow-color);
+        }
+        .stake-rule-head {
+            display: flex; align-items: baseline; gap: 7px; font-family: var(--font-main);
+            font-size: 0.9rem; font-weight: 900; color: var(--text);
+        }
+        .stake-rule-flag {
+            font-family: var(--font-numeric); font-size: 0.5rem; font-weight: 900;
+            letter-spacing: 1.1px; padding: 2px 6px; border-radius: 5px; margin-left: auto;
+            background: rgba(127,127,127,0.2); color: var(--text-soft);
+        }
+        .stake-rule-flag.is-won { background: var(--accent-3); color: var(--accent-3-text); }
+        .stake-rule-body {
+            font-family: var(--font-main); font-size: 0.68rem; font-weight: 600;
+            color: var(--text-soft); line-height: 1.35; margin-top: 3px;
+        }
+        .stake-rule-carry {
+            font-family: var(--font-main); font-size: 0.6rem; font-weight: 700;
+            color: var(--text-soft); line-height: 1.45; margin-top: 8px;
+            padding-top: 7px; border-top: 1px solid var(--panel-border);
+        }
+        .stake-rule-carry b { color: var(--text); }
+        /* the one thing on this screen you are meant to press */
+        #btn-start-run {
+            width: 100%; max-width: 340px; margin-top: 2px;
+            background: var(--accent-3); border-color: var(--accent-3-shadow);
+            color: var(--accent-3-text); box-shadow: 0 var(--press-depth) 0 0 var(--accent-3-shadow);
+        }
+        #btn-start-run:active { box-shadow: 0 0 0 0 var(--accent-3-shadow); }
+        #btn-start-run .start-stake {
+            display: block; font-family: var(--font-numeric); font-size: 0.58rem;
+            font-weight: 900; letter-spacing: 1.2px; opacity: 0.85; margin-top: 2px;
+        }
         #unlock-banner {
             position:absolute; top:14px; left:50%; transform: translateX(-50%) translateY(-140%);
             z-index:120; pointer-events:none; display:flex; flex-direction:column; align-items:center; gap:2px;
@@ -2406,7 +2515,6 @@
             <button class="resume-strip continue-btn" id="btn-continue-run"><span class="resume-mark">↻</span><span class="resume-text"><b>CONTINUE RUN</b><i id="resume-where">Stage 1</i></span><span class="resume-go">›</span></button>
             <div class="resume-or"><span>or start a new run</span></div>
         </div>
-        <div id="press-picker"><div class="press-title">RUN LOADOUT</div><div class="press-rail-wrap"><button type="button" class="press-arrow" id="press-prev" aria-label="Previous loadout">‹</button><div id="press-rail"></div><button type="button" class="press-arrow" id="press-next" aria-label="Next loadout">›</button></div></div>
         <button class="diff-btn diff-easy" id="btn-mode-classic">CLASSIC<br><span class="mode-sub">8 Stages · Shop · Glyphs</span></button>
         <div class="daily-card">
             <button class="diff-btn diff-medium" id="btn-mode-daily">DAILY CHALLENGE<br><span class="mode-sub" id="daily-mode-sub">Loading…</span></button>
@@ -2417,6 +2525,20 @@
         <button class="diff-btn diff-blitz" id="btn-mode-blitz">BLITZ<br><span class="mode-sub" id="blitz-mode-sub">90 Seconds · Fill 2 to 7</span></button>
     </div>
 
+    <div id="view-newrun" class="view-panel hidden">
+        <button type="button" class="panel-close" id="btn-close-newrun" aria-label="Back">✕</button>
+        <h2><span class="header-badge">NEW RUN</span></h2>
+        <div class="press-rail-wrap">
+            <button type="button" class="press-arrow" id="press-prev" aria-label="Previous loadout">‹</button>
+            <div id="press-rail"></div>
+            <button type="button" class="press-arrow" id="press-next" aria-label="Next loadout">›</button>
+        </div>
+        <div id="press-dots"></div>
+        <div class="stake-eyebrow">CHOOSE YOUR STAKE</div>
+        <div id="stake-chips"></div>
+        <div id="stake-rule"></div>
+        <button class="diff-btn diff-easy" id="btn-start-run">START RUN</button>
+    </div>
     <div id="view-map" class="view-panel hidden"><div id="map-header"></div><div id="map-scroll"><div id="map-ladder"></div></div><button id="btn-start-stage">START STAGE</button></div>
     <div id="view-game" class="view-panel hidden">
         <div id="header"><button id="btn-run-info" class="header-pill">RUN INFO</button><button id="btn-header-options" class="header-pill">OPTIONS</button></div>
@@ -2448,6 +2570,7 @@
         <div class="run-info-band">RUN INFO</div>
         <div class="run-info-body">
             <div class="run-info-row"><span>Stage</span><span id="ri-stage">—</span></div>
+            <div class="run-info-row"><span>Stake</span><span id="ri-stake">—</span></div>
             <div class="run-info-row"><span>Bag</span><span id="ri-bag">—</span></div>
             <div class="run-info-row"><span>Word Levels</span><span id="ri-levels-hint">tap a length in the shop to level it</span></div>
             <div class="length-level-grid" id="ri-levels"></div>
@@ -2942,6 +3065,38 @@
     const ZEN_STAGE_TARGETS = [0, 100, 220, 380, 580, 820, 1100, 1450, 1850];
 
     // Run loadouts, unlocked one at a time by winning a run with the previous one.
+    // ---------------------------------------------------------------- Stakes
+    // Five difficulties per Press, cumulative: taking Edited means you are also
+    // playing Revised. Each one adds exactly one rule, so a player can always
+    // say what changed - a stake that alters four numbers at once just feels
+    // unfair rather than harder.
+    const STAKES = [
+        { n:1, id:'draft',     name:'Draft',     targetMult:1,
+          rule:'The game as it is. Clear it to open Revised.' },
+        { n:2, id:'revised',   name:'Revised',   targetMult:1.15,
+          rule:'Every stage needs 15% more to clear it.' },
+        { n:3, id:'edited',    name:'Edited',    targetMult:1.15, discardCut:1,
+          rule:'One fewer Discard on every stage.' },
+        { n:4, id:'censored',  name:'Censored',  targetMult:1.15, discardCut:1,
+          rule:'EVERY stage rolls a Boss Blind, not only 3, 6 and 8.' },
+        { n:5, id:'final_cut', name:'Final Cut', targetMult:1.3,  discardCut:1,
+          rule:'Every stage needs 30% more to clear it, not 15%.' }
+    ];
+    const MAX_STAKE = STAKES.length;
+    function stakeDef(n) { return STAKES[Math.max(0, Math.min(MAX_STAKE, n||1) - 1)]; }
+    // Only Classic carries a stake. Daily is a shared board and has to be the
+    // same board for everybody; Zen and Blitz have no economy to squeeze.
+    function stakeLevel() { return G.gameMode === 'classic' ? (G.stake || 1) : 1; }
+    function stakeValue(key, fallback) {
+        const d = stakeDef(stakeLevel());
+        return (d && d[key] !== undefined) ? d[key] : fallback;
+    }
+    function stakeUnlocked() { return Math.max(1, Math.min(MAX_STAKE, (G.progress && G.progress.stakeUnlocked) || 1)); }
+    function pressStakeCleared(pressId) {
+        const m = (G.progress && G.progress.pressStakes) || {};
+        return Math.max(0, Math.min(MAX_STAKE, m[pressId] || 0));
+    }
+
     const PRESSES = [
         { id:'merchant_press', name:'Merchant Press', icon:'⚖', color:'#F59E0B', unlockedBy:null,
           perk:'Start with ◆15', tradeoff:'Shop rerolls cost ◆3',
@@ -3063,10 +3218,13 @@
         wins: 0,
         grantedThemes: [],
         selectedPress: 'merchant_press',
+        selectedStake: 1,
         // kept as one space-separated string, the way the dictionary is: half
         // the bytes of an array of quoted words, and appending is a concat
         foundWords: '',
         completedSets: [],
+        stakeUnlocked: 1,
+        pressStakes: {},
         stats: { lettersDiscarded:0, inkSealsUsed:0, specialTilesPlayed:0, highestStageReached:1, fiveLetterWords:0 }
     };
     function loadProgress() {
@@ -3093,6 +3251,8 @@
             try { had = localStorage.getItem("wordling-theme"); } catch (e) {}
             if (had && !p.grantedThemes.includes(had)) p.grantedThemes.push(had);
         }
+        p.stakeUnlocked = Math.max(1, Math.min(MAX_STAKE, parseInt(p.stakeUnlocked, 10) || 1));
+        if (!p.pressStakes || typeof p.pressStakes !== 'object' || Array.isArray(p.pressStakes)) p.pressStakes = {};
         if (typeof p.foundWords !== 'string') {
             p.foundWords = Array.isArray(p.foundWords) ? p.foundWords.join(' ') : '';
         }
@@ -3133,19 +3293,33 @@
             const card = document.createElement('div');
             card.className = 'press-card' + (unlocked ? '' : ' locked') + (unlocked && G.progress.selectedPress===press.id ? ' selected' : '');
             card.style.setProperty('--press-color', press.color);
-            const icon = document.createElement('div'); icon.className='press-icon'; icon.textContent = unlocked ? press.icon : '🔒';
+            const icon = document.createElement('div'); icon.className='press-icon';
+            if (unlocked) icon.textContent = press.icon + '\uFE0E';
+            else icon.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 1.5A5.2 5.2 0 0 0 6.8 6.7V9.4H5.6A1.9 1.9 0 0 0 3.7 11.3v9A1.9 1.9 0 0 0 5.6 22.2H18.4A1.9 1.9 0 0 0 20.3 20.3v-9A1.9 1.9 0 0 0 18.4 9.4H17.2V6.7A5.2 5.2 0 0 0 12 1.5Zm0 2.2a3 3 0 0 1 3 3V9.4H9V6.7a3 3 0 0 1 3-3Z"/></svg>';
+            const body = document.createElement('div'); body.className='press-body';
             const name = document.createElement('div'); name.className='press-name'; name.textContent = press.name;
-            card.appendChild(icon); card.appendChild(name);
+            body.appendChild(name);
+            card.appendChild(icon); card.appendChild(body);
             if (unlocked) {
                 const perk = document.createElement('div'); perk.className='press-perk'; perk.textContent = press.perk;
                 const cost = document.createElement('div'); cost.className='press-cost'; cost.textContent = press.tradeoff;
-                card.appendChild(perk); card.appendChild(cost);
+                body.appendChild(perk); body.appendChild(cost);
+                // the stakes this press has already beaten, stacked down its edge
+                const won = pressStakeCleared(press.id);
+                const pips = document.createElement('div'); pips.className='press-pips';
+                for (let i = 1; i <= MAX_STAKE; i++) {
+                    const pip = document.createElement('i');
+                    pip.textContent = ROMAN[i];
+                    if (i <= won) pip.className = 'is-won';
+                    pips.appendChild(pip);
+                }
+                card.appendChild(pips);
                 card.addEventListener('click', ()=>{ G.progress.selectedPress = press.id; G.pressFocus = PRESSES.indexOf(press); saveProgress(); AudioEngine.playTap(); renderPresses(); });
             } else {
                 const prev = getPress(press.unlockedBy);
                 const lock = document.createElement('div'); lock.className='press-lock';
                 lock.textContent = 'Clear a run with ' + (prev ? prev.name : 'the previous press') + ' to unlock';
-                card.appendChild(lock);
+                body.appendChild(lock);
             }
             rail.appendChild(card);
         });
@@ -3154,6 +3328,90 @@
         }
         centerPress(G.pressFocus, false);
         updatePressArrows();
+        renderPressDots();
+        renderStakes();
+    }
+    const ROMAN = { 1:'I', 2:'II', 3:'III', 4:'IV', 5:'V' };
+    function renderPressDots() {
+        const dots = document.getElementById('press-dots');
+        if (!dots) return;
+        dots.innerHTML = '';
+        for (let i = 0; i < PRESSES.length; i++) {
+            const b = document.createElement('b');
+            if (i === G.pressFocus) b.className = 'on';
+            dots.appendChild(b);
+        }
+    }
+    // The stake that will actually be played. A locked chip can be opened to read
+    // what is coming, but it never becomes the thing START RUN starts.
+    function selectedStake() {
+        const want = (G.progress && G.progress.selectedStake) || 1;
+        return Math.max(1, Math.min(stakeUnlocked(), want));
+    }
+    function renderStakes() {
+        const chips = document.getElementById('stake-chips');
+        const rule = document.getElementById('stake-rule');
+        if (!chips || !rule || !G.progress) return;
+        const open = stakeUnlocked();
+        const playing = selectedStake();
+        if (!G.stakeView || G.stakeView < 1 || G.stakeView > MAX_STAKE) G.stakeView = playing;
+        const pressId = G.progress.selectedPress;
+        const won = pressStakeCleared(pressId);
+
+        chips.innerHTML = '';
+        STAKES.forEach(st => {
+            const locked = st.n > open;
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'stake-chip' + (st.n <= won ? ' is-won' : '') + (locked ? ' is-locked' : '')
+                        + (st.n === G.stakeView ? ' is-viewing' : '');
+            b.dataset.stake = String(st.n);
+            b.textContent = ROMAN[st.n];
+            b.addEventListener('click', () => {
+                G.stakeView = st.n;
+                if (!locked) G.progress.selectedStake = st.n;
+                saveProgress(); AudioEngine.playTap(); renderStakes();
+            });
+            chips.appendChild(b);
+        });
+
+        const st = stakeDef(G.stakeView);
+        const locked = st.n > open;
+        rule.innerHTML = '';
+        const head = document.createElement('div'); head.className = 'stake-rule-head';
+        const h = document.createElement('span'); h.textContent = ROMAN[st.n] + ' \u00B7 ' + st.name;
+        head.appendChild(h);
+        const flag = document.createElement('span'); flag.className = 'stake-rule-flag';
+        if (locked) flag.textContent = 'LOCKED';
+        else if (st.n <= won) { flag.textContent = 'BEATEN'; flag.classList.add('is-won'); }
+        else flag.textContent = 'NOT BEATEN';
+        head.appendChild(flag);
+        rule.appendChild(head);
+
+        const body = document.createElement('p'); body.className = 'stake-rule-body';
+        body.textContent = st.rule;
+        rule.appendChild(body);
+
+        const carry = document.createElement('div'); carry.className = 'stake-rule-carry';
+        const also = STAKES.filter(x => x.n > 1 && x.n < st.n).map(x => x.name);
+        const bits = [];
+        if (also.length) bits.push('Carries <b>' + also.join('</b>, <b>') + '</b>.');
+        if (locked) {
+            bits.push('Clear <b>' + stakeDef(st.n - 1).name + '</b> on any Press to open it.');
+        } else if (st.n < MAX_STAKE) {
+            bits.push('Clear it to open <b>' + stakeDef(st.n + 1).name + '</b>.');
+        } else {
+            bits.push('The last one. Nothing comes after it.');
+        }
+        const pressName = (getPress(pressId) || {}).name || 'this Press';
+        bits.push(won >= st.n ? ('Already beaten on <b>' + pressName + '</b>.')
+                              : ('Not yet beaten on <b>' + pressName + '</b>.'));
+        carry.innerHTML = bits.join(' ');
+        rule.appendChild(carry);
+
+        const btn = document.getElementById('btn-start-run');
+        if (btn) btn.innerHTML = 'START RUN<span class="start-stake">' +
+            ROMAN[playing] + ' \u00B7 ' + stakeDef(playing).name.toUpperCase() + '</span>';
     }
     function centerPress(index, smooth) {
         const rail = document.getElementById('press-rail');
@@ -3192,6 +3450,18 @@
     function winRun(pressId) {
         if (!pressId || !G.progress) return null;
         if (!G.progress.completedRuns.includes(pressId)) G.progress.completedRuns.push(pressId);
+        // The sticker is per Press - it is the wall you are filling in - but the
+        // stake itself opens for every Press at once, so nobody has to grind the
+        // same loadout five times to see the next rule.
+        const at = stakeLevel();
+        if (G.gameMode === 'classic') {
+            if (!G.progress.pressStakes) G.progress.pressStakes = {};
+            if (at > pressStakeCleared(pressId)) G.progress.pressStakes[pressId] = at;
+            if (at >= stakeUnlocked() && at < MAX_STAKE) {
+                G.progress.stakeUnlocked = at + 1;
+                showUnlockBanner('NEW STAKE UNLOCKED', stakeDef(at + 1).name);
+            }
+        }
         const next = PRESSES.find(p=>p.unlockedBy===pressId);
         let unlocked = null;
         if (next && !G.progress.unlockedPresses.includes(next.id)) { G.progress.unlockedPresses.push(next.id); unlocked = next; }
@@ -3502,7 +3772,7 @@
         // that have long since cycled back through the bag.
         [].concat(G.hand||[], G.tileBag||[], G.discardPile||[], G.activeWord||[])
           .forEach(t => { if (t && t.stageGold) { t.aura = null; delete t.stageGold; } });
-        G.currentScore=0; G.discardsUsedThisStage=0; G.stageLetters=0; G.doubleNext=false; G.floodTiles=0; G.playsLeft=((G.gameMode==='daily'&&G.dailyChallenge===4)?2:(4+((G.currentStage||1)>=5?1:0)+((G.currentStage||1)>=7?1:0)))+(G.bonusHands||0); G.rerollsLeft=3; G.activeWord=[]; G.hand=[]; G.stageWords=[]; G.isAnimating=false; G.rerollMode=false; G.rerollMarks.clear(); G.anchorTileId=null; G.mutedTileId=null; drawToHand(); }
+        G.currentScore=0; G.discardsUsedThisStage=0; G.stageLetters=0; G.doubleNext=false; G.floodTiles=0; G.playsLeft=((G.gameMode==='daily'&&G.dailyChallenge===4)?2:(4+((G.currentStage||1)>=5?1:0)+((G.currentStage||1)>=7?1:0)))+(G.bonusHands||0); G.rerollsLeft=Math.max(0, 3 - stakeValue('discardCut', 0)); G.activeWord=[]; G.hand=[]; G.stageWords=[]; G.isAnimating=false; G.rerollMode=false; G.rerollMarks.clear(); G.anchorTileId=null; G.mutedTileId=null; drawToHand(); }
     function startRun() {
         clearActiveRun();
         G.removedLetters = new Set();
@@ -3546,7 +3816,7 @@
     // Without that the strongest build stayed roughly three times the weakest all
     // run, and there was no target that asked anything of it without locking the
     // others out entirely.
-    const LENGTH_LEVEL_GAIN = { 3:{c:40,m:3}, 4:{c:45,m:3}, 5:{c:50,m:3}, 6:{c:50,m:2},
+    const LENGTH_LEVEL_GAIN = { 3:{c:40,m:5}, 4:{c:45,m:4}, 5:{c:50,m:4}, 6:{c:50,m:2},
                                 7:{c:52,m:2}, 8:{c:55,m:2}, 9:{c:58,m:2}, 10:{c:60,m:2} };
     const MAX_LENGTH_LEVEL = 20;
     function lengthKey(l) { return l >= 10 ? 10 : l; }
@@ -4121,13 +4391,14 @@
         Analytics.track("stage_cleared", { stage: G.currentStage, score: G.currentScore,
             target: G.stageTargets[G.currentStage], handsLeft: G.playsLeft, glyphs: G.equippedGlyphs.length, bank: G.bank });
         const base = 3; G.bank += base; lines.push(['Base Win', base]);
-        if (G.playsLeft > 0) { G.bank += G.playsLeft; lines.push(['Unused Hands ×'+G.playsLeft, G.playsLeft]); }
+        const handsPay = Math.max(0, G.playsLeft);
+        if (handsPay > 0) { G.bank += handsPay; lines.push(['Unused Hands ×'+handsPay, handsPay]); }
         if (G.rerollsLeft > 0) { G.bank += G.rerollsLeft; lines.push(['Unused Discards ×'+G.rerollsLeft, G.rerollsLeft]); }
         const interest = Math.min(5, Math.floor(G.bank/5));
         if (interest > 0) { G.bank += interest; lines.push(['Interest', interest]); }
         let piggy = 0;
         if (GlyphManager.hasGlyph('piggy_bank')) { piggy = Math.min(scaleInt(5, glyphLevel('piggy_bank')), Math.floor(G.bank/5)); if (piggy > 0) { G.bank += piggy; lines.push(['Piggy Bank', piggy]); } }
-        G.records.totalGoldEarned += (base + Math.max(0,G.playsLeft) + Math.max(0,G.rerollsLeft) + interest + piggy);
+        G.records.totalGoldEarned += (base + handsPay + Math.max(0,G.rerollsLeft) + interest + piggy);
         saveRecords();
         // Nobody buys a seal they have never held. Every Boss Blind hands one over.
         if (isBossStage(G.currentStage) && (G.consumables||[]).length < getMaxConsumables()) {
@@ -4143,7 +4414,7 @@
         lines.forEach(([label,val]) => { const row=document.createElement('div'); row.className='payout-row'; row.innerHTML = `<span>${label}</span><span>+<span class="diamond-icon"></span>${val}</span>`; list.appendChild(row); });
         container.appendChild(list);
         const total = document.createElement('div'); total.className='payout-total'; total.innerHTML='BANK: <span class="diamond-icon"></span>'+G.bank; container.appendChild(total);
-        const earned = base + Math.max(0,G.playsLeft) + Math.max(0,G.rerollsLeft) + interest + piggy;
+        const earned = base + handsPay + Math.max(0,G.rerollsLeft) + interest + piggy;
         const boost = document.createElement('button'); boost.className='ad-btn'; boost.id='btn-ad-cash';
         boost.textContent='\u25B6 WATCH AD \u00B7 +50% DIAMONDS';
         boost.addEventListener('click', () => AdManager.show(AdManager.placements.cash, () => {
@@ -4713,6 +4984,14 @@
         const isZen = G.gameMode === 'zen';
         document.getElementById('ri-stage').textContent = isZen ? ('Stage '+G.currentStage+' (Zen)') : ('Stage '+G.currentStage+' / '+G.totalStages);
         document.getElementById('ri-bag').textContent = isZen ? '∞' : (G.tileBag.length+' tiles');
+        const stakeEl = document.getElementById('ri-stake');
+        if (stakeEl) {
+            const n = stakeLevel();
+            stakeEl.textContent = G.gameMode === 'classic'
+                ? (ROMAN[n] + ' \u00B7 ' + stakeDef(n).name)
+                : 'I \u00B7 Draft';
+            stakeEl.title = stakeDef(G.gameMode === 'classic' ? n : 1).rule;
+        }
         const hz = HAZARD_DATABASE[G.activeHazard];
         document.getElementById('ri-hazard').textContent = isZen ? 'None (Zen)' : (hz ? (hz.icon+'\uFE0E '+hz.name) : 'None');
         const hzDesc = document.getElementById('ri-hazard-desc');
@@ -5330,13 +5609,19 @@
     // question it could not answer.
     function isBossStage(stage) {
         if (isZenLike()) return false;
+        // Censored and up. Three of the seven blinds attack word length, so a run
+        // that can only spell one length has nowhere left to hide.
+        if (stakeLevel() >= 4) return true;
         return stage % 3 === 0 || stage === (G.totalStages || 8);
     }
     function rollStageHazard() {
         G.activeHazard = null;
         if (isZenLike() || !isBossStage(G.currentStage)) return;
-        const hazards = ['wall','taxman','mute','anchor','editor','minimalist','echo'];
+        let hazards = ['wall','taxman','mute','anchor','editor','minimalist','echo'];
+        // back to back stages under one blind reads as the game being stuck
+        if (G.lastHazard && hazards.length > 1) hazards = hazards.filter(h => h !== G.lastHazard);
         G.activeHazard = hazards[Math.floor(Math.random()*hazards.length)];
+        G.lastHazard = G.activeHazard;
     }
     function showHazardToast() {
         const b=document.getElementById('hazard-banner'); if(!b) return;
@@ -5479,8 +5764,13 @@
             if (!loadActiveRunState()) { go(); return; }
             askOverwrite(go);
         };
-        document.getElementById('btn-mode-classic').addEventListener('click',startFresh(()=>startClassicLikeRun('classic')));
-        document.getElementById('btn-mode-daily').addEventListener('click',startFresh(()=>startClassicLikeRun('daily')));
+        document.getElementById('btn-mode-classic').addEventListener('click',()=>{ renderPresses(); slideToView('view-newrun','view-difficulty'); });
+        document.getElementById('btn-close-newrun').addEventListener('click',()=>slideBack('view-difficulty','view-newrun'));
+        document.getElementById('btn-start-run').addEventListener('click',startFresh(()=>{
+            G.stake = selectedStake();
+            startClassicLikeRun('classic');
+        }));
+        document.getElementById('btn-mode-daily').addEventListener('click',startFresh(()=>{ G.stake = 1; startClassicLikeRun('daily'); }));
         document.getElementById('btn-mode-zen').addEventListener('click',startFresh(()=>startZenRun()));
         document.getElementById('btn-mode-blitz').addEventListener('click',startFresh(()=>startBlitzRun()));
         // a backgrounded WebView can stop the interval outright, so re-check
@@ -5590,6 +5880,9 @@
         G.bonusHands = saved.bonusHands || 0; G.doubleNext = !!saved.doubleNext; G.floodTiles = saved.floodTiles || 0;
         // A run saved before levels existed has none, and every length starts at 1.
         G.lengthLevels = Object.assign(blankLengthLevels(), saved.lengthLevels || {});
+        // a run saved before stakes existed is a Draft run
+        G.stake = Math.max(1, Math.min(MAX_STAKE, saved.stake || 1));
+        G.lastHazard = saved.lastHazard || null;
         // Runs saved while the drag bug was live can carry gaps in this list.
         // Anything without an id is not a glyph, and every pass over the board
         // assumes there are none, so they are dropped on the way in.
@@ -5624,11 +5917,22 @@
     }
     function startClassicLikeRun(mode) {
         G.gameMode = mode;
+        // Only Classic carries a stake, and it is clamped here rather than trusted
+        // from whatever set it - a run on a stake the player has not opened would
+        // hand out a clear they never earned.
+        G.stake = mode === 'classic' ? Math.max(1, Math.min(stakeUnlocked(), G.stake || 1)) : 1;
+        G.lastHazard = null;
         G.dailyChallenge = mode==='daily' ? getTodaysChallenge().id : null;
         G.activePressId = (G.progress && G.progress.selectedPress) || 'merchant_press';
         const activePress = getPress(G.activePressId);
         G.stageTargets = [...CLASSIC_STAGE_TARGETS];
         if (activePress && activePress.targetMult) G.stageTargets = G.stageTargets.map(t=>Math.floor(t*activePress.targetMult));
+        // The stake raises what a stage asks for rather than what it pays out.
+        // Squeezing Diamonds instead looked right on paper and simulated as
+        // unplayable: levels are the only thing that scales a run, so cutting
+        // income compounds into a build that simply stops growing by stage 5.
+        const sMult = stakeValue('targetMult', 1);
+        if (sMult !== 1) G.stageTargets = G.stageTargets.map(t=>Math.floor(t*sMult));
         G.totalStages = 8;
         G.isEndless = false;
         G.gameStarted = true;
@@ -6017,7 +6321,8 @@
             activePressId: G.activePressId, shopRerollsUsedThisRun: G.shopRerollsUsedThisRun,
             archivistLengths: G.archivistLengths||[], serialTriggers: G.serialTriggers||0,
             stageLetters: G.stageLetters||0, bonusHands: G.bonusHands||0,
-            doubleNext: !!G.doubleNext, floodTiles: G.floodTiles||0, lengthLevels: G.lengthLevels || blankLengthLevels()
+            doubleNext: !!G.doubleNext, floodTiles: G.floodTiles||0, lengthLevels: G.lengthLevels || blankLengthLevels(),
+            stake: G.stake || 1, lastHazard: G.lastHazard || null
         };
     }
     function saveActiveRun() {
@@ -6244,10 +6549,10 @@
     function dismissMenuViews() {
         const menu=document.getElementById('view-menu');
         if(menu) menu.classList.add('slide-left');
-        ['view-difficulty','view-themes','view-stats','view-unlocks','view-lexicon'].forEach(id=>{
+        ['view-difficulty','view-newrun','view-themes','view-stats','view-unlocks','view-lexicon'].forEach(id=>{
             const v=document.getElementById(id); if(v) v.classList.remove('slide-in');
         });
-        setTimeout(()=>{ ['view-menu','view-difficulty','view-themes','view-stats','view-unlocks','view-lexicon']
+        setTimeout(()=>{ ['view-menu','view-difficulty','view-newrun','view-themes','view-stats','view-unlocks','view-lexicon']
             .forEach(id=>{ const v=document.getElementById(id); if(v) v.classList.add('hidden'); }); }, 400);
     }
     function updateContinueButtonVisibility() {
