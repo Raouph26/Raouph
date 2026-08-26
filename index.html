@@ -1358,6 +1358,73 @@
         .unlock-bar { display:block; width:100%; height:5px; border-radius:3px; background: rgba(127,127,127,0.3); overflow:hidden; margin-top:3px; }
         .unlock-bar-fill { display:block; height:100%; background: var(--accent-3); }
         .unlock-count { font-size:0.6rem; font-weight:900; color: var(--text); font-family: var(--font-numeric); font-variant-numeric: tabular-nums; }
+        /* ------------------------------------------------------- the Lexicon */
+        #lexicon-content { width:100%; }
+        #lexicon-content h3 { font-size:0.85rem; font-weight:900; letter-spacing:1.5px; color: var(--text);
+            margin: 12px 0 6px; text-align:center; font-family: var(--font-main); text-shadow: none; }
+        #view-lexicon {
+            align-items: center; gap:10px; padding:30px 20px; z-index:9;
+            justify-content: flex-start; justify-content: safe center;
+            background: rgba(0,0,0,0.72);
+            transform: translateX(110%); opacity: 0; pointer-events: none; overflow-y:auto;
+        }
+        #view-lexicon.slide-in { transform: translateX(0); opacity: 1; pointer-events: auto; }
+        /* the headline number, so the first thing read is how far in you are */
+        .lex-hero { width:100%; text-align:center; padding:10px 0 4px; }
+        .lex-hero-num { display:block; font-family: var(--font-numeric); font-variant-numeric: tabular-nums;
+            font-size:2.1rem; font-weight:900; color: var(--text); line-height:1; }
+        .lex-hero-of { display:block; font-family: var(--font-numeric); font-variant-numeric: tabular-nums;
+            font-size:0.62rem; font-weight:900; letter-spacing:1.2px; color: var(--text-soft); margin-top:5px; }
+        .lex-row { display:flex; align-items:center; gap:8px; width:100%; margin-bottom:5px; }
+        .lex-row-key { width:30px; flex-shrink:0; font-family: var(--font-numeric); font-size:0.66rem;
+            font-weight:900; color: var(--text); letter-spacing:0.5px; }
+        .lex-row-bar { flex:1 1 auto; min-width:0; height:8px; border-radius:4px;
+            background: rgba(127,127,127,0.28); overflow:hidden; }
+        .lex-row-fill { display:block; height:100%; background: var(--accent-3); }
+        .lex-row-num { flex-shrink:0; min-width:82px; text-align:right; font-family: var(--font-numeric);
+            font-variant-numeric: tabular-nums; font-size:0.58rem; font-weight:900; color: var(--text-soft); }
+        /* a set card reads like an unlock row but is a door, so it says so */
+        .lex-set {
+            display:flex; align-items:center; gap:9px; width:100%; padding:8px 9px; cursor:pointer;
+            border-radius: calc(var(--panel-radius) * 0.6); background: rgba(127,127,127,0.10);
+            border: 1px solid var(--panel-border); border-left: 3px solid var(--text-soft); margin-bottom:5px;
+            font-family: var(--font-main); text-align:left;
+        }
+        .lex-set.is-done { border-left-color: var(--accent-3); }
+        .lex-set:active { transform: translateY(1px); }
+        .lex-set-icon { flex-shrink:0; width:26px; text-align:center; font-size:1rem; line-height:1.2;
+            color: var(--text-soft); font-variant-emoji: text; }
+        .lex-set.is-done .lex-set-icon { color: var(--accent-3); }
+        .lex-set-body { display:flex; flex-direction:column; gap:2px; min-width:0; flex:1 1 auto; }
+        .lex-set-name { font-size:0.72rem; font-weight:900; color: var(--text); }
+        .lex-set-sub { font-size:0.6rem; font-weight:700; color: var(--text-soft); line-height:1.3; }
+        .lex-set-count { flex-shrink:0; font-family: var(--font-numeric); font-variant-numeric: tabular-nums;
+            font-size:0.62rem; font-weight:900; color: var(--text); }
+        .lex-set-chev { flex-shrink:0; color: var(--text-soft); font-size:0.8rem; font-weight:900; }
+        .lex-blurb { width:100%; font-size:0.66rem; font-weight:700; line-height:1.4;
+            color: var(--text-soft); text-align:center; font-family: var(--font-main); margin-bottom:2px; }
+        .lex-reward { width:100%; text-align:center; font-family: var(--font-numeric);
+            font-size:0.58rem; font-weight:900; letter-spacing:1px; color: var(--text);
+            background: rgba(var(--accent-3-rgb),0.18); border:1px solid var(--panel-border);
+            border-radius: calc(var(--panel-radius) * 0.5); padding:7px 9px; margin-bottom:4px; }
+        .lex-chips { display:flex; flex-wrap:wrap; gap:5px; width:100%; justify-content:center; }
+        /* a word you have not found shows its length and nothing else - the
+           shape is the clue, the letters are the thing you are still hunting */
+        .lex-chip { padding:5px 8px; border-radius:6px; font-family: var(--font-numeric);
+            font-size:0.62rem; font-weight:900; letter-spacing:1.4px;
+            background: rgba(127,127,127,0.15); color: var(--text-soft);
+            border:1px solid var(--panel-border); }
+        .lex-chip.is-found { background: var(--accent-3); color: var(--accent-3-text);
+            border-color: var(--accent-3-shadow); }
+        /* the one line of the Lexicon the menu shows, tucked under its button */
+        .menu-teaser {
+            margin-top:-9px; align-self:center; padding:4px 12px; border-radius:999px;
+            background: var(--cap-bg); color: var(--cap-color);
+            border: 2px solid var(--cap-border);
+            font-family: var(--font-numeric); font-variant-numeric: tabular-nums;
+            font-size:0.56rem; font-weight:900; letter-spacing:1.1px; white-space:nowrap;
+        }
+        .menu-teaser.hidden { display:none; }
         /* every panel reachable from the menu carries its own way out, pinned
            to the top of the scroller so it never has to be scrolled to */
         .panel-close {
@@ -2057,6 +2124,15 @@
         #view-menu .menu-btn.play-btn { font-size: 1.28rem; }
         #view-difficulty { gap: 7px; padding: 12px 26px; }
         #press-picker .press-title { font-size: 0.55rem; margin-bottom: 3px; }
+        /* The menu carries seven buttons and the Lexicon caption now, which is
+           more than a 740-tall screen has room for at the sizes above. This has
+           to come after them - they are not in a query, so they win on order. */
+        @media (max-height: 810px) {
+            #view-menu { gap: 11px; padding: 18px 20px; }
+            #view-menu { padding-bottom: calc(18px + 57px + env(safe-area-inset-bottom, 0px)); }
+            #view-menu .menu-btn { padding: 14px 14px; }
+            .menu-teaser { margin-top: -7px; font-size: 0.54rem; padding: 3px 11px; }
+        }
         @media (max-height: 700px) {
             #view-menu h1 { font-size: clamp(1.4rem, 9.4vw, 2.5rem) !important; margin-bottom: 4px !important; }
             html[data-theme="cyber-arcade"] #view-menu h1 { font-size: clamp(1.3rem, 8.5vw, 2.3rem) !important; }
@@ -2219,7 +2295,7 @@
 <div id="game-container">
     <div id="unlock-banner" class="hidden"></div>
     <div id="bg-overlay"></div>
-    <div id="view-menu" class="view-panel"><h1 id="game-title" class="game-title"><span class="title-eyebrow"></span><span class="title-main">WORDSPYRE</span><span class="title-gem" aria-hidden="true"><span class="gem-shard"></span><span class="gem-glint gem-glint-a"></span><span class="gem-glint gem-glint-b"></span><span class="gem-glint gem-glint-c"></span></span><span class="title-tagline"></span></h1><button class="menu-btn play-btn" id="btn-play">▶ PLAY</button><button class="menu-btn themes-btn" id="btn-menu-themes">◆ THEMES</button><button class="menu-btn settings-btn" id="btn-menu-unlocks">◈ UNLOCKS</button><button class="menu-btn settings-btn" id="btn-menu-options">⚙ SETTINGS</button><button class="menu-btn settings-btn" id="btn-menu-howto">? HOW TO PLAY</button><button class="menu-btn settings-btn" id="btn-menu-stats">★ STATS</button><button type="button" class="bug-btn" id="btn-bug-report" aria-label="Report a bug">⚑ REPORT A BUG</button><button type="button" class="save-btn" id="btn-backup" aria-label="Back up save">⤓ BACK UP SAVE</button></div>
+    <div id="view-menu" class="view-panel"><h1 id="game-title" class="game-title"><span class="title-eyebrow"></span><span class="title-main">WORDSPYRE</span><span class="title-gem" aria-hidden="true"><span class="gem-shard"></span><span class="gem-glint gem-glint-a"></span><span class="gem-glint gem-glint-b"></span><span class="gem-glint gem-glint-c"></span></span><span class="title-tagline"></span></h1><button class="menu-btn play-btn" id="btn-play">▶ PLAY</button><button class="menu-btn themes-btn" id="btn-menu-themes">◆ THEMES</button><button class="menu-btn settings-btn" id="btn-menu-lexicon">◇ LEXICON</button><div id="lexicon-teaser" class="menu-teaser hidden"></div><button class="menu-btn settings-btn" id="btn-menu-unlocks">◈ UNLOCKS</button><button class="menu-btn settings-btn" id="btn-menu-options">⚙ SETTINGS</button><button class="menu-btn settings-btn" id="btn-menu-howto">? HOW TO PLAY</button><button class="menu-btn settings-btn" id="btn-menu-stats">★ STATS</button><button type="button" class="bug-btn" id="btn-bug-report" aria-label="Report a bug">⚑ REPORT A BUG</button><button type="button" class="save-btn" id="btn-backup" aria-label="Back up save">⤓ BACK UP SAVE</button></div>
     <div id="backup-modal"><div class="modal-inner"><h2>BACK UP SAVE</h2><textarea id="backup-code" rows="4" spellcheck="false" placeholder="Paste a backup code here to restore"></textarea><div class="backup-row"><button id="btn-backup-copy" class="menu-btn" type="button">COPY</button><button id="btn-backup-restore" class="menu-btn" type="button">RESTORE</button></div><p id="backup-msg" class="bug-copy"></p><button id="btn-backup-close" class="menu-btn" type="button" style="width:100%;">CLOSE</button></div></div>
     <div id="bug-modal"><div class="modal-inner"><h2>REPORT A BUG</h2><p class="bug-copy" id="bug-lead">Tell us what went wrong. The details below are filled in for you — leave them as they are.</p><textarea id="bug-diag" rows="5" spellcheck="false" readonly></textarea><div class="backup-row"><button id="btn-bug-copy" class="menu-btn" type="button">COPY DETAILS</button><button id="btn-bug-send" class="menu-btn themes-btn" type="button">OPEN THE FORM</button></div><p id="bug-msg" class="bug-copy"></p><button class="menu-btn" id="btn-bug-close" style="width:100%;">CLOSE</button></div></div>
     <div id="view-stats" class="view-panel hidden">
@@ -2236,6 +2312,14 @@
             <h2>UNLOCKS</h2>
             <div id="unlocks-content"></div>
             <button class="menu-btn" id="btn-back-unlocks" style="width:100%; margin-top:10px;">BACK</button>
+        </div>
+    </div>
+    <div id="view-lexicon" class="view-panel hidden">
+        <button type="button" class="panel-close" id="btn-close-lexicon" aria-label="Back to menu">✕</button>
+        <div class="stats-panel">
+            <h2 id="lexicon-title">LEXICON</h2>
+            <div id="lexicon-content"></div>
+            <button class="menu-btn" id="btn-back-lexicon" style="width:100%; margin-top:10px;">BACK</button>
         </div>
     </div>
     <div id="view-themes" class="view-panel">
@@ -2933,11 +3017,43 @@
           progress:()=>[G.progress.stats.inkSealsUsed||0, 5],
           test:c => (G.progress.stats.inkSealsUsed||0) >= 5 },
         { id:'gilding', kind:'consumable', label:'Gilding', hint:'Play a word holding three gold tiles',
-          test:c => c.event==='word' && c.goldPlayed >= 3 },
-        { id:'bookbinder', kind:'consumable', label:'Bookbinder', hint:'Reach stage 6 in any run',
-          progress:()=>[G.progress.stats.highestStageReached||1, 6],
-          test:c => (G.progress.stats.highestStageReached||1) >= 6 }
+          test:c => c.event==='word' && c.goldPlayed >= 3 }
     ];
+
+    // ------------------------------------------------------------- the Lexicon
+    // Every valid word a player submits is kept forever. The sets are small,
+    // hand-picked lists rather than whole categories: something you can finish
+    // in a week, not chase for a year. Each one pays out a reward the player can
+    // see - a theme they would otherwise have to win for, or an Ink Seal.
+    const WORD_SETS = [
+        { id:'long_form', name:'The Long Form', icon:'\u2261',
+          blurb:'One word of every length, three letters through ten.',
+          reward:{ kind:'theme', id:'cyber-arcade', label:'Cyber Arcade theme' },
+          words:['INK','PAGE','QUILL','SCRIPT','CHAPTER','EPILOGUE','NARRATIVE','TYPEWRITER'] },
+        { id:'rare_hand', name:'The Rare Hand', icon:'\u25C7',
+          blurb:'Ten words built from the letters nobody wants to draw.',
+          reward:{ kind:'consumable', id:'the_blank', label:'The Blank' },
+          words:['JAZZ','QUIZ','ZEST','JINX','WALTZ','QUARTZ','ZODIAC','JACKPOT','EQUINOX','XYLOPHONE'] },
+        { id:'palette', name:'The Palette', icon:'\u25C9',
+          blurb:'Twelve colours.',
+          reward:{ kind:'consumable', id:'gilding', label:'Gilding' },
+          words:['RED','TAN','JADE','PLUM','RUST','AMBER','IVORY','OLIVE','INDIGO','SCARLET','CRIMSON','TURQUOISE'] },
+        { id:'almanac', name:'The Almanac', icon:'\u2744',
+          blurb:'Twelve kinds of weather.',
+          reward:{ kind:'theme', id:'typewriter', label:'Typewriter theme' },
+          words:['FOG','ICE','HAIL','MIST','SNOW','GALE','FROST','SLEET','CLOUD','THUNDER','MONSOON','BLIZZARD'] },
+        { id:'anatomy', name:'The Anatomy', icon:'\u2295',
+          blurb:'Fourteen parts of a body.',
+          reward:{ kind:'theme', id:'renegade-crimson', label:'Renegade Crimson theme' },
+          words:['RIB','JAW','EAR','HEEL','SHIN','LUNG','WRIST','SPINE','THUMB','ELBOW','KIDNEY','TENDON','STOMACH','COLLARBONE'] },
+        { id:'bestiary', name:'The Bestiary', icon:'\u2B1F',
+          blurb:'Twenty animals.',
+          reward:{ kind:'theme', id:'pale-terminal', label:'Pale Terminal theme' },
+          words:['CAT','DOG','FOX','OWL','BEAR','WOLF','LION','CROW','TIGER','OTTER','RAVEN','MOOSE','BADGER','FALCON','WEASEL','PYTHON','PELICAN','GAZELLE','PORCUPINE','ARMADILLO'] }
+    ];
+    // The longest bench getHandSize() can ever build, so the longest word that
+    // could possibly be played. Anything past it is not a goal, it is padding.
+    const LEXICON_MAX_LEN = 14;
 
     const DEFAULT_PROGRESS = {
         unlockedPresses: ['merchant_press'],
@@ -2947,6 +3063,10 @@
         wins: 0,
         grantedThemes: [],
         selectedPress: 'merchant_press',
+        // kept as one space-separated string, the way the dictionary is: half
+        // the bytes of an array of quoted words, and appending is a concat
+        foundWords: '',
+        completedSets: [],
         stats: { lettersDiscarded:0, inkSealsUsed:0, specialTilesPlayed:0, highestStageReached:1, fiveLetterWords:0 }
     };
     function loadProgress() {
@@ -2954,7 +3074,7 @@
         try { saved = JSON.parse(localStorage.getItem('wordling-progress')||'null'); } catch(e) { saved = null; }
         const p = Object.assign({}, DEFAULT_PROGRESS, saved||{});
         p.stats = Object.assign({}, DEFAULT_PROGRESS.stats, (saved&&saved.stats)||{});
-        ['unlockedPresses','unlockedGlyphs','unlockedConsumables','completedRuns'].forEach(k=>{
+        ['unlockedPresses','unlockedGlyphs','unlockedConsumables','completedRuns','completedSets'].forEach(k=>{
             if (!Array.isArray(p[k])) p[k] = DEFAULT_PROGRESS[k].slice();
         });
         if (!p.unlockedPresses.includes('merchant_press')) p.unlockedPresses.unshift('merchant_press');
@@ -2973,7 +3093,16 @@
             try { had = localStorage.getItem("wordling-theme"); } catch (e) {}
             if (had && !p.grantedThemes.includes(had)) p.grantedThemes.push(had);
         }
+        if (typeof p.foundWords !== 'string') {
+            p.foundWords = Array.isArray(p.foundWords) ? p.foundWords.join(' ') : '';
+        }
         G.progress = p;
+        // the lookup the Lexicon and the recorder both use; the string on disk
+        // is only ever appended to, never searched
+        G.foundSet = new Set(p.foundWords.split(' ').filter(Boolean));
+        // a restored backup can arrive with a set already finished on it, and
+        // the payout must not wait for a word that may never be played again
+        checkWordSets();
         saveProgress();
     }
     function saveProgress() { try { localStorage.setItem('wordling-progress', JSON.stringify(G.progress)); } catch(e) {} }
@@ -3082,6 +3211,87 @@
             list.push(m.id); saveProgress();
             showUnlockBanner(m.kind==='glyph' ? 'NEW GLYPH UNLOCKED' : 'NEW INK SEAL UNLOCKED', m.label);
         });
+    }
+
+    // ------------------------------------------------------ the Lexicon, kept
+    function recordFoundWord(word) {
+        if (!G.progress || !word) return;
+        const w = String(word).toUpperCase();
+        if (!G.foundSet) G.foundSet = new Set();
+        if (G.foundSet.has(w)) return;
+        G.foundSet.add(w);
+        G.progress.foundWords = G.progress.foundWords ? (G.progress.foundWords + ' ' + w) : w;
+        checkWordSets();
+        saveProgress();
+    }
+    function setFoundCount(set) {
+        if (!G.foundSet) return 0;
+        let n = 0;
+        for (let i = 0; i < set.words.length; i++) if (G.foundSet.has(set.words[i])) n++;
+        return n;
+    }
+    function isSetComplete(set) {
+        return ((G.progress && G.progress.completedSets) || []).indexOf(set.id) !== -1;
+    }
+    // A set reward is never power in a run - it is a theme you would otherwise
+    // have to win five times for, or a seal you have not met yet.
+    function grantSetReward(set) {
+        const r = set.reward; if (!r || !G.progress) return;
+        const list = r.kind === 'theme' ? G.progress.grantedThemes
+                   : r.kind === 'glyph' ? G.progress.unlockedGlyphs
+                   : G.progress.unlockedConsumables;
+        if (Array.isArray(list) && list.indexOf(r.id) === -1) list.push(r.id);
+    }
+    function checkWordSets() {
+        if (!G.progress) return;
+        if (!Array.isArray(G.progress.completedSets)) G.progress.completedSets = [];
+        WORD_SETS.forEach(set => {
+            if (G.progress.completedSets.indexOf(set.id) !== -1) return;
+            if (setFoundCount(set) < set.words.length) return;
+            G.progress.completedSets.push(set.id);
+            grantSetReward(set);
+            showUnlockBanner('WORD SET COMPLETE', set.name);
+            if (set.reward) showUnlockBanner('REWARD UNLOCKED', set.reward.label);
+        });
+    }
+    // whichever unfinished set is closest to done - the line the menu shows
+    function nextLexiconGoal() {
+        let best = null;
+        WORD_SETS.forEach(set => {
+            if (isSetComplete(set)) return;
+            const have = setFoundCount(set), need = set.words.length;
+            if (!best || (need - have) < (best.need - best.have)) best = { set:set, have:have, need:need };
+        });
+        return best;
+    }
+    // The denominator is whatever the dictionary actually holds at a length a
+    // bench could reach, so it can never drift from words.js.
+    let _lexDict = null;
+    function lexiconTotals() {
+        if (_lexDict) {
+            const f = new Map(); let ft = 0;
+            (G.foundSet || new Set()).forEach(w => {
+                if (w.length < 3 || w.length > LEXICON_MAX_LEN) return;
+                const k = w.length >= 10 ? 10 : w.length;
+                f.set(k, (f.get(k) || 0) + 1); ft++;
+            });
+            return { byLen:_lexDict.byLen, found:f, dictTotal:_lexDict.dictTotal, foundTotal:ft };
+        }
+        const byLen = new Map(); let dictTotal = 0;
+        if (G.dictSet) G.dictSet.forEach(w => {
+            if (w.length < 3 || w.length > LEXICON_MAX_LEN) return;
+            const k = w.length >= 10 ? 10 : w.length;
+            byLen.set(k, (byLen.get(k) || 0) + 1);
+            dictTotal++;
+        });
+        const found = new Map(); let foundTotal = 0;
+        (G.foundSet || new Set()).forEach(w => {
+            if (w.length < 3 || w.length > LEXICON_MAX_LEN) return;
+            const k = w.length >= 10 ? 10 : w.length;
+            found.set(k, (found.get(k) || 0) + 1); foundTotal++;
+        });
+        if (dictTotal) _lexDict = { byLen:byLen, dictTotal:dictTotal };
+        return { byLen:byLen, found:found, dictTotal:dictTotal, foundTotal:foundTotal };
     }
 
     let _bannerQueue = [], _bannerBusy = false;
@@ -3747,6 +3957,7 @@
         G.currentScore += payload.totalScore;
         if(!Array.isArray(G.stageWords)) G.stageWords=[];
         G.stageWords.push({word:payload.word, score:payload.totalScore});
+        recordFoundWord(payload.word);
         if (payload.occ === 5) bumpStat('fiveLetterWords', 1);
         checkMilestones({ event:'word', word:payload.word, score:payload.totalScore,
             goldPlayed: tilesCopy.filter(t => t && t.aura === 'gold').length,
@@ -5248,6 +5459,9 @@
         document.getElementById('btn-menu-options').addEventListener('click',openOptionsModal);
         document.getElementById('btn-menu-stats').addEventListener('click',()=>{ renderStats(); slideToView('view-stats','view-menu'); });
         document.getElementById('btn-back-stats').addEventListener('click',()=>slideBack('view-menu','view-stats'));
+        document.getElementById('btn-menu-lexicon').addEventListener('click',()=>{ renderLexiconPage(); slideToView('view-lexicon','view-menu'); });
+        document.getElementById('btn-back-lexicon').addEventListener('click', leaveLexicon);
+        document.getElementById('btn-close-lexicon').addEventListener('click', leaveLexicon);
         document.getElementById('btn-menu-unlocks').addEventListener('click',()=>{ renderUnlocksPage(); slideToView('view-unlocks','view-menu'); });
         document.getElementById('btn-back-unlocks').addEventListener('click',()=>slideBack('view-menu','view-unlocks'));
         document.getElementById('btn-close-diff').addEventListener('click',()=>slideBack('view-menu','view-difficulty'));
@@ -5847,6 +6061,134 @@
         ];
         rows.forEach(([label,val])=>{ const row=document.createElement('div'); row.className='stats-row'; row.innerHTML=`<span class="stats-label">${label}</span><span class="stats-value">${val}</span>`; c.appendChild(row); });
     }
+    // ------------------------------------------------------- the Lexicon page
+    function lengthKeyLabel(k) { return k >= 10 ? '10+' : (k + ''); }
+    // the panel's own BACK is the only way out, so it has to say where it goes
+    function setLexiconBackLabel(text) {
+        const b = document.getElementById('btn-back-lexicon');
+        if (b) b.textContent = text;
+    }
+    function renderLexiconPage() {
+        G.lexiconSet = null;
+        const title = document.getElementById('lexicon-title');
+        if (title) title.textContent = 'LEXICON';
+        setLexiconBackLabel('BACK');
+        const c = document.getElementById('lexicon-content');
+        if (!c) return;
+        c.innerHTML = '';
+        const tot = lexiconTotals();
+
+        const hero = document.createElement('div'); hero.className = 'lex-hero';
+        const num = document.createElement('span'); num.className = 'lex-hero-num';
+        num.textContent = tot.foundTotal.toLocaleString();
+        const of = document.createElement('span'); of.className = 'lex-hero-of';
+        const pct = tot.dictTotal ? (tot.foundTotal / tot.dictTotal * 100) : 0;
+        of.textContent = 'WORDS FOUND OF ' + tot.dictTotal.toLocaleString() +
+            '  \u00B7  ' + (pct < 0.1 && pct > 0 ? '<0.1' : pct.toFixed(1)) + '%';
+        hero.appendChild(num); hero.appendChild(of);
+        c.appendChild(hero);
+
+        const h1 = document.createElement('h3'); h1.textContent = 'BY LENGTH'; c.appendChild(h1);
+        for (let k = 3; k <= 10; k++) {
+            const have = tot.found.get(k) || 0, need = tot.byLen.get(k) || 0;
+            const row = document.createElement('div'); row.className = 'lex-row';
+            const key = document.createElement('span'); key.className = 'lex-row-key';
+            key.textContent = lengthKeyLabel(k);
+            const bar = document.createElement('span'); bar.className = 'lex-row-bar';
+            const fill = document.createElement('span'); fill.className = 'lex-row-fill';
+            fill.style.width = (need ? Math.max(have ? 2 : 0, Math.min(100, have / need * 100)) : 0) + '%';
+            bar.appendChild(fill);
+            const n = document.createElement('span'); n.className = 'lex-row-num';
+            n.textContent = have.toLocaleString() + ' / ' + need.toLocaleString();
+            row.appendChild(key); row.appendChild(bar); row.appendChild(n);
+            c.appendChild(row);
+        }
+
+        const done = WORD_SETS.filter(isSetComplete).length;
+        const h2 = document.createElement('h3');
+        h2.textContent = 'WORD SETS (' + done + ' / ' + WORD_SETS.length + ')';
+        c.appendChild(h2);
+        WORD_SETS.forEach(set => {
+            const have = setFoundCount(set), complete = isSetComplete(set);
+            const row = document.createElement('button');
+            row.type = 'button';
+            row.className = 'lex-set' + (complete ? ' is-done' : '');
+            row.dataset.set = set.id;
+            const ic = document.createElement('span'); ic.className = 'lex-set-icon';
+            ic.textContent = set.icon + '\uFE0E';
+            const body = document.createElement('span'); body.className = 'lex-set-body';
+            const nm = document.createElement('span'); nm.className = 'lex-set-name'; nm.textContent = set.name;
+            const sub = document.createElement('span'); sub.className = 'lex-set-sub';
+            sub.textContent = complete
+                ? (set.reward ? set.reward.label + ' unlocked' : 'Complete')
+                : (set.reward ? 'Reward: ' + set.reward.label : set.blurb);
+            body.appendChild(nm); body.appendChild(sub);
+            const cnt = document.createElement('span'); cnt.className = 'lex-set-count';
+            cnt.textContent = have + ' / ' + set.words.length;
+            const chev = document.createElement('span'); chev.className = 'lex-set-chev';
+            chev.textContent = '\u203A';
+            row.appendChild(ic); row.appendChild(body); row.appendChild(cnt); row.appendChild(chev);
+            row.addEventListener('click', () => renderLexiconSet(set.id));
+            c.appendChild(row);
+        });
+    }
+    function renderLexiconSet(id) {
+        const set = WORD_SETS.find(w => w.id === id);
+        if (!set) return renderLexiconPage();
+        G.lexiconSet = id;
+        AudioEngine.playSwipe();
+        const title = document.getElementById('lexicon-title');
+        if (title) title.textContent = set.name.toUpperCase();
+        setLexiconBackLabel('ALL SETS');
+        const c = document.getElementById('lexicon-content');
+        if (!c) return;
+        c.innerHTML = '';
+        const have = setFoundCount(set), complete = isSetComplete(set);
+
+        const hero = document.createElement('div'); hero.className = 'lex-hero';
+        const num = document.createElement('span'); num.className = 'lex-hero-num';
+        num.textContent = have + ' / ' + set.words.length;
+        const of = document.createElement('span'); of.className = 'lex-hero-of';
+        of.textContent = complete ? 'COMPLETE' : (set.words.length - have) + ' STILL TO FIND';
+        hero.appendChild(num); hero.appendChild(of);
+        c.appendChild(hero);
+
+        const blurb = document.createElement('p'); blurb.className = 'lex-blurb';
+        blurb.textContent = set.blurb; c.appendChild(blurb);
+
+        if (set.reward) {
+            const rw = document.createElement('div'); rw.className = 'lex-reward';
+            rw.textContent = (complete ? 'UNLOCKED \u00B7 ' : 'REWARD \u00B7 ') + set.reward.label.toUpperCase();
+            c.appendChild(rw);
+        }
+
+        const h = document.createElement('h3'); h.textContent = 'THE LIST'; c.appendChild(h);
+        const chips = document.createElement('div'); chips.className = 'lex-chips';
+        set.words.forEach(w => {
+            const found = G.foundSet && G.foundSet.has(w);
+            const chip = document.createElement('span');
+            chip.className = 'lex-chip' + (found ? ' is-found' : '');
+            // hidden words still show their length: the shape is the clue
+            chip.textContent = found ? w : new Array(w.length + 1).join('?');
+            if (!found) chip.title = w.length + ' letters';
+            chips.appendChild(chip);
+        });
+        c.appendChild(chips);
+    }
+    // BACK and the X have to leave the panel when you are looking at the list,
+    // and step up to the list when you are inside a set.
+    function leaveLexicon() {
+        if (G.lexiconSet) { renderLexiconPage(); return; }
+        slideBack('view-menu', 'view-lexicon');
+    }
+    function updateLexiconTeaser() {
+        const el = document.getElementById('lexicon-teaser');
+        if (!el || !G.progress) return;
+        const goal = nextLexiconGoal();
+        if (!goal) { el.textContent = 'EVERY WORD SET COMPLETE'; el.classList.remove('hidden'); return; }
+        el.textContent = 'NEXT \u00B7 ' + goal.set.name.toUpperCase() + ' \u00B7 ' + goal.have + '/' + goal.need;
+        el.classList.remove('hidden');
+    }
     function renderUnlocksPage(){ const c=document.getElementById('unlocks-content'); c.innerHTML=''; renderUnlocks(c); }
     function milestoneFor(id) { return MILESTONES.find(m=>m.id===id) || null; }
     function unlockRow(opts) {
@@ -5902,14 +6244,15 @@
     function dismissMenuViews() {
         const menu=document.getElementById('view-menu');
         if(menu) menu.classList.add('slide-left');
-        ['view-difficulty','view-themes','view-stats','view-unlocks'].forEach(id=>{
+        ['view-difficulty','view-themes','view-stats','view-unlocks','view-lexicon'].forEach(id=>{
             const v=document.getElementById(id); if(v) v.classList.remove('slide-in');
         });
-        setTimeout(()=>{ ['view-menu','view-difficulty','view-themes','view-stats','view-unlocks']
+        setTimeout(()=>{ ['view-menu','view-difficulty','view-themes','view-stats','view-unlocks','view-lexicon']
             .forEach(id=>{ const v=document.getElementById(id); if(v) v.classList.add('hidden'); }); }, 400);
     }
     function updateContinueButtonVisibility() {
         updateBlitzModeSub();
+        updateLexiconTeaser();
         const shelf = document.getElementById('resume-shelf');
         const active = hasActiveRun();
         if (shelf) shelf.classList.toggle('hidden', !active);
