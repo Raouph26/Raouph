@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WORDSPYRE capture stage</title>
+<!--
+  A recording rig, not part of the game.
+
+  Playwright only scales video down, so recording a 432px-wide phone layout into
+  a 1080x1920 frame left the game sitting small in one corner. Scaling the page
+  itself is no good either: the game sizes everything in vw units, so a wider
+  viewport makes the tiles shrink relative to the frame.
+
+  The game therefore runs inside an iframe that really is 432x768 - so vw units
+  resolve to a phone - and the whole iframe is then scaled 2.5x to fill
+  1080x1920. Layout stays exactly what a player sees; only the raster is bigger.
+
+  Nothing is drawn on top. The clips ship clean so captions can be written and
+  placed wherever they are being posted.
+-->
+<style>
+  html, body { margin: 0; padding: 0; width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+  #stage { position: absolute; top: 0; left: 0; width: 432px; height: 768px;
+           transform: scale(2.5); transform-origin: top left; border: 0; }
+</style>
+</head>
+<body>
+<iframe id="stage" src="/index.html"></iframe>
+</body>
+</html>
