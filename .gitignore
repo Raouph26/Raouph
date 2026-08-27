@@ -11,3 +11,12 @@ android/app/src/main/assets/
 android/.gradle/
 android/build/
 android/app/build/
+promo-mp4/
+tools/cards/
+tools/node_modules/
+
+# Rendered video and the ffmpeg binary the build script pulls in. Delivery
+# artifacts and tooling, not part of the site.
+promo-mp4/
+tools/cards/
+tools/node_modules/

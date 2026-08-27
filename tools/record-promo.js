@@ -127,6 +127,9 @@ const server = http.createServer((req, res) => {
       viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1,
       recordVideo: { dir: OUT, size: { width: 1080, height: 1920 } }
     });
+    const T0 = Date.now();
+    const marks = {};
+    const mark = k => { marks[k] = (Date.now() - T0) / 1000; };
     const page = await ctx.newPage();
     const errs = [];
     page.on('pageerror', e => errs.push(String(e).slice(0, 140)));
@@ -170,7 +173,8 @@ const server = http.createServer((req, res) => {
     // ---- a word, played slowly enough to follow, then held on the count-up
     const playWord = async (word, clear) => {
       await fr.evaluate(() => document.querySelector('.continue-btn').click());
-      await wait(2000);
+      await wait(1500);
+      mark('board');
       for (const ch of word) {
         await fr.evaluate(x => {
           const t = [...document.querySelectorAll('#hand-rack .tile-inner')]
@@ -180,11 +184,13 @@ const server = http.createServer((req, res) => {
             t.dispatchEvent(new PointerEvent('pointerup', { bubbles: true })); } }, ch);
         await wait(300);
       }
+      mark('wordIn');
       await wait(1400);
+      mark('submit');
       const hit = await fr.evaluate(() => { const b = document.getElementById('btn-submit');
         if (b && !b.disabled) { b.click(); return true; } return false; });
-      await wait(clear ? 11000 : 9000);
-      await wait(2500);
+      await wait(clear ? 11000 : 9500);
+      await wait(1100);
       return hit;
     };
 
@@ -197,6 +203,7 @@ const server = http.createServer((req, res) => {
       await wait(1600);
       await fr.evaluate(() => document.getElementById('btn-mode-classic').click());
       await wait(2200);
+      mark('board');
       for (let i = 0; i < 2; i++) {
         await fr.evaluate(() => document.getElementById('press-next').click());
         await wait(1500);
@@ -216,6 +223,7 @@ const server = http.createServer((req, res) => {
       // the shop, then a Manuscript bought and the level moving
       await fr.evaluate(() => document.querySelector('.continue-btn').click());
       await wait(2600);
+      mark('board');
       await fr.evaluate(() => { const card = [...document.querySelectorAll('#view-draft .draft-card-wrap')]
         .find(x => /MANUSCRIPT/i.test(x.textContent)); if (card) card.click(); });
       await wait(3000);
@@ -228,11 +236,12 @@ const server = http.createServer((req, res) => {
       await fr.evaluate(() => { const b = document.getElementById('btn-start-stage'); if (b) b.click(); });
       await wait(2400);
       await fr.evaluate(() => { const b = document.getElementById('btn-run-info'); if (b) b.click(); });
-      await wait(3400);
+      await wait(3000);
 
     } else if (c.kind === 'lexicon') {
       await fr.evaluate(() => document.getElementById('btn-menu-lexicon').click());
-      await wait(2600);
+      await wait(2200);
+      mark('board');
       await fr.evaluate(() => { const v = document.getElementById('view-lexicon');
         v.scrollTo({ top: v.scrollHeight, behavior: 'smooth' }); });
       await wait(3000);
@@ -246,7 +255,8 @@ const server = http.createServer((req, res) => {
     } else if (c.kind === 'boss') {
       // The Editor bans six letters or more: the long word bounces, a short one lands
       await fr.evaluate(() => document.querySelector('.continue-btn').click());
-      await wait(2200);
+      await wait(1500);
+      mark('board');
       await fr.evaluate(() => { const b = document.getElementById('btn-run-info'); if (b) b.click(); });
       await wait(3600);
       await fr.evaluate(() => { const b = document.getElementById('btn-close-run-info'); if (b) b.click(); });
@@ -262,6 +272,7 @@ const server = http.createServer((req, res) => {
       await wait(1200);
       // the rejection message only holds for about a second, so it gets tried
       // twice - which is also what a player actually does before they believe it
+      mark('reject');
       await fr.evaluate(() => { const b = document.getElementById('btn-submit'); if (b) b.click(); });
       await wait(2200);
       await fr.evaluate(() => { const b = document.getElementById('btn-submit'); if (b) b.click(); });
@@ -280,14 +291,15 @@ const server = http.createServer((req, res) => {
       await wait(1300);
       ok = await fr.evaluate(() => { const b = document.getElementById('btn-submit');
         if (b && !b.disabled) { b.click(); return true; } return false; });
-      await wait(9000);
-      await wait(2000);
+      await wait(9500);
+      await wait(1100);
 
     } else if (c.kind === 'blitz') {
       await fr.evaluate(() => document.getElementById('btn-play').click());
       await wait(1400);
       await fr.evaluate(() => document.getElementById('btn-mode-blitz').click());
-      await wait(2000);
+      await wait(1600);
+      mark('board');
       const taken = new Set();
       for (const want of [5, 6, 4, 7, 3, 2]) {
         for (let a = 0; a < 2; a++) {
@@ -322,10 +334,16 @@ const server = http.createServer((req, res) => {
       return pill ? pill.textContent.trim() : '';
     }).catch(() => '');
 
+    mark('end');
     const v = await page.video().path();
     await ctx.close();
     const dest = OUT + '/' + c.f + '.webm';
     fs.renameSync(v, dest);
+    // the video starts when the context does, so these offsets are frame-accurate
+    const manifest = OUT + '/timing.json';
+    const all = fs.existsSync(manifest) ? JSON.parse(fs.readFileSync(manifest, 'utf8')) : {};
+    all[c.f] = marks;
+    fs.writeFileSync(manifest, JSON.stringify(all, null, 2));
     const kb = Math.round(fs.statSync(dest).size / 1024);
     results.push({ f: c.f, ok, shown, kb, errs: errs.length });
     console.log('  ' + c.f.padEnd(24) + (ok ? 'ok  ' : 'CHECK') + '  ' +
