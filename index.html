@@ -1343,6 +1343,9 @@
         .length-level-cell.is-levelled { border-color: var(--accent-3); }
         .length-level-cell.is-levelled .lll-lvl { color: var(--accent-3); }
         #ri-levels-hint { font-size:0.6rem; color: var(--text-soft); }
+        .ri-note { font-size:0.62rem; line-height:1.4; color: var(--text-soft);
+            font-family: var(--font-main); margin:-2px 0 4px; padding:0 2px; }
+        .ri-note.hidden { display:none; }
         .tile-inner.anchor-locked::after {
             content: '⚓'; position:absolute; top:2px; right:2px; font-size:0.6rem; line-height:1; z-index:2;
         }
@@ -2572,6 +2575,8 @@
             <div class="run-info-row"><span>Stage</span><span id="ri-stage">—</span></div>
             <div class="run-info-row"><span>Stake</span><span id="ri-stake">—</span></div>
             <div class="run-info-row"><span>Bag</span><span id="ri-bag">—</span></div>
+            <div class="run-info-row"><span>Special Tiles</span><span id="ri-special">—</span></div>
+            <div id="ri-special-note" class="ri-note hidden"></div>
             <div class="run-info-row"><span>Word Levels</span><span id="ri-levels-hint">tap a length in the shop to level it</span></div>
             <div class="length-level-grid" id="ri-levels"></div>
             <div class="run-info-row clickable" id="ri-hazard-row"><span>Boss Blind <span class="info-dot" id="ri-hazard-info">ⓘ</span></span><span id="ri-hazard">—</span></div>
@@ -3093,7 +3098,13 @@
         const d = stakeDef(stakeLevel());
         return (d && d[key] !== undefined) ? d[key] : fallback;
     }
-    function stakeUnlocked() { return Math.max(1, Math.min(MAX_STAKE, (G.progress && G.progress.stakeUnlocked) || 1)); }
+    // Each Press earns its own ladder. Clearing Draft on the Merchant Press
+    // says nothing about whether you can handle Revised on the Wildcard Press,
+    // and opening it there anyway made five loadouts feel like one.
+    function stakeUnlockedFor(pressId) {
+        return Math.max(1, Math.min(MAX_STAKE, pressStakeCleared(pressId) + 1));
+    }
+    function currentPressId() { return (G.progress && G.progress.selectedPress) || 'merchant_press'; }
     function pressStakeCleared(pressId) {
         const m = (G.progress && G.progress.pressStakes) || {};
         return Math.max(0, Math.min(MAX_STAKE, m[pressId] || 0));
@@ -3225,7 +3236,6 @@
         // the bytes of an array of quoted words, and appending is a concat
         foundWords: '',
         completedSets: [],
-        stakeUnlocked: 1,
         pressStakes: {},
         stats: { lettersDiscarded:0, inkSealsUsed:0, specialTilesPlayed:0, highestStageReached:1, fiveLetterWords:0 }
     };
@@ -3253,8 +3263,16 @@
             try { had = localStorage.getItem("wordling-theme"); } catch (e) {}
             if (had && !p.grantedThemes.includes(had)) p.grantedThemes.push(had);
         }
-        p.stakeUnlocked = Math.max(1, Math.min(MAX_STAKE, parseInt(p.stakeUnlocked, 10) || 1));
         if (!p.pressStakes || typeof p.pressStakes !== 'object' || Array.isArray(p.pressStakes)) p.pressStakes = {};
+        // Stakes used to open for every Press at once. A save from then is
+        // credited on the Presses it actually beat rather than being reset.
+        const oldGlobal = Math.max(1, Math.min(MAX_STAKE, parseInt(p.stakeUnlocked, 10) || 1));
+        if (oldGlobal > 1) {
+            (p.completedRuns || []).forEach(id => {
+                p.pressStakes[id] = Math.max(p.pressStakes[id] || 0, oldGlobal - 1);
+            });
+        }
+        delete p.stakeUnlocked;
         if (typeof p.foundWords !== 'string') {
             p.foundWords = Array.isArray(p.foundWords) ? p.foundWords.join(' ') : '';
         }
@@ -3348,17 +3366,17 @@
     // what is coming, but it never becomes the thing START RUN starts.
     function selectedStake() {
         const want = (G.progress && G.progress.selectedStake) || 1;
-        return Math.max(1, Math.min(stakeUnlocked(), want));
+        return Math.max(1, Math.min(stakeUnlockedFor(currentPressId()), want));
     }
     function renderStakes() {
         const chips = document.getElementById('stake-chips');
         const rule = document.getElementById('stake-rule');
         if (!chips || !rule || !G.progress) return;
-        const open = stakeUnlocked();
+        const pressId = G.progress.selectedPress;
+        const open = stakeUnlockedFor(pressId);
+        const won = pressStakeCleared(pressId);
         const playing = selectedStake();
         if (!G.stakeView || G.stakeView < 1 || G.stakeView > MAX_STAKE) G.stakeView = playing;
-        const pressId = G.progress.selectedPress;
-        const won = pressStakeCleared(pressId);
 
         chips.innerHTML = '';
         STAKES.forEach(st => {
@@ -3399,7 +3417,7 @@
         const bits = [];
         if (also.length) bits.push('Carries <b>' + also.join('</b>, <b>') + '</b>.');
         if (locked) {
-            bits.push('Clear <b>' + stakeDef(st.n - 1).name + '</b> on any Press to open it.');
+            bits.push('Clear <b>' + stakeDef(st.n - 1).name + '</b> on this Press to open it.');
         } else if (st.n < MAX_STAKE) {
             bits.push('Clear it to open <b>' + stakeDef(st.n + 1).name + '</b>.');
         } else {
@@ -3458,10 +3476,9 @@
         const at = stakeLevel();
         if (G.gameMode === 'classic') {
             if (!G.progress.pressStakes) G.progress.pressStakes = {};
-            if (at > pressStakeCleared(pressId)) G.progress.pressStakes[pressId] = at;
-            if (at >= stakeUnlocked() && at < MAX_STAKE) {
-                G.progress.stakeUnlocked = at + 1;
-                showUnlockBanner('NEW STAKE UNLOCKED', stakeDef(at + 1).name);
+            if (at > pressStakeCleared(pressId)) {
+                G.progress.pressStakes[pressId] = at;
+                if (at < MAX_STAKE) showUnlockBanner('NEW STAKE UNLOCKED', stakeDef(at + 1).name);
             }
         }
         const next = PRESSES.find(p=>p.unlockedBy===pressId);
@@ -4986,6 +5003,29 @@
         const isZen = G.gameMode === 'zen';
         document.getElementById('ri-stage').textContent = isZen ? ('Stage '+G.currentStage+' (Zen)') : ('Stage '+G.currentStage+' / '+G.totalStages);
         document.getElementById('ri-bag').textContent = isZen ? '∞' : (G.tileBag.length+' tiles');
+        const special = document.getElementById('ri-special');
+        if (special) {
+            const NAMES = { wildcard:'Wildcard', finisher:'Finisher', italic:'Italic' };
+            const where = t => (G.hand||[]).indexOf(t) !== -1 || (G.activeWord||[]).indexOf(t) !== -1;
+            const all = [].concat(G.hand||[], G.activeWord||[], G.tileBag||[], G.discardPile||[])
+                          .filter(t => t && NAMES[t.type]);
+            if (!all.length) {
+                special.textContent = 'None';
+                document.getElementById('ri-special-note').classList.add('hidden');
+            } else {
+                const counts = {};
+                all.forEach(t => { counts[t.type] = (counts[t.type] || 0) + 1; });
+                const onHand = all.filter(where).length;
+                special.textContent = Object.keys(counts)
+                    .map(k => counts[k] + ' ' + NAMES[k]).join(' \u00B7 ');
+                const note = document.getElementById('ri-special-note');
+                note.textContent = onHand
+                    ? (onHand === 1 ? 'One is on your bench right now. The rest are shuffled through the bag.'
+                                    : onHand + ' are on your bench right now. The rest are shuffled through the bag.')
+                    : 'All shuffled through the bag - they turn up as you draw.';
+                note.classList.remove('hidden');
+            }
+        }
         const stakeEl = document.getElementById('ri-stake');
         if (stakeEl) {
             const n = stakeLevel();
@@ -5272,7 +5312,7 @@
     function cleanupDrag() { if(!G.dragData) return; const {el,clone,pointerId} = G.dragData; if(el){ el.classList.remove('dragging'); el.style.opacity='1'; try{ el.releasePointerCapture(pointerId); }catch(err){} el.removeEventListener('lostpointercapture',onDragLost); } document.removeEventListener('pointermove',onDragMove); document.removeEventListener('pointerup',onDragEnd); document.removeEventListener('pointercancel',onDragEnd); if(clone && clone.parentNode) clone.remove(); G.dragData=null; }
     function onDragLost(e) { if(G.dragData && e.currentTarget===G.dragData.el){ cleanupDrag(); renderWithTileFlip(); } }
     function onDragStart(e, source, index) { if(G.isAnimating||G.dragData) return; const tile = source==='hand' ? G.hand[index] : (source==='word' ? G.activeWord[index] : G.equippedGlyphs[index]); if(!tile) return; const el=e.currentTarget; try{ el.setPointerCapture(e.pointerId); }catch(err){} G.dragData={source,index,tile,el,clone:null,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,hasMoved:false}; el.addEventListener('lostpointercapture',onDragLost); document.addEventListener('pointermove',onDragMove); document.addEventListener('pointerup',onDragEnd); document.addEventListener('pointercancel',onDragEnd); }
-    function onDragMove(e) { if(!G.dragData||e.pointerId!==G.dragData.pointerId) return; e.preventDefault(); const px=e.clientX, py=e.clientY; if(Math.abs(px-G.dragData.startX)>4||Math.abs(py-G.dragData.startY)>4) G.dragData.hasMoved=true; if(!G.dragData.clone&&G.dragData.hasMoved){ const clone=G.dragData.el.cloneNode(true); clone.className=G.dragData.el.className+' drag-clone'; clone.style.width=G.dragData.el.offsetWidth+'px'; clone.style.height=G.dragData.el.offsetHeight+'px'; clone.innerHTML=G.dragData.el.innerHTML; document.body.appendChild(clone); G.dragData.clone=clone; G.dragData.el.classList.add('dragging'); G.dragData.el.style.opacity='0.35'; } if(G.dragData.clone){ G.dragData.clone.style.left=px+'px'; G.dragData.clone.style.top=py+'px'; } }
+    function onDragMove(e) { if(!G.dragData||e.pointerId!==G.dragData.pointerId) return; e.preventDefault(); const px=e.clientX, py=e.clientY; if(Math.abs(px-G.dragData.startX)>4||Math.abs(py-G.dragData.startY)>4) G.dragData.hasMoved=true; if(!G.dragData.clone&&G.dragData.hasMoved&&!G.rerollMode){ const clone=G.dragData.el.cloneNode(true); clone.className=G.dragData.el.className+' drag-clone'; clone.style.width=G.dragData.el.offsetWidth+'px'; clone.style.height=G.dragData.el.offsetHeight+'px'; clone.innerHTML=G.dragData.el.innerHTML; document.body.appendChild(clone); G.dragData.clone=clone; G.dragData.el.classList.add('dragging'); G.dragData.el.style.opacity='0.35'; } if(G.dragData.clone){ G.dragData.clone.style.left=px+'px'; G.dragData.clone.style.top=py+'px'; } }
     function onDragEnd(e) {
         if(!G.dragData||e.pointerId!==G.dragData.pointerId) return;
         const {source,index,hasMoved}=G.dragData; const px=e.clientX, py=e.clientY;
@@ -5301,9 +5341,16 @@
             renderGlyphsWithFlip();
             return;
         }
-        if(!hasMoved){ if(source==='hand'){ if(G.rerollMode) toggleRerollMark(index); else placeTileInSlot(index); } else { removeTileFromWord(index); } return; }
-        // a deliberate drag is not a discard mark: step out of reroll and move it
-        if(G.rerollMode){ G.rerollMode=false; G.rerollMarks.clear(); }
+        // Reroll is a selection mode, not a drag mode. A finger that slid a few
+        // pixels while tapping used to fall through to the drag path below, which
+        // left reroll, threw away the marks already made, and placed the tile in
+        // the word instead - and under the Anchor that tile is then locked there
+        // for the rest of the hand. Nothing in reroll mode moves a tile now.
+        if(G.rerollMode){
+            if(source==='hand') toggleRerollMark(index); else renderWithTileFlip();
+            return;
+        }
+        if(!hasMoved){ if(source==='hand'){ placeTileInSlot(index); } else { removeTileFromWord(index); } return; }
         const targetEl=document.elementFromPoint(px,py); if(!targetEl){ renderWithTileFlip(); return; }
         const handWrap=targetEl.closest('.hand-tile-wrap'); const activeTile=targetEl.closest('.active-tile'); const wordLine=targetEl.closest('#active-word-line'); const handRack=targetEl.closest('#hand-rack');
         if(source==='hand'){
@@ -5919,13 +5966,16 @@
     }
     function startClassicLikeRun(mode) {
         G.gameMode = mode;
-        // Only Classic carries a stake, and it is clamped here rather than trusted
-        // from whatever set it - a run on a stake the player has not opened would
-        // hand out a clear they never earned.
-        G.stake = mode === 'classic' ? Math.max(1, Math.min(stakeUnlocked(), G.stake || 1)) : 1;
         G.lastHazard = null;
         G.dailyChallenge = mode==='daily' ? getTodaysChallenge().id : null;
         G.activePressId = (G.progress && G.progress.selectedPress) || 'merchant_press';
+        // Only Classic carries a stake, and it is clamped here rather than trusted
+        // from whatever set it - a run on a stake this Press has not opened would
+        // hand out a clear it never earned. This has to come AFTER activePressId
+        // is set, or the clamp reads an undefined press and drops every run to
+        // Draft.
+        G.stake = mode === 'classic'
+            ? Math.max(1, Math.min(stakeUnlockedFor(G.activePressId), G.stake || 1)) : 1;
         const activePress = getPress(G.activePressId);
         G.stageTargets = [...CLASSIC_STAGE_TARGETS];
         if (activePress && activePress.targetMult) G.stageTargets = G.stageTargets.map(t=>Math.floor(t*activePress.targetMult));
