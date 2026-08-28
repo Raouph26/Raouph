@@ -3059,7 +3059,9 @@
     // Tuned so a strong build spends three of its hands on every stage from 3
     // onward rather than clearing in one and wasting the rest. Stage 1 is still a
     // single word - it is where the game teaches itself.
-    const CLASSIC_STAGE_TARGETS = [0, 150, 1200, 9000, 26000, 80000, 135000, 235000, 330000];
+    // Rebuilt against a simulator that deals real racks. The old ladder put a
+    // wall between stages 4 and 5 - 26,000 then 80,000 - where 83% of runs ended.
+    const CLASSIC_STAGE_TARGETS = [0, 120, 800, 3500, 10000, 24000, 48000, 82000, 130000];
     // Zen has no fail state, so the targets exist to mark progress rather than to
     // squeeze. They sit far below the classic curve and climb far more gently.
     const ZEN_STAGE_TARGETS = [0, 100, 220, 380, 580, 820, 1100, 1450, 1850];
@@ -3073,14 +3075,14 @@
     const STAKES = [
         { n:1, id:'draft',     name:'Draft',     targetMult:1,
           rule:'The game as it is. Clear it to open Revised.' },
-        { n:2, id:'revised',   name:'Revised',   targetMult:1.15,
-          rule:'Every stage needs 15% more to clear it.' },
-        { n:3, id:'edited',    name:'Edited',    targetMult:1.15, discardCut:1,
+        { n:2, id:'revised',   name:'Revised',   targetMult:1.25,
+          rule:'Every stage needs 25% more to clear it.' },
+        { n:3, id:'edited',    name:'Edited',    targetMult:1.25, discardCut:1,
           rule:'One fewer Discard on every stage.' },
-        { n:4, id:'censored',  name:'Censored',  targetMult:1.15, discardCut:1,
-          rule:'EVERY stage rolls a Boss Blind, not only 3, 6 and 8.' },
-        { n:5, id:'final_cut', name:'Final Cut', targetMult:1.3,  discardCut:1,
-          rule:'Every stage needs 30% more to clear it, not 15%.' }
+        { n:4, id:'censored',  name:'Censored',  targetMult:1.6,  discardCut:1,
+          rule:'EVERY stage rolls a Boss Blind, and stages need 60% more.' },
+        { n:5, id:'final_cut', name:'Final Cut', targetMult:2.2,  discardCut:1,
+          rule:'Every stage needs more than double what Draft asks for.' }
     ];
     const MAX_STAKE = STAKES.length;
     function stakeDef(n) { return STAKES[Math.max(0, Math.min(MAX_STAKE, n||1) - 1)]; }
@@ -3805,8 +3807,8 @@
     // Length now pays once. Chips still climb hard, so finding a nine-letter word
     // is still the best single thing you can do; the multiplier comes off your
     // board instead. Anything that multiplies is now something you chose.
-    const LENGTH_BASE_CHIPS = { 3:20, 4:40, 5:80, 6:150, 7:300, 8:400, 9:550, 10:700 };
-    const LENGTH_BASE_MULT  = { 3:1,  4:2,  5:2,  6:3,   7:3,   8:4,   9:4,   10:5 };
+    const LENGTH_BASE_CHIPS = { 3:45, 4:80, 5:125, 6:180, 7:250, 8:330, 9:420, 10:520 };
+    const LENGTH_BASE_MULT  = { 3:2,  4:3,  5:3,   6:4,   7:4,   8:5,   9:5,   10:6 };
     // Each length keeps its own level, and levelling is bought, never earned by
     // playing - if playing a length levelled it, spamming nine-letter words would
     // make nine-letter words better and the problem gets worse. Buying it makes a
