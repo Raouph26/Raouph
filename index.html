@@ -4530,7 +4530,11 @@
                                        .sort((a, b) => (t[b] || 0) - (t[a] || 0));
         if (!used.length) return [4, 5, 6];
         const out = used.slice(0, 3);
-        const rest = MANUSCRIPT_LENGTHS.filter(l => out.indexOf(l) === -1);
+        // The outsider is drawn from what a bench can actually spell. In 701
+        // words across sixty runs nobody produced an 8, a 9 or a 10, so those
+        // are only ever offered to a player who has in fact played one - which
+        // `used` already covers, Deep Pockets runs included.
+        const rest = MANUSCRIPT_LENGTHS.filter(l => l <= 7 && out.indexOf(l) === -1);
         if (rest.length) out.push(rest[Math.floor(Math.random() * rest.length)]);
         return out;
     }
