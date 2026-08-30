@@ -3791,6 +3791,9 @@
             // Cascade counts letters, not words, so a stage builds towards one big
             // last hand however you get there.
             G.stageLetters = (G.stageLetters||0) + len;
+            // What the shop uses to decide which Manuscripts are worth offering.
+            if (len) { if (!G.playedLengths) G.playedLengths = {}; const k = lengthKey(len);
+                       G.playedLengths[k] = (G.playedLengths[k] || 0) + 1; }
             if (!Array.isArray(G.archivistLengths)) G.archivistLengths = [];
             // Only while equipped: buying it late should not hand you a full set.
             if (this.hasGlyph('archivist') && len && G.archivistLengths.indexOf(len) === -1) G.archivistLengths.push(len);
@@ -3808,7 +3811,8 @@
         gameMode:'classic', dailyChallenge:null, isEndless:false, consumables:[], activeHazard:null, anchorTileId:null, mutedTileId:null,
         leaderboard:[], records:{highestWord:null, totalGoldEarned:0, mostStagesCleared:0},
         shopOffers:{glyphs:[], consumables:[]}, shopRerollCount:0, adsRemoved:false,
-        archivistLengths:[], serialTriggers:0, stageLetters:0, bonusHands:0, floodTiles:0, doubleNext:false, lengthLevels:null
+        archivistLengths:[], serialTriggers:0, stageLetters:0, bonusHands:0, floodTiles:0, doubleNext:false, lengthLevels:null,
+        playedLengths:{}
     };
 
     function assignRandomAura() { const r=Math.random(); if(r<0.15) return 'blue'; if(r<0.22) return 'red'; if(r<0.26) return 'gold'; return null; }
@@ -3833,6 +3837,7 @@
         G.shopOffers = {glyphs:[], consumables:[]}; G.shopRerollCount = 0; G.shopRerollsUsedThisRun = 0;
         G.archivistLengths = []; G.serialTriggers = 0; G.stageLetters = 0; G.bonusHands = 0; G.floodTiles = 0; G.doubleNext = false;
         G.lengthLevels = blankLengthLevels();
+        G.playedLengths = {};
         const seedSeals = pressValue('startSeals', 0);
         if (seedSeals > 0) {
             const pool = shuffle(CONSUMABLE_DATABASE.filter(d=>G.progress.unlockedConsumables.includes(d.id)));
@@ -4507,6 +4512,28 @@
     // piece the game never had: a way to invest in a playstyle rather than just
     // play the one the maths already favours.
     const MANUSCRIPT_LENGTHS = [3,4,5,6,7,8,9,10];
+    // Which Manuscripts are worth putting on the table.
+    //
+    // All eight lengths used to go into the shuffle with equal weight. Measured
+    // over forty runs, players spelled 5s and 6s 80% of the time and never once
+    // spelled an 8, a 9 or a 10 - so a run bought eleven dead Manuscripts for
+    // every live one, and the tutorial's advice to pour them into a single
+    // length could not be followed even by someone trying to.
+    //
+    // The lengths this run actually spells get the weight. One length it has
+    // not touched stays on the table so changing direction is still possible,
+    // and before the first word is played the short lengths are offered, which
+    // is what a ten-tile bench can reach.
+    function manuscriptOfferLengths() {
+        const t = G.playedLengths || {};
+        const used = MANUSCRIPT_LENGTHS.filter(l => (t[l] || 0) > 0)
+                                       .sort((a, b) => (t[b] || 0) - (t[a] || 0));
+        if (!used.length) return [4, 5, 6];
+        const out = used.slice(0, 3);
+        const rest = MANUSCRIPT_LENGTHS.filter(l => out.indexOf(l) === -1);
+        if (rest.length) out.push(rest[Math.floor(Math.random() * rest.length)]);
+        return out;
+    }
     function manuscriptId(len) { return 'ms_' + len; }
     function manuscriptName(len) { return len >= 10 ? '10+ LETTER MANUSCRIPT' : len + '-LETTER MANUSCRIPT'; }
     function manuscriptDesc(len) {
@@ -4596,7 +4623,7 @@
             if (G.equippedGlyphs.length < maxGlyphSlots()) pool.push(makeGlyphOffer(g));
         });
         SPECIAL_TILE_DATABASE.forEach(def=>{ pool.push(makeTileOffer(def)); });
-        MANUSCRIPT_LENGTHS.forEach(len=>{ pool.push(makeManuscriptOffer(len)); });
+        manuscriptOfferLengths().forEach(len=>{ pool.push(makeManuscriptOffer(len)); });
         const slots = Math.max(1, 3 + pressValue('shopGlyphDelta', 0));
         const picked = shuffle(pool).slice(0, slots);
         const boardFull = G.equippedGlyphs.length >= maxGlyphSlots();
@@ -5966,6 +5993,7 @@
         G.bonusHands = saved.bonusHands || 0; G.doubleNext = !!saved.doubleNext; G.floodTiles = saved.floodTiles || 0;
         // A run saved before levels existed has none, and every length starts at 1.
         G.lengthLevels = Object.assign(blankLengthLevels(), saved.lengthLevels || {});
+        G.playedLengths = (saved.playedLengths && typeof saved.playedLengths === 'object') ? saved.playedLengths : {};
         // a run saved before stakes existed is a Draft run
         G.stake = Math.max(1, Math.min(MAX_STAKE, saved.stake || 1));
         G.lastHazard = saved.lastHazard || null;
@@ -6411,6 +6439,7 @@
             archivistLengths: G.archivistLengths||[], serialTriggers: G.serialTriggers||0,
             stageLetters: G.stageLetters||0, bonusHands: G.bonusHands||0,
             doubleNext: !!G.doubleNext, floodTiles: G.floodTiles||0, lengthLevels: G.lengthLevels || blankLengthLevels(),
+            playedLengths: G.playedLengths || {},
             stake: G.stake || 1, lastHazard: G.lastHazard || null
         };
     }
