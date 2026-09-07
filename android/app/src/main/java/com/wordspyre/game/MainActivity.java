@@ -15,6 +15,8 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.webkit.WebViewAssetLoader;
 
+import com.google.android.gms.ads.MobileAds;
+
 /**
  * The whole game, running from inside the app.
  *
@@ -27,6 +29,7 @@ import androidx.webkit.WebViewAssetLoader;
 public class MainActivity extends AppCompatActivity {
 
     private WebView web;
+    private AdBridge ads;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -57,6 +60,12 @@ public class MainActivity extends AppCompatActivity {
                 return loader.shouldInterceptRequest(r.getUrl());
             }
         });
+
+        // The page asks for ads through window.WordspyreAds. Without this the
+        // AdManager falls back to a placeholder that grants the reward free.
+        ads = new AdBridge(this, web);
+        web.addJavascriptInterface(ads, "WordspyreAds");
+        MobileAds.initialize(this, status -> ads.preloadAll());
 
         web.setBackgroundColor(0xFF0B0B0D);
         web.setOverScrollMode(View.OVER_SCROLL_NEVER);

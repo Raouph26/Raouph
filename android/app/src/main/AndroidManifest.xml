@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- No permissions at all. The game reads nothing, sends nothing and has
-         no network code, so there is nothing to ask the player for. -->
+    <!-- The game itself still reads nothing and sends nothing: index.html and
+         every asset ship inside the app and are read out of it. These two are
+         for the rewarded ads and nothing else. INTERNET is what fetches them;
+         AD_ID is required from Android 13 for the advertising identifier. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
     <application
         android:allowBackup="true"
@@ -13,6 +17,13 @@
         android:supportsRtl="false"
         android:hardwareAccelerated="true"
         android:theme="@style/Theme.Wordspyre">
+
+        <!-- Google's published test application id. Swap it for your own from
+             AdMob at the same time as the four unit ids in AdBridge.java: the
+             app will not start if this is missing or malformed. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
 
         <activity
             android:name=".MainActivity"

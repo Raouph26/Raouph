@@ -3056,7 +3056,7 @@
     // One switch for every ad touchpoint. false = the player never sees an ad
     // offer anywhere; the AdManager, its placements and its analytics stay wired
     // so turning this back to true restores all four placements as they were.
-    const ADS_ENABLED = false;
+    const ADS_ENABLED = true;
     // Retuned for the flattened curve. Length used to be paid twice, so scores
     // were roughly three times what they are now at the top end; holding the old
     // targets would have made every stage past 4 unreachable.
@@ -6302,15 +6302,31 @@
     // one, the built-in placeholder below stands in so the flow is playable.
     const AdManager = {
         placements: { revive: "run_revive", rerolls: "shop_reroll_refill", cash: "victory_cash_boost", theme: "theme_1h_pass" },
+        // A JavascriptInterface method cannot take a JS function - only strings
+        // and primitives cross into Java - so the callback is parked here under
+        // a token and the app calls back with it when the ad is finished.
+        pending: {},
         show(placement, onReward) {
             const host = window.WordspyreAds;
             if (host && typeof host.showRewarded === "function") {
-                try { host.showRewarded(placement, granted => { if (granted) onReward(); }); return; }
-                catch (e) { /* fall through to the placeholder */ }
+                const token = "ad_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
+                this.pending[token] = { placement: placement, onReward: onReward };
+                try { host.showRewarded(placement, token); return; }
+                catch (e) { delete this.pending[token]; }
             }
+            // No app around this page - the browser build - so nothing to show.
             playAdPlaceholder(placement, onReward);
         },
         reward(placement) { Analytics.track("ad_watched", { placement: placement }); }
+    };
+    // Called by the app when a rewarded ad finishes. Only a genuine completion
+    // arrives as granted; closing an ad early pays nothing.
+    window.__adResult = function (token, granted) {
+        const p = AdManager.pending[token];
+        if (!p) return;
+        delete AdManager.pending[token];
+        if (granted) { AdManager.reward(p.placement); p.onReward(); }
+        else showUnlockBanner("NO AD AVAILABLE", "Try again in a moment");
     };
     let adTimer = null;
     function closeAdModal() { if (adTimer) { clearInterval(adTimer); adTimer = null; } document.getElementById("ad-modal").classList.remove("show"); }

@@ -85,6 +85,12 @@ android {
 // artifact, so having both on the classpath means every class in them is
 // declared twice and packaging fails. Pin one version and drop the old split
 // halves - nothing here is written in Kotlin, this is only transitive baggage.
+dependencies {
+    // Rewarded ads. The four placements the game already had - revive, shop
+    // rerolls, the victory boost and the theme pass - had no SDK behind them.
+    implementation 'com.google.android.gms:play-services-ads:23.6.0'
+}
+
 configurations.configureEach {
     resolutionStrategy { force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.24' }
     exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
