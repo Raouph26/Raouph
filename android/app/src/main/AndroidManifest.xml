@@ -18,12 +18,11 @@
         android:hardwareAccelerated="true"
         android:theme="@style/Theme.Wordspyre">
 
-        <!-- Google's published test application id. Swap it for your own from
-             AdMob at the same time as the four unit ids in AdBridge.java: the
-             app will not start if this is missing or malformed. -->
+        <!-- The AdMob application id for WORDSPYRE. The app will not start if
+             this is missing or malformed, so it is not something to trim. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-7760232793926214~8062108794" />
 
         <activity
             android:name=".MainActivity"

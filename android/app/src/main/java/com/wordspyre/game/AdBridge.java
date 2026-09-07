@@ -34,20 +34,18 @@ import java.util.Map;
 public class AdBridge {
 
     /**
-     * Your four AdMob rewarded unit ids go here.
+     * The four AdMob rewarded units, one per placement the game offers.
      *
-     * While an entry still reads REPLACE_ME the app serves Google's official
-     * test ad instead. Test ads are safe - they are the supported way to build
-     * against AdMob - but they earn nothing, and Google's policy forbids
-     * shipping them to production. So: paste the real ids in before the build
-     * that turns ads on for players.
+     * An entry left as REPLACE_ME falls back to Google's test ad, which serves
+     * but earns nothing - so an empty slot degrades quietly rather than
+     * crashing, but it is not something to ship.
      */
     private static final Map<String, String> UNITS = new HashMap<>();
     static {
-        UNITS.put("run_revive",         "REPLACE_ME");
-        UNITS.put("shop_reroll_refill", "REPLACE_ME");
-        UNITS.put("victory_cash_boost", "REPLACE_ME");
-        UNITS.put("theme_1h_pass",      "REPLACE_ME");
+        UNITS.put("run_revive",         "ca-app-pub-7760232793926214/1802350998");
+        UNITS.put("shop_reroll_refill", "ca-app-pub-7760232793926214/2678272799");
+        UNITS.put("victory_cash_boost", "ca-app-pub-7760232793926214/5736997629");
+        UNITS.put("theme_1h_pass",      "ca-app-pub-7760232793926214/8363160967");
     }
 
     /** Google's published test rewarded unit. Serves a real ad, pays nothing. */
