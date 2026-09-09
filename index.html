@@ -6311,8 +6311,15 @@
             if (host && typeof host.showRewarded === "function") {
                 const token = "ad_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
                 this.pending[token] = { placement: placement, onReward: onReward };
-                try { host.showRewarded(placement, token); return; }
-                catch (e) { delete this.pending[token]; }
+                try {
+                    // The app will wait a few seconds for an ad if none is warm,
+                    // so say so rather than leaving a button looking broken.
+                    let warm = false;
+                    try { warm = host.isReady && host.isReady(placement); } catch (e2) {}
+                    if (!warm) showUnlockBanner("FINDING AN AD", "One moment");
+                    host.showRewarded(placement, token);
+                    return;
+                } catch (e) { delete this.pending[token]; }
             }
             // No app around this page - the browser build - so nothing to show.
             playAdPlaceholder(placement, onReward);
@@ -6321,11 +6328,14 @@
     };
     // Called by the app when a rewarded ad finishes. Only a genuine completion
     // arrives as granted; closing an ad early pays nothing.
-    window.__adResult = function (token, granted) {
+    window.__adResult = function (token, granted, reason) {
         const p = AdManager.pending[token];
         if (!p) return;
         delete AdManager.pending[token];
-        if (granted) { AdManager.reward(p.placement); p.onReward(); }
+        if (granted) { AdManager.reward(p.placement); p.onReward(); return; }
+        // Closing an ad early is the player's own doing and needs saying plainly,
+        // or it reads as the game cheating them.
+        if (reason === "closed_early") showUnlockBanner("AD CLOSED EARLY", "No reward this time");
         else showUnlockBanner("NO AD AVAILABLE", "Try again in a moment");
     };
     let adTimer = null;
