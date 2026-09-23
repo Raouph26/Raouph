@@ -1,65 +1,185 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>FROGSOULS — combat prototype</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Frogsouls</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-  :root { color-scheme: dark; }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html,body { height:100%; background:#08090b; overflow:hidden; }
-  canvas { display:block; }
-  #ui { position:fixed; inset:0; pointer-events:none; font:600 13px/1.4 ui-sans-serif,system-ui,sans-serif;
-        color:#e8e4dc; text-shadow:0 1px 2px rgba(0,0,0,.9); }
-  .bars { position:absolute; left:28px; top:24px; width:min(340px,42vw); }
-  .bar { position:relative; height:14px; margin-bottom:6px; border:1px solid #000;
-         background:#16120f; box-shadow:0 0 0 1px #3a332a inset; }
-  .bar > i { position:absolute; inset:0; transform-origin:left center; display:block; }
-  #hp  > i { background:linear-gradient(#a3242a,#6d1418); }
-  #st  > i { background:linear-gradient(#7d8f3c,#4d5c22); }
-  #st  { height:10px; width:88%; }
-  .bar > u { position:absolute; inset:0; transform-origin:left center; background:#d8b26a; opacity:.35; }
-  #bossbar { position:absolute; left:50%; bottom:46px; transform:translateX(-50%);
-             width:min(620px,74vw); opacity:0; transition:opacity .4s; }
-  #bossbar.on { opacity:1; }
-  #bossbar .name { text-align:center; letter-spacing:.22em; text-transform:uppercase;
-                   font-size:11px; margin-bottom:5px; color:#c9c1b2; }
-  #bb { height:11px; }
-  #bb > i { background:linear-gradient(#b8933f,#74561c); }
-  #hint { position:absolute; right:26px; bottom:22px; text-align:right; font-weight:500;
-          font-size:11.5px; color:#8d8578; line-height:1.85; letter-spacing:.04em; }
-  #hint b { color:#d6cfc1; font-weight:600; }
-  #center { position:absolute; left:50%; top:46%; transform:translate(-50%,-50%); text-align:center;
-            letter-spacing:.3em; text-transform:uppercase; opacity:0; transition:opacity .5s; }
-  #center.on { opacity:1; }
-  #center .big { font-size:38px; color:#9a2b2b; }
-  #center .sub { font-size:11px; color:#8d8578; margin-top:10px; letter-spacing:.2em; }
-  #deaths { position:absolute; left:28px; bottom:22px; font-size:11px; color:#6f6a60; letter-spacing:.12em; }
-  #lockdot { position:absolute; width:16px; height:16px; margin:-8px 0 0 -8px; opacity:0;
-             transition:opacity .15s; }
-  #lockdot.on { opacity:.9; }
-  #lockdot svg { display:block; }
-  #flash { position:absolute; inset:0; background:#fff; opacity:0; mix-blend-mode:screen; }
+  :root{
+    color-scheme:dark;
+    --ink:#e8e4dc; --dim:#9a948a; --faint:#5f5a53;
+    --amber:#d9a441; --blood:#a3242a;
+    --disp:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;background:#050607;overflow:hidden;
+    -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;
+    overscroll-behavior:none;touch-action:none;}
+  #stage{position:fixed;inset:0;}
+  #stage canvas{display:block;width:100%;height:100%;}
+
+  #ui{position:fixed;inset:0;pointer-events:none;color:var(--ink);font-family:var(--mono);
+      padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+
+  /* ── bars ── */
+  #bars{position:absolute;left:max(18px,env(safe-area-inset-left,0px));top:16px;
+        width:min(320px,38vw);opacity:0;transition:opacity .4s;}
+  #bars.on{opacity:1;}
+  .bar{position:relative;height:13px;margin-bottom:5px;border:1px solid #000;
+       background:#16120f;box-shadow:0 0 0 1px #3a332a inset;}
+  .bar>i,.bar>u{position:absolute;inset:0;transform-origin:left center;display:block;}
+  #hp>i{background:linear-gradient(#a3242a,#6d1418);}
+  #st{height:9px;width:88%;}
+  #st>i{background:linear-gradient(#7d8f3c,#4d5c22);}
+  .bar>u{background:#d8b26a;opacity:.32;}
+
+  /* ── boss bar ── */
+  #bossbar{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);
+           width:min(640px,72vw);opacity:0;transition:opacity .45s;}
+  #bossbar.on{opacity:1;}
+  #bossbar .name{text-align:center;font-family:var(--disp);font-weight:600;font-size:15px;
+        letter-spacing:.26em;text-transform:uppercase;color:#ddd5c4;text-shadow:0 2px 8px #000;}
+  #bossbar .sub{text-align:center;font-size:9.5px;letter-spacing:.14em;color:var(--faint);
+        margin:2px 0 5px;text-shadow:0 2px 8px #000;}
+  #bb{height:10px;}
+  #bb>i{background:linear-gradient(#b8933f,#74561c);}
+
+  /* ── place title ── */
+  #place{position:absolute;left:50%;top:14%;transform:translateX(-50%);text-align:center;
+         opacity:0;pointer-events:none;width:90%;}
+  #place.show{animation:placeIn 4.2s ease forwards;}
+  @keyframes placeIn{0%{opacity:0}14%{opacity:1}72%{opacity:1}100%{opacity:0}}
+  #place .pn{font-family:var(--disp);font-weight:700;font-size:clamp(20px,4.6vw,36px);
+        letter-spacing:.3em;text-transform:uppercase;text-shadow:0 2px 14px #000;}
+  #place .ps{font-size:10.5px;letter-spacing:.2em;color:var(--dim);margin-top:5px;
+        text-shadow:0 2px 10px #000;}
+
+  /* ── gate prompt ── */
+  #prompt{position:absolute;left:50%;bottom:17%;transform:translateX(-50%);text-align:center;
+          opacity:0;transition:opacity .2s;width:90%;}
+  #prompt.on{opacity:1;}
+  #prompt .pl{font-family:var(--disp);font-weight:600;font-size:clamp(15px,3.2vw,22px);
+        letter-spacing:.22em;text-transform:uppercase;color:var(--amber);text-shadow:0 2px 10px #000;}
+  #prompt.locked .pl{color:#6d6a66;}
+  #prompt .psub{font-size:10px;letter-spacing:.14em;color:var(--dim);margin-top:3px;
+        text-shadow:0 2px 10px #000;}
+
+  #center{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);text-align:center;
+          opacity:0;transition:opacity .5s;width:90%;}
+  #center.on{opacity:1;}
+  #center .big{font-family:var(--disp);font-weight:700;font-size:clamp(30px,8vw,58px);
+        letter-spacing:.3em;text-transform:uppercase;color:var(--blood);text-shadow:0 3px 22px #000;}
+  #center .sub{font-size:10.5px;letter-spacing:.24em;color:var(--dim);margin-top:12px;
+        text-transform:uppercase;}
+
+  #deaths{position:absolute;left:max(18px,env(safe-area-inset-left,0px));bottom:14px;
+          font-size:10px;letter-spacing:.14em;color:#6f6a60;}
+  #lockdot{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;opacity:0;transition:opacity .15s;}
+  #lockdot.on{opacity:.9;}
+  #flash{position:absolute;inset:0;background:#fff;opacity:0;mix-blend-mode:screen;}
+
+  /* ── keyboard hint (desktop only) ── */
+  #hint{position:absolute;right:20px;bottom:14px;text-align:right;font-size:10.5px;
+        line-height:1.9;color:#7d776e;letter-spacing:.05em;}
+  #hint b{color:#c9c2b4;font-weight:500;}
+  #ui.touch #hint{display:none;}
+
+  /* ── touch controls ── */
+  #touchui{display:none;}
+  #ui.touch #touchui{display:block;}
+  #stickzone{position:absolute;left:0;top:0;bottom:0;width:46%;pointer-events:auto;}
+  #stick{position:absolute;width:112px;height:112px;margin:-56px 0 0 -56px;border-radius:50%;
+         border:2px solid rgba(232,228,220,.22);background:rgba(10,12,14,.22);
+         opacity:0;transition:opacity .15s;pointer-events:none;}
+  #stick.on{opacity:1;}
+  #knob{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;
+        border-radius:50%;background:rgba(232,228,220,.42);}
+  #pad{position:absolute;right:max(20px,env(safe-area-inset-right,0px));bottom:18px;
+       width:212px;height:196px;pointer-events:none;}
+  .btn{position:absolute;border-radius:50%;pointer-events:auto;display:grid;place-content:center;
+       font-family:var(--disp);font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+       border:2px solid rgba(232,228,220,.30);background:rgba(12,14,16,.44);
+       color:rgba(232,228,220,.88);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+       transition:transform .07s,background .07s;}
+  .btn.press{transform:scale(.9);background:rgba(217,164,65,.5);}
+  #bLight{right:56px;bottom:96px;width:78px;height:78px;font-size:15px;}
+  #bHeavy{right:132px;bottom:34px;width:64px;height:64px;font-size:13px;}
+  #bRoll {right:0;bottom:30px;width:70px;height:70px;font-size:14px;}
+  #bGuard{right:120px;bottom:114px;width:60px;height:60px;font-size:12px;}
+  #bLock {right:6px;bottom:130px;width:52px;height:52px;font-size:11px;
+          border-color:rgba(217,164,65,.45);color:var(--amber);}
+
+  /* ── rotate gate ── */
+  #rotate{position:fixed;inset:0;z-index:60;display:none;place-content:center;text-align:center;
+          background:#050607;gap:14px;padding:24px;}
+  #rotate .ic{font-size:44px;animation:tip 2.4s ease-in-out infinite;}
+  @keyframes tip{0%,100%{transform:rotate(0)}50%{transform:rotate(-90deg)}}
+  #rotate .t{font-family:var(--disp);font-size:20px;letter-spacing:.3em;text-transform:uppercase;
+             color:var(--amber);}
+  #rotate .s{font-size:11px;letter-spacing:.16em;color:var(--faint);}
+  @media (orientation:portrait) and (pointer:coarse){ #rotate{display:grid;} }
+
+  /* ── boot ── */
+  #boot{position:fixed;inset:0;z-index:50;display:grid;place-content:center;gap:10px;
+        background:#050607;text-align:center;transition:opacity .6s;}
+  #boot.gone{opacity:0;pointer-events:none;}
+  #boot .t{font-family:var(--disp);font-weight:700;font-size:34px;letter-spacing:.42em;
+           text-transform:uppercase;color:var(--amber);}
+  #boot .s{font-size:10.5px;letter-spacing:.24em;color:var(--faint);}
+
+  #resetBtn{position:absolute;right:max(18px,env(safe-area-inset-right,0px));top:14px;
+            pointer-events:auto;padding:7px 12px;border:1px solid #33302b;background:rgba(10,11,13,.5);
+            color:#6f6a60;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
+            text-transform:uppercase;cursor:pointer;}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
 </style>
 </head>
 <body>
+<div id="stage"></div>
+
 <div id="ui">
-  <div class="bars">
-    <div class="bar" id="hp"><u></u><i></i></div>
-    <div class="bar" id="st"><i></i></div>
-  </div>
-  <div id="bossbar"><div class="name"></div><div class="bar" id="bb"><u></u><i></i></div></div>
-  <div id="lockdot"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 1v3M8 12v3M1 8h3M12 8h3" stroke="#e8e4dc" stroke-width="1.5"/><circle cx="8" cy="8" r="2.2" fill="#e8e4dc"/></svg></div>
+  <div id="bars"><div class="bar" id="hp"><u></u><i></i></div><div class="bar" id="st"><i></i></div></div>
+
+  <div id="place"><div class="pn"></div><div class="ps"></div></div>
+  <div id="prompt"><div class="pl"></div><div class="psub"></div></div>
+
+  <div id="bossbar"><div class="name"></div><div class="sub"></div>
+    <div class="bar" id="bb"><u></u><i></i></div></div>
+
   <div id="center"><div class="big"></div><div class="sub"></div></div>
   <div id="deaths"></div>
+  <button id="resetBtn">reset progress</button>
+
+  <div id="lockdot"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 1v3M8 12v3M1 8h3M12 8h3" stroke="#e8e4dc" stroke-width="1.5"/><circle cx="8" cy="8" r="2.2" fill="#e8e4dc"/></svg></div>
+
   <div id="hint">
-    <b>WASD</b> move &nbsp; <b>Shift</b> sprint<br>
-    <b>Space</b> roll &nbsp; <b>Tab / MMB</b> lock-on<br>
-    <b>LMB</b> light &nbsp; <b>RMB hold</b> block &nbsp; <b>RMB tap</b> parry<br>
-    <b>Q</b> heavy &nbsp; <b>1 2 3</b> weapon &nbsp; <b>R</b> retry
+    <b>WASD</b> move &nbsp; <b>Shift</b> sprint &nbsp; <b>Space</b> roll<br>
+    <b>LMB</b> light &nbsp; <b>Q</b> heavy &nbsp; <b>RMB</b> hold block / tap parry<br>
+    <b>Tab</b> lock-on &nbsp; <b>1 2 3</b> weapon &nbsp; <b>R</b> retry
   </div>
+
+  <div id="touchui">
+    <div id="stickzone"></div>
+    <div id="stick"><div id="knob"></div></div>
+    <div id="pad">
+      <div class="btn" id="bLight">Atk</div>
+      <div class="btn" id="bHeavy">Hvy</div>
+      <div class="btn" id="bRoll">Roll</div>
+      <div class="btn" id="bGuard">Grd</div>
+      <div class="btn" id="bLock">Lock</div>
+    </div>
+  </div>
+
   <div id="flash"></div>
 </div>
+
+<div id="rotate"><div class="ic">📱</div><div class="t">Rotate</div>
+  <div class="s">Frogsouls plays in landscape</div></div>
+
+<div id="boot"><div class="t">Frogsouls</div><div class="s">waking the lily&hellip;</div></div>
+
 <script type="module" src="/src/main.js"></script>
 </body>
 </html>

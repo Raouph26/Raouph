@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { buildActor } from './actor.js';
+import { ARCHETYPES } from './content.js';
 
 const _d = new THREE.Vector3(), _p = new THREE.Vector3();
 
@@ -37,19 +38,26 @@ const MOVES = {
 };
 
 export class Boss {
-  constructor(scene, fx, opts = {}) {
+  constructor(scene, fx, def = {}) {
     this.fx = fx;
-    this.name = opts.name ?? 'THE FINANCIER';
-    this.maxHp = opts.hp ?? 900;
+    this.def = def;
+    const A = ARCHETYPES[def.archetype] ?? ARCHETYPES.duelist;
+    this.arch = A;
+    this.name = def.name ?? 'THE FINANCIER';
+    this.epithet = def.epithet ?? '';
+    this.maxHp = def.hp ?? 900;
     this.hp = this.maxHp;
-    this.scale = opts.scale ?? 1.85;
+    this.scale = def.scale ?? A.scale;
+    this.walkSpeed = A.speed;
+    this.cooldowns = A.cd;
+    this.pool = A.moves;
 
     this.obj = buildActor({ scale: this.scale, skin: 0x6a5f4e, cloth: 0x1d1a17, accent: 0xb8933f });
     scene.add(this.obj);
     this.rig = this.obj.userData.rig;
 
     this.position = this.obj.position;
-    this.position.set(0, 0, -9);
+    this.position.set(0, 0, -10);
     this.velocity = new THREE.Vector3();
     this.facing = Math.PI;
 
@@ -57,7 +65,7 @@ export class Boss {
     this.capsuleHeight = 2.0 * this.scale;
     this.lockHeight = 1.9 * this.scale;
 
-    this.maxPoise = 110;
+    this.maxPoise = A.poise;
     this.poise = this.maxPoise;
     this.poiseRegen = 22;
 
@@ -104,12 +112,20 @@ export class Boss {
   _flinch() { this.state = 'flinch'; this.t = 0; this.velocity.set(0, 0, 0); }
 
   _choose(dist) {
+    // weight this archetype's own moves by how well they fit the current gap
+    const FIT = {
+      slam:        d => d < 4.6 ? 3 : 1,
+      doubleSwipe: d => d < 4.2 ? 3 : 0,
+      sweep:       d => d < 5.0 ? 3 : 0,
+      lunge:       d => d > 3.0 ? 4 : 1,
+      stomp:       d => (this.phase >= 2 && d < 6.5) ? 3 : 0,
+    };
     const pool = [];
-    const w = (m, n) => { for (let i = 0; i < n; i++) pool.push(m); };
-    if (dist < 4.2) { w('slam', 3); w('doubleSwipe', 3); w('sweep', 2); }
-    if (dist >= 3.2 && dist < 9) { w('lunge', this.phase >= 2 ? 4 : 3); w('slam', 1); }
-    if (dist < 6 && this.phase >= 2) w('stomp', 2);
-    if (!pool.length) w('lunge', 1);
+    for (const m of this.pool) {
+      const n = FIT[m] ? FIT[m](dist) : 1;
+      for (let i = 0; i < n; i++) pool.push(m);
+    }
+    if (!pool.length) return this.pool[0] ?? 'lunge';
     return pool[(Math.random() * pool.length) | 0];
   }
 
@@ -137,13 +153,13 @@ export class Boss {
         if (!player.alive) { this.velocity.multiplyScalar(Math.exp(-8 * dt)); break; }
         if (dist > this.aggroRange) { this.velocity.set(0, 0, 0); break; }
 
-        const speed = this.phase >= 2 ? 3.4 : 2.6;
+        const speed = this.walkSpeed * (this.phase >= 2 ? 1.22 : 1);
         if (dist > 3.0) this.velocity.copy(_d).multiplyScalar(speed);
         else this.velocity.multiplyScalar(Math.exp(-9 * dt));
 
         // commit to an attack when the cooldown has run out
         this._cd = (this._cd ?? 0.9) - dt;
-        if (this._cd <= 0 && dist < 9.5) this._begin(this._choose(dist));
+        if (this._cd <= 0 && dist < 10.5) this._begin(this._choose(dist));
         break;
       }
       case 'attack': {
@@ -162,7 +178,7 @@ export class Boss {
           this.velocity.multiplyScalar(Math.exp(-6 * dt));
           if (this.t >= m.windup + m.active + m.recovery) {
             if (m.followUp && Math.random() < 0.72) this._begin(m.followUp);
-            else { this.state = 'idle'; this.t = 0; this._cd = this.phase >= 3 ? 0.30 : this.phase >= 2 ? 0.55 : 0.95; }
+            else { this.state = 'idle'; this.t = 0; this._cd = this.cooldowns[Math.min(this.phase, 3) - 1]; }
           }
         }
         break;

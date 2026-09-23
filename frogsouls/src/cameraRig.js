@@ -15,6 +15,8 @@ export class CameraRig {
     this.pos = new THREE.Vector3();
     this.look = new THREE.Vector3();
     this.shake = 0;
+    this.distScale = 1;
+    this.heightScale = 1;
     this._t = 0;
     this._initialised = false;
   }
@@ -78,10 +80,11 @@ export class CameraRig {
       this.look.lerp(lookAt, 1 - Math.exp(-C.lockLerp * dt));
     } else {
       const cp = Math.cos(this.pitch);
+      const D = C.distance * this.distScale;
       desired.set(
-        focus.x + Math.sin(this.yaw) * C.distance * cp,
-        focus.y + C.height + Math.sin(this.pitch) * C.distance,
-        focus.z + Math.cos(this.yaw) * C.distance * cp,
+        focus.x + Math.sin(this.yaw) * D * cp,
+        focus.y + C.height * this.heightScale + Math.sin(this.pitch) * D,
+        focus.z + Math.cos(this.yaw) * D * cp,
       );
       this.pos.lerp(desired, 1 - Math.exp(-C.followLerp * dt));
       this.look.lerp(focus, 1 - Math.exp(-C.followLerp * dt));

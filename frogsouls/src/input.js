@@ -5,6 +5,7 @@ const BUFFER = 0.24;
 
 export class Input {
   constructor(canvas) {
+    this.touch = null;          // set by Touch once it attaches
     this.keys = new Set();
     this.mouse = { dx: 0, dy: 0, left: false, right: false };
     this._buf = new Map();      // action -> time remaining
@@ -58,11 +59,15 @@ export class Input {
   clear() { this._buf.clear(); }
 
   down(code) { return this.keys.has(code); }
-  get blocking() { return this.mouse.right && this._rightDownAt > 0 &&
-                          performance.now() - this._rightDownAt >= 190; }
+  get blocking() {
+    if (this.touch?.blocking) return true;
+    return this.mouse.right && this._rightDownAt > 0 &&
+           performance.now() - this._rightDownAt >= 190;
+  }
 
   /** Raw WASD as a camera-relative 2D vector. */
   moveAxis(out) {
+    if (this.touch?.active && this.touch.axis(out)) return true;
     let x = 0, z = 0;
     if (this.down('KeyW') || this.down('ArrowUp'))    z -= 1;
     if (this.down('KeyS') || this.down('ArrowDown'))  z += 1;
@@ -73,7 +78,9 @@ export class Input {
     return m > 0;
   }
 
-  get sprinting() { return this.down('ShiftLeft') || this.down('ShiftRight'); }
+  get sprinting() {
+    return this.down('ShiftLeft') || this.down('ShiftRight') || !!this.touch?.sprinting;
+  }
 
   endFrame(dt) {
     this.mouse.dx = 0; this.mouse.dy = 0;
