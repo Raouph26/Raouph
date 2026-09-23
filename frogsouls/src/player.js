@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { PLAYER as P, WEAPONS, FEEL } from './config.js';
 import { buildActor, buildWeaponMesh } from './actor.js';
+import { poseArm, poseLeg, walkCycle, damp, ease, arc, clamp01 } from './anim.js';
 
 const _f = new THREE.Vector3(), _r = new THREE.Vector3(), _d = new THREE.Vector3();
 const _tip = new THREE.Vector3(), _prevTip = new THREE.Vector3();
@@ -8,7 +9,7 @@ const _tip = new THREE.Vector3(), _prevTip = new THREE.Vector3();
 export class Player {
   constructor(scene, fx) {
     this.fx = fx;
-    this.obj = buildActor({ scale: 1, skin: 0x6d8f4e, cloth: 0x2a2d28, accent: 0x8fae4b });
+    this.obj = buildActor({ scale: 1, skin: 0x6d8f4e, cloth: 0x23261f, accent: 0x8fae4b, build: 'normal' });
     scene.add(this.obj);
     this.rig = this.obj.userData.rig;
 
@@ -308,82 +309,176 @@ export class Player {
     this.wantRetry = false;
   }
 
-  // ── procedural animation (placeholder rig only) ────────────────────────────
+  // ── procedural animation ──────────────────────────────────────────────────
+  // Rewritten against the two-bone rig: knees and elbows actually bend, the
+  // torso leads every swing, and the roll is a real forward tuck.
   _animate(dt) {
     const r = this.rig, A = this._anim;
     const speed = Math.hypot(this.velocity.x, this.velocity.z);
-    A.step += dt * (2.2 + speed * 1.55);
+    const stride = clamp01(speed / P.sprintSpeed);
+    A.step += dt * (3.1 + speed * 2.15);
 
-    const stride = Math.min(speed / P.sprintSpeed, 1);
-    const sw = Math.sin(A.step * 2.4) * stride * 0.85;
+    // defaults every state can override
+    let spineX = 0, spineY = 0, spineZ = 0, headX = 0, pelvisY = 0, bodyX = 0, bodyY = 0;
+    let armR = null, armL = null;
+    const RATE = 20;
 
-    r.legL.rotation.x = sw; r.legR.rotation.x = -sw;
-    r.armL.rotation.x = -sw * 0.55;
-    r.pelvis.position.y = 0.92 + Math.abs(Math.sin(A.step * 2.4)) * stride * 0.055;
-
-    let armR = -sw * 0.55, lean = 0, roll = 0, bodyY = 0;
+    const grounded = !['roll', 'backstep', 'dead'].includes(this.state);
+    if (grounded) {
+      const c = walkCycle(r, A.step, stride, dt, 22);
+      pelvisY = c.bob; spineZ = c.roll; bodyX = c.lean * .6; headX = -c.lean * .4;
+      armL = { sx: c.armSwing, elbow: c.elbow, sz: .10 };
+      // the weapon arm hangs heavier and swings less — it is carrying something
+      armR = { sx: c.armSwingB * .55 - .12, elbow: c.elbow * .6 - .30,
+               sz: -.20, wrist: -.18 };
+    }
 
     switch (this.state) {
       case 'roll': {
-        const k = Math.min(1, this.t / P.roll.duration);
-        roll = k * Math.PI * 2;
-        bodyY = -Math.sin(k * Math.PI) * 0.34;
-        r.legL.rotation.x = r.legR.rotation.x = -1.5 * Math.sin(k * Math.PI);
-        armR = -2.2 * Math.sin(k * Math.PI);
+        const k = clamp01(this.t / P.roll.duration);
+        bodyX = k * Math.PI * 2;                       // forward tuck, not a barrel roll
+        bodyY = -arc(k) * .40;
+        const tuck = arc(k);
+        poseLeg(r.legL, { hip: 1.9 * tuck, knee: -2.3 * tuck }, 26, dt);
+        poseLeg(r.legR, { hip: 1.7 * tuck, knee: -2.2 * tuck }, 26, dt);
+        armL = { sx: -.5 - 1.5 * tuck, elbow: -2.1 * tuck };
+        armR = { sx: -.4 - 1.3 * tuck, elbow: -1.9 * tuck };
+        spineX = .9 * tuck;
         break;
       }
-      case 'backstep': lean = -0.4 * Math.sin(Math.min(1, this.t / P.backstep.duration) * Math.PI); break;
+      case 'backstep': {
+        const k = clamp01(this.t / P.backstep.duration);
+        const hop = arc(k);
+        bodyY = hop * .18; bodyX = -.34 * hop;
+        poseLeg(r.legL, { hip: -.7 * hop, knee: -1.5 * hop }, 26, dt);
+        poseLeg(r.legR, { hip: -.5 * hop, knee: -1.3 * hop }, 26, dt);
+        armL = { sx: .5 * hop, elbow: -.7 }; armR = { sx: .3 * hop, elbow: -.9, sz: -.2 };
+        spineX = -.25 * hop;
+        break;
+      }
       case 'light': case 'heavy': {
         const a = this.weapon[this._attackKind];
         const total = a.startup + a.active + a.recovery;
-        const k = Math.min(1, this.t / total);
-        const wind = a.startup / total;
-        if (k < wind) {
-          const w = k / wind;
-          armR = -1.1 - w * 1.5;               // big readable wind-up
-          lean = -0.28 * w;
+        const windK = clamp01(this.t / a.startup);
+        const swingK = clamp01((this.t - a.startup) / (a.active + a.recovery * .55));
+        const heavy = this._attackKind === 'heavy';
+        const side = this.comboStep % 2 === 1 ? -1 : 1;   // alternate the swing side
+
+        if (this.t < a.startup) {
+          const w = ease(windK);
+          // load: weapon goes back and up, torso winds against it
+          armR = { sx: -.4 - w * (heavy ? 2.55 : 1.85),
+                   sz: -.25 - w * side * .55,
+                   elbow: -(.4 + w * (heavy ? 1.5 : 1.0)),
+                   wrist: -w * .5 };
+          armL = { sx: -.2 + w * .5, elbow: -(.5 + w * .8), sz: w * .35 * side };
+          spineY = w * .75 * side;
+          spineX = -(heavy ? .34 : .20) * w;
+          bodyX = -.10 * w;
+          poseLeg(r.legL, { hip: -.18 * w, knee: -.30 - .25 * w }, 18, dt);
+          poseLeg(r.legR, { hip: .22 * w, knee: -.24 }, 18, dt);
         } else {
-          const s = (k - wind) / (1 - wind);
-          armR = -2.6 + Math.min(1, s * 4.4) * 4.0;
-          lean = -0.28 + Math.min(1, s * 3.6) * 0.62;
+          const sK = ease(clamp01(swingK * 1.35));
+          // release: the torso unwinds first, the arm follows through past it
+          armR = { sx: -.4 - (heavy ? 2.55 : 1.85) + sK * (heavy ? 4.1 : 3.3),
+                   sz: -.25 - side * .55 + sK * side * 1.05,
+                   elbow: -(.4 + (heavy ? 1.5 : 1.0)) + sK * (heavy ? 1.7 : 1.25),
+                   wrist: -.5 + sK * .85 };
+          armL = { sx: .3 - sK * .55, elbow: -(1.3) + sK * .5, sz: .35 * side - sK * .6 * side };
+          spineY = .75 * side - sK * 1.5 * side;
+          spineX = -(heavy ? .34 : .20) + sK * (heavy ? .72 : .5);
+          bodyX = -.10 + sK * .26;
+          poseLeg(r.legL, { hip: -.18 + sK * .55, knee: -.30 - .3 * (1 - sK) }, 18, dt);
+          poseLeg(r.legR, { hip: .22 - sK * .45, knee: -.24 - sK * .35 }, 18, dt);
         }
-        if (this.comboStep % 2 === 1) r.chest.rotation.y = Math.sin(k * Math.PI) * 0.5;
-        else r.chest.rotation.y = -Math.sin(k * Math.PI) * 0.35;
+        headX = spineX * .5;
         break;
       }
       case 'parry': {
-        const k = Math.min(1, this.t / (P.parry.startup + P.parry.window + P.parry.recovery));
-        armR = -0.6 - Math.sin(Math.min(1, k * 3.2) * Math.PI) * 1.9;
-        r.chest.rotation.y = -Math.sin(Math.min(1, k * 3) * Math.PI) * 0.6;
+        const total = P.parry.startup + P.parry.window + P.parry.recovery;
+        const k = clamp01(this.t / total);
+        const flick = arc(clamp01(k * 3.0));
+        armR = { sx: -.55 - flick * 1.35, sz: -.9 + flick * 1.5,
+                 elbow: -(.8 + flick * .7), wrist: flick * 1.1 };
+        armL = { sx: -.4, elbow: -1.1, sz: .3 };
+        spineY = -flick * .75;
+        spineX = .1;
         break;
       }
-      case 'block':
-        armR = -1.35; r.armL.rotation.x = -1.15; lean = 0.12;
-        r.chest.rotation.y = 0.24;
+      case 'block': {
+        armR = { sx: -1.05, sz: -.62, elbow: -1.35, wrist: -.3 };
+        armL = { sx: -1.25, sz: .55, elbow: -1.55 };
+        spineY = .30; spineX = .16; bodyX = .10; headX = .1;
+        poseLeg(r.legL, { hip: -.20, knee: -.45 }, 16, dt);
+        poseLeg(r.legR, { hip: .26, knee: -.40 }, 16, dt);
         break;
+      }
       case 'riposte': {
-        const k = Math.min(1, this.t / P.riposte.duration);
-        armR = -2.4 + Math.min(1, k * 2.4) * 3.6;
-        lean = 0.4 * Math.sin(k * Math.PI);
+        const k = clamp01(this.t / P.riposte.duration);
+        const thrust = ease(clamp01(k * 2.2));
+        const settle = ease(clamp01((k - .55) / .45));
+        armR = { sx: -2.3 + thrust * 3.5 - settle * .7, elbow: -1.6 + thrust * 1.5,
+                 sz: -.3, wrist: -.4 + thrust * .8 };
+        armL = { sx: -.9 + thrust * .6, elbow: -1.2 };
+        spineX = -.3 + thrust * .85 - settle * .4;
+        bodyX = thrust * .3 - settle * .25;
+        poseLeg(r.legL, { hip: -.55 * thrust, knee: -.8 * thrust }, 18, dt);
+        poseLeg(r.legR, { hip: .5 * thrust, knee: -.3 }, 18, dt);
+        headX = .35 * thrust;
         break;
       }
-      case 'hurt':      lean = -0.5 * (1 - this.t / P.hurtStun); break;
-      case 'guardbreak':lean = -0.75; armR = 0.9; r.armL.rotation.x = 0.7; break;
+      case 'hurt': {
+        const k = clamp01(this.t / P.hurtStun);
+        const j = arc(k);
+        spineX = -.55 * j; bodyX = -.28 * j; headX = -.4 * j;
+        armR = { sx: .55 * j, elbow: -.5, sz: -.5 * j };
+        armL = { sx: .45 * j, elbow: -.45, sz: .5 * j };
+        break;
+      }
+      case 'guardbreak': {
+        const k = clamp01(this.t / P.block.guardBreakStun);
+        const open = ease(clamp01(k * 3)) * (1 - ease(clamp01((k - .7) / .3)));
+        spineX = -.78 * open; headX = -.6 * open;
+        armR = { sx: 1.1 * open, sz: -.9 * open, elbow: -.25 };
+        armL = { sx: .95 * open, sz: .9 * open, elbow: -.25 };
+        poseLeg(r.legL, { hip: -.4 * open, knee: -.55 }, 14, dt);
+        poseLeg(r.legR, { hip: .3 * open, knee: -.5 }, 14, dt);
+        break;
+      }
       case 'dead': {
-        const k = Math.min(1, this.t / 0.9);
-        r.body.rotation.x = k * -1.5; r.body.position.y = -k * 0.42;
-        this.rig.chest.rotation.y = 0;
+        const k = ease(clamp01(this.t / 1.1));
+        r.body.rotation.x = damp(r.body.rotation.x, -1.48, 8, dt);
+        r.body.position.y = damp(r.body.position.y, -.46, 8, dt);
+        r.body.rotation.z = damp(r.body.rotation.z, .22, 8, dt);
+        poseLeg(r.legL, { hip: -.5, knee: -.9 }, 7, dt);
+        poseLeg(r.legR, { hip: -.25, knee: -.55 }, 7, dt);
+        poseArm(r.armL, { sx: .7, elbow: -.35, sz: .6 }, 7, dt);
+        poseArm(r.armR, { sx: .55, elbow: -.4, sz: -.5 }, 7, dt);
+        r.spine.rotation.x = damp(r.spine.rotation.x, .3, 7, dt);
+        r.head.rotation.x = damp(r.head.rotation.x, .45, 7, dt);
         return;
+      }
+      default: {   // idle / move — a slow breath so the frame is never dead
+        const br = Math.sin(this.t * 1.7) * .035 * (1 - stride);
+        spineX = .04 + br; headX = -br * .8;
+        break;
       }
     }
 
-    r.armR.rotation.x = armR;
-    r.body.rotation.x = lean;
-    r.body.rotation.z = roll;
-    r.body.position.y = bodyY;
-    if (!['light', 'heavy', 'parry', 'block'].includes(this.state))
-      r.chest.rotation.y *= Math.exp(-9 * dt);
-    r.head.rotation.x = -lean * 0.6;
+    if (armR) poseArm(r.armR, armR, RATE, dt);
+    if (armL) poseArm(r.armL, armL, RATE, dt);
+
+    r.pelvis.position.y = damp(r.pelvis.position.y, 0.92 + pelvisY, 18, dt);
+    r.spine.rotation.x = damp(r.spine.rotation.x, spineX, RATE, dt);
+    r.spine.rotation.y = damp(r.spine.rotation.y, spineY, RATE, dt);
+    r.spine.rotation.z = damp(r.spine.rotation.z, spineZ, RATE, dt);
+    r.chest.rotation.y = damp(r.chest.rotation.y, spineY * .45, RATE, dt);
+    r.head.rotation.x  = damp(r.head.rotation.x, headX, 14, dt);
+    r.head.rotation.y  = damp(r.head.rotation.y, -spineY * .55, 14, dt);
+    const snap = this.state === 'roll' || this.state === 'backstep';
+    r.body.rotation.x  = snap ? bodyX : damp(r.body.rotation.x, bodyX, 16, dt);
+    r.body.rotation.z  = damp(r.body.rotation.z, 0, 16, dt);
+    r.body.position.y  = snap ? bodyY : damp(r.body.position.y, bodyY, 16, dt);
   }
 }
 

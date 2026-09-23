@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { buildActor } from './actor.js';
+import { poseArm, poseLeg, walkCycle, damp, ease, arc, clamp01 } from './anim.js';
 import { ARCHETYPES } from './content.js';
 
 const _d = new THREE.Vector3(), _p = new THREE.Vector3();
@@ -52,7 +53,17 @@ export class Boss {
     this.cooldowns = A.cd;
     this.pool = A.moves;
 
-    this.obj = buildActor({ scale: this.scale, skin: 0x6a5f4e, cloth: 0x1d1a17, accent: 0xb8933f });
+    const SKIN = { brute:0x6a5f4e, duelist:0x7a6a55, hound:0x5f5344,
+                   sweeper:0x6d6152, sovereign:0x7d6c4f };
+    const BUILD = { brute:'heavy', duelist:'normal', hound:'lean',
+                    sweeper:'long', sovereign:'crowned' };
+    this.obj = buildActor({
+      scale: this.scale,
+      skin: SKIN[def.archetype] ?? 0x6a5f4e,
+      cloth: 0x1d1a17,
+      accent: def.isWorldBoss ? 0xd9c07a : 0xb8933f,
+      build: BUILD[def.archetype] ?? 'normal',
+    });
     scene.add(this.obj);
     this.rig = this.obj.userData.rig;
 
@@ -225,83 +236,140 @@ export class Boss {
     if (res === 'parried') { this._hitPlayer = true; }
   }
 
-  // Telegraph colour: the boss glows in the wind-up so attacks are readable.
+  // Telegraph: each move owns a distinct wind-up pose, and the body glows
+  // while it loads. Two moves must never start from the same silhouette.
   _animate(dt, player) {
     const r = this.rig;
-    this._step += dt * (2 + Math.hypot(this.velocity.x, this.velocity.z) * 1.3);
     const speed = Math.hypot(this.velocity.x, this.velocity.z);
-    const stride = Math.min(speed / 3.4, 1);
-    const sw = Math.sin(this._step * 2.1) * stride * 0.8;
-    r.legL.rotation.x = sw; r.legR.rotation.x = -sw;
-    r.armL.rotation.x = -sw * 0.5; r.armR.rotation.x = -sw * 0.5;
-    r.pelvis.position.y = 0.92 + Math.abs(Math.sin(this._step * 2.1)) * stride * 0.05;
+    const stride = clamp01(speed / Math.max(this.walkSpeed, .1));
+    this._step += dt * (2.4 + speed * 1.7);
 
-    let glow = 0;
+    let spineX = 0, spineY = 0, headX = 0, bodyX = 0, bodyY = 0, pelvisY = 0, glow = 0;
+    let armR = null, armL = null;
+    const RATE = 16;
+
+    if (!['dead', 'stagger'].includes(this.state)) {
+      const c = walkCycle(r, this._step, stride, dt, 18);
+      pelvisY = c.bob; bodyX = c.lean * .5;
+      armL = { sx: c.armSwing, elbow: c.elbow - .3 };
+      armR = { sx: c.armSwingB, elbow: c.elbow - .3 };
+    }
 
     if (this.state === 'attack') {
       const m = this.move, k = this.t;
-      if (k < m.windup) {
-        const w = k / m.windup;
-        glow = w * w;
-        switch (m.tell) {
-          case 'rear':   r.armR.rotation.x = -0.5 - w * 2.6; r.body.rotation.x = -0.35 * w; break;
-          case 'wind':   r.armR.rotation.x = -0.4 - w * 2.0; r.chest.rotation.y = -1.0 * w; break;
-          case 'crouch': r.body.position.y = -0.34 * w; r.legL.rotation.x = r.legR.rotation.x = 0.85 * w;
-                         r.body.rotation.x = 0.4 * w; break;
-          case 'spin':   r.chest.rotation.y = -1.6 * w; r.armR.rotation.x = -1.5;
-                         r.armL.rotation.x = -1.5; break;
-          case 'rise':   r.body.position.y = 0.6 * w; r.armR.rotation.x = -2.8 * w;
-                         r.armL.rotation.x = -2.8 * w; break;
-        }
-      } else {
-        const s = Math.min(1, (k - m.windup) / Math.max(m.active + m.recovery * 0.35, .001));
-        glow = Math.max(0, 1 - s * 3);
-        switch (m.tell) {
-          case 'rear':   r.armR.rotation.x = -3.1 + s * 4.3; r.body.rotation.x = -0.35 + s * 0.8; break;
-          case 'wind':   r.armR.rotation.x = -2.4 + s * 3.6; r.chest.rotation.y = -1.0 + s * 2.0; break;
-          case 'crouch': r.body.position.y = -0.34 + s * 0.34; r.body.rotation.x = 0.4 - s * 0.55;
-                         r.legL.rotation.x = 0.85 - s * 1.5; r.legR.rotation.x = 0.85 - s * 1.2; break;
-          case 'spin':   r.chest.rotation.y = -1.6 + s * 5.2; break;
-          case 'rise':   r.body.position.y = 0.6 - Math.min(1, s * 5) * 0.82;
-                         r.armR.rotation.x = -2.8 + Math.min(1, s * 5) * 3.4;
-                         r.armL.rotation.x = -2.8 + Math.min(1, s * 5) * 3.4; break;
-        }
+      const loading = k < m.windup;
+      const w = loading ? ease(clamp01(k / m.windup)) : 1;
+      const s = loading ? 0
+        : ease(clamp01((k - m.windup) / Math.max(m.active + m.recovery * .4, .001)));
+      glow = loading ? w * w : Math.max(0, 1 - s * 3);
+
+      switch (m.tell) {
+        case 'rear':    // overhead slam — both arms up and back, body arched
+          armR = { sx: -.5 - w * 2.75 + s * 4.2, sz: -.2, elbow: -(.3 + w * 1.25) + s * 1.5 };
+          armL = { sx: -.4 - w * 2.35 + s * 3.7, sz: .2, elbow: -(.3 + w * 1.1) + s * 1.3 };
+          spineX = -.42 * w + s * 1.0; bodyX = -.22 * w + s * .5;
+          headX = -.3 * w + s * .5;
+          poseLeg(r.legL, { hip: -.3 * w + s * .6, knee: -.35 - .3 * w }, 16, dt);
+          poseLeg(r.legR, { hip: .25 * w - s * .4, knee: -.3 }, 16, dt);
+          break;
+        case 'wind':    // side swipe — heavy torso twist, one arm cocked wide
+          armR = { sx: -.35 - w * 1.5 + s * 2.6, sz: -.5 - w * .95 + s * 1.9,
+                   elbow: -(.4 + w * .85) + s * 1.1 };
+          armL = { sx: -.2 + w * .45, elbow: -.8, sz: .35 * w };
+          spineY = -1.15 * w + s * 2.3;
+          spineX = -.12 * w + s * .3;
+          headX = .1;
+          break;
+        case 'crouch':  // lunge — coils low, then fires flat and long
+          bodyY = -.42 * w + s * .5; spineX = .55 * w - s * .85;
+          armR = { sx: -.3 - w * .9 + s * 2.9, elbow: -(1.4 - w * .3) + s * 1.5, sz: -.3 };
+          armL = { sx: -.25 - w * .8 + s * 2.5, elbow: -1.3 + s * 1.3, sz: .3 };
+          poseLeg(r.legL, { hip: 1.0 * w - s * 1.5, knee: -1.6 * w + s * 1.4 }, 20, dt);
+          poseLeg(r.legR, { hip: .8 * w - s * 1.2, knee: -1.4 * w + s * 1.2 }, 20, dt);
+          headX = -.35 * w + s * .5;
+          break;
+        case 'spin':    // 360 sweep — arms out flat, whole body rotates
+          armR = { sx: -1.45, sz: -1.25 * w, elbow: -.25 };
+          armL = { sx: -1.45, sz: 1.25 * w, elbow: -.25 };
+          spineY = -1.8 * w + s * 6.4;
+          bodyX = .12; pelvisY = -.08 * w;
+          poseLeg(r.legL, { hip: -.3, knee: -.5 }, 14, dt);
+          poseLeg(r.legR, { hip: .3, knee: -.45 }, 14, dt);
+          break;
+        case 'rise':    // unblockable stomp — rears up tall, then drives down
+          bodyY = .72 * w - clamp01(s * 4) * .95;
+          armR = { sx: -3.0 * w + clamp01(s * 4) * 3.5, sz: -.45, elbow: -.5 * w };
+          armL = { sx: -3.0 * w + clamp01(s * 4) * 3.5, sz: .45, elbow: -.5 * w };
+          spineX = -.5 * w + clamp01(s * 4) * 1.15;
+          headX = -.55 * w + clamp01(s * 4) * .9;
+          poseLeg(r.legL, { hip: -.55 * w + clamp01(s * 4) * 1.0, knee: -.2 - .5 * w }, 18, dt);
+          poseLeg(r.legR, { hip: -.5 * w + clamp01(s * 4) * .9, knee: -.2 - .45 * w }, 18, dt);
+          break;
       }
+
     } else if (this.state === 'stagger') {
-      const k = Math.min(1, this.t / 2.4);
-      r.body.rotation.x = 0.85; r.body.position.y = -0.4;
-      r.armL.rotation.x = 0.5; r.armR.rotation.x = 0.5;
-      r.head.rotation.x = 0.5;
-      glow = 0;
+      // the riposte window: unmistakably helpless, down on one knee
+      const k = clamp01(this.t / 2.4);
+      const up = ease(clamp01((k - .82) / .18));
+      const down = 1 - up;
+      spineX = .95 * down; bodyX = .38 * down; headX = .55 * down; bodyY = -.46 * down;
+      armR = { sx: .85 * down, elbow: -.3, sz: -.55 * down };
+      armL = { sx: .7 * down, elbow: -.35, sz: .55 * down };
+      poseLeg(r.legL, { hip: 1.25 * down, knee: -1.85 * down }, 12, dt);
+      poseLeg(r.legR, { hip: -.4 * down, knee: -.6 * down }, 12, dt);
+
     } else if (this.state === 'flinch') {
-      const k = this.t / 0.42;
-      r.body.rotation.x = -0.45 * (1 - k);
-      r.chest.rotation.y = 0.3 * (1 - k);
+      const j2 = arc(clamp01(this.t / 0.42));
+      spineX = -.5 * j2; headX = -.45 * j2; spineY = .35 * j2;
+      armR = { sx: .5 * j2, elbow: -.4 }; armL = { sx: .4 * j2, elbow: -.4 };
+
     } else if (this.state === 'roar') {
-      const k = Math.min(1, this.t / 1.15);
-      r.body.rotation.x = -0.55 * Math.sin(k * Math.PI);
-      r.armL.rotation.x = -2.4 * Math.sin(k * Math.PI);
-      r.armR.rotation.x = -2.4 * Math.sin(k * Math.PI);
-      r.head.rotation.x = -0.8 * Math.sin(k * Math.PI);
-      glow = Math.sin(k * Math.PI);
+      const k = clamp01(this.t / 1.15), a2 = arc(k);
+      spineX = -.62 * a2; headX = -.85 * a2;
+      armR = { sx: -2.5 * a2, sz: -.9 * a2, elbow: -.6 * a2 };
+      armL = { sx: -2.5 * a2, sz: .9 * a2, elbow: -.6 * a2 };
+      bodyY = a2 * .16; glow = a2;
+
     } else if (this.state === 'dead') {
-      const k = Math.min(1, this.t / 1.6);
-      r.body.rotation.x = k * -1.45;
-      r.body.position.y = -k * 0.5;
-      r.armL.rotation.x = r.armR.rotation.x = k * 0.6;
+      r.body.rotation.x = damp(r.body.rotation.x, -1.42, 5, dt);
+      r.body.position.y = damp(r.body.position.y, -.55, 5, dt);
+      r.body.rotation.z = damp(r.body.rotation.z, -.26, 5, dt);
+      poseLeg(r.legL, { hip: -.45, knee: -1.0 }, 5, dt);
+      poseLeg(r.legR, { hip: -.2, knee: -.6 }, 5, dt);
+      poseArm(r.armL, { sx: .8, elbow: -.3, sz: .7 }, 5, dt);
+      poseArm(r.armR, { sx: .65, elbow: -.35, sz: -.6 }, 5, dt);
+      r.spine.rotation.x = damp(r.spine.rotation.x, .35, 5, dt);
+      r.head.rotation.x = damp(r.head.rotation.x, .5, 5, dt);
+      this._paint(0);
+      return;
+
     } else {
-      r.body.rotation.x *= Math.exp(-8 * dt);
-      r.body.position.y *= Math.exp(-8 * dt);
-      r.chest.rotation.y *= Math.exp(-8 * dt);
-      r.head.rotation.x *= Math.exp(-8 * dt);
+      const br = Math.sin(this.t * 1.3) * .05 * (1 - stride);
+      spineX = .05 + br; headX = -br;
     }
 
-    // paint the telegraph
-    const em = this.phase >= 3 ? 0xd1452e : 0xd9a441;
+    if (armR) poseArm(r.armR, armR, RATE, dt);
+    if (armL) poseArm(r.armL, armL, RATE, dt);
+
+    r.pelvis.position.y = damp(r.pelvis.position.y, 0.92 + pelvisY, 15, dt);
+    r.spine.rotation.x = damp(r.spine.rotation.x, spineX, RATE, dt);
+    r.spine.rotation.y = damp(r.spine.rotation.y, spineY, RATE, dt);
+    r.chest.rotation.y = damp(r.chest.rotation.y, spineY * .4, RATE, dt);
+    r.head.rotation.x  = damp(r.head.rotation.x, headX, 12, dt);
+    r.head.rotation.y  = damp(r.head.rotation.y, -spineY * .5, 12, dt);
+    r.body.rotation.x  = damp(r.body.rotation.x, bodyX, 14, dt);
+    r.body.position.y  = damp(r.body.position.y, bodyY, 14, dt);
+
+    this._paint(glow);
+  }
+
+  _paint(glow) {
+    const em = this.phase >= 3 ? 0xd1452e : (this.move?.unblockable ? 0xff5a2a : 0xd9a441);
+    const k = glow * (this.move?.unblockable ? 1.6 : 0.9);
     this.obj.traverse((o) => {
       if (o.isMesh && o.material?.emissive) {
         o.material.emissive.setHex(em);
-        o.material.emissiveIntensity = glow * (this.move?.unblockable ? 1.5 : 0.85);
+        o.material.emissiveIntensity = k;
       }
     });
   }

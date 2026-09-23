@@ -59,7 +59,9 @@ function clearBoss() {
   enemies.length = 0;
 }
 
-function setZoneCamera() { rig.distScale = 2.05; rig.heightScale = 2.5; rig.pitch = 0.46; }
+// Zones are third person like the fights — just a touch further out so the
+// gates read at a glance, never a top-down map view.
+function setZoneCamera() { rig.distScale = 1.18; rig.heightScale = 1.02; rig.pitch = 0.17; }
 function setFightCamera() { rig.distScale = 1; rig.heightScale = 1; }
 
 function enterHub() {
@@ -250,5 +252,5 @@ document.getElementById('resetBtn')?.addEventListener('click', () => {
   Save.reset(); player.deaths = 0; enterHub();
 });
 
-window.__game = { get player(){return player;}, get boss(){return boss;},
+window.__game = { get player(){return player;}, get boss(){return boss;}, get rigCam(){return rig;}, camera,
                   get mode(){return mode;}, enterFight, enterWorld, enterHub, WORLDS, Save };
