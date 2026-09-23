@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body style="margin:0">
+<title>Frogsouls Look Dev</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    color-scheme: dark;
+    --ink:#e7e3da; --ink-dim:#9a948a; --ink-faint:#635e57;
+    --panel:#121316; --panel-2:#1a1c20; --line:#2a2d33;
+    --accent:#d9a441; --accent-dim:#8a6a2c;
+    --display:"Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+    --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;background:#000;color:var(--ink);
+            font-family:var(--mono);overscroll-behavior:none;}
+  #stage{position:fixed;inset:0;}
+  #stage canvas{display:block;width:100%;height:100%;touch-action:none;}
+
+  #boot{position:fixed;inset:0;display:grid;place-content:center;gap:10px;
+        background:#000;z-index:40;text-align:center;transition:opacity .5s;}
+  #boot .t{font-family:var(--display);font-size:26px;letter-spacing:.32em;
+           text-transform:uppercase;color:var(--accent);}
+  #boot .s{font-size:11px;letter-spacing:.2em;color:var(--ink-faint);}
+
+  /* ── title plate ── */
+  #plate{position:fixed;top:0;left:0;padding:14px 18px;
+         padding-top:calc(14px + env(safe-area-inset-top,0px));
+         pointer-events:none;z-index:10;}
+  #plate h1{margin:0;font-family:var(--display);font-weight:600;font-size:19px;
+            letter-spacing:.3em;text-transform:uppercase;color:var(--ink);
+            text-shadow:0 1px 6px #000;}
+  #plate .look{margin-top:3px;font-size:10.5px;letter-spacing:.24em;
+               text-transform:uppercase;color:var(--accent);text-shadow:0 1px 6px #000;}
+  #plate .desc{margin-top:6px;max-width:30ch;font-size:10.5px;line-height:1.6;
+               color:var(--ink-dim);text-shadow:0 1px 6px #000;}
+
+  /* ── control panel ── */
+  #panel{position:fixed;left:0;right:0;bottom:0;z-index:20;
+         background:linear-gradient(to top,rgba(10,11,13,.97) 62%,rgba(10,11,13,.86));
+         border-top:1px solid var(--line);
+         padding:0 16px 16px;
+         padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));
+         backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
+
+  #grip{display:flex;align-items:center;justify-content:center;gap:10px;
+        height:30px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+  #grip span{width:34px;height:3px;border-radius:2px;background:var(--line);}
+  #grip b{font-family:var(--display);font-size:11px;letter-spacing:.24em;
+          text-transform:uppercase;color:var(--ink-faint);font-weight:500;}
+
+  .chips{display:flex;gap:7px;overflow-x:auto;padding:2px 0 12px;
+         scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{flex:0 0 auto;padding:8px 13px;border:1px solid var(--line);
+        background:var(--panel-2);color:var(--ink-dim);
+        font-family:var(--display);font-size:13px;letter-spacing:.18em;
+        text-transform:uppercase;cursor:pointer;transition:.18s;
+        -webkit-tap-highlight-color:transparent;}
+  .chip:hover{color:var(--ink);border-color:#3d424a;}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);
+        color:#141005;font-weight:600;}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  #body{display:grid;gap:13px;
+        grid-template-columns:repeat(auto-fit,minmax(215px,1fr));
+        max-height:42vh;overflow-y:auto;padding-right:2px;}
+  #panel.closed #body,#panel.closed .chips{display:none;}
+  #panel.closed{padding-bottom:calc(6px + env(safe-area-inset-bottom,0px));}
+
+  .ctl label{display:flex;justify-content:space-between;align-items:baseline;
+             font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+             color:var(--ink-dim);margin-bottom:5px;}
+  .ctl label b{color:var(--accent);font-weight:500;font-variant-numeric:tabular-nums;}
+  input[type=range]{width:100%;height:22px;margin:0;background:transparent;
+                    -webkit-appearance:none;appearance:none;cursor:pointer;}
+  input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--line);}
+  input[type=range]::-moz-range-track{height:2px;background:var(--line);}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;
+      margin-top:-6.5px;background:var(--ink);border:none;border-radius:50%;}
+  input[type=range]::-moz-range-thumb{width:15px;height:15px;background:var(--ink);
+      border:none;border-radius:50%;}
+  input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:4px;}
+
+  .toggles{display:flex;flex-wrap:wrap;gap:7px;}
+  .tg{padding:7px 11px;border:1px solid var(--line);background:var(--panel-2);
+      color:var(--ink-faint);font-family:var(--mono);font-size:10px;
+      letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:.18s;
+      -webkit-tap-highlight-color:transparent;}
+  .tg[aria-pressed="true"]{color:var(--accent);border-color:var(--accent-dim);}
+  .tg:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  #out{grid-column:1/-1;border-top:1px solid var(--line);padding-top:11px;}
+  #out .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+  #out .hd span{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);}
+  #copy{padding:6px 12px;border:1px solid var(--accent-dim);background:transparent;
+        color:var(--accent);font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+        text-transform:uppercase;cursor:pointer;}
+  #copy:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  pre{margin:0;padding:11px;background:#0b0c0e;border:1px solid var(--line);
+      font-family:var(--mono);font-size:10.5px;line-height:1.75;color:var(--ink-dim);
+      overflow-x:auto;white-space:pre;}
+  pre b{color:var(--accent);font-weight:500;}
+
+  @media (min-width:880px){
+    #panel{left:auto;top:0;bottom:0;width:390px;border-top:none;
+           border-left:1px solid var(--line);overflow-y:auto;
+           background:linear-gradient(to left,rgba(10,11,13,.97) 72%,rgba(10,11,13,.9));
+           padding:0 20px 24px;}
+    #grip{justify-content:flex-start;height:56px;
+          padding-top:env(safe-area-inset-top,0px);}
+    #grip span{display:none;}
+    #body{max-height:none;grid-template-columns:1fr;}
+    .chips{flex-wrap:wrap;overflow-x:visible;}
+    #panel.closed #body,#panel.closed .chips{display:grid;}
+    #panel.closed .chips{display:flex;}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+
+<div id="stage"></div>
+
+<div id="plate">
+  <h1>Frogsouls</h1>
+  <div class="look" id="lookName">Ashen</div>
+  <div class="desc" id="lookDesc"></div>
+</div>
+
+<div id="panel">
+  <div id="grip" role="button" tabindex="0" aria-expanded="true" aria-controls="body">
+    <span></span><b id="gripLabel">Look dev</b><span></span>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div id="body">
+    <div class="ctl"><label for="fog">Fog density <b id="fogV"></b></label>
+      <input type="range" id="fog" min="0" max="70" step="1"></div>
+    <div class="ctl"><label for="exp">Exposure <b id="expV"></b></label>
+      <input type="range" id="exp" min="30" max="220" step="1"></div>
+    <div class="ctl"><label for="key">Key light <b id="keyV"></b></label>
+      <input type="range" id="key" min="0" max="450" step="1"></div>
+    <div class="ctl"><label for="amb">Ambient fill <b id="ambV"></b></label>
+      <input type="range" id="amb" min="0" max="300" step="1"></div>
+    <div class="ctl"><label for="rim">Rim light <b id="rimV"></b></label>
+      <input type="range" id="rim" min="0" max="400" step="1"></div>
+    <div class="ctl"><label for="sun">Key angle <b id="sunV"></b></label>
+      <input type="range" id="sun" min="0" max="360" step="1"></div>
+    <div class="ctl"><label for="ele">Key height <b id="eleV"></b></label>
+      <input type="range" id="ele" min="4" max="88" step="1"></div>
+    <div class="ctl"><label for="grd">Ground value <b id="grdV"></b></label>
+      <input type="range" id="grd" min="0" max="100" step="1"></div>
+    <div class="ctl" style="grid-column:1/-1">
+      <label>Display</label>
+      <div class="toggles">
+        <button class="tg" id="tOrbit" aria-pressed="true">Auto orbit</button>
+        <button class="tg" id="tGlow" aria-pressed="false">Boss telegraph</button>
+        <button class="tg" id="tGrid" aria-pressed="true">Floor rings</button>
+        <button class="tg" id="tPillar" aria-pressed="true">Pillars</button>
+        <button class="tg" id="tShadow" aria-pressed="true">Shadows</button>
+      </div>
+    </div>
+    <div id="out">
+      <div class="hd"><span>arena.js values</span>
+        <button id="copy">Copy</button></div>
+      <pre id="dump"></pre>
+    </div>
+  </div>
+</div>
+
+<div id="boot"><div class="t">Frogsouls</div><div class="s">loading look dev&hellip;</div></div>
+
+<script type="module">
+import * as THREE from 'three';
+
+// ── Six visual directions. Each one is a complete, committed look, not a tweak. ──
+const LOOKS = [
+  { id:'ashen', name:'Ashen',
+    desc:'Overcast, colourless, fog doing most of the work. Reads as cold and far north. Cheapest to build and the most forgiving of simple models.',
+    fog:22, fogCol:0x14161c, bg:0x14161c, exposure:105, key:250, keyCol:0xffe9c4,
+    amb:115, ambSky:0x5d6b8a, ambGnd:0x2a231b, rim:125, rimCol:0x6f93cc,
+    sun:40, ele:52, ground:20, groundCol:0x33302c, pillarCol:0x3b3733 },
+
+  { id:'sodium', name:'Sodium',
+    desc:'One warm sodium source in a black world. Hard falloff, deep shadow, everything outside the light is gone. Most dramatic; needs strong silhouettes.',
+    fog:14, fogCol:0x0d0a07, bg:0x0d0a07, exposure:130, key:400, keyCol:0xffb257,
+    amb:38, ambSky:0x3a2a15, ambGnd:0x0a0705, rim:55, rimCol:0x4a6aa8,
+    sun:118, ele:26, ground:11, groundCol:0x2e2620, pillarCol:0x241e18 },
+
+  { id:'silhouette', name:'Silhouette',
+    desc:'Backlit. Characters read as near-black cut-outs against bright fog. Animation and pose carry everything — the Shadow of the Colossus trick.',
+    fog:40, fogCol:0xb9c3cf, bg:0xb9c3cf, exposure:95, key:330, keyCol:0xffffff,
+    amb:22, ambSky:0x8fa2b8, ambGnd:0x1a1a1a, rim:0, rimCol:0xffffff,
+    sun:190, ele:13, ground:7, groundCol:0x232528, pillarCol:0x191b1e },
+
+  { id:'verdigris', name:'Verdigris',
+    desc:'Swamp light. Green-teal murk, wet ground, low sun through vapour. The frog belongs here — the palette is the character.',
+    fog:31, fogCol:0x16241f, bg:0x16241f, exposure:118, key:230, keyCol:0xc8e08a,
+    amb:130, ambSky:0x3f7a68, ambGnd:0x151b12, rim:170, rimCol:0x2f8f86,
+    sun:305, ele:22, ground:23, groundCol:0x2c3a2e, pillarCol:0x283530 },
+
+  { id:'ember', name:'Ember',
+    desc:'Something is burning off-screen. Dark ground, red rim on every edge, heat in the fog. Phase-two energy — good for late bosses.',
+    fog:26, fogCol:0x160d0c, bg:0x160d0c, exposure:125, key:150, keyCol:0xff8c4a,
+    amb:52, ambSky:0x6b2a1c, ambGnd:0x120807, rim:300, rimCol:0xd1452e,
+    sun:250, ele:17, ground:14, groundCol:0x2a1f1c, pillarCol:0x221816 },
+
+  { id:'bone', name:'Bone',
+    desc:'Flat pale daylight, almost no shadow, washed and dry. Uncomfortable rather than moody — nowhere for anything to hide.',
+    fog:17, fogCol:0xcac4b2, bg:0xcac4b2, exposure:88, key:170, keyCol:0xfff6e2,
+    amb:210, ambSky:0xbfb9a6, ambGnd:0x8a8474, rim:60, rimCol:0xd8d2c0,
+    sun:75, ele:70, ground:58, groundCol:0x9a9483, pillarCol:0xa8a190 },
+];
+
+// ── renderer ──────────────────────────────────────────────────────────────
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias:true, powerPreference:'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+stage.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 400);
+
+function resize(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+
+// ── the same blocky stand-ins the game runs on ────────────────────────────
+const mkMat = (c) => new THREE.MeshStandardMaterial({ color:c, roughness:.87, metalness:.04, flatShading:true });
+const box = (w,h,d,c) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mkMat(c)); m.castShadow = true; m.receiveShadow = true; return m; };
+function limb(w,h,d,c){ const g = new THREE.Group(); const m = box(w,h,d,c); m.position.y = -h/2; g.add(m); return g; }
+
+function actor({scale=1, skin=0x6d8f4e, cloth=0x2a2d28}){
+  const root = new THREE.Group(), body = new THREE.Group();
+  body.scale.setScalar(scale); root.add(body);
+  const pelvis = new THREE.Group(); pelvis.position.y = .92; body.add(pelvis);
+  const torso = box(.62,.72,.42,cloth); torso.position.y = .36; pelvis.add(torso);
+  const chest = new THREE.Group(); chest.position.y = .72; pelvis.add(chest);
+  const skull = box(.46,.38,.44,skin); skull.position.y = .2; chest.add(skull);
+  for (const s of [-1,1]){
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(.115,10,8),
+      new THREE.MeshStandardMaterial({color:0xe9e5d6,roughness:.5,flatShading:true}));
+    eye.position.set(s*.16,.38,.06); eye.castShadow = true; chest.add(eye);
+    const pup = new THREE.Mesh(new THREE.SphereGeometry(.052,8,6),
+      new THREE.MeshStandardMaterial({color:0x14100d,roughness:.4}));
+    pup.position.set(s*.16,.39,.15); chest.add(pup);
+  }
+  const aL = limb(.19,.62,.19,skin); aL.position.set(-.38,.6,0);
+  const aR = limb(.19,.62,.19,skin); aR.position.set(.38,.6,0);
+  const lL = limb(.22,.86,.24,cloth); lL.position.set(-.17,.02,0);
+  const lR = limb(.22,.86,.24,cloth); lR.position.set(.17,.02,0);
+  pelvis.add(aL,aR,lL,lR);
+  root.userData = {aL,aR,lL,lR,chest,body,pelvis};
+  return root;
+}
+
+const player = actor({});
+player.position.set(1.7, 0, 3.4);
+player.rotation.y = -0.38;
+scene.add(player);
+// weapon
+const blade = box(.22,1.15,.06,0xa8b0b4);
+blade.position.y = -.85; blade.rotation.x = Math.PI;
+const hand = new THREE.Group(); hand.position.y = -.62;
+player.userData.aR.add(hand); hand.add(blade);
+player.userData.aR.rotation.x = -.55;
+
+const boss = actor({scale:1.85, skin:0x6a5f4e, cloth:0x1d1a17});
+boss.position.set(-1.4, 0, -3.1);
+boss.rotation.y = 2.75;
+scene.add(boss);
+boss.userData.aR.rotation.x = -2.3;   // frozen mid-wind-up, the readable pose
+boss.userData.aL.rotation.x = -0.5;
+boss.userData.body.rotation.x = -0.22;
+
+// ground
+const groundMat = mkMat(0x33302c); groundMat.roughness = 1;
+const ground = new THREE.Mesh(new THREE.CircleGeometry(23,64), groundMat);
+ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; ground.castShadow = false;
+scene.add(ground);
+
+const rings = new THREE.Group(); scene.add(rings);
+for (let i=1;i<=5;i++){
+  const r = new THREE.Mesh(new THREE.RingGeometry(i*3.6, i*3.6+.07, 96),
+    new THREE.MeshBasicMaterial({color:0x5a544a, transparent:true, opacity:.55}));
+  r.rotation.x = -Math.PI/2; r.position.y = .012; rings.add(r);
+}
+
+const pillars = new THREE.Group(); scene.add(pillars);
+const pGeo = new THREE.BoxGeometry(1.15,7.5,1.15);
+const pMat = mkMat(0x3b3733);
+for (let i=0;i<18;i++){
+  const a = (i/18)*Math.PI*2;
+  const p = new THREE.Mesh(pGeo, pMat);
+  p.position.set(Math.sin(a)*22.6, 3.4 + ((i*37)%100)/100*1.2, Math.cos(a)*22.6);
+  p.rotation.y = a; p.castShadow = true; p.receiveShadow = true;
+  pillars.add(p);
+}
+
+// lights
+const hemi = new THREE.HemisphereLight(0x5d6b8a, 0x2a231b, 1.15); scene.add(hemi);
+const key = new THREE.DirectionalLight(0xffe9c4, 2.5);
+key.castShadow = true; key.shadow.mapSize.set(2048,2048);
+const sc = key.shadow.camera; sc.left=-26; sc.right=26; sc.top=26; sc.bottom=-26; sc.far=80;
+key.shadow.bias = -0.0012;
+scene.add(key);
+const rim = new THREE.DirectionalLight(0x6f93cc, 1.25); scene.add(rim);
+
+// ── state ─────────────────────────────────────────────────────────────────
+const S = { ...LOOKS[0] };
+let orbit = true, glow = false;
+let yaw = 0.62, pitch = 0.26, dist = 14.2;
+
+function hex(n){ return '0x' + n.toString(16).padStart(6,'0'); }
+
+function apply(){
+  const fogD = S.fog/1000;
+  scene.fog = fogD > 0.0002 ? new THREE.FogExp2(S.fogCol, fogD) : null;
+  scene.background = new THREE.Color(S.bg);
+  renderer.toneMappingExposure = S.exposure/100;
+
+  key.intensity = S.key/100;
+  key.color.setHex(S.keyCol);
+  const a = S.sun*Math.PI/180, e = S.ele*Math.PI/180;
+  key.position.set(Math.sin(a)*Math.cos(e)*22, Math.sin(e)*22 + 2, Math.cos(a)*Math.cos(e)*22);
+  key.castShadow = shadowsOn;
+
+  hemi.intensity = S.amb/100;
+  hemi.color.setHex(S.ambSky); hemi.groundColor.setHex(S.ambGnd);
+
+  rim.intensity = S.rim/100; rim.color.setHex(S.rimCol);
+  rim.position.set(-Math.sin(a)*14, 6, -Math.cos(a)*14);
+
+  const g = new THREE.Color(S.groundCol);
+  const v = S.ground/100;
+  groundMat.color.setRGB(g.r*(0.35+v*1.3), g.g*(0.35+v*1.3), g.b*(0.35+v*1.3));
+  pMat.color.setHex(S.pillarCol);
+
+  boss.traverse(o=>{ if(o.isMesh && o.material.emissive){
+    o.material.emissive.setHex(glow ? 0xd9a441 : 0x000000);
+    o.material.emissiveIntensity = glow ? 0.9 : 0;
+  }});
+
+  document.getElementById('lookName').textContent = S.name;
+  document.getElementById('lookDesc').textContent = S.desc;
+  sync(); dump();
+}
+
+const ids = ['fog','exp','key','amb','rim','sun','ele','grd'];
+const map = { fog:'fog', exp:'exposure', key:'key', amb:'amb', rim:'rim', sun:'sun', ele:'ele', grd:'ground' };
+function sync(){
+  for (const id of ids){
+    const el = document.getElementById(id);
+    el.value = S[map[id]];
+    document.getElementById(id+'V').textContent = S[map[id]];
+  }
+}
+for (const id of ids){
+  document.getElementById(id).addEventListener('input', e=>{
+    S[map[id]] = +e.target.value;
+    document.getElementById(id+'V').textContent = e.target.value;
+    apply();
+  });
+}
+
+function dump(){
+  document.getElementById('dump').innerHTML =
+`scene.fog = new THREE.FogExp2(<b>${hex(S.fogCol)}</b>, <b>${(S.fog/1000).toFixed(4)}</b>);
+scene.background = new THREE.Color(<b>${hex(S.bg)}</b>);
+renderer.toneMappingExposure = <b>${(S.exposure/100).toFixed(2)}</b>;
+
+hemi  = HemisphereLight(<b>${hex(S.ambSky)}</b>, <b>${hex(S.ambGnd)}</b>, <b>${(S.amb/100).toFixed(2)}</b>);
+key   = DirectionalLight(<b>${hex(S.keyCol)}</b>, <b>${(S.key/100).toFixed(2)}</b>);
+key.position.set(<b>${(Math.sin(S.sun*Math.PI/180)*Math.cos(S.ele*Math.PI/180)*22).toFixed(1)}</b>, <b>${(Math.sin(S.ele*Math.PI/180)*22+2).toFixed(1)}</b>, <b>${(Math.cos(S.sun*Math.PI/180)*Math.cos(S.ele*Math.PI/180)*22).toFixed(1)}</b>);
+rim   = DirectionalLight(<b>${hex(S.rimCol)}</b>, <b>${(S.rim/100).toFixed(2)}</b>);
+
+ground.material.color = <b>${'0x'+groundMat.color.getHexString()}</b>;
+pillar.material.color = <b>${hex(S.pillarCol)}</b>;`;
+}
+
+// ── chips ─────────────────────────────────────────────────────────────────
+const chips = document.getElementById('chips');
+LOOKS.forEach((L,i)=>{
+  const b = document.createElement('button');
+  b.className = 'chip'; b.textContent = L.name;
+  b.setAttribute('aria-pressed', i===0 ? 'true':'false');
+  b.addEventListener('click', ()=>{
+    Object.assign(S, L);
+    [...chips.children].forEach(c=>c.setAttribute('aria-pressed','false'));
+    b.setAttribute('aria-pressed','true');
+    apply();
+  });
+  chips.appendChild(b);
+});
+
+// ── toggles ───────────────────────────────────────────────────────────────
+let shadowsOn = true;
+const tog = (id, init, fn) => {
+  const el = document.getElementById(id);
+  let v = init;
+  el.setAttribute('aria-pressed', String(v));
+  el.addEventListener('click', ()=>{ v = !v; el.setAttribute('aria-pressed', String(v)); fn(v); });
+};
+tog('tOrbit', true, v=>orbit=v);
+tog('tGlow', false, v=>{ glow=v; apply(); });
+tog('tGrid', true, v=>rings.visible=v);
+tog('tPillar', true, v=>pillars.visible=v);
+tog('tShadow', true, v=>{ shadowsOn=v; apply(); });
+
+// ── panel collapse ────────────────────────────────────────────────────────
+const panel = document.getElementById('panel'), grip = document.getElementById('grip');
+function togglePanel(){
+  const closed = panel.classList.toggle('closed');
+  grip.setAttribute('aria-expanded', String(!closed));
+  document.getElementById('gripLabel').textContent = closed ? 'Show controls' : 'Look dev';
+  requestAnimationFrame(resize);
+}
+grip.addEventListener('click', togglePanel);
+grip.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); togglePanel(); }});
+
+// ── copy ──────────────────────────────────────────────────────────────────
+document.getElementById('copy').addEventListener('click', async (e)=>{
+  const txt = document.getElementById('dump').textContent;
+  const btn = e.currentTarget;
+  try { await navigator.clipboard.writeText(txt); btn.textContent = 'Copied'; }
+  catch { const r = document.createRange(); r.selectNodeContents(document.getElementById('dump'));
+          getSelection().removeAllRanges(); getSelection().addRange(r); btn.textContent = 'Selected'; }
+  setTimeout(()=>btn.textContent = 'Copy', 1400);
+});
+
+// ── drag to orbit ─────────────────────────────────────────────────────────
+let drag = null;
+renderer.domElement.addEventListener('pointerdown', e=>{
+  drag = { x:e.clientX, y:e.clientY }; orbit = false;
+  document.getElementById('tOrbit').setAttribute('aria-pressed','false');
+  renderer.domElement.setPointerCapture(e.pointerId);
+});
+renderer.domElement.addEventListener('pointermove', e=>{
+  if (!drag) return;
+  yaw   -= (e.clientX - drag.x) * 0.006;
+  pitch += (e.clientY - drag.y) * 0.004;
+  pitch = Math.max(0.03, Math.min(0.92, pitch));
+  drag = { x:e.clientX, y:e.clientY };
+});
+addEventListener('pointerup', ()=>drag=null);
+renderer.domElement.addEventListener('wheel', e=>{
+  e.preventDefault(); dist = Math.max(7, Math.min(30, dist + e.deltaY*0.012));
+}, {passive:false});
+
+// ── loop ──────────────────────────────────────────────────────────────────
+const focus = new THREE.Vector3(0.1, 1.85, 0.2);
+let t = 0;
+function frame(){
+  requestAnimationFrame(frame);
+  t += 1/60;
+  if (orbit) yaw += 0.0022;
+  const cp = Math.cos(pitch);
+  // widen the pull-back on tall/narrow viewports so nothing crops
+  const d = dist * (camera.aspect < 1 ? 1 + (1 - camera.aspect) * 0.95 : 1);
+  camera.position.set(focus.x + Math.sin(yaw)*d*cp,
+                      focus.y + Math.sin(pitch)*d + 1.1,
+                      focus.z + Math.cos(yaw)*d*cp);
+  camera.lookAt(focus);
+  // the faintest breathing so the frame isn't dead
+  player.userData.chest.position.y = 0.72 + Math.sin(t*1.5)*0.012;
+  renderer.render(scene, camera);
+}
+
+resize(); apply(); frame();
+const boot = document.getElementById('boot');
+boot.style.opacity = '0';
+setTimeout(()=>boot.remove(), 520);
+</script>
+
+</body>
+</html>
