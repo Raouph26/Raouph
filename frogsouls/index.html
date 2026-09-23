@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>FROGSOULS — combat prototype</title>
+<style>
+  :root { color-scheme: dark; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { height:100%; background:#08090b; overflow:hidden; }
+  canvas { display:block; }
+  #ui { position:fixed; inset:0; pointer-events:none; font:600 13px/1.4 ui-sans-serif,system-ui,sans-serif;
+        color:#e8e4dc; text-shadow:0 1px 2px rgba(0,0,0,.9); }
+  .bars { position:absolute; left:28px; top:24px; width:min(340px,42vw); }
+  .bar { position:relative; height:14px; margin-bottom:6px; border:1px solid #000;
+         background:#16120f; box-shadow:0 0 0 1px #3a332a inset; }
+  .bar > i { position:absolute; inset:0; transform-origin:left center; display:block; }
+  #hp  > i { background:linear-gradient(#a3242a,#6d1418); }
+  #st  > i { background:linear-gradient(#7d8f3c,#4d5c22); }
+  #st  { height:10px; width:88%; }
+  .bar > u { position:absolute; inset:0; transform-origin:left center; background:#d8b26a; opacity:.35; }
+  #bossbar { position:absolute; left:50%; bottom:46px; transform:translateX(-50%);
+             width:min(620px,74vw); opacity:0; transition:opacity .4s; }
+  #bossbar.on { opacity:1; }
+  #bossbar .name { text-align:center; letter-spacing:.22em; text-transform:uppercase;
+                   font-size:11px; margin-bottom:5px; color:#c9c1b2; }
+  #bb { height:11px; }
+  #bb > i { background:linear-gradient(#b8933f,#74561c); }
+  #hint { position:absolute; right:26px; bottom:22px; text-align:right; font-weight:500;
+          font-size:11.5px; color:#8d8578; line-height:1.85; letter-spacing:.04em; }
+  #hint b { color:#d6cfc1; font-weight:600; }
+  #center { position:absolute; left:50%; top:46%; transform:translate(-50%,-50%); text-align:center;
+            letter-spacing:.3em; text-transform:uppercase; opacity:0; transition:opacity .5s; }
+  #center.on { opacity:1; }
+  #center .big { font-size:38px; color:#9a2b2b; }
+  #center .sub { font-size:11px; color:#8d8578; margin-top:10px; letter-spacing:.2em; }
+  #deaths { position:absolute; left:28px; bottom:22px; font-size:11px; color:#6f6a60; letter-spacing:.12em; }
+  #lockdot { position:absolute; width:16px; height:16px; margin:-8px 0 0 -8px; opacity:0;
+             transition:opacity .15s; }
+  #lockdot.on { opacity:.9; }
+  #lockdot svg { display:block; }
+  #flash { position:absolute; inset:0; background:#fff; opacity:0; mix-blend-mode:screen; }
+</style>
+</head>
+<body>
+<div id="ui">
+  <div class="bars">
+    <div class="bar" id="hp"><u></u><i></i></div>
+    <div class="bar" id="st"><i></i></div>
+  </div>
+  <div id="bossbar"><div class="name"></div><div class="bar" id="bb"><u></u><i></i></div></div>
+  <div id="lockdot"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 1v3M8 12v3M1 8h3M12 8h3" stroke="#e8e4dc" stroke-width="1.5"/><circle cx="8" cy="8" r="2.2" fill="#e8e4dc"/></svg></div>
+  <div id="center"><div class="big"></div><div class="sub"></div></div>
+  <div id="deaths"></div>
+  <div id="hint">
+    <b>WASD</b> move &nbsp; <b>Shift</b> sprint<br>
+    <b>Space</b> roll &nbsp; <b>Tab / MMB</b> lock-on<br>
+    <b>LMB</b> light &nbsp; <b>RMB hold</b> block &nbsp; <b>RMB tap</b> parry<br>
+    <b>Q</b> heavy &nbsp; <b>1 2 3</b> weapon &nbsp; <b>R</b> retry
+  </div>
+  <div id="flash"></div>
+</div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
