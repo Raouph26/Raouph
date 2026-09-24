@@ -22,8 +22,9 @@ export const PLAYER = {
   staminaRegen: 46, regenDelay: 0.55, blockRegenScale: 0.35,
   sprintDrain: 13,
 
-  roll:     { cost: 22, startup: .05, iframes: .30, duration: .56, recovery: .10, distance: 4.1 },
-  backstep: { cost: 14, iframes: .13, duration: .36, distance: 2.2 },
+  // DS3's medium roll is invincible for 13 frames of 30 (0.43 s); a thumb on
+  // glass is slower than a thumb on a pad, so ours sits closer to that
+  roll:     { cost: 22, startup: .04, iframes: .34, duration: .56, recovery: .10, distance: 4.1 },
 
   parry: { cost: 12, startup: .05, window: .16, recovery: .42 },
   riposte: { duration: 1.05, range: 2.7, iframes: 1.05 },
@@ -68,6 +69,7 @@ export class PlayerSim {
     this.buf = null;              // { action, age }
     this.healApplied = false;
     this.rollDir = 0;
+    this.rollRel = 0;
     this.lastHitBy = null;
 
     this.stats = { hitsTaken: 0, hitsLanded: 0, parries: 0, blocks: 0, rolls: 0, heals: 0, dmgDealt: 0, dmgTaken: 0 };
@@ -115,7 +117,7 @@ export class PlayerSim {
     const a = this.buf.action;
     if (a === 'light' && this.fight.boss?.ripostable && this.tryRiposte(this.fight.boss)) { this.buf = null; return true; }
     let ok = false;
-    if (a === 'roll')  ok = this._startRoll(intent);
+    if (a === 'roll')  ok = this._startRoll(intent, target);
     if (a === 'light') ok = this._startAttack('light', intent, target);
     if (a === 'heavy') ok = this._startAttack('heavy', intent, target);
     if (a === 'parry') ok = this._startParry();
@@ -124,23 +126,24 @@ export class PlayerSim {
     return ok;
   }
 
-  _startRoll(intent) {
+  /**
+   * Rolls go any of eight ways. Locked on, the frog keeps its eyes on the boss
+   * and rolls relative to it (forward, back, sideways, diagonals). Free, it
+   * turns into the roll. No direction at all rolls backwards, away from trouble.
+   */
+  _startRoll(intent, lockOn) {
     if (this.stamina <= 0) return false;
-    const m = Math.hypot(intent.mx, intent.mz);
-    const cost = (m > 0.2 ? PLAYER.roll.cost : PLAYER.backstep.cost) * (this.mods.rollCost ?? 1);
-    this.spend(cost);
+    this.spend(PLAYER.roll.cost * (this.mods.rollCost ?? 1));
     this.atk = null;
-    if (m > 0.2) {
-      this.rollDir = Math.atan2(intent.mx, intent.mz);
-      this.yaw = this.rollDir;
-      this.enter('roll');
-      this.stats.rolls++;
-      this.fight.emit({ type: 'roll', x: this.x, z: this.z });
-    } else {
-      this.rollDir = this.yaw + Math.PI;
-      this.enter('backstep');
-      this.fight.emit({ type: 'backstep', x: this.x, z: this.z });
-    }
+    const m = Math.hypot(intent.mx, intent.mz);
+    const face = lockOn ? yawTo(this.x, this.z, lockOn.x, lockOn.z) : this.yaw;
+    this.rollDir = m > 0.2 ? Math.atan2(intent.mx, intent.mz) : face + Math.PI;
+    if (lockOn) this.yaw = face;
+    else if (m > 0.2) this.yaw = this.rollDir;
+    this.rollRel = angleDiff(this.yaw, this.rollDir);   // 0 forward, ±π back, +π/2 its left
+    this.enter('roll');
+    this.stats.rolls++;
+    this.fight.emit({ type: 'roll', x: this.x, z: this.z, rel: this.rollRel });
     return true;
   }
 
@@ -155,10 +158,18 @@ export class PlayerSim {
     this.atk = { spec, kind, idx: chainIdx, hit: new Set(), shockDone: false };
     this.enter('attack');
 
-    // aim: locked target wins, otherwise the stick, otherwise keep facing
+    // aim: locked target wins, otherwise the stick, otherwise a soft assist
+    // toward an enemy roughly in front (thumbs on glass aren't precise)
     const m = Math.hypot(intent.mx, intent.mz);
     if (target && target.alive) this.yaw = turnToward(this.yaw, yawTo(this.x, this.z, target.x, target.z), 1.2);
     else if (m > 0.2) this.yaw = Math.atan2(intent.mx, intent.mz);
+    else {
+      const e = this.fight.enemies()[0];
+      if (e) {
+        const to = yawTo(this.x, this.z, e.x, e.z);
+        if (Math.abs(angleDiff(this.yaw, to)) < 1.3 && Math.hypot(e.x - this.x, e.z - this.z) < 7 + e.radius) this.yaw = turnToward(this.yaw, to, 0.9);
+      }
+    }
 
     this.fight.emit({ type: 'swing', kind, anim: spec.anim, weapon: this.weaponId, heavy: kind !== 'light' });
     return true;
@@ -206,7 +217,6 @@ export class PlayerSim {
         break;
 
       case 'roll': this._roll(dt, intent); break;
-      case 'backstep': this._backstep(dt, intent); break;
       case 'attack': this._attack(dt, intent, lockOn); break;
 
       case 'parry':
@@ -314,16 +324,6 @@ export class PlayerSim {
       this._friction(dt, 30);
       if (this.t >= R.duration + R.recovery) this.enter('idle');
     }
-  }
-
-  _backstep(dt) {
-    const B = PLAYER.backstep;
-    if (this.t < B.iframes * (this.mods.iframes ?? 1)) this.iframes = Math.max(this.iframes, 0.02);
-    const k = Math.min(1, this.t / B.duration);
-    const sp = (B.distance / B.duration) * (1.7 * (1 - k) + 0.15);
-    this.vx = Math.sin(this.rollDir) * sp;
-    this.vz = Math.cos(this.rollDir) * sp;
-    if (this.t >= B.duration) this.enter('idle');
   }
 
   _attack(dt, intent, lockOn) {
@@ -452,13 +452,13 @@ export class PlayerSim {
         this.regenLock = 1.2;
         this._takeDamage(hit.dmg * (1 - w.guard * 0.5), hit);
         if (this.alive) this.enter('guardbreak');
-        this.fight.emit({ type: 'guardbreak', x: this.x, z: this.z });
+        this.fight.emit({ type: 'guardbreak', x: this.x, z: this.z, fx: hit.x, fz: hit.z });
         return 'guardbreak';
       }
       this.spend(chip);
       this._takeDamage(hit.dmg * (1 - w.guard), hit, true);
       this.stats.blocks++;
-      this.fight.emit({ type: 'block', x: this.x, z: this.z, dmg: hit.dmg });
+      this.fight.emit({ type: 'block', x: this.x, z: this.z, dmg: hit.dmg, fx: hit.x, fz: hit.z });
       // blocking a heavy blow still shoves you
       const push = Math.min(4, hit.dmg * 0.09);
       this.vx = -Math.sin(toSrc) * push; this.vz = -Math.cos(toSrc) * push;
@@ -471,7 +471,7 @@ export class PlayerSim {
     this.stats.hitsTaken++;
     const knock = hit.knockdown || hit.dmg >= this.maxHp * 0.3;
     if (this.hyper && !knock) {
-      this.fight.emit({ type: 'hit', target: 'player', x: this.x, z: this.z, dmg: hit.dmg, hyper: true });
+      this.fight.emit({ type: 'hit', target: 'player', x: this.x, z: this.z, dmg: hit.dmg, hyper: true, fx: hit.x, fz: hit.z });
       return 'hit';
     }
     this.atk = null;
@@ -480,7 +480,7 @@ export class PlayerSim {
     this.vx = -Math.sin(toSrc) * kb; this.vz = -Math.cos(toSrc) * kb;
     if (knock) { this.enter('knockdown'); this.iframes = PLAYER.knockdownIframes; }
     else { this.enter('hurt'); this.iframes = PLAYER.invulnAfterHit; }
-    this.fight.emit({ type: 'hit', target: 'player', x: this.x, z: this.z, dmg: hit.dmg, knockdown: knock });
+    this.fight.emit({ type: 'hit', target: 'player', x: this.x, z: this.z, dmg: hit.dmg, knockdown: knock, fx: hit.x, fz: hit.z });
     return 'hit';
   }
 

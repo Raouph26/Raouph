@@ -48,11 +48,13 @@ log('fight phase:', await g(() => `${window.__game.state} ${window.__game.phase}
 await shot('5-combat');
 
 // swing at it for a while: does damage land both ways?
-const hp0 = await g(() => ({ b: window.__game.fight.boss.hp, p: window.__game.fight.player.hp }));
-for (let i = 0; i < 40; i++) {
-  await g(() => { const G = window.__game, f = G.fight; if (!f) return; const pl = f.player, bo = f.boss;
+const hp0 = await g(() => ({ b: window.__game.fight.boss.hp, p: window.__game.fight.player.hp, t: window.__game.fight.time }));
+// keep swinging until four seconds of GAME time have passed (headless runs at a few fps)
+for (let i = 0; i < 400; i++) {
+  const t = await g(() => { const G = window.__game, f = G.fight; if (!f) return 99; const pl = f.player, bo = f.boss;
     const d = Math.hypot(bo.x - pl.x, bo.z - pl.z); if (d > 3) { pl.x += (bo.x - pl.x) / d * (d - 2.6); pl.z += (bo.z - pl.z) / d * (d - 2.6); }
-    G.input.press(Math.random() < .8 ? 'light' : 'roll'); });
+    G.input.press('light'); return f.time; });
+  if (t - hp0.t > 4) break;
   await wait(150);
   if (i === 12) await shot('6-swing');
 }
@@ -61,7 +63,7 @@ log('boss hp', hp0.b, '->', hp1.b, '| player hp', hp0.p, '->', hp1.p);
 await shot('7-midfight');
 
 // force a death → YOU CROAKED → try again
-await g(() => { const f = window.__game.fight; f.player.receiveHit({ dmg: 9999, x: f.boss.x, z: f.boss.z }); });
+await g(() => { const f = window.__game.fight; f.player.iframes = 0; f.player.enter('idle'); f.player.receiveHit({ dmg: 9999, x: f.boss.x, z: f.boss.z }); });
 await wait(3500);
 await shot('8-croaked');
 log('menu after death:', await g(() => window.__game.ui.menuOpen));

@@ -24,9 +24,10 @@ export class Stage {
     this.key = new THREE.DirectionalLight(0xbcd2ff, 1.9);
     this.key.castShadow = true;
     const sc = this.key.shadow.camera;
-    sc.left = -24; sc.right = 24; sc.top = 24; sc.bottom = -24; sc.near = 1; sc.far = 90;
-    this.key.shadow.bias = -0.0008;
-    this.key.shadow.normalBias = 0.03;
+    // a tight box around the fight: sharper shadows from the same map
+    sc.left = -16; sc.right = 16; sc.top = 16; sc.bottom = -16; sc.near = 1; sc.far = 90;
+    this.key.shadow.bias = -0.0006;
+    this.key.shadow.normalBias = 0.025;
     this.rim = new THREE.DirectionalLight(0x7fd0c0, 1.6);
     scene.add(this.hemi, this.key, this.key.target, this.rim);
 

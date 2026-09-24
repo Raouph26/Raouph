@@ -172,6 +172,27 @@ export function softSprite() {
   return t;
 }
 
+/** A four-point star with a soft core: the glint on a blade about to swing. */
+export function glintTexture() {
+  if (cache.has('glint')) return cache.get('glint');
+  const S = 128, c = canvas(S), ctx = c.getContext('2d');
+  ctx.globalCompositeOperation = 'lighter';
+  const core = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S * .22);
+  core.addColorStop(0, 'rgba(255,255,255,1)'); core.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = core; ctx.fillRect(0, 0, S, S);
+  for (const [w, h] of [[S, 5], [5, S], [S * .55, 3], [3, S * .55]]) {
+    const r = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, Math.max(w, h) / 2);
+    r.addColorStop(0, 'rgba(255,255,255,.95)'); r.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = r;
+    ctx.save(); ctx.translate(S / 2, S / 2); if (w === S * .55 || h === S * .55) ctx.rotate(Math.PI / 4);
+    ctx.fillRect(-w / 2, -h / 2, w, h); ctx.restore();
+  }
+  const t = toTex(c, { srgb: false });
+  t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+  cache.set('glint', t);
+  return t;
+}
+
 // ── screens: the faces of the bosses that have them ─────────────────────────
 // Each returns a CanvasTexture plus a redraw(state) so a face can change mid-fight.
 export function screenTexture(kind, w = 256, h = 192) {

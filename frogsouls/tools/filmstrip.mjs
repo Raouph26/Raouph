@@ -19,16 +19,32 @@ await p.evaluate(() => { const G = window.__game, f = G.fight; f.player.x = -1.6
 // CAM=near frames the frog; the default frames both fighters
 const CAMS = { far: [0.4, 1.7, 7.5, 0.4, 1.3, 0], near: [-1.0, 1.25, 3.6, -1.0, 1.0, 0], boss: [0.8, 2.2, 9.5, 1.2, 1.6, 0] };
 const cam = CAMS[process.env.CAM ?? 'far'];
-const step = (n, act) => p.evaluate(([n, act, cam]) => { const G = window.__game; for (let i = 0; i < n; i++) { if (act && i === 0) G.input.press(act); G.frame(1 / 60); const c = G.R.camera; c.position.set(cam[0], cam[1], cam[2]); c.lookAt(cam[3], cam[4], cam[5]); G.R.render(0, G.stage); } }, [n, act, cam]);
+// act may be 'roll' or 'roll:KeyD' (hold a direction key for a few frames around the press)
+const step = (n, act) => p.evaluate(([n, act, cam]) => {
+  const G = window.__game;
+  for (let i = 0; i < n; i++) {
+    if (act && i === 0) {
+      const [a, key] = act.split(':');
+      if (key) { G.input.keys.add(key); G._releaseAt = G.t + .12; G._heldKey = key; }
+      if (a) G.input.press(a);
+    }
+    if (G._heldKey && G.t > G._releaseAt) { G.input.keys.delete(G._heldKey); G._heldKey = null; }
+    G.frame(1 / 60);
+    const c = G.R.camera; c.position.set(cam[0], cam[1], cam[2]); c.lookAt(cam[3], cam[4], cam[5]); G.R.render(0, G.stage);
+  }
+}, [n, act, cam]);
 await step(10);
 const plan = {
   combo: [[0, 'light'], [16, 'light'], [32, 'light']],
   heavy: [[0, 'heavy']],
-  roll: [[0, 'roll']],
+  roll: [[0, 'roll:KeyD']],
+  // locked on, facing +x: D forward, A back, W its left, S its right
+  roll8: [[0, 'roll:KeyD'], [44, 'roll:KeyA'], [88, 'roll:KeyW'], [132, 'roll:KeyS']],
   parry: [[0, 'parry']],
+  drink: [[0, 'heal']],
   boss: [],
 }[script];
-if (script === 'roll') await p.evaluate(() => { window.__game.input.keys.add('KeyD'); });   // roll toward the boss, side-on
+if (script === 'roll8') await p.evaluate(() => { const G = window.__game; G.lockOn = true; });
 if (script === 'boss') await p.evaluate(() => { const G = window.__game, b = G.fight.boss; b.cd = 0; b.moveCd = {}; b.startMove(b.moves[0]); });
 for (let fr = 0; fr < +frames; fr++) {
   const act = plan.find(([t]) => t === fr)?.[1];

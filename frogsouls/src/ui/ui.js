@@ -21,6 +21,8 @@ export class UI {
     this.fliesEl = $('#flies', root); this.fliesN = $('#flies b', root);
     this.bossEl = $('#boss', root); this.bossName = $('#boss .bn', root); this.bossEpi = $('#boss .be', root);
     this.bossHp = $('#boss .bar i', root); this.bossGhost = $('#boss .bar u', root); this.bossLabel = $('#boss .bl', root);
+    this.bossDmg = $('#boss .bd', root); this._dmg = 0; this._dmgT = 0;
+    this._last = {};                 // last values written, so the DOM is only touched on change
     this.reticle = $('#reticle', root);
     this.sayEl = $('#say', root);
     this.promptEl = $('#prompt', root);
@@ -54,43 +56,68 @@ export class UI {
     this.touchRoot.classList.toggle('quiet', !controls);
   }
 
+  /** Write a style/text only when it changed: DOM writes every frame cost layout on phones. */
+  _set(key, el, prop, val) {
+    if (this._last[key] === val) return;
+    this._last[key] = val;
+    if (prop === 'text') el.textContent = val;
+    else if (prop === 'transform') el.style.transform = val;
+    else el.style.setProperty(prop, val);
+  }
+  _cls(key, el, cls, on) {
+    const k = key + cls;
+    if (this._last[k] === on) return;
+    this._last[k] = on;
+    el.classList.toggle(cls, on);
+  }
+
   updateHud(dt, s) {
     const hpF = Math.max(0, s.hp / s.maxHp);
-    this.hpBar.style.setProperty('--w', (s.maxHp / 100) * 26 + 'vw');
-    this.hp.style.transform = `scaleX(${hpF})`;
+    this._set('hpw', this.hpBar, '--w', (s.maxHp / 100) * 26 + 'vw');
+    this._set('hp', this.hp, 'transform', `scaleX(${hpF.toFixed(4)})`);
     this._ghost = this._ghost < hpF ? hpF : this._ghost + (hpF - this._ghost) * Math.min(1, dt * 2.2);
-    this.hpGhost.style.transform = `scaleX(${this._ghost})`;
-    this.hpBar.classList.toggle('low', hpF < .25);
-    this.stBar.style.setProperty('--w', (s.maxStamina / 100) * 20 + 'vw');
-    this.st.style.transform = `scaleX(${Math.max(0, s.stamina / s.maxStamina)})`;
-    this.flaskN.textContent = s.flasks;
-    this.flaskEl.classList.toggle('empty', s.flasks <= 0);
-    this.flaskEl.classList.toggle('banned', !!s.noHeal);
+    this._set('hpg', this.hpGhost, 'transform', `scaleX(${this._ghost.toFixed(3)})`);
+    this._cls('hpl', this.hpBar, 'low', hpF < .25);
+    this._set('stw', this.stBar, '--w', (s.maxStamina / 100) * 20 + 'vw');
+    this._set('st', this.st, 'transform', `scaleX(${Math.max(0, s.stamina / s.maxStamina).toFixed(3)})`);
+    this._set('fl', this.flaskN, 'text', String(s.flasks));
+    this._cls('fle', this.flaskEl, 'empty', s.flasks <= 0);
+    this._cls('flb', this.flaskEl, 'banned', !!s.noHeal);
     if (this._flies == null) this._flies = s.flies;
     this._flies += (s.flies - this._flies) * Math.min(1, dt * 4);
     if (Math.abs(this._flies - s.flies) < 1) this._flies = s.flies;
-    this.fliesN.textContent = fmt(this._flies);
+    this._set('flies', this.fliesN, 'text', fmt(this._flies));
 
     if (s.boss) {
       const b = s.boss;
-      this.bossName.textContent = b.name;
-      this.bossEpi.textContent = b.epithet;
-      this.bossHp.style.transform = `scaleX(${Math.max(0, b.hpFrac)})`;
+      this._set('bn', this.bossName, 'text', b.name);
+      this._set('be', this.bossEpi, 'text', b.epithet);
+      this._set('bhp', this.bossHp, 'transform', `scaleX(${Math.max(0, b.hpFrac).toFixed(4)})`);
       this._bossGhost = this._bossGhost < b.hpFrac ? b.hpFrac : this._bossGhost + (b.hpFrac - this._bossGhost) * Math.min(1, dt * 1.8);
-      this.bossGhost.style.transform = `scaleX(${this._bossGhost})`;
-      this.bossLabel.textContent = b.label ?? '';
-      this.bossLabel.classList.toggle('danger', !!b.danger);
+      this._set('bg', this.bossGhost, 'transform', `scaleX(${this._bossGhost.toFixed(3)})`);
+      this._set('bl', this.bossLabel, 'text', b.label ?? '');
+      this._cls('bl', this.bossLabel, 'danger', !!b.danger);
     }
-    if (s.reticle) { this.reticle.classList.add('on'); this.reticle.style.transform = `translate(${s.reticle.x}px, ${s.reticle.y}px)`; }
-    else this.reticle.classList.remove('on');
+    if (this._dmgT > 0) { this._dmgT -= dt; if (this._dmgT <= 0) this.bossDmg.classList.remove('on'); }
+    if (s.reticle) { this._cls('ret', this.reticle, 'on', true); this.reticle.style.transform = `translate(${s.reticle.x.toFixed(1)}px, ${s.reticle.y.toFixed(1)}px)`; }
+    else this._cls('ret', this.reticle, 'on', false);
     if (s.say) {
       if (this.sayEl.dataset.text !== s.say.text) { this.sayEl.textContent = s.say.text; this.sayEl.dataset.text = s.say.text; }
-      this.sayEl.classList.add('on');
-      this.sayEl.style.transform = `translate(${s.say.x}px, ${s.say.y}px) translate(-50%, -100%)`;
-    } else this.sayEl.classList.remove('on');
+      this._cls('say', this.sayEl, 'on', true);
+      this.sayEl.style.transform = `translate(${s.say.x.toFixed(1)}px, ${s.say.y.toFixed(1)}px) translate(-50%, -100%)`;
+    } else this._cls('say', this.sayEl, 'on', false);
   }
 
-  resetBossBar() { this._bossGhost = 1; this._ghost = 1; }
+  /** Damage dealt, souls-style: it adds up through a combo, then fades. */
+  bossDamage(n) {
+    this._dmg = (this._dmgT > 0 ? this._dmg : 0) + n;
+    this._dmgT = 1.8;
+    const el = this.bossDmg;
+    el.textContent = Math.round(this._dmg);
+    el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop', 'on');
+  }
+
+  resetBossBar() { this._bossGhost = 1; this._ghost = 1; this._dmgT = 0; this._dmg = 0; this.bossDmg.classList.remove('on'); }
 
   prompt(p) {
     if (!p) { this.promptEl.classList.remove('on'); $('#bAct', this.root)?.classList.remove('on'); return; }

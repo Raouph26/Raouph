@@ -74,8 +74,10 @@ export class CameraCtl {
       // the right shoulder so the frog never hides what the boss is doing
       this.yaw = angDamp(this.yaw, toYaw + Math.PI, 7, dt);
       const size = lock.height ?? 3;
-      const back = 3.5 + Math.min(d * .3, 2.8) + size * .32;
-      const up = 1.95 + size * .25 + Math.min(d * .07, .7);
+      // a big boss right on top of you pushes the camera back and up, so it stays in frame
+      const close = Math.max(0, size * .9 - d);
+      const back = 3.4 + Math.min(d * .28, 2.6) + size * .36 + close * .55;
+      const up = 1.9 + size * .26 + Math.min(d * .07, .7) + close * .22;
       const side = 1.15 + size * .07;
       const sx = Math.sin(this.yaw), sz = Math.cos(this.yaw);
       desiredPos = _v.set(p.x + sx * back + sz * side, up, p.z + sz * back - sx * side);

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { createRig } from './rig.js';
-import { actorMaterial, glowMaterial } from './builder.js';
+import { actorMaterial, glowMaterial, PartBuilder } from './builder.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The frog. A knight of the pond: faceted head, gold slit-pupil eyes, throat
@@ -14,11 +14,13 @@ export const FROG_PALETTES = {
     // green frog, blue tunic, red scarf: three colours no arena shares, so the frog always reads
     skin: 0x5e9a3c, skinDark: 0x42702c, belly: 0xe2dcae, eye: 0xf1ead2, iris: 0xe0a93a, pupil: 0x0e0d0b,
     cloth: 0x33507c, leather: 0x74502d, metal: 0x9aa1a8, scarf: 0xc0282c, trim: 0xc99f4c, flask: 0x8dff72,
+    pad: 0x2e8a4c, padRim: 0x7cc466, padVein: 0x1f6636, lotus: 0xf4a0c4, lotusHeart: 0xffd35a,
     rim: 0xffe3b8,
   },
   other: {
     skin: 0x2f2839, skinDark: 0x1d1826, belly: 0x6c5f7c, eye: 0xf1e6e6, iris: 0xd1452e, pupil: 0x080608,
     cloth: 0x141118, leather: 0x3a2c3c, metal: 0x6d6c7c, scarf: 0x3a1f55, trim: 0xc9a34e, flask: 0xff5a8a,
+    pad: 0x3b2a4d, padRim: 0x7a5a9a, padVein: 0x24182f, lotus: 0xc03a5a, lotusHeart: 0xffb84a,
     rim: 0xd08bff,
   },
 };
@@ -32,11 +34,11 @@ export function buildFrog(variant = 'hero') {
   P.pelvis.cyl(.27, .25, .24, C.cloth, { y: .02, seg: 7 })
     .box(.60, .08, .48, C.leather, { y: .12 })
     .box(.11, .09, .05, C.trim, { y: .12, z: .245 })
-    .box(.12, .13, .09, C.leather, { x: .27, y: .06, z: .12, ry: .3 })            // pouch (left)
+    .box(.12, .13, .09, C.leather, { x: -.27, y: .06, z: .12, ry: -.3 })          // pouch (right)
     .box(.20, .30, .04, C.cloth, { y: -.14, z: .20, rx: .08, shade: .35 })         // front tabard
     .box(.26, .34, .04, C.cloth, { y: -.14, z: -.22, rx: -.1, shade: .35 })        // back tabard
-    .cyl(.045, .05, .14, C.flask, { x: -.29, y: .04, z: .08 })                     // flask (right hip)
-    .cyl(.03, .03, .04, C.trim, { x: -.29, y: .13, z: .08 });
+    .cyl(.045, .05, .14, C.flask, { x: .29, y: .04, z: .08 })                      // flask (left hip, the drinking hand)
+    .cyl(.03, .03, .04, C.trim, { x: .29, y: .13, z: .08 });
 
   // ── torso: round belly, tunic, harness straps ──────────────────────────────
   P.spine.cyl(.28, .26, S.torsoH, C.cloth, { y: S.torsoH / 2, seg: 8 })
@@ -91,6 +93,29 @@ export function buildFrog(variant = 'hero') {
     }
   }
 
+  // ── the lily-pad buckler, strapped to the back of the left forearm ─────────
+  // (a notched pad, a lighter rim, dark veins, a lotus for a boss)
+  const fl = S.foreLen, bz = -.085, pad = [];
+  const notch = .24, R = .235;
+  pad.push([0, 0]);
+  for (let i = 0; i <= 22; i++) {
+    const a = Math.PI / 2 + notch + (i / 22) * (Math.PI * 2 - notch * 2);
+    pad.push([Math.cos(a) * R, Math.sin(a) * R]);
+  }
+  const padRim = pad.map(([x, y]) => [x * 1.09, y * 1.09]);
+  P.foreL.shape(padRim, .02, C.padRim, { y: -fl * .55, z: bz + .006 })
+    .shape(pad, .026, C.pad, { y: -fl * .55, z: bz - .004 });
+  for (let v = 0; v < 7; v++) {
+    const a = Math.PI / 2 + notch + .35 + (v / 6) * (Math.PI * 2 - notch * 2 - .7);
+    P.foreL.box(.012, R * .82, .008, C.padVein, { x: Math.cos(a) * R * .44, y: -fl * .55 + Math.sin(a) * R * .44, z: bz - .02, rz: a - Math.PI / 2 });
+  }
+  for (let k = 0; k < 5; k++) {
+    const a = (k / 5) * Math.PI * 2;
+    P.foreL.blob(.034, .05, .02, C.lotus, { x: Math.cos(a) * .036, y: -fl * .55 + Math.sin(a) * .036, z: bz - .034, rz: a - Math.PI / 2 });
+  }
+  P.foreL.sphere(.026, C.lotusHeart, { y: -fl * .55, z: bz - .046, seg: 8, rings: 5 })
+    .box(.03, .12, .06, C.leather, { y: -fl * .55, z: bz + .04 });                // the strap
+
   // ── legs: cloth breeches, frog shins, big webbed feet ──────────────────────
   for (const side of ['R', 'L']) {
     const th = P['thigh' + side], sh = P['shin' + side], ft = P['foot' + side];
@@ -110,9 +135,24 @@ export function buildFrog(variant = 'hero') {
   rig.finalize(mat);
 
   // glowing dew in the flask — its own unlit bit so it survives the dark
-  const dew = new THREE.Mesh(new THREE.CylinderGeometry(.03, .035, .08, 6), glowMaterial(C.flask));
-  dew.position.set(-.29, .04, .08);
+  const dewMat = glowMaterial(C.flask);
+  const dew = new THREE.Mesh(new THREE.CylinderGeometry(.03, .035, .08, 6), dewMat);
+  dew.position.set(.29, .04, .08);
   rig.joints.pelvis.add(dew);
+
+  // the bottle in hand while drinking (the hip one hides meanwhile)
+  const bottle = new THREE.Group();
+  const bb = new PartBuilder();
+  bb.cyl(.05, .055, .13, 0xcfe8d0, { y: -.1, seg: 7 })
+    .cyl(.022, .03, .05, 0xcfe8d0, { y: -.19, seg: 6 })
+    .cyl(.026, .026, .03, C.leather, { y: -.225, seg: 6 });
+  const bm = bb.build(mat); bm.castShadow = false; bottle.add(bm);
+  const dew2 = new THREE.Mesh(new THREE.CylinderGeometry(.04, .046, .1, 7), dewMat);
+  dew2.position.y = -.095; bottle.add(dew2);
+  bottle.position.set(0, -.04, .05);
+  bottle.rotation.x = -.35;
+  bottle.visible = false;
+  rig.joints.handL.add(bottle);
 
   // scarf tails: anchors the view animates as a spring chain
   const scarf = [];
@@ -126,7 +166,10 @@ export function buildFrog(variant = 'hero') {
     for (let i = 0; i < 5; i++) {
       const seg = new THREE.Group();
       seg.position.y = i === 0 ? 0 : -.13;
-      const m = new THREE.Mesh(new THREE.BoxGeometry(.12 - i * .012, .14, .025), mat);
+      const g = new THREE.BoxGeometry(.12 - i * .012, .14, .025).toNonIndexed();
+      const sc = new THREE.Color(C.scarf).multiplyScalar(1 - i * .06);
+      g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count * 3).map((_, j) => [sc.r, sc.g, sc.b][j % 3]), 3));
+      const m = new THREE.Mesh(g, mat);
       m.position.y = -.065;
       m.castShadow = true;
       seg.add(m);
@@ -137,5 +180,5 @@ export function buildFrog(variant = 'hero') {
     scarf.push({ anchor, segs, side: sx, state: segs.map(() => ({ ax: 0, az: 0, vx: 0, vz: 0 })) });
   }
 
-  return { rig, material: mat, scarf, palette: C, kind: 'frog', variant };
+  return { rig, material: mat, scarf, palette: C, kind: 'frog', variant, bottle, hipDew: dew };
 }

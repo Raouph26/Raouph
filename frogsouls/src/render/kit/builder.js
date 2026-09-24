@@ -115,7 +115,7 @@ export function actorMaterial({ rim = 0x9fb7d0, rimStrength = 0.35, rough = 0.82
           float fres = pow(1.0 - clamp(abs(dot(normal, vdir)), 0.0, 1.0), 2.6);
           outgoingLight += diffuseColor.rgb * uFill * (0.3 + 0.7 * facing);
           outgoingLight += uRimColor * fres * uRimStrength;
-          outgoingLight += uGlowColor * uGlow * (0.2 + fres * 1.7);          // the silhouette burns, the face stays readable
+          outgoingLight += uGlowColor * uGlow * (0.05 + fres * 1.8);         // a rim of light; the body stays readable
           outgoingLight = mix(outgoingLight, uFlashColor, uFlash * (0.5 + 0.5 * fres));   // keeps the form readable
         }
         #include <opaque_fragment>`);

@@ -81,9 +81,13 @@ export class Particles {
   }
 
   update(dt) {
+    // only upload the slice of the pool that's alive (often nothing at all)
+    let lo = this.max, hi = -1;
     for (let i = 0; i < this.max; i++) {
       if (this.life[i] <= 0) continue;
       this.life[i] -= dt;
+      if (lo > i) lo = i;
+      if (hi < i) hi = i;
       if (this.life[i] <= 0) { this.alpha[i] = 0; this.pos[i * 3 + 1] = -9999; continue; }
       const d = Math.exp(-this.drag[i] * dt);
       this.vel[i * 3] *= d; this.vel[i * 3 + 2] *= d;
@@ -96,21 +100,133 @@ export class Particles {
       this.size[i] = this.s1[i] + (this.s0[i] - this.s1[i]) * k;
       this.alpha[i] = this.a0[i] * Math.min(1, k * 2.5) * Math.min(1, (1 - k) * 12 + .2);
     }
+    if (hi < 0 && !this.dirty) return;
     const a = this.geo.attributes;
-    a.position.needsUpdate = a.aColor.needsUpdate = a.aSize.needsUpdate = a.aAlpha.needsUpdate = true;
+    const from = this.dirty ? 0 : lo, count = this.dirty ? this.max : hi - lo + 1;
+    for (const [attr, n] of [[a.position, 3], [a.aColor, 3], [a.aSize, 1], [a.aAlpha, 1]]) {
+      attr.clearUpdateRanges(); attr.addUpdateRange(from * n, count * n); attr.needsUpdate = true;
+    }
+    this.dirty = false;
   }
 }
 const _c = new THREE.Color();
 
+// ── streaks: sparks drawn as thin glowing quads stretched along their motion ─
+const SVERT = /* glsl */`
+  attribute vec3 aStart; attribute vec3 aEnd; attribute vec3 aCol; attribute float aW; attribute float aA;
+  uniform vec2 uRes;
+  varying vec3 vCol; varying float vA; varying float vU;
+  void main() {
+    vec4 a = projectionMatrix * modelViewMatrix * vec4(aStart, 1.0);
+    vec4 b = projectionMatrix * modelViewMatrix * vec4(aEnd, 1.0);
+    vec2 sa = a.xy / max(a.w, .001), sb = b.xy / max(b.w, .001);
+    vec2 dir = (sb - sa) * uRes; float len = length(dir);
+    dir = len > .001 ? dir / len : vec2(1.0, 0.0);
+    vec2 n = vec2(-dir.y, dir.x) / uRes;
+    vec4 p = mix(a, b, position.x);
+    p.xy += n * position.y * aW * p.w;
+    gl_Position = p;
+    vCol = aCol; vA = aA; vU = position.y;
+  }`;
+const SFRAG = /* glsl */`
+  varying vec3 vCol; varying float vA; varying float vU;
+  void main() { float a = vA * (1.0 - vU * vU); if (a < .01) discard; gl_FragColor = vec4(vCol * 1.6, a); }`;
+
+export class Streaks {
+  constructor(scene, max = 320) {
+    this.max = max;
+    const g = new THREE.InstancedBufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute([0, -1, 0, 1, -1, 0, 0, 1, 0, 1, 1, 0], 3));
+    g.setIndex([0, 1, 2, 2, 1, 3]);
+    this.start = new Float32Array(max * 3); this.end = new Float32Array(max * 3);
+    this.col = new Float32Array(max * 3); this.w = new Float32Array(max); this.a = new Float32Array(max);
+    const I = (arr, n) => new THREE.InstancedBufferAttribute(arr, n).setUsage(THREE.DynamicDrawUsage);
+    g.setAttribute('aStart', I(this.start, 3)); g.setAttribute('aEnd', I(this.end, 3));
+    g.setAttribute('aCol', I(this.col, 3)); g.setAttribute('aW', I(this.w, 1)); g.setAttribute('aA', I(this.a, 1));
+    g.instanceCount = 0;
+    this.geo = g;
+    this.mat = new THREE.ShaderMaterial({ vertexShader: SVERT, fragmentShader: SFRAG, uniforms: { uRes: { value: new THREE.Vector2(1, 1) } },
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+    this.mesh = new THREE.Mesh(g, this.mat);
+    this.mesh.frustumCulled = false;
+    this.mesh.renderOrder = 7;
+    scene.add(this.mesh);
+    this.p = [];            // live streaks: {x,y,z,vx,vy,vz,life,max,len,w,r,g,b,grav}
+  }
+
+  emit(x, y, z, vx, vy, vz, color, { life = .3, len = .06, w = 2.2, grav = 9 } = {}) {
+    if (this.p.length >= this.max) this.p.shift();
+    _c.set(color);
+    this.p.push({ x, y, z, vx, vy, vz, life, max: life, len, w, r: _c.r, g: _c.g, b: _c.b, grav });
+  }
+
+  update(dt, res) {
+    this.mat.uniforms.uRes.value.copy(res);
+    const P = this.p;
+    let n = 0;
+    for (let i = 0; i < P.length; i++) {
+      const s = P[i];
+      s.life -= dt;
+      if (s.life <= 0) continue;
+      const d = Math.exp(-3 * dt);
+      s.vx *= d; s.vz *= d; s.vy = s.vy * d - s.grav * dt;
+      s.x += s.vx * dt; s.y += s.vy * dt; s.z += s.vz * dt;
+      if (s.y < .02) { s.y = .02; s.vy *= -.3; s.vx *= .5; s.vz *= .5; }
+      const k = s.life / s.max;
+      const o = n * 3;
+      this.start[o] = s.x; this.start[o + 1] = s.y; this.start[o + 2] = s.z;
+      this.end[o] = s.x - s.vx * s.len; this.end[o + 1] = s.y - s.vy * s.len; this.end[o + 2] = s.z - s.vz * s.len;
+      this.col[o] = s.r; this.col[o + 1] = s.g; this.col[o + 2] = s.b;
+      this.w[n] = s.w * (.4 + .6 * k); this.a[n] = Math.min(1, k * 2);
+      P[n++] = s;
+    }
+    P.length = n;
+    const g = this.geo;
+    g.instanceCount = n;
+    if (n) for (const k of ['aStart', 'aEnd', 'aCol', 'aW', 'aA']) {
+      const at = g.attributes[k]; at.clearUpdateRanges(); at.addUpdateRange(0, n * at.itemSize); at.needsUpdate = true;
+    }
+  }
+}
+
 // ── presets ─────────────────────────────────────────────────────────────────
+const _res = new THREE.Vector2();
 export class FX {
   constructor(scene) {
     this.add = new Particles(scene, { max: 2600, additive: true });
     this.norm = new Particles(scene, { max: 1600, additive: false });
+    this.streaks = new Streaks(scene);
     this.flies = [];     // swarms flying to the frog after a kill
+    this.res = new THREE.Vector2(1, 1);
   }
 
-  setScale(px) { this.add.setScale(px); this.norm.setScale(px); }
+  setScale(px, w, h) { this.add.setScale(px); this.norm.setScale(px); if (w) this.res.set(w, h); }
+
+  /**
+   * A blade biting in: a flash at the contact, sparks thrown AWAY from the
+   * attacker (dx,dz: the swing's direction), a spray of the boss's colour.
+   */
+  impact(x, y, z, dx, dz, { color = 0xffd9a0, goo = 0x9fd06a, heavy = false, crit = false } = {}) {
+    const p = crit ? 1.6 : heavy ? 1.3 : 1;
+    const n = Math.round((crit ? 30 : heavy ? 22 : 14));
+    for (let i = 0; i < n; i++) {
+      const a = Math.atan2(dx, dz) + (Math.random() - .5) * 2.2, e = (Math.random() - .2) * 1.2;
+      const s = (5 + Math.random() * 9) * p;
+      this.streaks.emit(x, y, z, Math.sin(a) * Math.cos(e) * s, Math.sin(e) * s + 2, Math.cos(a) * Math.cos(e) * s, color, { life: .18 + Math.random() * .25, len: .035, w: 2.4 * p });
+    }
+    this.add.emit(x, y, z, 0, 0, 0, 0xffffff, 120 * p, .07, { sizeEnd: 40 });
+    this.add.emit(x, y, z, 0, 0, 0, color, 70 * p, .16, { sizeEnd: 20 });
+    this.goo(x, y, z, goo, heavy ? 14 : 8, dx, dz);
+  }
+
+  sparks(x, y, z, color = 0xffd9a0, n = 18, power = 1) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, e = Math.random() * 1.1;
+      const s = (3 + Math.random() * 7) * power;
+      this.streaks.emit(x, y, z, Math.cos(a) * Math.cos(e) * s, Math.sin(e) * s * .9 + 1.5, Math.sin(a) * Math.cos(e) * s, color, { life: .2 + Math.random() * .3, len: .035, w: 2 });
+    }
+    this.add.emit(x, y, z, 0, 0, 0, color, 90 * power, .12, { sizeEnd: 30 });
+  }
 
   sparks(x, y, z, color = 0xffd9a0, n = 18, power = 1) {
     for (let i = 0; i < n; i++) {
@@ -122,10 +238,11 @@ export class FX {
     this.add.emit(x, y, z, 0, 0, 0, color, 90 * power, .12, { sizeEnd: 30 });
   }
 
-  goo(x, y, z, color, n = 14) {           // what a boss leaks when hit
+  goo(x, y, z, color, n = 14, dx = 0, dz = 0) {   // what a boss leaks when hit, thrown along the blow
+    const base = Math.atan2(dx, dz), aimed = dx || dz;
     for (let i = 0; i < n; i++) {
-      const a = Math.random() * Math.PI * 2, s = 2 + Math.random() * 4;
-      this.norm.emit(x, y, z, Math.cos(a) * s, 2 + Math.random() * 4, Math.sin(a) * s, color, 14 + Math.random() * 16, .5 + Math.random() * .4, { gravity: 18, drag: 1, sizeEnd: 6, alpha: .95 });
+      const a = aimed ? base + (Math.random() - .5) * 1.8 : Math.random() * Math.PI * 2, s = 2 + Math.random() * 4.5;
+      this.norm.emit(x, y, z, Math.sin(a) * s, 1.5 + Math.random() * 4, Math.cos(a) * s, color, 14 + Math.random() * 16, .5 + Math.random() * .4, { gravity: 18, drag: 1, sizeEnd: 6, alpha: .95 });
     }
   }
 
@@ -146,18 +263,38 @@ export class FX {
   }
 
   heal(x, y, z) {
-    for (let i = 0; i < 26; i++) {
-      const a = Math.random() * Math.PI * 2, r = .3 + Math.random() * .4;
-      this.add.emit(x + Math.cos(a) * r, y - .6 + Math.random() * .8, z + Math.sin(a) * r, 0, 1.2 + Math.random() * 1.6, 0,
-        i % 3 ? 0x8dff72 : 0xe8ffd8, 10 + Math.random() * 12, .8 + Math.random() * .6, { drag: .5, sizeEnd: 2 });
+    // a ring at the feet, motes spiralling up, a soft bloom at the chest
+    for (let i = 0; i < 28; i++) {
+      const a = (i / 28) * Math.PI * 2;
+      this.add.emit(x + Math.cos(a) * .25, .08, z + Math.sin(a) * .25, Math.cos(a) * 2.6, .15, Math.sin(a) * 2.6, 0x8dff72, 14, .45, { drag: 4, sizeEnd: 4 });
     }
+    for (let i = 0; i < 34; i++) {
+      const a = Math.random() * Math.PI * 2, r = .25 + Math.random() * .45;
+      this.add.emit(x + Math.cos(a) * r, .1 + Math.random() * 1.2, z + Math.sin(a) * r, -Math.sin(a) * .8, 1.1 + Math.random() * 1.8, Math.cos(a) * .8,
+        i % 3 ? 0x8dff72 : 0xe8ffd8, 10 + Math.random() * 14, .9 + Math.random() * .7, { drag: .6, sizeEnd: 2 });
+    }
+    this.add.emit(x, y, z, 0, .3, 0, 0x8dff72, 160, .5, { sizeEnd: 60, alpha: .6 });
   }
 
   parry(x, y, z) {
-    this.sparks(x, y, z, 0xfff2c4, 34, 1.5);
-    for (let i = 0; i < 24; i++) {
-      const a = (i / 24) * Math.PI * 2;
-      this.add.emit(x, y, z, Math.cos(a) * 9, Math.sin(a) * 2, Math.sin(a) * 9, 0xffffff, 12, .2, { drag: 6, sizeEnd: 2 });
+    for (let i = 0; i < 40; i++) {
+      const a = Math.random() * Math.PI * 2, e = (Math.random() - .3) * 1.4, s = 7 + Math.random() * 12;
+      this.streaks.emit(x, y, z, Math.cos(a) * Math.cos(e) * s, Math.sin(e) * s + 1, Math.sin(a) * Math.cos(e) * s, i % 4 ? 0xfff2c4 : 0xffb347, { life: .25 + Math.random() * .35, len: .045, w: 2.8 });
+    }
+    this.add.emit(x, y, z, 0, 0, 0, 0xffffff, 260, .12, { sizeEnd: 80 });
+    this.add.emit(x, y, z, 0, 0, 0, 0xfff2c4, 150, .3, { sizeEnd: 30 });
+    for (let i = 0; i < 32; i++) {
+      const a = (i / 32) * Math.PI * 2;
+      this.add.emit(x, y, z, Math.cos(a) * 10, Math.sin(a) * 2.5, Math.sin(a) * 10, 0xffffff, 12, .22, { drag: 6, sizeEnd: 2 });
+    }
+  }
+
+  /** Embers rising off a body as it comes apart (boss deaths). */
+  embers(x, y, z, r, h, color = 0xffb35a, n = 20) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, rr = Math.random() * r;
+      this.add.emit(x + Math.cos(a) * rr, Math.random() * h, z + Math.sin(a) * rr, (Math.random() - .5) * .6, 1 + Math.random() * 2.2, (Math.random() - .5) * .6,
+        Math.random() < .3 ? 0xffffff : color, 8 + Math.random() * 12, 1 + Math.random() * 1.2, { drag: .4, sizeEnd: 1 });
     }
   }
 
@@ -197,9 +334,10 @@ export class FX {
       this.add.emit(f.x, f.y, f.z, 0, 0, 0, 0x9fd06a, 5, .05, { sizeEnd: 3, alpha: .5 });
       if (d < .6 || f.t > 4) f.done = true;
     }
-    this.flies = this.flies.filter((f) => !f.done);
+    if (this.flies.length) this.flies = this.flies.filter((f) => !f.done);
     this.add.update(dt);
     this.norm.update(dt);
+    this.streaks.update(dt, this.res);
   }
 }
 

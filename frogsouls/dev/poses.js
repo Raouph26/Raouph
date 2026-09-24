@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { buildFrog } from '../src/render/kit/frog.js';
 import { buildWeapon } from '../src/render/kit/weapons.js';
 import { applyPose } from '../src/render/kit/rig.js';
-import { REST, READY, GUARD, ATTACKS, ACT, BOSS } from '../src/render/anim/clips.js';
+import { REST, READY, GUARD, ATTACKS, ACT, BOSS, BOSS_ACTS, PLAYER_ACTS, sampleKeys } from '../src/render/anim/clips.js';
 
 const q = new URLSearchParams(location.search);
 const set = q.get('set') ?? 'player';
@@ -17,6 +17,16 @@ if (set === 'player') {
   for (const k of ['lungeThrust', 'runSlash', 'hammerR', 'hammerL', 'slam', 'spearPoke']) entries.push([k + ' peak', ATTACKS[k].peak], [k + ' strike', ATTACKS[k].strike]);
 } else if (set === 'act') {
   for (const k of Object.keys(ACT)) entries.push([k, ACT[k]]);
+} else if (set === 'guard') {
+  entries.push(['READY', READY], ['GUARD', GUARD], ['parryWind', ACT.parryWind], ['parryFlick', ACT.parryFlick], ['drinkReach', ACT.drinkReach], ['drink', ACT.drink], ['gulp', ACT.gulp],
+    ['riposteDraw', ACT.riposteDraw], ['riposteStab', ACT.riposteStab], ['riposteGrind', ACT.riposteGrind], ['riposteKick', ACT.riposteKick], ['guardBroken', ACT.guardBroken]);
+} else if (set === 'swing') {
+  // one attack, sampled along its whole timeline
+  const clip = ATTACKS[q.get('clip') ?? 'slashR'];
+  const tmp = () => new Float32Array(READY.length);
+  for (const [ph, ks] of [['windup', [0, .4, .72, 1]], ['active', [.2, .38, .7, 1]], ['recovery', [.2, .4, .7, 1]]]) {
+    for (const k of ks) entries.push([`${ph} ${k}`, sampleKeys(tmp(), clip[ph], k, READY, READY)]);
+  }
 } else if (set === 'boss') {
   for (const k of ['sweep', 'stomp', 'leap', 'charge', 'throw', 'cast']) entries.push([k + ' peak', BOSS[k].peak], [k + ' strike', BOSS[k].strike]);
 } else if (set === 'boss2') {

@@ -183,6 +183,12 @@ const SFX = {
     this._metal(t, 520 * rnd(.97, 1.03), out, { gain: .45, dur: 1.6, bright: 1.1 });
     this._metal(t, 780, out, { gain: .2, dur: .9 });
   },
+  glint(t, o) {                    // a blade catching the light: the swing is coming
+    const out = this._out({ ...o, gain: .5, rev: .55 });
+    this._noise(t, .1, out, { gain: .3, type: 'highpass', f: 5200, fEnd: 9500 });
+    this._metal(t, o.red ? 760 : 1900, out, { partials: [1, 2.02, 3.1, 4.7], gain: o.red ? .16 : .11, dur: o.red ? .5 : .32, bright: 1.25 });
+    if (o.red) this._osc('sawtooth', 190, t, .22, out, { gain: .07, freqEnd: 160 });
+  },
   block(t, o) {
     const out = this._out({ ...o, gain: .7, rev: .2 });
     this._noise(t, .08, out, { gain: .7, type: 'lowpass', f: 1600, fEnd: 300 });

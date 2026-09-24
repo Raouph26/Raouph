@@ -6,6 +6,7 @@ import { PlayerAnimator, BossAnimator, VacuumAnimator } from './anim/animator.js
 import { Trail } from './fx/trail.js';
 import { WEAPONS } from '../sim/weapons.js';
 import { glowMaterial } from './kit/builder.js';
+import { glintTexture } from './textures.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Views mirror sim entities every frame. They own meshes, animators, trails
@@ -37,11 +38,15 @@ export class PlayerView {
   }
 
   /** p: the PlayerSim, or anything with the same shape (the hub walker). */
-  update(dt, p, combat) {
+  update(dt, p, combat, realDt = dt) {
     this.setWeapon(p.weaponId);
+    this.anim.realDt = realDt;
     this.anim.update(dt, p, { combat, weaponTwo: TWO_HANDED.has(p.weaponId) });
-    const live = p.state === 'attack' && p.atk && p.t >= p.atk.spec.startup * 0.7 && p.t <= p.atk.spec.startup + p.atk.spec.active + 0.06;
-    this.trail.update(dt, this.weapon?.userData.base, this.weapon?.userData.tip, live || p.state === 'riposte' && p.t > .3 && p.t < .5);
+    // the dew bottle comes out of the hip and into the hand while drinking
+    const inHand = this.anim.drinking > .5;
+    this.frog.bottle.visible = inHand; this.frog.hipDew.visible = !inHand;
+    const live = p.state === 'attack' && p.atk && p.t >= p.atk.spec.startup * 0.75 && p.t <= p.atk.spec.startup + p.atk.spec.active + 0.05;
+    this.trail.update(dt, this.weapon?.userData.base, this.weapon?.userData.tip, live || p.state === 'riposte' && p.t > .18 && p.t < .4);
     this.flash = Math.max(0, this.flash - dt * 7);
     this.frog.material.userData.u.uFlash.value = this.flash * this.flash * .7;
     this.frog.rig.root.visible = true;
@@ -69,27 +74,40 @@ export class BossView {
     this.t = 0;
     this.deadT = 0;
     this.u = this.b.material.userData.u;
+    // the glint: a star that flashes on the weapon just before it swings
+    this.glint = new THREE.Sprite(new THREE.SpriteMaterial({ map: glintTexture(), color: 0xfff1c8, transparent: true, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+    this.glint.renderOrder = 9;
+    this.glint.visible = false;
+    this.glintT = -1;
+    this.glintKey = null;
+    scene.add(this.glint);
   }
 
-  update(dt, boss, fight) {
+  update(dt, boss, fight, realDt = dt) {
     this.t += dt;
+    this.anim.realDt = realDt;
     this.anim.update(dt, boss);
 
-    // telegraph glow: builds through the wind-up, flashes red for unblockables
+    // telegraph: a rim of light builds through the wind-up (gold: parryable,
+    // red: not), then a glint flashes on the weapon just before it swings
     const an = boss.anim;
-    let target = 0;
+    let target = 0, red = false;
     if (boss.state === 'move') {
       const s = boss.run?.step;
-      if (an.phase === 'windup') target = an.k * an.k;
-      else if (an.phase === 'hold') target = .85 + Math.sin(this.t * 22) * .15;
-      else if (an.phase === 'active') target = Math.max(0, 1 - an.k * 2.5);
-      const red = s?.hit?.unblockable || !s?.hit?.parryable;
-      this.u.uGlowColor.value.set(boss.phase >= 3 ? 0xff5a3a : red ? 0xff5a3a : 0xffc46a);
+      if (an.phase === 'windup') target = .15 + an.k * an.k * .45;
+      else if (an.phase === 'hold') target = .5 + Math.sin(this.t * 22) * .15;
+      else if (an.phase === 'active') target = Math.max(0, .6 - an.k * 2);
+      red = !!(s?.hit?.unblockable || !s?.hit?.parryable);
+      this.u.uGlowColor.value.set(red ? 0xff4a2a : 0xffc46a);
+      const key = `${an.moveId}:${an.step}`;
+      if (an.phase === 'windup' && an.k > .8 && this.glintKey !== key) { this.glintKey = key; this._glint(red); }
     } else if (boss.state === 'transition') { target = .7 + Math.sin(this.t * 18) * .3; this.u.uGlowColor.value.set(0xffffff); }
     else if (boss.flags.countering) { target = .8; this.u.uGlowColor.value.set(0x6ab8ff); }
+    if (boss.state !== 'move') this.glintKey = null;
     if (boss.iframes > 0 && boss.def.gimmick === 'loading') { target = .6; this.u.uGlowColor.value.set(0x57a8ff); }
     this.glow += (target - this.glow) * Math.min(1, dt * 18);
-    this.u.uGlow.value = this.glow * 1.4;
+    this.u.uGlow.value = this.glow;
+    this._updateGlint(realDt);
 
     this.flash = Math.max(0, this.flash - dt * 9);
     this.u.uFlash.value = this.flash * this.flash * .42;
@@ -134,9 +152,32 @@ export class BossView {
     }
   }
 
+  _glint(red) {
+    this.glintT = 0;
+    this.glint.material.color.set(red ? 0xff5a3a : 0xfff1c8);
+    this.onGlint?.(red);
+  }
+
+  _updateGlint(dt) {
+    const g = this.glint;
+    if (this.glintT < 0) { g.visible = false; return; }
+    this.glintT += dt;
+    const k = this.glintT / .32;
+    if (k >= 1) { this.glintT = -1; g.visible = false; return; }
+    // at the weapon's tip if it has one, else at its hand
+    const tip = this.b.weapon?.userData.tip ?? this.b.rig?.joints.handR ?? this.b.root;
+    tip.getWorldPosition(g.position);
+    const pop = k < .25 ? k / .25 : 1 - (k - .25) / .75;
+    const size = (.55 + .5 * (this.anim.scale ?? 1)) * (0.4 + pop * 1.1);
+    g.scale.set(size, size, 1);
+    g.material.rotation = k * 1.2;
+    g.material.opacity = Math.min(1, pop * 1.4);
+    g.visible = true;
+  }
+
   hitFlash() { this.flash = 1; }
   get root() { return this.b.root; }
-  dispose() { this.scene.remove(this.b.root); this.scene.remove(this.trail.mesh); }
+  dispose() { this.scene.remove(this.b.root); this.scene.remove(this.trail.mesh); this.scene.remove(this.glint); }
 }
 
 // ── projectiles ─────────────────────────────────────────────────────────────

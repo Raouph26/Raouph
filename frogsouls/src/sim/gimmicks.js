@@ -173,7 +173,7 @@ G.algorithm = () => ({
     const h = b.flags.hist;
     const push = (a) => { h.push(a); if (h.length > 14) h.shift(); };
     if (e.type === 'swing') push(e.heavy ? 'heavy' : 'light');
-    else if (e.type === 'roll' || e.type === 'backstep') push('roll');
+    else if (e.type === 'roll') push('roll');
     else if (e.type === 'block') push('block');
     else if (e.type === 'flaskStart') {
       push('heal');

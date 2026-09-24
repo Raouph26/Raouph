@@ -6,6 +6,7 @@ import { FX } from '../render/fx/particles.js';
 import { Decals } from '../render/fx/decals.js';
 import { Gate } from '../render/env/props.js';
 import { CameraCtl } from './camera.js';
+import { Interp } from './interp.js';
 import { Save } from './save.js';
 import { Input } from '../input/input.js';
 import { AudioEngine } from '../audio/engine.js';
@@ -55,6 +56,8 @@ export class Game {
     this.fx = new FX(this.scene);
     this.projViews = new ProjectileViews(this.scene);
     this.cam = new CameraCtl(this.R.camera);
+    this.interp = new Interp();
+    this._quiet = { ...EMPTY_INTENT };
     this.input = new Input(this.R.gl.domElement, this.ui);
     this.input.sens = S.sens; this.input.invertY = S.invertY;
     this.audio = new AudioEngine();
@@ -82,7 +85,6 @@ export class Game {
     this.busy = false;
     this.heartT = 0;
     this._v = new THREE.Vector3();
-    this.clock = new THREE.Clock();
     window.__game = this;
   }
 
@@ -110,14 +112,17 @@ export class Game {
       if (gp) start(); else requestAnimationFrame(padPoll);
     };
     padPoll();
-    this.clock.start();
-    this.loop();
+    requestAnimationFrame(this.loop);
   }
 
-  loop = () => {
+  // the display's own frame timestamps: steadier than reading the clock
+  // inside the callback, which carries the callback's scheduling jitter
+  loop = (now) => {
     requestAnimationFrame(this.loop);
-    const raw = Math.min(this.clock.getDelta(), 1 / 20);
-    if (this.manual) return;          // test harness steps frames itself
+    const last = this._lastNow ?? now;
+    this._lastNow = now;
+    const raw = Math.min(Math.max(0, (now - last) / 1000), 1 / 20);
+    if (this.manual || raw === 0) return;          // test harness steps frames itself
     this.frame(raw);
   };
 
@@ -221,6 +226,7 @@ export class Game {
     this.fightDef = def;
     this.attempt = this.save.attempt(id);
     this.bossView = new BossView(this.scene, def);
+    this.bossView.onGlint = (red) => this.sfx('glint', { pos: this.fight?.boss, red });
     this.gateGroup.visible = false;
     this.state = 'fight';
     this.phase = 'intro';
@@ -269,8 +275,8 @@ export class Game {
     const f = this.fight, p = f.player, b = f.boss;
     if (this.phase === 'intro') {
       this.introT += dt;
-      this.bossView.update(dt, b, f);
-      this.playerView.update(dt, p, true);
+      this.bossView.update(dt, b, f, dt);
+      this.playerView.update(dt, p, true, dt);
       if (this.introT > 2.8 || (this.introT > .8 && (this.input.took('confirm') || this.input.took('light') || this.input.took('interact') || this.input.took('tap')))) this._beginCombat();
       return;
     }
@@ -286,14 +292,22 @@ export class Game {
     this.acc += simDt;
     let first = true;
     while (this.acc >= TICK) {
-      f.step(TICK, first ? intent : { ...intent, light: false, heavy: false, roll: false, parry: false, heal: false });
+      this.interp.snap(f);
+      if (first) f.step(TICK, intent);
+      else {                                   // presses belong to the first step only
+        const q = Object.assign(this._quiet, intent);
+        q.light = q.heavy = q.roll = q.parry = q.heal = false;
+        f.step(TICK, q);
+      }
       first = false;
       this.acc -= TICK;
       this._events(f.drain());
     }
+    // draw between the last two sim states (restored after the frame renders)
+    this.interp.apply(f, Math.min(1, this.acc / TICK));
 
-    this.bossView.update(simDt, b, f);
-    this.playerView.update(simDt, p, true);
+    this.bossView.update(simDt, b, f, dt);
+    this.playerView.update(simDt, p, true, dt);
     if (this.phase === 'combat') this.combatT += simDt;
     this._coach(dt);
     this.projViews.sync(simDt, f.projectiles, f.time);
@@ -326,7 +340,7 @@ export class Game {
 
   _footsteps(dt, p) {
     const sp = Math.hypot(p.vx, p.vz);
-    if (p.state === 'roll' || p.state === 'backstep' || !p.alive) return;
+    if (p.state === 'roll' || !p.alive) return;
     this.stepDist += sp * dt;
     if (this.stepDist > 1.25 && sp > .8) {
       this.stepDist = 0;
@@ -346,22 +360,32 @@ export class Game {
       switch (e.type) {
         case 'swing': this.sfx(e.heavy ? 'whoosh' : 'whoosh', { pos: p, heavy: e.heavy }); break;
         case 'roll': this.sfx('roll', { pos: p }); this.fx.dust(p.x, p.z, 8, .5, 0x8a8070, .8); break;
-        case 'backstep': this.sfx('whooshSmall', { pos: p }); break;
         case 'dodged': this.sfx('dodged', { pos: p }); break;
         case 'hit':
           if (e.target === 'boss') {
             const heavy = e.heavy || e.riposte;
             this.sfx('hit', { pos: e, heavy });
-            this.fx.sparks(e.x, 1.2 * b.scale, e.z, 0xffd9a0, heavy ? 26 : 16, heavy ? 1.3 : 1);
-            this.fx.goo(e.x, 1.1 * b.scale, e.z, b.def.visual?.accent ?? 0x9fd06a, heavy ? 16 : 8);
+            // the contact: where the blade meets the boss's body, sparks thrown along the blow
+            const tip = this.playerView.weapon?.userData.tip;
+            if (tip) tip.getWorldPosition(this._v); else this._v.set(p.x, 1.2, p.z);
+            let dx = this._v.x - b.x, dz = this._v.z - b.z;
+            const dl = Math.hypot(dx, dz) || 1;
+            const cy = Math.max(.45, Math.min(b.height * .8, this._v.y));
+            this.fx.impact(b.x + dx / dl * b.radius * .75, cy, b.z + dz / dl * b.radius * .75, b.x - p.x, b.z - p.z,
+              { color: e.riposte ? 0xffe6b0 : 0xffd9a0, goo: b.def.visual?.accent ?? 0x9fd06a, heavy, crit: e.riposte });
+            this.ui.bossDamage(e.dmg);
             this.bossView?.hitFlash();
+            this.bossView?.anim.flinch?.(Math.atan2((e.fx ?? p.x) - b.x, (e.fz ?? p.z) - b.z), e.riposte ? 1.4 : heavy ? 1 : .6);
             this.hitstop = Math.max(this.hitstop, e.riposte ? .24 : heavy ? .085 : .05);
             this.cam.shake(e.riposte ? .45 : heavy ? .24 : .12);
             rumble(heavy ? .6 : .3, .3, heavy ? 120 : 60);
           } else {
             this.sfx('hurt', { pos: p });
-            this.fx.sparks(p.x, 1.1, p.z, 0xff5a4a, 14, .9);
+            this.fx.impact(p.x, 1.05, p.z, p.x - (e.fx ?? b.x), p.z - (e.fz ?? b.z), { color: 0xff7a4a, goo: 0x5e9a3c, heavy: e.knockdown });
             this.playerView.hitFlash();
+            const from = Math.atan2((e.fx ?? b.x) - p.x, (e.fz ?? b.z) - p.z);
+            this.playerView.anim.hurtFrom(from);
+            this.playerView.anim.flinch(from, e.knockdown ? 1.4 : e.hyper ? .5 : .9);
             this.R.fx.hurt = Math.min(1, this.R.fx.hurt + (e.knockdown ? .9 : .6));
             this.R.fx.aberration = 1;
             this.hitstop = Math.max(this.hitstop, e.knockdown ? .11 : .07);
@@ -371,15 +395,17 @@ export class Game {
           }
           break;
         case 'parry':
+          this.playerView.anim.parried();
           this.sfx('parry', { pos: e });
           this.fx.parry(e.x, 1.3, e.z);
-          this.R.fx.flash = .45; this.R.fx.aberration = 1.2;
-          this.hitstop = Math.max(this.hitstop, .16);
+          this.R.fx.flash = .35; this.R.fx.aberration = 1.2;
+          this.hitstop = Math.max(this.hitstop, .12);
+          this.timeScale = .3; this.slowT = .35;              // the world holds its breath
           this.cam.shake(.3);
           rumble(.5, .9, 140);
           break;
-        case 'block': this.sfx('block', { pos: p }); this.fx.sparks(p.x + Math.sin(p.yaw) * .6, 1.2, p.z + Math.cos(p.yaw) * .6, 0xffe2a8, 10, .7); this.cam.shake(.14); rumble(.3, .3, 80); break;
-        case 'guardbreak': this.sfx('guardbreak', { pos: p }); this.cam.shake(.4); this.R.fx.aberration = 1; break;
+        case 'block': this.playerView.anim.blockHit(Math.min(1.5, .5 + (e.dmg ?? 10) / 30)); this.sfx('block', { pos: p }); this.fx.sparks(p.x + Math.sin(p.yaw) * .6, 1.2, p.z + Math.cos(p.yaw) * .6, 0xffe2a8, 10, .7); this.cam.shake(.14); rumble(.3, .3, 80); break;
+        case 'guardbreak': this.playerView.anim.flinch(Math.atan2((e.fx ?? b.x) - p.x, (e.fz ?? b.z) - p.z), 1.2); this.sfx('guardbreak', { pos: p }); this.cam.shake(.4); this.R.fx.aberration = 1; break;
         case 'riposte': this.sfx('riposte', { pos: e }); this.R.fx.flash = .2; this.cam.kick(4); break;
         case 'flaskStart': this.sfx('flask', { pos: p }); break;
         case 'healed': this.sfx('healed', { pos: p }); this.fx.heal(p.x, 1.3, p.z); break;
@@ -779,7 +805,7 @@ export class Game {
 
     // world
     this.fx.update(gdt * (this.hitstop > 0 ? .15 : 1));
-    this.fx.setScale(this.R.pointScale);
+    this.fx.setScale(this.R.pointScale, this.R.w, this.R.h);
     this.stage.update(dt, c, { pointScale: this.R.pointScale });
 
     // HUD
@@ -797,6 +823,7 @@ export class Game {
     }
 
     this.R.render(dt, this.stage);
+    this.interp.restore();
     this.input.endFrame();
   }
 

@@ -70,7 +70,7 @@ export class BossSim {
     this.stagDur = 0;
     this.pauseDur = 0;
     this.say = null;               // { text, t } — speech the renderer floats above it
-    this.anim = { tell: 'idle', phase: 'idle', k: 0, step: 0 };
+    this.anim = { tell: 'idle', phase: 'idle', k: 0, dur: 0, step: 0 };
     this.flags = {};               // per-fight scratch for gimmicks
 
     this.gimmick = makeGimmick(def.gimmick, this, fight);
@@ -325,6 +325,7 @@ export class BossSim {
     this.y = 0;
     this.stagDur = dur;
     this.stagRip = ripostable;
+    this.stagWhy = why;               // the renderer plays a parried recoil differently from a poise break
     this.enter('stagger');
     this.vx *= 0.2; this.vz *= 0.2;
     this.fight.emit({ type: 'bossStagger', why, x: this.x, z: this.z });
@@ -359,7 +360,7 @@ export class BossSim {
 
     const dmg = hit.dmg * (this.flags.damageTaken ?? 1);
     this.hp -= dmg;
-    this.fight.emit({ type: 'hit', target: 'boss', x: this.x, z: this.z, dmg, heavy: !!hit.heavy });
+    this.fight.emit({ type: 'hit', target: 'boss', x: this.x, z: this.z, dmg, heavy: !!hit.heavy, kind: hit.kind, fx: hit.from?.x, fz: hit.from?.z });
 
     if (this.state !== 'stagger' && this.state !== 'riposted' && this.state !== 'transition') {
       this.poise -= hit.poise * (this.flags.poiseTaken ?? 1);
@@ -377,7 +378,7 @@ export class BossSim {
     this.hp -= dmg * (this.flags.damageTaken ?? 1);
     this.run = null;
     this.enter('riposted');
-    this.fight.emit({ type: 'hit', target: 'boss', x: this.x, z: this.z, dmg, riposte: true });
+    this.fight.emit({ type: 'hit', target: 'boss', x: this.x, z: this.z, dmg, riposte: true, fx: this.fight.player.x, fz: this.fight.player.z });
     this._checkPhase();
     this._checkDeath();
   }
@@ -585,15 +586,17 @@ export class BossSim {
       a.tell = s.tell ?? r.move.tell;
       a.step = r.i;
       a.phase = r.phase;
-      if (r.phase === 'windup') a.k = Math.min(1, r.t / Math.max(s.windup, 0.001));
-      else if (r.phase === 'hold') a.k = 1;
-      else if (r.phase === 'active') a.k = Math.min(1, (r.t - s.windup - r.hold) / Math.max(s.active, 0.001));
-      else a.k = Math.min(1, (r.t - s.windup - r.hold - s.active) / Math.max(s.recovery, 0.001));
+      // dur lets the renderer advance k between sim steps (−1: don't)
+      if (r.phase === 'windup') { a.dur = Math.max(s.windup, 0.001); a.k = Math.min(1, r.t / a.dur); }
+      else if (r.phase === 'hold') { a.dur = -1; a.k = 1; }
+      else if (r.phase === 'active') { a.dur = Math.max(s.active, 0.001); a.k = Math.min(1, (r.t - s.windup - r.hold) / a.dur); }
+      else { a.dur = Math.max(s.recovery, 0.001); a.k = Math.min(1, (r.t - s.windup - r.hold - s.active) / a.dur); }
       a.moveId = r.move.id;
     } else {
       a.tell = this.state;
       a.phase = this.state;
-      a.k = this.t;
+      a.k = this.t;                // seconds in this state
+      a.dur = 0;
       a.step = 0;
       a.moveId = null;
     }

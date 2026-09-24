@@ -54,6 +54,10 @@
   #boss .bh{display:flex;align-items:baseline;gap:10px;white-space:nowrap}
   #boss .bn{flex:none;font:400 clamp(17px,2.1vw,24px) var(--serif);letter-spacing:.06em;text-shadow:0 2px 8px #000}
   #boss .be{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font:400 11px var(--mono);color:var(--dim);text-shadow:0 1px 4px #000}
+  #boss .bd{flex:none;font:600 16px var(--cond);color:#fff1cf;letter-spacing:.04em;text-shadow:0 1px 6px #000;opacity:0;transition:opacity .5s}
+  #boss .bd.on{opacity:1;transition:none}
+  #boss .bd.pop{animation:dmgpop .28s cubic-bezier(.2,1.6,.4,1)}
+  @keyframes dmgpop{0%{transform:scale(1.5);color:#fff}100%{transform:scale(1)}}
   #boss .bar{width:100%;height:9px;margin-top:6px}
   #boss .bar i{background:linear-gradient(#c79a45,#7e5a1c)}
   #boss .bl{flex:none;font:500 12px var(--mono);color:var(--gold2);letter-spacing:.06em;text-shadow:0 1px 4px #000}
@@ -209,7 +213,7 @@
       <div id="flask"><span class="ic"></span><b>3</b></div>
     </div>
     <div id="flies"><span class="ic"></span><b>0</b></div>
-    <div id="boss"><div class="bh"><div class="bn"></div><div class="be"></div><div class="bl"></div></div><div class="bar"><u></u><i></i></div></div>
+    <div id="boss"><div class="bh"><div class="bn"></div><div class="be"></div><div class="bd"></div><div class="bl"></div></div><div class="bar"><u></u><i></i></div></div>
     <div id="reticle"></div>
     <div id="say"></div>
     <div id="prompt"></div>
