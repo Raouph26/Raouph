@@ -12,6 +12,20 @@ import { PLAYER } from '../../sim/player.js';
 
 const clamp01 = (x) => Math.max(0, Math.min(1, x));
 const arc = (k) => Math.sin(Math.PI * clamp01(k));
+const smooth01 = (x) => { const k = clamp01(x); return k * k * (3 - 2 * k); };
+
+/**
+ * A forward roll: dive, one full tumble around the tucked body's middle, rise.
+ * Returns the pivot height for applyPose. The turn ends exactly at 0 (not 2π)
+ * so fading back to locomotion never spins the body backwards.
+ */
+function tumble(a, base, k, hipH) {
+  lerpPose(a, base, ACT.tuck, arc(k * 1.05));
+  const turn = smooth01((k - .04) / .72);
+  a[I.pitch] = turn >= 1 ? 0 : turn * Math.PI * 2;
+  a[I.drop] = -arc(k) * .3;
+  return hipH + .05;
+}
 const angleLerp = (a, b, t) => { let d = ((b - a + Math.PI) % (Math.PI * 2)) - Math.PI; if (d < -Math.PI) d += Math.PI * 2; return a + d * t; };
 
 /** Make the off hand grab the weapon for two-handed props. */
@@ -31,6 +45,7 @@ class BaseAnimator {
     this.lastAct = new Float32Array(N);
     this.w = 0;                // action layer weight
     this.mask = null;
+    this.pivot = 0;            // pitch pivot height for tumbles (see applyPose)
     this.phase = 0;
     this.t = 0;
     this.yaw = null;
@@ -48,7 +63,7 @@ class BaseAnimator {
     this.out.set(this.loco);
     const src = active ? this.act : this.lastAct;
     blendInto(this.out, src, ease.inOut(this.w), this.mask);
-    applyPose(this.rig, this.out);
+    applyPose(this.rig, this.out, active ? this.pivot : 0);
   }
 }
 
@@ -80,6 +95,7 @@ export class PlayerAnimator extends BaseAnimator {
 
     let active = true;
     this.mask = null;
+    this.pivot = 0;
     const a = this.act;
     switch (p.state) {
       case 'attack': {
@@ -94,13 +110,7 @@ export class PlayerAnimator extends BaseAnimator {
         if (weaponTwo) twoHands(a);
         break;
       }
-      case 'roll': {
-        const k = clamp01(p.t / PLAYER.roll.duration);
-        lerpPose(a, stanceBase, ACT.tuck, arc(k * 1.05));
-        a[I.pitch] = k * Math.PI * 2;
-        a[I.drop] = -arc(k) * .42 + Math.sin(k * Math.PI * 2) * .05;
-        break;
-      }
+      case 'roll': this.pivot = tumble(a, stanceBase, clamp01(p.t / PLAYER.roll.duration), this.rig.spec.hipH); break;
       case 'backstep': lerpPose(a, stanceBase, ACT.hopBack, arc(p.t / PLAYER.backstep.duration)); break;
       case 'block': a.set(GUARD); if (weaponTwo) twoHands(a); this.mask = UPPER; break;
       case 'parry': {
@@ -197,6 +207,7 @@ export class BossAnimator extends BaseAnimator {
     const a = this.act, an = b.anim;
     let active = true;
     this.mask = null;
+    this.pivot = 0;
     switch (b.state) {
       case 'move': {
         const lib = this.frog ? ATTACKS : BOSS;
@@ -233,12 +244,7 @@ export class BossAnimator extends BaseAnimator {
         a[I.tilt] = .18; a[I.rRaise] -= .15; a[I.drop] -= .04;
         break;
       }
-      case 'dodge': {
-        const k = clamp01(b.t / .5);
-        lerpPose(a, this.rest, ACT.tuck, arc(k * 1.05));
-        a[I.pitch] = k * Math.PI * 2; a[I.drop] = -arc(k) * .42;
-        break;
-      }
+      case 'dodge': this.pivot = tumble(a, this.rest, clamp01(b.t / .5), this.rig.spec.hipH); break;
       case 'drink': lerpPose(a, this.rest, ACT.drink, arc(Math.min(1, b.t / 1.25 * 1.2)) ** .6); break;
       case 'dead': lerpPose(a, this.rest, ACT.dead, ease.out(clamp01(b.t / 1.2))); break;
       default: active = false;

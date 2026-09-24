@@ -238,7 +238,7 @@ export class Game {
     this.ui.hideBanner();
     this.ui.closeMenu();
     this.ui.prompt(null);
-    this.ui.showHud(true, { boss: false });
+    this.ui.showHud(true, { boss: false, controls: false });
     this.cam.cinematic(new THREE.Vector3(this.fight.boss.x, 0, this.fight.boss.z), 6 + this.fight.boss.scale * 2.4, this.fight.boss.height, 2.8, Math.PI * .1);
     this.cam.snap = true;
     this.music.stop(.6);
@@ -250,6 +250,7 @@ export class Game {
 
   _beginCombat() {
     this.phase = 'combat';
+    this.combatT = 0;
     this.cam.endCinematic(this.fight.player);
     this.cam.yaw = Math.PI * 0 + this.fight.player.yaw + Math.PI;
     this.ui.showHud(true, { boss: true });
@@ -270,7 +271,7 @@ export class Game {
       this.introT += dt;
       this.bossView.update(dt, b, f);
       this.playerView.update(dt, p, true);
-      if (this.introT > 2.8 || (this.introT > .8 && (this.input.took('confirm') || this.input.took('light') || this.input.took('interact')))) this._beginCombat();
+      if (this.introT > 2.8 || (this.introT > .8 && (this.input.took('confirm') || this.input.took('light') || this.input.took('interact') || this.input.took('tap')))) this._beginCombat();
       return;
     }
 
@@ -293,6 +294,8 @@ export class Game {
 
     this.bossView.update(simDt, b, f);
     this.playerView.update(simDt, p, true);
+    if (this.phase === 'combat') this.combatT += simDt;
+    this._coach(dt);
     this.projViews.sync(simDt, f.projectiles, f.time);
     this.decals.sync(f.hazards, simDt);
     this.stage.dim += ((f.dim ?? 0) - this.stage.dim) * Math.min(1, dt * 2);
@@ -430,6 +433,39 @@ export class Game {
     }
   }
 
+  // ── first-time tips: each taught once, in the moment it matters ───────────
+  _btn(a) {
+    const d = this.input.device;
+    const T = { touch: { light: 'ATK', heavy: 'HEAVY', roll: 'ROLL', parry: 'PARRY', heal: 'HEAL', block: 'BLOCK', lock: 'LOCK' },
+      pad: { light: 'R1', heavy: 'R2', roll: 'B', parry: 'L2', heal: 'X', block: 'L1', lock: 'R3' },
+      kb: { light: 'CLICK', heavy: 'F', roll: 'SPACE', parry: 'C', heal: 'R', block: 'RIGHT CLICK', lock: 'Q' } };
+    return (T[d] ?? T.kb)[a];
+  }
+
+  _tip(id, text, dur = 4.2) {
+    const t = this.save.d.tips ?? (this.save.d.tips = {});
+    if (t[id] || this.tipCd > 0 || this.save.settings.hints === false) return;
+    t[id] = true; this.save.write();
+    this.ui.toast(text, dur);
+    this.tipCd = dur + .6;
+  }
+
+  _coach(dt) {
+    this.tipCd = Math.max(0, (this.tipCd ?? 0) - dt);
+    const f = this.fight;
+    if (!f || this.phase !== 'combat') return;
+    const p = f.player, b = f.boss;
+    if (this.combatT > .6) this._tip('start', `${this._btn('light')} to hit · ${this._btn('roll')} to dodge through attacks`, 4.6);
+    if (b.state === 'move') {
+      const h = b.run?.step?.hit, red = !h || h.unblockable || !h.parryable;
+      if (red) this._tip('red', `red glow = can't parry it. ${this._btn('roll')}!`);
+      else this._tip('glow', `gold glow = incoming. ${this._btn('parry')} as it lands, or ${this._btn('roll')}`, 4.6);
+    }
+    if (b.ripostable) this._tip('riposte', `it's open — ${this._btn('light')}!`, 3);
+    if (p.alive && p.hp / p.maxHp < .55 && p.flasks > 0 && !f.mods.noHeal) this._tip('heal', `${this._btn('heal')} to drink dew — away from the boss`);
+    if (p.stamina <= 1) this._tip('stamina', 'out of breath — back off a moment');
+  }
+
   _facing(b) {
     const c = this.R.camera; c.getWorldDirection(this._v);
     const dx = b.x - c.position.x, dz = b.z - c.position.z, d = Math.hypot(dx, dz);
@@ -452,7 +488,7 @@ export class Game {
   _outcome(result) {
     this.phase = 'outcome';
     this.outcomeT = 0;
-    this.ui.showHud(true, { boss: false });
+    this.ui.showHud(true, { boss: false, controls: false });
     const f = this.fight, def = this.fightDef, w = this.world;
     this.input.releasePointer();
     if (result === 'lost') {
@@ -622,7 +658,7 @@ export class Game {
       this.enterHub();
       if (!this.save.d.seenHelp) {
         this.save.d.seenHelp = true; this.save.write();
-        setTimeout(() => this.ui.toast(this.input.device === 'touch' ? 'left thumb moves · drag right to look · walk to a portal' : this.input.device === 'pad' ? 'walk to a portal and press A' : 'WASD to move · mouse to look · E at a portal', 5), 1800);
+        setTimeout(() => this.ui.toast(this.input.device === 'touch' ? 'left thumb moves · drag right to look · walk to a portal' : this.input.device === 'pad' ? 'walk to a portal and press A' : 'WASD to move · mouse to look · E at a portal', 5), 3800);
       }
     });
   }
@@ -662,6 +698,7 @@ export class Game {
       { label: 'invert camera y', toggle: true, get: () => S.settings.invertY, set: (v) => set('invertY', v) },
       { label: 'graphics', choice: true, options: ['auto', 'low', 'medium', 'high'], get: () => S.settings.quality, set: (v) => set('quality', v) },
       { label: 'vibration', toggle: true, get: () => S.settings.vibration, set: (v) => set('vibration', v) },
+      { label: 'combat tips', toggle: true, get: () => S.settings.hints !== false, set: (v) => { set('hints', v); if (v) S.d.tips = {}; } },
       { label: 'erase save', sub: 'everything but these settings', action: () => this._confirmErase(back) },
       { label: 'back', action: back },
     ], onBack: back });
@@ -735,6 +772,8 @@ export class Game {
       this.cam.update(dt, p, lock, frozen ? { x: 0, y: 0 } : look, { touchFollow: this.input.device === 'touch' && this.input.touch.look == null });
     }
     this.cam.bounds = this.state === 'fight' ? 22 : 24;
+    // on touch the buttons cover the right third: slide the picture left a little
+    this.R.setViewShift(this.input.device === 'touch' && this.state !== 'title' ? .07 : 0);
     const c = this.R.camera;
     this.audio.listener = { x: c.position.x, z: c.position.z, yaw: Math.atan2(this.cam.look.x - c.position.x, this.cam.look.z - c.position.z) };
 

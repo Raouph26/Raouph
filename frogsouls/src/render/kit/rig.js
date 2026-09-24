@@ -84,10 +84,16 @@ export function createRig(buildName = 'normal') {
 }
 
 /** Write a pose onto the rig's joints. */
-export function applyPose(rig, p) {
+/**
+ * @param pivotH height (above the feet) that `pitch` turns around. 0 tips the
+ *   whole body over its feet (falls, knockdowns); a roll passes the height of
+ *   the tucked body's middle so it tumbles in place instead of through the floor.
+ */
+export function applyPose(rig, p, pivotH = 0) {
   const J = rig.joints, S = rig.spec;
-  J.body.position.y = p[I.drop];
-  J.body.rotation.set(p[I.pitch], p[I.twist], p[I.roll]);
+  const th = p[I.pitch];
+  J.body.position.set(0, p[I.drop] + pivotH * (1 - Math.cos(th)), -pivotH * Math.sin(th));
+  J.body.rotation.set(th, p[I.twist], p[I.roll]);
   J.pelvis.position.y = S.hipH + p[I.pelvisY];
   J.pelvis.rotation.y = -p[I.pelvisTwist];
   J.spine.rotation.set(p[I.lean], -p[I.spineTwist], p[I.tilt]);

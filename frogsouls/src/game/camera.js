@@ -15,7 +15,7 @@ export class CameraCtl {
     this.cam = camera;
     this.yaw = Math.PI;         // camera sits at yaw's direction from the target: behind a frog facing −z
     this.pitch = 0.28;
-    this.dist = 5.6;
+    this.dist = 4.8;
     this.pos = new THREE.Vector3(0, 3, 10);
     this.look = new THREE.Vector3(0, 1.4, 0);
     this.trauma = 0;
@@ -70,18 +70,19 @@ export class CameraCtl {
       const dx = lock.x - p.x, dz = lock.z - p.z;
       const d = Math.max(.001, Math.hypot(dx, dz));
       const toYaw = Math.atan2(dx, dz);
-      // camera sits behind the frog, on the line through it from the boss
+      // behind the frog on the boss line, low enough that bosses loom, and off
+      // the right shoulder so the frog never hides what the boss is doing
       this.yaw = angDamp(this.yaw, toYaw + Math.PI, 7, dt);
       const size = lock.height ?? 3;
-      const back = 5.2 + Math.min(d * .42, 4.5) + size * .45;
-      const up = 1.7 + size * .42 + Math.min(d * .12, 1.4);
-      const side = .55;
+      const back = 3.5 + Math.min(d * .3, 2.8) + size * .32;
+      const up = 1.95 + size * .25 + Math.min(d * .07, .7);
+      const side = 1.15 + size * .07;
       const sx = Math.sin(this.yaw), sz = Math.cos(this.yaw);
       desiredPos = _v.set(p.x + sx * back + sz * side, up, p.z + sz * back - sx * side);
-      const w = Math.min(.55, .3 + size * .04);
-      desiredLook = _w.set(p.x + dx * w, 1.1 + size * .38, p.z + dz * w);
-      this.pitch = .28;
-      this.pos.lerp(desiredPos, this.snap ? 1 : 1 - Math.exp(-9 * dt));
+      const w = Math.min(.5, .3 + size * .035);
+      desiredLook = _w.set(p.x + dx * w, 1.25 + size * .3, p.z + dz * w);
+      this.pitch = .22;
+      this.pos.lerp(desiredPos, this.snap ? 1 : 1 - Math.exp(-8 * dt));
       this.look.lerp(desiredLook, this.snap ? 1 : 1 - Math.exp(-10 * dt));
       this.snap = false;
     } else {
@@ -95,7 +96,7 @@ export class CameraCtl {
       }
       const cp = Math.cos(this.pitch), sp = Math.sin(this.pitch);
       const sx = Math.sin(this.yaw), sz = Math.cos(this.yaw);
-      desiredLook = _w.set(p.x + sz * .45, 1.45, p.z - sx * .45);          // over the right shoulder
+      desiredLook = _w.set(p.x + sz * .55, 1.4, p.z - sx * .55);          // over the right shoulder
       desiredPos = _v.set(desiredLook.x + sx * this.dist * cp, desiredLook.y + .35 + sp * this.dist, desiredLook.z + sz * this.dist * cp);
       this.pos.lerp(desiredPos, this.snap ? 1 : 1 - Math.exp(-14 * dt));
       this.look.lerp(desiredLook, this.snap ? 1 : 1 - Math.exp(-16 * dt));
@@ -116,6 +117,10 @@ export class CameraCtl {
     c.lookAt(this.look);
     c.rotateZ((Math.sin(this.t * 47) * s) * .05);
 
+    // hold the horizontal view near 84°: a wide phone gets a narrower vertical
+    // FOV instead of a fish-eye view where everything looks far away
+    const hf = Math.tan((84 * Math.PI / 180) / 2);
+    this.baseFov = Math.max(44, Math.min(60, 2 * Math.atan(hf / c.aspect) * 180 / Math.PI));
     this.fovKick = damp(this.fovKick, 0, 6, dt);
     const fov = this.baseFov + this.fovKick;
     if (Math.abs(c.fov - fov) > .01) { c.fov = fov; c.updateProjectionMatrix(); }

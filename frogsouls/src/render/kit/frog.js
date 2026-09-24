@@ -11,9 +11,10 @@ import { actorMaterial, glowMaterial } from './builder.js';
 
 export const FROG_PALETTES = {
   hero: {
-    skin: 0x557f3c, skinDark: 0x3c5f2c, belly: 0xd8d2a2, eye: 0xe9e2c9, iris: 0xe0a93a, pupil: 0x0e0d0b,
-    cloth: 0x2d2721, leather: 0x6e4c2b, metal: 0x8e959b, scarf: 0xa3242a, trim: 0xb89146, flask: 0x8dff72,
-    rim: 0xa8c7ff,
+    // green frog, blue tunic, red scarf: three colours no arena shares, so the frog always reads
+    skin: 0x5e9a3c, skinDark: 0x42702c, belly: 0xe2dcae, eye: 0xf1ead2, iris: 0xe0a93a, pupil: 0x0e0d0b,
+    cloth: 0x33507c, leather: 0x74502d, metal: 0x9aa1a8, scarf: 0xc0282c, trim: 0xc99f4c, flask: 0x8dff72,
+    rim: 0xffe3b8,
   },
   other: {
     skin: 0x2f2839, skinDark: 0x1d1826, belly: 0x6c5f7c, eye: 0xf1e6e6, iris: 0xd1452e, pupil: 0x080608,
@@ -105,7 +106,7 @@ export function buildFrog(variant = 'hero') {
     ft.box(.2, .008, .11, C.skinDark, { y: -.058, z: .19 });                        // webbing
   }
 
-  const mat = actorMaterial({ rim: C.rim, rimStrength: 0.42 });
+  const mat = actorMaterial({ rim: C.rim, rimStrength: 0.5 });
   rig.finalize(mat);
 
   // glowing dew in the flask — its own unlit bit so it survives the dark

@@ -12,10 +12,14 @@ await p.keyboard.press('KeyX'); await p.waitForTimeout(1200);
 await p.evaluate((id) => window.__game.startFight(id), boss);
 await p.waitForFunction(() => window.__game.phase === 'intro', null, { timeout: 60000 });
 await p.evaluate(() => { const G = window.__game; G.manual = true; G.ui.fade(0, 0); G._beginCombat(); });
+if (process.env.CAM === 'near') await p.evaluate(() => { document.getElementById('ui').style.display = 'none'; });
 // place the fighters side-on to the camera so motion reads
 await p.evaluate(() => { const G = window.__game, f = G.fight; f.player.x = -1.6; f.player.z = 0; f.boss.x = 2.2 + f.boss.radius; f.boss.z = 0; f.player.yaw = Math.PI / 2; f.boss.yaw = -Math.PI / 2; f.boss.cd = 99; G.lockOn = false;
   G.cam.mode = 'free'; });
-const step = (n, act) => p.evaluate(([n, act]) => { const G = window.__game; for (let i = 0; i < n; i++) { if (act && i === 0) G.input.press(act); G.frame(1 / 60); const c = G.R.camera; c.position.set(0.4, 1.7, 7.5); c.lookAt(0.4, 1.3, 0); G.R.render(0, G.stage); } }, [n, act]);
+// CAM=near frames the frog; the default frames both fighters
+const CAMS = { far: [0.4, 1.7, 7.5, 0.4, 1.3, 0], near: [-1.0, 1.25, 3.6, -1.0, 1.0, 0], boss: [0.8, 2.2, 9.5, 1.2, 1.6, 0] };
+const cam = CAMS[process.env.CAM ?? 'far'];
+const step = (n, act) => p.evaluate(([n, act, cam]) => { const G = window.__game; for (let i = 0; i < n; i++) { if (act && i === 0) G.input.press(act); G.frame(1 / 60); const c = G.R.camera; c.position.set(cam[0], cam[1], cam[2]); c.lookAt(cam[3], cam[4], cam[5]); G.R.render(0, G.stage); } }, [n, act, cam]);
 await step(10);
 const plan = {
   combo: [[0, 'light'], [16, 'light'], [32, 'light']],
@@ -24,7 +28,7 @@ const plan = {
   parry: [[0, 'parry']],
   boss: [],
 }[script];
-if (script === 'roll') await p.evaluate(() => { window.__game.input.move.y = 1; });
+if (script === 'roll') await p.evaluate(() => { window.__game.input.keys.add('KeyD'); });   // roll toward the boss, side-on
 if (script === 'boss') await p.evaluate(() => { const G = window.__game, b = G.fight.boss; b.cd = 0; b.moveCd = {}; b.startMove(b.moves[0]); });
 for (let fr = 0; fr < +frames; fr++) {
   const act = plan.find(([t]) => t === fr)?.[1];

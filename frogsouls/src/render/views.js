@@ -21,6 +21,7 @@ export class PlayerView {
     this.anim = new PlayerAnimator(this.frog);
     scene.add(this.frog.rig.root);
     this.trail = new Trail(scene, 0xc9e27a);
+    this.frog.material.userData.u.uFlashColor.value.set(0xff7a5c);    // getting hit reads red
     this.weaponId = null;
     this.flash = 0;
     this.stepT = 0;
@@ -41,8 +42,8 @@ export class PlayerView {
     this.anim.update(dt, p, { combat, weaponTwo: TWO_HANDED.has(p.weaponId) });
     const live = p.state === 'attack' && p.atk && p.t >= p.atk.spec.startup * 0.7 && p.t <= p.atk.spec.startup + p.atk.spec.active + 0.06;
     this.trail.update(dt, this.weapon?.userData.base, this.weapon?.userData.tip, live || p.state === 'riposte' && p.t > .3 && p.t < .5);
-    this.flash = Math.max(0, this.flash - dt * 6);
-    this.frog.material.userData.u.uFlash.value = this.flash * .6;
+    this.flash = Math.max(0, this.flash - dt * 7);
+    this.frog.material.userData.u.uFlash.value = this.flash * this.flash * .7;
     this.frog.rig.root.visible = true;
   }
 
@@ -61,7 +62,7 @@ export class BossView {
     scene.add(this.b.root);
     if (this.b.kind === 'vacuum') this.anim = new VacuumAnimator(this.b);
     else this.anim = new BossAnimator(this.b, def);
-    this.trail = new Trail(scene, def.visual?.accent ?? 0xffc27a, 14);
+    this.trail = new Trail(scene, def.visual?.accent ?? 0xffc27a, { raw: 8, inner: .45 });
     this.trail.mat.uniforms.uOpacity.value = .6;
     this.flash = 0;
     this.glow = 0;
@@ -90,8 +91,8 @@ export class BossView {
     this.glow += (target - this.glow) * Math.min(1, dt * 18);
     this.u.uGlow.value = this.glow * 1.4;
 
-    this.flash = Math.max(0, this.flash - dt * 7);
-    this.u.uFlash.value = this.flash * .55;
+    this.flash = Math.max(0, this.flash - dt * 9);
+    this.u.uFlash.value = this.flash * this.flash * .42;
 
     const live = boss.state === 'move' && (an.phase === 'active' || (an.phase === 'windup' && an.k > .85));
     this.trail.update(dt, this.b.weapon?.userData.base, this.b.weapon?.userData.tip, live);

@@ -81,6 +81,7 @@ export class Renderer {
     this.composer.addPass(this.grade);
 
     this.fx = { flash: 0, hurt: 0, aberration: 0, blue: 0, fade: 0 };
+    this.viewShift = 0;          // slide the picture left (fraction of width) so touch buttons don't cover the action
     this.scale = 1;              // live resolution scale for 'auto'
     this._ft = [];
     this.t = 0;
@@ -103,6 +104,8 @@ export class Renderer {
     const w = this.container.clientWidth || innerWidth, h = this.container.clientHeight || innerHeight;
     this.w = w; this.h = h;
     this.camera.aspect = w / h;
+    if (this.viewShift) this.camera.setViewOffset(w, h, w * this.viewShift, 0, w, h);
+    else this.camera.clearViewOffset();
     this.camera.updateProjectionMatrix();
     this.gl.setPixelRatio(this.pixelRatio);
     this.gl.setSize(w, h, false);
@@ -126,9 +129,12 @@ export class Renderer {
     if (before !== this.scale) this.resize();
   }
 
+  setViewShift(v) { if (v !== this.viewShift) { this.viewShift = v; this.resize(); } }
+
   render(dt, stage) {
     this.t += dt;
     this._adapt(dt);
+    this.pointScale = (this.h * this.pixelRatio) / (2 * Math.tan((this.camera.fov * Math.PI / 180) / 2));
     const g = stage.grade, u = this.grade.uniforms;
     this.gl.toneMappingExposure = g.exposure;
     u.uTime.value = this.t;

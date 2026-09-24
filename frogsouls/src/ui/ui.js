@@ -46,10 +46,12 @@ export class UI {
   setDevice(d) { this.root.dataset.device = d; }
 
   // ── HUD ───────────────────────────────────────────────────────────────────
-  showHud(on, { boss = false } = {}) {
+  /** controls:false keeps the touch layer (so a tap still registers) but hides the buttons. */
+  showHud(on, { boss = false, controls = true } = {}) {
     this.hudEl.classList.toggle('on', on);
     this.bossEl.classList.toggle('on', on && boss);
     this.touchRoot.classList.toggle('on', on && this.touch);
+    this.touchRoot.classList.toggle('quiet', !controls);
   }
 
   updateHud(dt, s) {
@@ -127,7 +129,7 @@ export class UI {
 
   rule(text) { this.ruleEl.textContent = text; this._flash(this.ruleEl, 'rule', 3.2); }
 
-  toast(text, dur = 2.4) { this.toastEl.textContent = text; this._flash(this.toastEl, 'toast', dur); }
+  toast(text, dur = 2.4) { this.toastEl.textContent = text; this.toastEl.style.animationDuration = dur + 's'; this._flash(this.toastEl, 'toast', dur); }
 
   fade(to, dur = .35) {
     this.fadeEl.style.transition = `opacity ${dur}s ease`;

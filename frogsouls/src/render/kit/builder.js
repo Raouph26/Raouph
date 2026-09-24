@@ -83,6 +83,11 @@ export class PartBuilder {
 // material doesn't do — a fresnel rim so silhouettes survive heavy fog, and a
 // glow term the boss pushes during a wind-up (the telegraph).
 // ─────────────────────────────────────────────────────────────────────────────
+// One shared fill uniform for every actor: a soft light from the camera's side
+// that keeps fighters readable when an arena is backlit or dark. The stage
+// sets it per world.
+export const ACTOR_FILL = { value: 0.3 };
+
 export function actorMaterial({ rim = 0x9fb7d0, rimStrength = 0.35, rough = 0.82, metal = 0.06, wire = false } = {}) {
   const mat = new THREE.MeshStandardMaterial({
     vertexColors: true, flatShading: true, roughness: rough, metalness: metal, wireframe: wire,
@@ -93,6 +98,8 @@ export function actorMaterial({ rim = 0x9fb7d0, rimStrength = 0.35, rough = 0.82
     uGlowColor: { value: new THREE.Color(0xd9a441) },
     uGlow: { value: 0 },
     uFlash: { value: 0 },
+    uFlashColor: { value: new THREE.Color(0xfff2dc) },
+    uFill: ACTOR_FILL,
   };
   mat.userData.u = u;
   mat.onBeforeCompile = (shader) => {
@@ -100,14 +107,16 @@ export function actorMaterial({ rim = 0x9fb7d0, rimStrength = 0.35, rough = 0.82
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>
         uniform vec3 uRimColor; uniform float uRimStrength;
-        uniform vec3 uGlowColor; uniform float uGlow; uniform float uFlash;`)
+        uniform vec3 uGlowColor; uniform float uGlow; uniform float uFlash; uniform vec3 uFlashColor; uniform float uFill;`)
       .replace('#include <opaque_fragment>', `
         {
           vec3 vdir = normalize(vViewPosition);
+          float facing = clamp(dot(normal, vdir), 0.0, 1.0);
           float fres = pow(1.0 - clamp(abs(dot(normal, vdir)), 0.0, 1.0), 2.6);
+          outgoingLight += diffuseColor.rgb * uFill * (0.3 + 0.7 * facing);
           outgoingLight += uRimColor * fres * uRimStrength;
-          outgoingLight += uGlowColor * uGlow * (0.35 + fres * 1.4);
-          outgoingLight = mix(outgoingLight, vec3(1.0), uFlash);
+          outgoingLight += uGlowColor * uGlow * (0.2 + fres * 1.7);          // the silhouette burns, the face stays readable
+          outgoingLight = mix(outgoingLight, uFlashColor, uFlash * (0.5 + 0.5 * fres));   // keeps the form readable
         }
         #include <opaque_fragment>`);
   };

@@ -13,7 +13,7 @@ const blank = () => ({
   v: 2, flies: 0, totalFlies: 0,
   levels: { vigor: 0, endurance: 0, strength: 0, flask: 0, potency: 0 },
   weapons: ['cleaver'], weapon: 'cleaver',
-  cleared: {}, attempts: {}, best: {}, deaths: 0, ng: 0, playtime: 0, seenHelp: false,
+  cleared: {}, attempts: {}, best: {}, deaths: 0, ng: 0, playtime: 0, seenHelp: false, tips: {},
   settings: { ...DEFAULT_SETTINGS },
 });
 

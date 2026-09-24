@@ -51,11 +51,12 @@
 
   #boss{position:absolute;left:50%;bottom:calc(5.5% + var(--sb));transform:translateX(-50%);width:min(66vw,760px);opacity:0;transition:opacity .5s}
   #boss.on{opacity:1}
-  #boss .bn{font:400 clamp(17px,2.1vw,24px) var(--serif);letter-spacing:.06em;text-shadow:0 2px 8px #000;display:inline}
-  #boss .be{font:400 11px var(--mono);color:var(--dim);margin-left:10px;display:inline;text-shadow:0 1px 4px #000}
+  #boss .bh{display:flex;align-items:baseline;gap:10px;white-space:nowrap}
+  #boss .bn{flex:none;font:400 clamp(17px,2.1vw,24px) var(--serif);letter-spacing:.06em;text-shadow:0 2px 8px #000}
+  #boss .be{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font:400 11px var(--mono);color:var(--dim);text-shadow:0 1px 4px #000}
   #boss .bar{width:100%;height:9px;margin-top:6px}
   #boss .bar i{background:linear-gradient(#c79a45,#7e5a1c)}
-  #boss .bl{position:absolute;right:0;top:0;font:500 12px var(--mono);color:var(--gold2);letter-spacing:.06em;text-shadow:0 1px 4px #000}
+  #boss .bl{flex:none;font:500 12px var(--mono);color:var(--gold2);letter-spacing:.06em;text-shadow:0 1px 4px #000}
   #boss .bl.danger{color:#ff6a5a;animation:pulse .6s ease-in-out infinite}
 
   #reticle{position:absolute;left:0;top:0;width:18px;height:18px;margin:-9px 0 0 -9px;opacity:0;transition:opacity .15s}
@@ -102,7 +103,8 @@
 
   #rule{top:24%;font:400 clamp(20px,3vw,34px) var(--serif);color:#ff8a6a;letter-spacing:.06em;text-shadow:0 2px 14px #000}
   #rule.on{animation:area 3.2s ease forwards}
-  #toast{bottom:calc(12% + var(--sb));font:500 13px var(--mono);color:var(--ink);text-shadow:0 1px 6px #000}
+  #toast{bottom:calc(12% + var(--sb));font:500 13px/1.45 var(--mono);color:var(--ink);text-shadow:0 1px 6px #000;
+    width:max-content;max-width:min(92vw,720px);padding:7px 16px;border-radius:18px;background:rgba(8,9,10,.58);text-wrap:balance}
   #toast.on{animation:area 2.4s ease forwards}
   #fade{position:fixed;inset:0;background:#000;opacity:1;pointer-events:none;z-index:40}
 
@@ -152,6 +154,8 @@
   /* ── touch controls ──────────────────────────────────── */
   #touch{position:absolute;inset:0;display:none}
   #touch.on{display:block}
+  #tpad,#bPause{transition:opacity .35s}
+  #touch.quiet #tpad,#touch.quiet #bPause,#touch.quiet #bAct{opacity:0;pointer-events:none}
   #tzone{position:absolute;inset:0;pointer-events:auto}
   #tstick{position:absolute;left:0;top:0;width:118px;height:118px;margin:-59px 0 0 -59px;border-radius:50%;
     border:2px solid rgba(235,230,218,.25);background:rgba(10,12,14,.2);opacity:0;transition:opacity .12s;pointer-events:none}
@@ -188,7 +192,8 @@
   @keyframes blink{50%{opacity:.35}}
   /* on touch, keep text clear of the right-thumb cluster */
   .is-touch #boss{left:calc(22px + var(--sl));transform:none;width:calc(100vw - 310px - var(--sl) - var(--sr));bottom:calc(16px + var(--sb))}
-  .is-touch #toast,.is-touch #prompt{bottom:auto;top:calc(26% + var(--st))}
+  .is-touch #toast,.is-touch #prompt{bottom:auto;top:calc(34% + var(--st))}
+  .is-touch #toast{left:calc((100vw - 270px + var(--sl) - var(--sr)) / 2);max-width:calc(100vw - 330px - var(--sl) - var(--sr))}
   .is-touch #prompt{left:calc(40% - 60px)}
   .is-touch #intro{bottom:calc(22% + var(--sb))}
   @media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important;transition-duration:.01s!important}}
@@ -204,7 +209,7 @@
       <div id="flask"><span class="ic"></span><b>3</b></div>
     </div>
     <div id="flies"><span class="ic"></span><b>0</b></div>
-    <div id="boss"><div class="bn"></div><div class="be"></div><div class="bl"></div><div class="bar"><u></u><i></i></div></div>
+    <div id="boss"><div class="bh"><div class="bn"></div><div class="be"></div><div class="bl"></div></div><div class="bar"><u></u><i></i></div></div>
     <div id="reticle"></div>
     <div id="say"></div>
     <div id="prompt"></div>

@@ -5,6 +5,7 @@ import { Water } from './env/water.js';
 import { ENVS } from './env/worlds.js';
 import { Ambient } from './fx/particles.js';
 import { groundTexture } from './textures.js';
+import { ACTOR_FILL } from './kit/builder.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The stage: lights, sky, floor, water, set dressing and the air, for whichever
@@ -68,7 +69,7 @@ export class Stage {
     return {
       fog: L.fog, fogCol: C(L.fogCol), skyTop: C(L.skyTop), skyHor: C(L.skyHor), exposure: L.exposure,
       key: L.key, keyCol: C(L.keyCol), amb: L.amb, ambSky: C(L.ambSky), ambGnd: C(L.ambGnd), rim: L.rim, rimCol: C(L.rimCol),
-      sun: L.sun, ele: L.ele, moon: L.moon ? 1 : 0, bloom: L.bloom, vignette: L.vignette, sat: L.sat, contrast: L.contrast,
+      sun: L.sun, ele: L.ele, moon: L.moon ? 1 : 0, fill: L.fill ?? .3, bloom: L.bloom, vignette: L.vignette, sat: L.sat, contrast: L.contrast,
       tint: new THREE.Vector3(...L.tint),
     };
   }
@@ -104,7 +105,8 @@ export class Stage {
   update(dt, camera, quality) {
     this.t += dt;
     const k = 1 - Math.exp(-2.2 * dt), c = this.cur, t = this.target;
-    for (const key of ['fog', 'exposure', 'key', 'amb', 'rim', 'moon', 'bloom', 'vignette', 'sat', 'contrast']) c[key] += (t[key] - c[key]) * k;
+    for (const key of ['fog', 'exposure', 'key', 'amb', 'rim', 'moon', 'fill', 'bloom', 'vignette', 'sat', 'contrast']) c[key] += (t[key] - c[key]) * k;
+    ACTOR_FILL.value = c.fill * (1 - this.dim * .6);
     c.sun += (t.sun - c.sun) * k; c.ele += (t.ele - c.ele) * k;
     for (const key of ['fogCol', 'skyTop', 'skyHor', 'keyCol', 'ambSky', 'ambGnd', 'rimCol']) c[key].lerp(t[key], k);
     c.tint.lerp(t.tint, k);

@@ -11,7 +11,7 @@
 //             buttons on the right
 // ─────────────────────────────────────────────────────────────────────────────
 
-const PRESS = ['light', 'heavy', 'roll', 'parry', 'heal', 'lock', 'interact', 'pause', 'up', 'down', 'left', 'right', 'confirm', 'back'];
+const PRESS = ['light', 'heavy', 'roll', 'parry', 'heal', 'lock', 'interact', 'pause', 'up', 'down', 'left', 'right', 'confirm', 'back', 'tap'];
 
 export class Input {
   constructor(canvas, ui) {
@@ -90,6 +90,7 @@ export class Input {
     // left half: a stick that appears under the thumb; right half: camera drag
     zone.addEventListener('pointerdown', (e) => {
       this.device = 'touch';
+      this.press('tap');                     // lets a tap skip cutscenes
       const left = e.clientX < innerWidth * 0.42;
       if (left && this.touch.stick == null) {
         this.touch.stick = e.pointerId; this.touch.sx = e.clientX; this.touch.sy = e.clientY;
