@@ -1,0 +1,50 @@
+import * as THREE from 'three';
+import { buildBoss } from '../src/render/kit/boss.js';
+import { applyPose } from '../src/render/kit/rig.js';
+import { BOSS_READY as READY, BOSS } from '../src/render/anim/clips.js';
+import { BOSSES } from '../src/content/bosses.js';
+
+const q = new URLSearchParams(location.search);
+const ids = (q.get('ids') ?? Object.keys(BOSSES).join(',')).split(',');
+const poseName = q.get('pose');
+const cols = +(q.get('cols') ?? 7);
+const rows = Math.ceil(ids.length / cols);
+const W = innerWidth, H = innerHeight;
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(W, H); renderer.setPixelRatio(1); renderer.shadowMap.enabled = true;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.setScissorTest(true);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a2f36);
+scene.add(new THREE.HemisphereLight(0xc8d8ff, 0x3a3228, 1.7));
+const sun = new THREE.DirectionalLight(0xfff0dc, 2.2); sun.position.set(6, 10, 8); scene.add(sun);
+const cw = W / cols, ch = H / rows;
+const cam = new THREE.PerspectiveCamera(34, cw / ch, .1, 200);
+const lab = document.getElementById('labels');
+ids.forEach((id, i) => {
+  const def = BOSSES[id];
+  const b = buildBoss(def);
+  const x = i * 20 - 200;
+  b.root.position.set(x, 0, 0);
+  const s = def.visual.body === 'vacuum' ? 1 : 0.85 * (def.scale ?? 1.6);
+  if (b.rig) {
+    b.root.scale.setScalar(def.visual.body === 'frog' ? 1 : s);
+    const p = poseName ? (BOSS[poseName]?.peak ?? READY) : READY;
+    applyPose(b.rig, p);
+  }
+  b.root.rotation.y = .5;
+  scene.add(b.root);
+  b.root.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(b.root);
+  const hgt = Math.max(1.2, box.max.y);
+  const c = i % cols, r = Math.floor(i / cols);
+  cam.position.set(x, hgt * .6, hgt * 1.6 + 1.4);
+  cam.lookAt(x, hgt * .5, 0);
+  cam.updateProjectionMatrix();
+  const vy = H - (r + 1) * ch;
+  renderer.setViewport(c * cw, vy, cw, ch); renderer.setScissor(c * cw + 1, vy + 1, cw - 2, ch - 2);
+  renderer.render(scene, cam);
+  b.root.visible = false;
+  const d = document.createElement('div'); d.textContent = def.name;
+  d.style.left = (c * cw + cw / 2) + 'px'; d.style.top = (r * ch + 4) + 'px'; lab.appendChild(d);
+});
+window.__ready = true;
