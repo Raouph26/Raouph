@@ -5,7 +5,8 @@ import { Water } from './env/water.js';
 import { ENVS } from './env/worlds.js';
 import { Ambient } from './fx/particles.js';
 import { groundTexture } from './textures.js';
-import { ACTOR_FILL } from './kit/builder.js';
+import { ACTOR_FILL, ACTOR_ENV } from './kit/builder.js';
+import { WIND } from './env/props.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The stage: lights, sky, floor, water, set dressing and the air, for whichever
@@ -14,6 +15,9 @@ import { ACTOR_FILL } from './kit/builder.js';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const C = (h) => new THREE.Color(h);
+const NUM_KEYS = ['fog', 'exposure', 'key', 'amb', 'rim', 'moon', 'fill', 'bloom', 'vignette', 'sat', 'contrast'];
+const COL_KEYS = ['fogCol', 'skyTop', 'skyHor', 'keyCol', 'ambSky', 'ambGnd', 'rimCol'];
+const WHITE = new THREE.Color(0xffffff);
 
 export class Stage {
   constructor(scene) {
@@ -79,6 +83,50 @@ export class Stage {
     this.lookName = name;
     this.target = this._lookState(LOOKS[name] ?? LOOKS.hub);
     if (instant) this.cur = this._lookState(LOOKS[name] ?? LOOKS.hub);
+    this._bakeEnv(LOOKS[name] ?? LOOKS.hub);
+  }
+
+  /** The renderer, for baking reflection maps. */
+  setRenderer(gl) { this.gl = gl; this.pmrem = new THREE.PMREMGenerator(gl); }
+
+  /**
+   * Bake this look's sky into a small prefiltered environment map for the
+   * actors: their sky above, their ground below, and a hot spot where the key
+   * light is, so glossy surfaces show a highlight that matches the scene.
+   */
+  _bakeEnv(L) {
+    if (!this.pmrem) return;
+    if (!this.envScene) {
+      this.envScene = new THREE.Scene();
+      this.envU = { uTop: { value: new THREE.Color() }, uHor: { value: new THREE.Color() }, uGnd: { value: new THREE.Color() },
+        uSun: { value: new THREE.Color() }, uSunDir: { value: new THREE.Vector3(0, 1, 0) } };
+      const m = new THREE.ShaderMaterial({
+        side: THREE.BackSide, depthWrite: false, uniforms: this.envU,
+        vertexShader: 'varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+        fragmentShader: `uniform vec3 uTop, uHor, uGnd, uSun, uSunDir; varying vec3 vDir;
+          void main(){
+            vec3 d = normalize(vDir);
+            vec3 c = d.y > 0.0 ? mix(uHor, uTop, pow(d.y, .6)) : mix(uHor, uGnd, pow(-d.y, .45));
+            float s = max(dot(d, uSunDir), 0.0);
+            c += uSun * (pow(s, 160.0) * 7.0 + pow(s, 10.0) * .35);
+            gl_FragColor = vec4(c, 1.0);
+          }`,
+      });
+      this.envScene.add(new THREE.Mesh(new THREE.SphereGeometry(10, 32, 16), m));
+    }
+    const u = this.envU;
+    // lift the sky a little: a dark sky still reflects something on wet skin
+    u.uTop.value.set(L.skyTop).lerp(new THREE.Color(L.ambSky), .5).multiplyScalar(1.4);
+    u.uHor.value.set(L.skyHor).lerp(new THREE.Color(L.fogCol), .3).multiplyScalar(1.5);
+    u.uGnd.value.set(L.ambGnd).multiplyScalar(.9);
+    u.uSun.value.set(L.keyCol).multiplyScalar(L.key * .6);
+    const a = L.sun * Math.PI / 180, e = L.ele * Math.PI / 180;
+    u.uSunDir.value.set(Math.sin(a) * Math.cos(e), Math.sin(e), Math.cos(a) * Math.cos(e)).normalize();
+    const rt = this.pmrem.fromScene(this.envScene, .02);
+    const old = this.envRT;
+    this.envRT = rt;
+    ACTOR_ENV.set(rt.texture, .75);
+    old?.dispose();
   }
 
   setWorld(envId) {
@@ -105,11 +153,12 @@ export class Stage {
 
   update(dt, camera, quality) {
     this.t += dt;
+    WIND.uTime.value = this.t % 1000;
     const k = 1 - Math.exp(-2.2 * dt), c = this.cur, t = this.target;
-    for (const key of ['fog', 'exposure', 'key', 'amb', 'rim', 'moon', 'fill', 'bloom', 'vignette', 'sat', 'contrast']) c[key] += (t[key] - c[key]) * k;
+    for (const key of NUM_KEYS) c[key] += (t[key] - c[key]) * k;
     ACTOR_FILL.value = c.fill * (1 - this.dim * .6);
     c.sun += (t.sun - c.sun) * k; c.ele += (t.ele - c.ele) * k;
-    for (const key of ['fogCol', 'skyTop', 'skyHor', 'keyCol', 'ambSky', 'ambGnd', 'rimCol']) c[key].lerp(t[key], k);
+    for (const key of COL_KEYS) c[key].lerp(t[key], k);
     c.tint.lerp(t.tint, k);
 
     const dim = 1 - this.dim;
@@ -125,7 +174,7 @@ export class Stage {
     this.key.target.position.set(fx, 0, fz);
     this.rim.position.set(-Math.sin(a) * 20, 9, -Math.cos(a) * 20);
     this.sky.u.uTop.value.copy(c.skyTop); this.sky.u.uHor.value.copy(c.skyHor); this.sky.u.uMoon.value = c.moon;
-    this.ringMat.color.copy(c.keyCol).lerp(new THREE.Color(0xffffff), .3);
+    this.ringMat.color.copy(c.keyCol).lerp(WHITE, .3);
     this.water.u.uLightDir.value.set(Math.sin(a), Math.sin(e) + .2, Math.cos(a)).normalize();
 
     this.sky.update(dt, camera);

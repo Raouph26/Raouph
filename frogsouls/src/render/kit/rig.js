@@ -1,13 +1,21 @@
 import * as THREE from 'three';
-import { PartBuilder } from './builder.js';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { PartBuilder, actorTwin } from './builder.js';
 import { I } from '../anim/pose.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Humanoid rig: a joint hierarchy with a PartBuilder on every bone. Dressers
 // (frog.js, boss.js) add primitives in bone-local space, then finalize()
-// merges each bone into a single mesh. Joint names match ASSETS.md so a real
-// rigged model can replace this later without touching animation code.
+// merges the whole body into ONE rigidly skinned mesh: every vertex follows
+// exactly one joint, so it looks the same as a mesh per joint but draws in a
+// single call (about 16 fewer per character, twice that with shadows).
+// Joint names match ASSETS.md so a real rigged model can replace this later
+// without touching animation code.
 // ─────────────────────────────────────────────────────────────────────────────
+
+// skinned casters get their own depth material: three.js otherwise shares one
+// between skinned and plain casters and re-derives its shader every switch
+const SKIN_DEPTH = new THREE.MeshDepthMaterial();
 
 export const BUILD = {
   normal:  { hipH: .92, torsoH: .46, chestH: .40, chestW: .56, chestD: .36, shoulderW: .34, upperLen: .33, foreLen: .31, thighLen: .44, shinLen: .42, legSpread: .15, limb: 1.00, head: 1.0 },
@@ -18,7 +26,7 @@ export const BUILD = {
   frog:    { hipH: .74, torsoH: .36, chestH: .36, chestW: .58, chestD: .44, shoulderW: .33, upperLen: .28, foreLen: .27, thighLen: .36, shinLen: .36, legSpread: .19, limb: 1.05, head: 1.0 },
 };
 
-export function createRig(buildName = 'normal') {
+export function createRig(buildName = 'normal', hints = null) {
   const S = BUILD[buildName] ?? BUILD.normal;
   const g = () => new THREE.Group();
 
@@ -68,15 +76,41 @@ export function createRig(buildName = 'normal') {
 
   const parts = {};
   for (const k of ['pelvis', 'spine', 'chest', 'head', 'upperR', 'foreR', 'handR', 'upperL', 'foreL', 'handL',
-    'thighR', 'shinR', 'footR', 'thighL', 'shinL', 'footL']) parts[k] = new PartBuilder();
+    'thighR', 'shinR', 'footR', 'thighL', 'shinL', 'footL']) parts[k] = new PartBuilder(hints);
 
   const rig = {
     spec: S, root, joints, parts, meshes: [],
+    partScale: {},          // per-part geometry scale about its joint (bosses' head size)
+    extraSkin: [],          // [{ bone, geo }] — extra jointed pieces (scarf tails) in the same mesh
     finalize(material) {
-      for (const k in parts) {
-        const m = parts[k].build(material);
-        if (m) { joints[k].add(m); rig.meshes.push(m); }
-      }
+      root.updateMatrixWorld(true);              // the rest pose, with the root at the origin
+      const bones = [], geos = [];
+      const add = (bone, geo, scale = 1) => {
+        if (scale !== 1) geo.scale(scale, scale, scale);
+        geo.applyMatrix4(bone.matrixWorld);      // bone-local → root space
+        let bi = bones.indexOf(bone);
+        if (bi < 0) bi = bones.push(bone) - 1;
+        const n = geo.attributes.position.count;
+        const si = new Uint16Array(n * 4), sw = new Float32Array(n * 4);
+        for (let i = 0; i < n; i++) { si[i * 4] = bi; sw[i * 4] = 1; }
+        geo.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4));
+        geo.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
+        geos.push(geo);
+      };
+      for (const k in parts) { const g = parts[k].geometry(); if (g) add(joints[k], g, rig.partScale[k] ?? 1); }
+      for (const e of rig.extraSkin) add(e.bone, e.geo);
+      const geo = mergeGeometries(geos, false);
+      for (const g of geos) g.dispose();
+      // plain meshes (weapons, bottles, claws) keep `material`; the body gets its skinned twin
+      const skinMat = material.userData?.u ? actorTwin(material) : material;
+      const mesh = new THREE.SkinnedMesh(geo, skinMat);
+      mesh.castShadow = true; mesh.receiveShadow = true;
+      mesh.frustumCulled = false;                // rolls and falls carry parts outside the bind-pose bounds
+      mesh.customDepthMaterial = SKIN_DEPTH;
+      root.add(mesh);
+      mesh.bind(new THREE.Skeleton(bones));
+      rig.meshes.push(mesh);
+      rig.skinned = mesh;
       return rig;
     },
   };

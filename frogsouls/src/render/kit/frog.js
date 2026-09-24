@@ -27,7 +27,15 @@ export const FROG_PALETTES = {
 
 export function buildFrog(variant = 'hero') {
   const C = FROG_PALETTES[variant] ?? FROG_PALETTES.hero;
-  const rig = createRig('frog');
+  // wet skin, glassy eyes, brass and steel that shine, cloth that doesn't
+  const hints = new Map([
+    [C.skin, { rough: .36 }], [C.skinDark, { rough: .4 }], [C.belly, { rough: .5 }],
+    [C.eye, { rough: .1 }], [C.iris, { rough: .15 }], [C.pupil, { rough: .15 }],
+    [C.metal, { rough: .3, metal: .85 }], [C.trim, { rough: .28, metal: .9 }],
+    [C.leather, { rough: .62 }], [C.cloth, { rough: .9 }], [C.scarf, { rough: .78 }],
+    [C.pad, { rough: .42 }], [C.padRim, { rough: .5 }], [C.padVein, { rough: .5 }], [C.lotus, { rough: .6 }],
+  ]);
+  const rig = createRig('frog', hints);
   const P = rig.parts, S = rig.spec;
 
   // ── pelvis: hip wrap, belt, pouches, the dew flask ─────────────────────────
@@ -131,6 +139,28 @@ export function buildFrog(variant = 'hero') {
     ft.box(.2, .008, .11, C.skinDark, { y: -.058, z: .19 });                        // webbing
   }
 
+  // scarf tails: a chain of joints the view animates as a spring; their cloth
+  // is part of the one skinned body mesh
+  const scarf = [];
+  for (const sx of [-1, 1]) {
+    const segs = [];
+    const anchor = new THREE.Group();
+    anchor.position.set(sx * .09, S.chestH - .02, -.22);
+    rig.joints.chest.add(anchor);
+    let parent = anchor;
+    for (let i = 0; i < 5; i++) {
+      const seg = new THREE.Group();
+      seg.position.y = i === 0 ? 0 : -.13;
+      parent.add(seg);
+      const cloth = new PartBuilder(hints);
+      cloth.box(.12 - i * .012, .14, .025, new THREE.Color(C.scarf).multiplyScalar(1 - i * .06).getHex(), { y: -.065, rough: .78 });
+      rig.extraSkin.push({ bone: seg, geo: cloth.geometry() });
+      segs.push(seg);
+      parent = seg;
+    }
+    scarf.push({ anchor, segs, side: sx, state: segs.map(() => ({ ax: 0, az: 0, vx: 0, vz: 0 })) });
+  }
+
   const mat = actorMaterial({ rim: C.rim, rimStrength: 0.5 });
   rig.finalize(mat);
 
@@ -142,7 +172,7 @@ export function buildFrog(variant = 'hero') {
 
   // the bottle in hand while drinking (the hip one hides meanwhile)
   const bottle = new THREE.Group();
-  const bb = new PartBuilder();
+  const bb = new PartBuilder(new Map([[0xcfe8d0, { rough: .08 }]]));
   bb.cyl(.05, .055, .13, 0xcfe8d0, { y: -.1, seg: 7 })
     .cyl(.022, .03, .05, 0xcfe8d0, { y: -.19, seg: 6 })
     .cyl(.026, .026, .03, C.leather, { y: -.225, seg: 6 });
@@ -153,32 +183,6 @@ export function buildFrog(variant = 'hero') {
   bottle.rotation.x = -.35;
   bottle.visible = false;
   rig.joints.handL.add(bottle);
-
-  // scarf tails: anchors the view animates as a spring chain
-  const scarf = [];
-  for (const sx of [-1, 1]) {
-    const segs = [];
-    let parent = rig.joints.chest;
-    const anchor = new THREE.Group();
-    anchor.position.set(sx * .09, S.chestH - .02, -.22);
-    rig.joints.chest.add(anchor);
-    parent = anchor;
-    for (let i = 0; i < 5; i++) {
-      const seg = new THREE.Group();
-      seg.position.y = i === 0 ? 0 : -.13;
-      const g = new THREE.BoxGeometry(.12 - i * .012, .14, .025).toNonIndexed();
-      const sc = new THREE.Color(C.scarf).multiplyScalar(1 - i * .06);
-      g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count * 3).map((_, j) => [sc.r, sc.g, sc.b][j % 3]), 3));
-      const m = new THREE.Mesh(g, mat);
-      m.position.y = -.065;
-      m.castShadow = true;
-      seg.add(m);
-      parent.add(seg);
-      segs.push(seg);
-      parent = seg;
-    }
-    scarf.push({ anchor, segs, side: sx, state: segs.map(() => ({ ax: 0, az: 0, vx: 0, vz: 0 })) });
-  }
 
   return { rig, material: mat, scarf, palette: C, kind: 'frog', variant, bottle, hipDew: dew };
 }

@@ -60,6 +60,7 @@ class BaseAnimator {
     this.pvx = 0; this.pvz = 0; this.accF = 0; this.accS = 0; this.yawRate = 0;
     this._fwd = 0; this._side = 0;
     this.shake = 0; this.shakeAmp = 0; this.shakeX = 0; this.shakeZ = 0;
+    this.push = { x: 0, z: 0, vx: 0, vz: 0 };   // a visual shove from hits, sprung back
   }
 
   /** A new action starts from exactly the pose on screen. */
@@ -98,6 +99,7 @@ class BaseAnimator {
     sp.impulse(I.lean, -fwd * 7 * k); sp.impulse(I.chestLean, -fwd * 5 * k); sp.impulse(I.nod, -fwd * 9 * k);
     sp.impulse(I.tilt, side * 5 * k); sp.impulse(I.spineTwist, -side * 4 * k); sp.impulse(I.look, -side * 6 * k);
     sp.impulse(I.rOut, 4 * k); sp.impulse(I.lOut, 4 * k); sp.impulse(I.drop, -1.1 * k);
+    this.push.vx -= Math.sin(fromYaw) * 1.6 * k; this.push.vz -= Math.cos(fromYaw) * 1.6 * k;
     // tremble in place through the hitstop (the victim shakes, the world holds)
     this.shake = .1 + .06 * s; this.shakeAmp = .045 * s * (this.flinchScale ?? 1);
     this.shakeX = Math.sin(fromYaw); this.shakeZ = Math.cos(fromYaw);
@@ -116,6 +118,16 @@ class BaseAnimator {
     if (this.tumble) this._applyTumble(this.tumble);
     // the shake runs on real time: during hitstop the sim clock is frozen
     const rdt = this.realDt ?? dt;
+    const ps = this.push;
+    if (ps.vx || ps.vz || ps.x || ps.z) {
+      ps.vx += (-ps.x * 220 - ps.vx * 22) * dt; ps.vz += (-ps.z * 220 - ps.vz * 22) * dt;
+      ps.x += ps.vx * dt; ps.z += ps.vz * dt;
+      if (Math.abs(ps.x) + Math.abs(ps.z) + Math.abs(ps.vx) + Math.abs(ps.vz) < 1e-4) ps.x = ps.z = ps.vx = ps.vz = 0;
+      // body offset is in the root's frame: rotate the world shove into it
+      const s = Math.sin(-(this.yaw ?? 0)), c = Math.cos(-(this.yaw ?? 0));
+      this.rig.joints.body.position.x += ps.x * c + ps.z * s;
+      this.rig.joints.body.position.z += -ps.x * s + ps.z * c;
+    }
     if (this.shake > 0) {
       this.shake -= rdt; this.shakeClock = (this.shakeClock ?? 0) + rdt;
       const j = Math.sin(this.shakeClock * 95) * this.shakeAmp * Math.min(1, this.shake * 12);
@@ -217,7 +229,9 @@ export class PlayerAnimator extends BaseAnimator {
     const stepLen = .5 + .3 * runK + .25 * sprint;
     this.phase += dt * (speed > .05 ? (speed / (2 * stepLen)) * TAU : 0);
     const busy = p.state === 'block' || p.state === 'heal';
-    locomotion(this.loco, base, { phase: this.phase, fwd: this._fwd, side: this._side, run: 4.4, sprint, t: this.t, armsBusy: busy, guard: this.stance });
+    const lo = this._lo ?? (this._lo = { phase: 0, fwd: 0, side: 0, run: 4.4, sprint: 0, t: 0, armsBusy: false, guard: 0 });
+    lo.phase = this.phase; lo.fwd = this._fwd; lo.side = this._side; lo.sprint = sprint; lo.t = this.t; lo.armsBusy = busy; lo.guard = this.stance;
+    locomotion(this.loco, base, lo);
     if (weaponTwo && !busy) twoHands(this.loco);
 
     let active = true;
@@ -374,7 +388,9 @@ export class BossAnimator extends BaseAnimator {
     this.speed = speed;
     const stepLen = .55 + .3 * Math.min(1, speed / 4.4);
     this.phase += dt * (speed > .05 ? (speed / (2 * stepLen)) * TAU : 0);
-    locomotion(this.loco, this.rest, { phase: this.phase, fwd: this._fwd / sc, side: this._side / sc, run: 4.4, sprint: 0, t: this.t, guard: 1 });
+    const lo = this._lo ?? (this._lo = { phase: 0, fwd: 0, side: 0, run: 4.4, sprint: 0, t: 0, armsBusy: false, guard: 1 });
+    lo.phase = this.phase; lo.fwd = this._fwd / sc; lo.side = this._side / sc; lo.t = this.t;
+    locomotion(this.loco, this.rest, lo);
     if (this.two) twoHands(this.loco);
 
     const a = this.act, an = b.anim;
@@ -387,7 +403,9 @@ export class BossAnimator extends BaseAnimator {
       case 'move': {
         // a new swing (or a repeat of the same one) starts from the pose on screen
         if (an.phase === 'windup' && this.lastPhase !== 'windup') this.actKey = null;
-        this._begin(`${an.moveId}:${an.step}`);
+        // one key object per move step, reused: no string built every frame
+        if (this._mk !== an.moveId || this._ms !== an.step) { this._mk = an.moveId; this._ms = an.step; this._mkey = {}; }
+        this._begin(this._mkey);
         const lib = this.frog ? ATTACKS : BOSS;
         const clip = lib[an.tell] ?? ATTACKS[an.tell] ?? BOSS.swipeR;
         sampleClip(a, clip, an.phase, clamp01(an.k), base, this.from);

@@ -7,13 +7,74 @@ import { labelTexture } from '../textures.js';
 
 export const envMat = () => new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: .92, metalness: .02 });
 
+/** Shared clock for everything the wind moves. The stage advances it. */
+export const WIND = { uTime: { value: 0 } };
+
+/**
+ * Environment material that sways in the wind: the higher a vertex is above
+ * its prop's base, the further it moves; each instance gets its own phase.
+ */
+const swayChunk = (amp) => `#include <begin_vertex>
+        {
+          vec3 ip = vec3(0.0);
+          #ifdef USE_INSTANCING
+            ip = vec3(instanceMatrix[3][0], 0.0, instanceMatrix[3][2]);
+          #endif
+          float h = max(0.0, position.y);
+          float gust = sin(uTime * .55 + ip.x * .08) * .5 + .5;
+          float w = sin(uTime * 1.6 + ip.x * .35 + ip.z * .27) * (.45 + .55 * gust) + sin(uTime * 3.3 + ip.z * .9) * .18;
+          transformed.x += w * h * h * ${amp.toFixed(3)};
+          transformed.z += w * .45 * h * h * ${amp.toFixed(3)};
+        }`;
+const injectSway = (m, amp) => {
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uTime = WIND.uTime;
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nuniform float uTime;')
+      .replace('#include <begin_vertex>', swayChunk(amp));
+  };
+  m.customProgramCacheKey = () => 'sway' + amp;
+  return m;
+};
+
+export function swayMat(amp = .1) {
+  const m = injectSway(envMat(), amp);
+  m.userData.sway = amp;
+  return m;
+}
+
+// Instanced props cast shadows through their own depth material. three.js
+// otherwise draws every caster with ONE shared depth material, and flipping it
+// between instanced and plain meshes re-derives its shader settings each time.
+const INST_DEPTH = new THREE.MeshDepthMaterial();
+const SWAY_DEPTH = new Map();
+function depthFor(mat) {
+  const amp = mat.userData.sway;
+  if (amp == null) return INST_DEPTH;
+  if (!SWAY_DEPTH.has(amp)) SWAY_DEPTH.set(amp, injectSway(new THREE.MeshDepthMaterial(), amp));   // shadows sway with the reeds
+  return SWAY_DEPTH.get(amp);
+}
+
 let rs = 7;
 export const rnd = () => { rs = (rs * 16807) % 2147483647; return (rs - 1) / 2147483646; };
 export const seed = (s) => { rs = s; };
 export const range = (a, b) => a + (b - a) * rnd();
 
+/**
+ * three.js picks a shader per material; a material shared by instanced AND
+ * plain meshes flips between two shaders every frame (and re-derives its
+ * settings each time). So a material serves one kind only: the other kind
+ * gets a twin.
+ */
+function forKind(mat, instancedKind) {
+  const key = instancedKind ? 'inst' : 'plain', other = instancedKind ? 'plain' : 'inst';
+  if (!mat.userData[other]) { mat.userData[key] = true; return mat; }
+  return mat.userData[key + 'Twin'] ?? (mat.userData[key + 'Twin'] = mat.clone());
+}
+
 /** Build one merged prototype with a PartBuilder, then instance it. */
 export function instanced(group, build, count, place, mat = envMat()) {
+  mat = forKind(mat, true);
   const b = new PartBuilder();
   build(b);
   const proto = b.build(mat);
@@ -31,6 +92,7 @@ export function instanced(group, build, count, place, mat = envMat()) {
   }
   mesh.castShadow = true;
   mesh.receiveShadow = true;
+  mesh.customDepthMaterial = depthFor(mat);
   group.add(mesh);
   return mesh;
 }
@@ -43,6 +105,7 @@ export function ring(i, rMin, rMax, jitter = 1) {
 }
 
 export function mesh(group, build, mat = envMat()) {
+  mat = forKind(mat, false);
   const b = new PartBuilder();
   build(b);
   const m = b.build(mat);
@@ -58,6 +121,15 @@ export function reedsProto(b) {
     if (i % 2 === 0) b.cyl(.05, .05, .32, 0x5a3a22, { x: x + Math.sin(rz) * -h, y: h + .1, rz, seg: 6 });
   }
   b.box(.3, .5, .02, 0x4d6a30, { y: .25, ry: .6, rz: .2, shade: .5 });
+}
+
+/** A clump of grass blades fanning out from one root. */
+export function grassProto(b) {
+  const cols = [0x4f7a2e, 0x628f36, 0x3f6526, 0x7a9a3c];
+  for (let i = 0; i < 7; i++) {
+    const a = (i / 7) * Math.PI * 2 + i * .7, lean = .25 + (i % 3) * .12, h = .45 + (i % 4) * .12;
+    b.box(.03, h, .012, cols[i % 4], { x: Math.sin(a) * .06, y: h / 2, z: Math.cos(a) * .06, rx: Math.cos(a) * lean, rz: -Math.sin(a) * lean, ry: a, shade: .55 });
+  }
 }
 
 export function lilyProto(b) {

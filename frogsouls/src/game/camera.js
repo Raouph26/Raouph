@@ -26,6 +26,7 @@ export class CameraCtl {
     this.bounds = 23;
     this.t = 0;
     this.snap = true;
+    this.zoomIn = 0;            // 0..1: pushes in and swings wide for a riposte
   }
 
   shake(a) { this.trauma = Math.min(1, this.trauma + a); }
@@ -76,9 +77,9 @@ export class CameraCtl {
       const size = lock.height ?? 3;
       // a big boss right on top of you pushes the camera back and up, so it stays in frame
       const close = Math.max(0, size * .9 - d);
-      const back = 3.4 + Math.min(d * .28, 2.6) + size * .36 + close * .55;
+      const back = (3.4 + Math.min(d * .28, 2.6) + size * .36 + close * .55) * (1 - this.zoomIn * .3);
       const up = 1.9 + size * .26 + Math.min(d * .07, .7) + close * .22;
-      const side = 1.15 + size * .07;
+      const side = 1.15 + size * .07 + this.zoomIn * 1.6;
       const sx = Math.sin(this.yaw), sz = Math.cos(this.yaw);
       desiredPos = _v.set(p.x + sx * back + sz * side, up, p.z + sz * back - sx * side);
       const w = Math.min(.5, .3 + size * .035);
@@ -134,6 +135,8 @@ export class CameraCtl {
     const f = Math.atan2(this.look.x - this.cam.position.x, this.look.z - this.cam.position.z);
     const sf = Math.sin(f), cf = Math.cos(f);
     // forward = (sf, cf); right = (-cf, sf)… with the character's right on −x:
-    return { x: sf * my - cf * mx, z: cf * my + sf * mx };
+    const o = this._mv ?? (this._mv = { x: 0, z: 0 });
+    o.x = sf * my - cf * mx; o.z = cf * my + sf * mx;
+    return o;
   }
 }

@@ -197,7 +197,8 @@ export class Input {
   /** The camera reads this, then the frame ends. */
   consumeLook() {
     const s = this.sens * (this.device === 'touch' ? .0042 : .0026);
-    const out = { x: this.look.x * s, y: this.look.y * s * (this.invertY ? -1 : 1) };
+    const out = this._lookOut ?? (this._lookOut = { x: 0, y: 0 });
+    out.x = this.look.x * s; out.y = this.look.y * s * (this.invertY ? -1 : 1);
     this.look.x = 0; this.look.y = 0;
     return out;
   }

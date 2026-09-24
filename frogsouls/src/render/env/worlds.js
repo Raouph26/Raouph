@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { PartBuilder, glowMaterial, actorMaterial } from '../kit/builder.js';
 import { feedTexture, labelTexture } from '../textures.js';
-import { envMat, instanced, ring, mesh, reedsProto, lilyProto, deadTree, rock, seed, rnd, range } from './props.js';
+import { envMat, swayMat, instanced, ring, mesh, reedsProto, lilyProto, grassProto, deadTree, rock, seed, rnd, range } from './props.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The places. Each builder dresses a group around the playable ring (r ≤ 19)
@@ -17,7 +17,8 @@ export const ENVS = {
     // the pad's raised rim
     mesh(g, (b) => b.torus(20.2, .45, 0x2a5c33, { rx: Math.PI / 2, y: .05, seg: 48, tseg: 6 }), m);
     instanced(g, lilyProto, 70, () => { const p = ring(0, 23, 60); return { x: p.x, y: -.2, z: p.z, ry: rnd() * 6.28, s: range(1.2, 3.2) }; }, m);
-    instanced(g, reedsProto, 160, () => { const p = ring(0, 26, 44, 3); return { x: p.x, y: -.3, z: p.z, ry: rnd() * 6.28, s: range(1.2, 2.2) }; }, m);
+    instanced(g, grassProto, 90, () => { const p = ring(0, 9, 19.6, 1); return { x: p.x, y: 0, z: p.z, ry: rnd() * 6.28, s: range(.8, 1.6) }; }, swayMat(.22));
+    instanced(g, reedsProto, 160, () => { const p = ring(0, 26, 44, 3); return { x: p.x, y: -.3, z: p.z, ry: rnd() * 6.28, s: range(1.2, 2.2) }; }, swayMat(.07));
     // lotus flowers that glow faintly
     const lotus = new THREE.InstancedMesh(new THREE.ConeGeometry(.35, .5, 6), glowMaterial(0xff9ac2), 26);
     const mm = new THREE.Matrix4();
@@ -37,10 +38,17 @@ export const ENVS = {
   pond(g) {
     seed(21);
     const m = envMat();
-    instanced(g, reedsProto, 320, () => { const p = ring(0, 20.2, 27, 2); return { x: p.x, y: -.2, z: p.z, ry: rnd() * 6.28, s: range(1, 2.1) }; }, m);
+    instanced(g, reedsProto, 320, () => { const p = ring(0, 20.2, 27, 2); return { x: p.x, y: -.2, z: p.z, ry: rnd() * 6.28, s: range(1, 2.1) }; }, swayMat(.07));
     instanced(g, lilyProto, 90, () => { const p = ring(0, 22, 55); return { x: p.x, y: -.2, z: p.z, ry: rnd() * 6.28, s: range(1, 2.6) }; }, m);
     instanced(g, (b) => rock(b, 1, 0x3c4636), 26, () => { const p = ring(0, 19.8, 22); return { x: p.x, y: -.1, z: p.z, ry: rnd() * 6, s: range(.8, 1.8) }; }, m);
     for (let i = 0; i < 9; i++) { const p = ring(0, 28, 48); deadTree(g, p.x, p.z, range(8, 15), range(1, 1.6)); }
+    // grass in clumps across the mud, thicker toward the edge
+    instanced(g, grassProto, 130, () => { const p = ring(0, 7, 19.8, 1); return { x: p.x, y: 0, z: p.z, ry: rnd() * 6.28, s: range(.9, 1.9) }; }, swayMat(.24));
+    // lotus flowers on the water: the only warm colour in the swamp
+    const lotus = new THREE.InstancedMesh(new THREE.ConeGeometry(.3, .42, 6), glowMaterial(0xff9ac2), 18);
+    const mm = new THREE.Matrix4();
+    for (let i = 0; i < 18; i++) { const p = ring(0, 22, 44); mm.makeTranslation(p.x, .02, p.z); lotus.setMatrixAt(i, mm); }
+    g.add(lotus);
     // a fallen log half in the water
     mesh(g, (b) => b.cyl(.7, .8, 9, 0x2e241b, { rz: Math.PI / 2, ry: .6, y: .2, seg: 7 }).cyl(.4, .5, 2, 0x2e241b, { x: 3, y: .9, rz: 1, seg: 6 }), m).position.set(-24, 0, 6);
     return {

@@ -382,7 +382,8 @@ export function buildBoss(def) {
     return { kind: 'frog', rig: f.rig, root: f.rig.root, material: f.material, scarf: f.scarf, weapon: w, fx: extras(), twoHand: false, frog: f };
   }
 
-  const rig = createRig(v.build ?? 'normal');
+  const hints = new Map([[v.trim, { rough: .32, metal: .75 }], [v.skin, { rough: .55 }], [v.cloth, { rough: .8 }]]);
+  const rig = createRig(v.build ?? 'normal', hints);
   const mat = actorMaterial({ rim: v.wire ? v.skin : 0xb0c4e0, rimStrength: v.wire ? .8 : .38, wire: !!v.wire });
   const fx = extras();
   dressBody(rig, v);
@@ -391,10 +392,11 @@ export function buildBoss(def) {
   const scale = rig.spec.head;
   (HEADS[v.head] ?? HEADS.botcube)(h, v);
   dressExtras(rig, v, fx, mat);
+  rig.partScale.head = scale;             // the head's own size, baked into the skinned mesh
   rig.finalize(mat);
   headGroup.scale.setScalar(scale);
   rig.joints.head.add(headGroup);
-  // head parts built into the merged mesh also need the head-size scale
+  // other meshes hung on the head (a halo) take the head size too
   for (const m of rig.joints.head.children) if (m.isMesh) m.scale.setScalar(scale);
 
   let weapon = null, twoHand = false;

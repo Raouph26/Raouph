@@ -103,7 +103,9 @@ export class Particles {
     if (hi < 0 && !this.dirty) return;
     const a = this.geo.attributes;
     const from = this.dirty ? 0 : lo, count = this.dirty ? this.max : hi - lo + 1;
-    for (const [attr, n] of [[a.position, 3], [a.aColor, 3], [a.aSize, 1], [a.aAlpha, 1]]) {
+    const list = this._attrs ?? (this._attrs = [a.position, a.aColor, a.aSize, a.aAlpha]);
+    for (let j = 0; j < 4; j++) {
+      const attr = list[j], n = attr.itemSize;
       attr.clearUpdateRanges(); attr.addUpdateRange(from * n, count * n); attr.needsUpdate = true;
     }
     this.dirty = false;
@@ -183,8 +185,9 @@ export class Streaks {
     P.length = n;
     const g = this.geo;
     g.instanceCount = n;
-    if (n) for (const k of ['aStart', 'aEnd', 'aCol', 'aW', 'aA']) {
-      const at = g.attributes[k]; at.clearUpdateRanges(); at.addUpdateRange(0, n * at.itemSize); at.needsUpdate = true;
+    if (n) {
+      const list = this._attrs ?? (this._attrs = ['aStart', 'aEnd', 'aCol', 'aW', 'aA'].map((k) => g.attributes[k]));
+      for (let j = 0; j < list.length; j++) { const at = list[j]; at.clearUpdateRanges(); at.addUpdateRange(0, n * at.itemSize); at.needsUpdate = true; }
     }
   }
 }
@@ -214,8 +217,8 @@ export class FX {
       const s = (5 + Math.random() * 9) * p;
       this.streaks.emit(x, y, z, Math.sin(a) * Math.cos(e) * s, Math.sin(e) * s + 2, Math.cos(a) * Math.cos(e) * s, color, { life: .18 + Math.random() * .25, len: .035, w: 2.4 * p });
     }
-    this.add.emit(x, y, z, 0, 0, 0, 0xffffff, 120 * p, .07, { sizeEnd: 40 });
-    this.add.emit(x, y, z, 0, 0, 0, color, 70 * p, .16, { sizeEnd: 20 });
+    this.add.emit(x, y, z, 0, 0, 0, 0xffffff, 75 * p, .05, { sizeEnd: 30 });
+    this.add.emit(x, y, z, 0, 0, 0, color, 50 * p, .12, { sizeEnd: 16 });
     this.goo(x, y, z, goo, heavy ? 14 : 8, dx, dz);
   }
 
@@ -281,8 +284,8 @@ export class FX {
       const a = Math.random() * Math.PI * 2, e = (Math.random() - .3) * 1.4, s = 7 + Math.random() * 12;
       this.streaks.emit(x, y, z, Math.cos(a) * Math.cos(e) * s, Math.sin(e) * s + 1, Math.sin(a) * Math.cos(e) * s, i % 4 ? 0xfff2c4 : 0xffb347, { life: .25 + Math.random() * .35, len: .045, w: 2.8 });
     }
-    this.add.emit(x, y, z, 0, 0, 0, 0xffffff, 260, .12, { sizeEnd: 80 });
-    this.add.emit(x, y, z, 0, 0, 0, 0xfff2c4, 150, .3, { sizeEnd: 30 });
+    this.add.emit(x, y, z, 0, 0, 0, 0xffffff, 150, .08, { sizeEnd: 60 });
+    this.add.emit(x, y, z, 0, 0, 0, 0xfff2c4, 90, .25, { sizeEnd: 24 });
     for (let i = 0; i < 32; i++) {
       const a = (i / 32) * Math.PI * 2;
       this.add.emit(x, y, z, Math.cos(a) * 10, Math.sin(a) * 2.5, Math.sin(a) * 10, 0xffffff, 12, .22, { drag: 6, sizeEnd: 2 });

@@ -26,6 +26,7 @@ export class Trail {
   constructor(scene, color = 0xffffff, { raw = 9, sub = 5, life = 0.17, inner = 0.38 } = {}) {
     this.maxRaw = raw; this.sub = sub; this.life = life; this.inner = inner;
     this.raw = [];                                 // newest first: {b:[x,y,z], t:[x,y,z], age}
+    this.pool = [];
     this.rows = (raw - 1) * sub + 1;
     const n = this.rows;
     const g = new THREE.BufferGeometry();
@@ -59,9 +60,11 @@ export class Trail {
     if (emitting && baseObj && tipObj) {
       baseObj.getWorldPosition(this._b); tipObj.getWorldPosition(this._t);
       this._b.lerp(this._t, this.inner);          // the ribbon covers the outer part of the blade
-      this.raw.unshift({ b: this._b.toArray(), t: this._t.toArray(), age: 0 });
+      const r = this.pool.pop() ?? { b: [0, 0, 0], t: [0, 0, 0], age: 0 };
+      this._b.toArray(r.b); this._t.toArray(r.t); r.age = 0;
+      this.raw.unshift(r);
     }
-    while (this.raw.length && (this.raw.length > this.maxRaw || this.raw[this.raw.length - 1].age >= 1)) this.raw.pop();
+    while (this.raw.length && (this.raw.length > this.maxRaw || this.raw[this.raw.length - 1].age >= 1)) this.pool.push(this.raw.pop());
     const R = this.raw, m = R.length;
     this.mesh.visible = m > 1;
     if (m < 2) return;

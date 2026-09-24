@@ -73,8 +73,13 @@ function grip(b, len) {
   b.box(.09, .06, .09, BRASS, { y: -len / 2 - .07 });
 }
 
+const HINTS = new Map([
+  [STEEL, { rough: .22, metal: .92 }], [STEEL_D, { rough: .3, metal: .9 }], [BRASS, { rough: .3, metal: .9 }],
+  [DARK, { rough: .5, metal: .3 }], [WRAP, { rough: .75 }], [0x9aa0b8, { rough: .2, metal: .9 }], [0xb4bad0, { rough: .2, metal: .9 }],
+]);
+
 export function buildWeapon(id, material) {
-  const b = new PartBuilder();
+  const b = new PartBuilder(HINTS);
   const spec = (BUILDERS[id] ?? BUILDERS.cleaver)(b);
   const g = new THREE.Group();
   const mesh = b.build(material);

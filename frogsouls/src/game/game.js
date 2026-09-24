@@ -52,6 +52,7 @@ export class Game {
     this.R = new Renderer(document.getElementById('stage'), S.quality);
     this.scene = this.R.scene;
     this.stage = new Stage(this.scene);
+    this.stage.setRenderer(this.R.gl);
     this.decals = new Decals(this.scene);
     this.fx = new FX(this.scene);
     this.projViews = new ProjectileViews(this.scene);
@@ -310,6 +311,9 @@ export class Game {
     this.playerView.update(simDt, p, true, dt);
     if (this.phase === 'combat') this.combatT += simDt;
     this._coach(dt);
+    // a dead boss sheds embers while it dissolves
+    const dis = this.bossView?.dissolve ?? 0;
+    if (dis > 0 && dis < 1) this.fx.embers(b.x, 0, b.z, b.radius * .9, b.height, b.def.visual?.accent ?? 0xffb35a, 3);
     this.projViews.sync(simDt, f.projectiles, f.time);
     this.decals.sync(f.hazards, simDt);
     this.stage.dim += ((f.dim ?? 0) - this.stage.dim) * Math.min(1, dt * 2);
@@ -328,14 +332,14 @@ export class Game {
     }
   }
 
+  /** This frame's intent (one reused object: it's read within the frame and never kept). */
   _intent(active) {
-    const I = this.input;
-    if (!active || this.paused) return { ...EMPTY_INTENT, lock: this.lockOn };
+    const I = this.input, it = this._it ?? (this._it = { ...EMPTY_INTENT });
+    if (!active || this.paused) { Object.assign(it, EMPTY_INTENT); it.lock = this.lockOn; return it; }
     const mv = this.cam.worldMove(I.move.x, I.move.y);
-    return {
-      mx: mv.x, mz: mv.z, sprint: I.held.sprint, block: I.held.block, lock: this.lockOn,
-      light: I.has('light'), heavy: I.has('heavy'), roll: I.has('roll'), parry: I.has('parry'), heal: I.has('heal'),
-    };
+    it.mx = mv.x; it.mz = mv.z; it.sprint = I.held.sprint; it.block = I.held.block; it.lock = this.lockOn;
+    it.light = I.has('light'); it.heavy = I.has('heavy'); it.roll = I.has('roll'); it.parry = I.has('parry'); it.heal = I.has('heal');
+    return it;
   }
 
   _footsteps(dt, p) {
@@ -406,7 +410,8 @@ export class Game {
           break;
         case 'block': this.playerView.anim.blockHit(Math.min(1.5, .5 + (e.dmg ?? 10) / 30)); this.sfx('block', { pos: p }); this.fx.sparks(p.x + Math.sin(p.yaw) * .6, 1.2, p.z + Math.cos(p.yaw) * .6, 0xffe2a8, 10, .7); this.cam.shake(.14); rumble(.3, .3, 80); break;
         case 'guardbreak': this.playerView.anim.flinch(Math.atan2((e.fx ?? b.x) - p.x, (e.fz ?? b.z) - p.z), 1.2); this.sfx('guardbreak', { pos: p }); this.cam.shake(.4); this.R.fx.aberration = 1; break;
-        case 'riposte': this.sfx('riposte', { pos: e }); this.R.fx.flash = .2; this.cam.kick(4); break;
+        case 'riposteStart': this.sfx('whooshBig', { pos: p }); break;
+        case 'riposte': this.sfx('riposte', { pos: e }); this.R.fx.flash = .15; this.cam.kick(4); this.cam.shake(.35); break;
         case 'flaskStart': this.sfx('flask', { pos: p }); break;
         case 'healed': this.sfx('healed', { pos: p }); this.fx.heal(p.x, 1.3, p.z); break;
         case 'flaskEmpty': this.sfx('flaskEmpty'); this.ui.toast('no dew left'); break;
@@ -795,31 +800,39 @@ export class Game {
     } else {
       const b = this.fight?.boss;
       const lock = this.state === 'fight' && this.phase === 'combat' && this.lockOn && b?.alive ? b : null;
-      this.cam.update(dt, p, lock, frozen ? { x: 0, y: 0 } : look, { touchFollow: this.input.device === 'touch' && this.input.touch.look == null });
+      this.cam.zoomIn += ((p?.state === 'riposte' ? 1 : 0) - this.cam.zoomIn) * Math.min(1, dt * 4);
+      const co = this._camOpts ?? (this._camOpts = { touchFollow: false });
+      co.touchFollow = this.input.device === 'touch' && this.input.touch.look == null;
+      if (frozen) { look.x = 0; look.y = 0; }
+      this.cam.update(dt, p, lock, look, co);
     }
     this.cam.bounds = this.state === 'fight' ? 22 : 24;
     // on touch the buttons cover the right third: slide the picture left a little
     this.R.setViewShift(this.input.device === 'touch' && this.state !== 'title' ? .07 : 0);
     const c = this.R.camera;
-    this.audio.listener = { x: c.position.x, z: c.position.z, yaw: Math.atan2(this.cam.look.x - c.position.x, this.cam.look.z - c.position.z) };
+    const L = this.audio.listener ?? (this.audio.listener = { x: 0, z: 0, yaw: 0 });
+    L.x = c.position.x; L.z = c.position.z; L.yaw = Math.atan2(this.cam.look.x - c.position.x, this.cam.look.z - c.position.z);
 
     // world
-    this.fx.update(gdt * (this.hitstop > 0 ? .15 : 1));
+    this.fx.update(gdt * (this.hitstop > 0 ? .3 : 1));      // sparks hang in the air through a hitstop
     this.fx.setScale(this.R.pointScale, this.R.w, this.R.h);
     this.stage.update(dt, c, { pointScale: this.R.pointScale });
 
     // HUD
     if (p && this.state !== 'title') {
       const b = this.fight?.boss;
-      let reticle = null, say = null, boss = null;
+      const H = this._hud ?? (this._hud = { boss: null, reticle: null, say: null, _boss: {}, _ret: { x: 0, y: 0 }, _say: { text: '', x: 0, y: 0 } });
+      H.boss = H.reticle = H.say = null;
       if (b && this.state === 'fight') {
-        const hud = this.fight.bossHud();
-        boss = { name: this.fightDef.name, epithet: this.fightDef.epithet, hpFrac: b.hpFrac, label: hud?.label, danger: hud?.danger };
-        if (this.lockOn && b.alive && this.phase === 'combat') reticle = this._screen(b.x, b.y + b.height * .55, b.z);
-        if (b.say && b.alive) { const s = this._screen(b.x, b.y + b.height * 1.08, b.z); if (s) say = { text: b.say.text, ...s }; }
+        const hud = this.fight.bossHud(), bo = H._boss;
+        bo.name = this.fightDef.name; bo.epithet = this.fightDef.epithet; bo.hpFrac = b.hpFrac; bo.label = hud?.label; bo.danger = hud?.danger;
+        H.boss = bo;
+        if (this.lockOn && b.alive && this.phase === 'combat' && this._screen(b.x, b.y + b.height * .55, b.z, H._ret)) H.reticle = H._ret;
+        if (b.say && b.alive && this._screen(b.x, b.y + b.height * 1.08, b.z, H._say)) { H._say.text = b.say.text; H.say = H._say; }
       }
-      this.ui.updateHud(dt, { hp: p.hp, maxHp: p.maxHp, stamina: p.stamina, maxStamina: p.maxStamina, flasks: p.flasks, flies: this.save.d.flies,
-        noHeal: this.fight?.mods.noHeal, boss, reticle, say });
+      H.hp = p.hp; H.maxHp = p.maxHp; H.stamina = p.stamina; H.maxStamina = p.maxStamina; H.flasks = p.flasks;
+      H.flies = this.save.d.flies; H.noHeal = this.fight?.mods.noHeal;
+      this.ui.updateHud(dt, H);
     }
 
     this.R.render(dt, this.stage);
@@ -827,10 +840,12 @@ export class Game {
     this.input.endFrame();
   }
 
-  _screen(x, y, z) {
+  /** Project to screen pixels into `out` (or a new object). Null when behind the camera. */
+  _screen(x, y, z, out = { x: 0, y: 0 }) {
     const v = this._v.set(x, y, z).project(this.R.camera);
     if (v.z > 1) return null;
-    return { x: (v.x * .5 + .5) * this.R.w, y: (-v.y * .5 + .5) * this.R.h };
+    out.x = (v.x * .5 + .5) * this.R.w; out.y = (-v.y * .5 + .5) * this.R.h;
+    return out;
   }
 }
 

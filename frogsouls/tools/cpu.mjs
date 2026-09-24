@@ -18,18 +18,18 @@ const r = await p.evaluate((n) => {
   for (let i = 0; i < 120; i++) G.frame(1 / 60);
   window.gc?.();
   const h0 = performance.memory.usedJSHeapSize;
-  let t = 0, worst = 0, minHeap = h0, peak = h0, drops = 0, last = h0;
+  let t = 0, worst = 0, drops = 0, last = h0, alloc = 0;
   for (let i = 0; i < n; i++) {
     if (i % 25 === 0) G.input.press(keys[(i / 25) % keys.length | 0]);
     G.input.move.x = Math.sin(i / 40); G.input.move.y = Math.cos(i / 55);
     const a = performance.now(); G.frame(1 / 60); const d = performance.now() - a;
     t += d; worst = Math.max(worst, d);
     const h = performance.memory.usedJSHeapSize;
-    if (h < last) drops++;
-    last = h; peak = Math.max(peak, h);
+    if (h < last) drops++; else alloc += h - last;      // every rise is an allocation; drops are collections
+    last = h;
   }
   G.R.render = realRender;
-  return { avgMs: t / n, worstMs: worst, heapGrowthKB: (peak - h0) / 1024, gcDrops: drops, perFrameKB: (peak - h0) / 1024 / n };
+  return { avgMs: t / n, worstMs: worst, gcDrops: drops, allocKBPerFrame: alloc / 1024 / n };
 }, +frames);
 console.log(JSON.stringify(r, null, 1));
 await b.close();

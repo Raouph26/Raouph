@@ -56,6 +56,14 @@ export class UI {
     this.touchRoot.classList.toggle('quiet', !controls);
   }
 
+  /** Scale a bar only when it moved visibly (avoids a new string every frame). */
+  _scale(key, el, v, eps = .0015) {
+    const k = '#' + key;
+    if (this._last[k] != null && Math.abs(this._last[k] - v) < eps) return;
+    this._last[k] = v;
+    el.style.transform = `scaleX(${v.toFixed(4)})`;
+  }
+
   /** Write a style/text only when it changed: DOM writes every frame cost layout on phones. */
   _set(key, el, prop, val) {
     if (this._last[key] === val) return;
@@ -72,29 +80,35 @@ export class UI {
   }
 
   updateHud(dt, s) {
-    const hpF = Math.max(0, s.hp / s.maxHp);
-    this._set('hpw', this.hpBar, '--w', (s.maxHp / 100) * 26 + 'vw');
-    this._set('hp', this.hp, 'transform', `scaleX(${hpF.toFixed(4)})`);
+    const hpT = Math.max(0, s.hp / s.maxHp);
+    // damage lands at once (the ghost shows the chunk); healing pours in
+    if (this._hpShown == null || hpT < this._hpShown) this._hpShown = hpT;
+    else this._hpShown = Math.min(hpT, this._hpShown + Math.max(.004, (hpT - this._hpShown) * Math.min(1, dt * 5)));
+    const hpF = this._hpShown;
+    this._cls('hph', this.hpBar, 'healing', hpT - hpF > .005);
+    if (this._last.maxHp !== s.maxHp) { this._last.maxHp = s.maxHp; this.hpBar.style.setProperty('--w', (s.maxHp / 100) * 26 + 'vw'); }
+    this._scale('hp', this.hp, hpF);
     this._ghost = this._ghost < hpF ? hpF : this._ghost + (hpF - this._ghost) * Math.min(1, dt * 2.2);
-    this._set('hpg', this.hpGhost, 'transform', `scaleX(${this._ghost.toFixed(3)})`);
+    this._scale('hpg', this.hpGhost, this._ghost);
     this._cls('hpl', this.hpBar, 'low', hpF < .25);
-    this._set('stw', this.stBar, '--w', (s.maxStamina / 100) * 20 + 'vw');
-    this._set('st', this.st, 'transform', `scaleX(${Math.max(0, s.stamina / s.maxStamina).toFixed(3)})`);
-    this._set('fl', this.flaskN, 'text', String(s.flasks));
+    if (this._last.maxSt !== s.maxStamina) { this._last.maxSt = s.maxStamina; this.stBar.style.setProperty('--w', (s.maxStamina / 100) * 20 + 'vw'); }
+    this._scale('st', this.st, Math.max(0, s.stamina / s.maxStamina));
+    if (this._last.fl !== s.flasks) { this._last.fl = s.flasks; this.flaskN.textContent = s.flasks; }
     this._cls('fle', this.flaskEl, 'empty', s.flasks <= 0);
     this._cls('flb', this.flaskEl, 'banned', !!s.noHeal);
     if (this._flies == null) this._flies = s.flies;
     this._flies += (s.flies - this._flies) * Math.min(1, dt * 4);
     if (Math.abs(this._flies - s.flies) < 1) this._flies = s.flies;
-    this._set('flies', this.fliesN, 'text', fmt(this._flies));
+    const fr = Math.round(this._flies);
+    if (this._last.flies !== fr) { this._last.flies = fr; this.fliesN.textContent = fmt(fr); }
 
     if (s.boss) {
       const b = s.boss;
       this._set('bn', this.bossName, 'text', b.name);
       this._set('be', this.bossEpi, 'text', b.epithet);
-      this._set('bhp', this.bossHp, 'transform', `scaleX(${Math.max(0, b.hpFrac).toFixed(4)})`);
+      this._scale('bhp', this.bossHp, Math.max(0, b.hpFrac), .0005);
       this._bossGhost = this._bossGhost < b.hpFrac ? b.hpFrac : this._bossGhost + (b.hpFrac - this._bossGhost) * Math.min(1, dt * 1.8);
-      this._set('bg', this.bossGhost, 'transform', `scaleX(${this._bossGhost.toFixed(3)})`);
+      this._scale('bg', this.bossGhost, this._bossGhost);
       this._set('bl', this.bossLabel, 'text', b.label ?? '');
       this._cls('bl', this.bossLabel, 'danger', !!b.danger);
     }
@@ -117,7 +131,7 @@ export class UI {
     el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop', 'on');
   }
 
-  resetBossBar() { this._bossGhost = 1; this._ghost = 1; this._dmgT = 0; this._dmg = 0; this.bossDmg.classList.remove('on'); }
+  resetBossBar() { this._bossGhost = 1; this._ghost = 1; this._hpShown = null; this._dmgT = 0; this._dmg = 0; this.bossDmg.classList.remove('on'); }
 
   prompt(p) {
     if (!p) { this.promptEl.classList.remove('on'); $('#bAct', this.root)?.classList.remove('on'); return; }

@@ -6,7 +6,16 @@ import { PlayerAnimator, BossAnimator, VacuumAnimator } from './anim/animator.js
 import { Trail } from './fx/trail.js';
 import { WEAPONS } from '../sim/weapons.js';
 import { glowMaterial } from './kit/builder.js';
-import { glintTexture } from './textures.js';
+import { glintTexture, softSprite } from './textures.js';
+
+/** A soft dark disc under a character: grounds it even where there are no shadow maps. */
+function contactShadow(scene, r) {
+  const m = new THREE.Mesh(new THREE.CircleGeometry(r, 20), new THREE.MeshBasicMaterial({ map: softSprite(), color: 0x000000, transparent: true, opacity: .5, depthWrite: false, toneMapped: false }));
+  m.rotation.x = -Math.PI / 2;
+  m.renderOrder = 1;
+  scene.add(m);
+  return m;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Views mirror sim entities every frame. They own meshes, animators, trails
@@ -23,6 +32,7 @@ export class PlayerView {
     scene.add(this.frog.rig.root);
     this.trail = new Trail(scene, 0xc9e27a);
     this.frog.material.userData.u.uFlashColor.value.set(0xff7a5c);    // getting hit reads red
+    this.blob = contactShadow(scene, .75);
     this.weaponId = null;
     this.flash = 0;
     this.stepT = 0;
@@ -41,13 +51,17 @@ export class PlayerView {
   update(dt, p, combat, realDt = dt) {
     this.setWeapon(p.weaponId);
     this.anim.realDt = realDt;
-    this.anim.update(dt, p, { combat, weaponTwo: TWO_HANDED.has(p.weaponId) });
+    const o = this._ao ?? (this._ao = { combat: true, weaponTwo: false });
+    o.combat = combat; o.weaponTwo = TWO_HANDED.has(p.weaponId);
+    this.anim.update(dt, p, o);
     // the dew bottle comes out of the hip and into the hand while drinking
     const inHand = this.anim.drinking > .5;
     this.frog.bottle.visible = inHand; this.frog.hipDew.visible = !inHand;
+    this.blob.position.set(p.x, .03, p.z);
+    this.blob.material.opacity = .5 / (1 + (p.y ?? 0) * 2);
     const live = p.state === 'attack' && p.atk && p.t >= p.atk.spec.startup * 0.75 && p.t <= p.atk.spec.startup + p.atk.spec.active + 0.05;
     this.trail.update(dt, this.weapon?.userData.base, this.weapon?.userData.tip, live || p.state === 'riposte' && p.t > .18 && p.t < .4);
-    this.flash = Math.max(0, this.flash - dt * 7);
+    this.flash = Math.max(0, this.flash - realDt * 7);
     this.frog.material.userData.u.uFlash.value = this.flash * this.flash * .7;
     this.frog.rig.root.visible = true;
   }
@@ -56,7 +70,7 @@ export class PlayerView {
   get root() { return this.frog.rig.root; }
   get chest() { return this.frog.rig.joints.chest; }
 
-  dispose() { this.scene.remove(this.frog.rig.root); this.scene.remove(this.trail.mesh); }
+  dispose() { this.scene.remove(this.frog.rig.root); this.scene.remove(this.trail.mesh); this.scene.remove(this.blob); }
 }
 
 export class BossView {
@@ -81,6 +95,8 @@ export class BossView {
     this.glintT = -1;
     this.glintKey = null;
     scene.add(this.glint);
+    this.blob = contactShadow(scene, 1);
+    this.blobR = def.radius ?? .55 * (def.scale ?? 1.6) * 1.5;
   }
 
   update(dt, boss, fight, realDt = dt) {
@@ -109,22 +125,26 @@ export class BossView {
     this.u.uGlow.value = this.glow;
     this._updateGlint(realDt);
 
-    this.flash = Math.max(0, this.flash - dt * 9);
+    this.flash = Math.max(0, this.flash - realDt * 9);      // real time: a flash shouldn't freeze with the hitstop
     this.u.uFlash.value = this.flash * this.flash * .42;
 
     const live = boss.state === 'move' && (an.phase === 'active' || (an.phase === 'windup' && an.k > .85));
     this.trail.update(dt, this.b.weapon?.userData.base, this.b.weapon?.userData.tip, live);
 
     this._living(dt, boss, fight);
+    this.blob.position.set(boss.x, .035, boss.z);
+    this.blob.scale.setScalar(this.blobR * (1 + boss.y * .15));
+    this.blob.material.opacity = (.5 / (1 + boss.y * .8)) * (1 - (this.dissolve ?? 0));
 
-    // death: it kneels, sinks and goes
+    // death: it falls, then comes apart into embers
+    this.dissolve = 0;
     if (!boss.alive) {
-      this.deadT += dt;
-      if (this.deadT > 1.3) {
-        const k = Math.min(1, (this.deadT - 1.3) / 1.4);
-        this.b.root.position.y = -k * 2.5;
-        this.b.root.scale.setScalar((this.anim.scale ?? 1) * (1 - k * .3));
-      }
+      this.deadT += dt;                         // game time: the death slow-mo stretches it, as it should
+      this.dissolve = Math.min(1, Math.max(0, (this.deadT - 1.35) / 1.6));
+      this.u.uDissolve.value = this.dissolve;
+      if (this.dissolve > 0 && !this.shadowsOff) { this.shadowsOff = true; this.b.root.traverse((o) => { o.castShadow = false; }); }
+      this.u.uDissolveColor.value.set(this.def.visual?.accent ?? 0xffb35a).lerp(new THREE.Color(0xffc27a), .5);
+      if (this.dissolve >= 1) this.b.root.visible = false;
     }
   }
 
@@ -177,7 +197,7 @@ export class BossView {
 
   hitFlash() { this.flash = 1; }
   get root() { return this.b.root; }
-  dispose() { this.scene.remove(this.b.root); this.scene.remove(this.trail.mesh); this.scene.remove(this.glint); }
+  dispose() { this.scene.remove(this.b.root); this.scene.remove(this.trail.mesh); this.scene.remove(this.glint); this.scene.remove(this.blob); }
 }
 
 // ── projectiles ─────────────────────────────────────────────────────────────

@@ -374,10 +374,18 @@ export class BossSim {
     return true;
   }
 
+  /** Caught by a riposte: helpless from the first frame; the damage comes with the stab. */
+  beginRiposted() {
+    this.run = null;
+    this.untargetable = false;
+    this.y = 0;
+    this.enter('riposted');
+  }
+
   receiveRiposte(dmg) {
     this.hp -= dmg * (this.flags.damageTaken ?? 1);
     this.run = null;
-    this.enter('riposted');
+    if (this.state !== 'riposted') this.enter('riposted');
     this.fight.emit({ type: 'hit', target: 'boss', x: this.x, z: this.z, dmg, riposte: true, fx: this.fight.player.x, fz: this.fight.player.z });
     this._checkPhase();
     this._checkDeath();

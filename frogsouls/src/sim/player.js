@@ -27,7 +27,7 @@ export const PLAYER = {
   roll:     { cost: 22, startup: .04, iframes: .34, duration: .56, recovery: .10, distance: 4.1 },
 
   parry: { cost: 12, startup: .05, window: .16, recovery: .42 },
-  riposte: { duration: 1.05, range: 2.7, iframes: 1.05 },
+  riposte: { duration: 1.05, range: 2.7, iframes: 1.05, hitAt: .3 },     // the blade lands at hitAt
 
   flask: { duration: 1.05, applyAt: .56, moveScale: .35 },
 
@@ -227,7 +227,13 @@ export class PlayerSim {
       case 'riposte':
         this.iframes = Math.max(this.iframes, 0.05);
         this._friction(dt, 20);
-        if (this.t >= PLAYER.riposte.duration) this.enter('idle');
+        if (this.rip && !this.rip.done && this.t >= PLAYER.riposte.hitAt) {
+          const r = this.rip; r.done = true;
+          r.target.receiveRiposte(r.dmg, this);
+          this.stats.dmgDealt += r.dmg;
+          this.fight.emit({ type: 'riposte', x: r.target.x, z: r.target.z, dmg: r.dmg });
+        }
+        if (this.t >= PLAYER.riposte.duration) { this.rip = null; this.enter('idle'); }
         break;
 
       case 'heal': {
@@ -414,10 +420,10 @@ export class PlayerSim {
     this.yaw = yawTo(this.x, this.z, target.x, target.z);
     this.enter('riposte');
     this.iframes = PLAYER.riposte.iframes;
-    const dmg = this.weapon.riposte * this.dmgMult;
-    target.receiveRiposte(dmg, this);
-    this.stats.dmgDealt += dmg;
-    this.fight.emit({ type: 'riposte', x: target.x, z: target.z, dmg });
+    // the boss is caught now; the damage lands when the stab does
+    this.rip = { target, dmg: this.weapon.riposte * this.dmgMult, done: false };
+    target.beginRiposted?.(this);
+    this.fight.emit({ type: 'riposteStart', x: target.x, z: target.z });
     return true;
   }
 

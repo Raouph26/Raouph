@@ -21,12 +21,12 @@ export function sampleKeys(out, keys, k, base, from) {
   const n = keys.length;
   if (k <= keys[0][0]) return copyKey(out, keys[0][1], base, from);
   for (let i = 1; i < n; i++) {
-    const [t1, p1, e] = keys[i];
+    const key = keys[i], t1 = key[0];
     if (k <= t1 || i === n - 1) {
-      const [t0, p0] = keys[i - 1];
+      const prev = keys[i - 1], t0 = prev[0];
       const u = t1 > t0 ? (k - t0) / (t1 - t0) : 1;
-      const a = resolve(p0, base, from), b = resolve(p1, base, from);
-      return lerpPose(out, a, b, easeClamped(e ?? 'inOut', u));
+      const a = resolve(prev[1], base, from), b = resolve(key[1], base, from);
+      return lerpPose(out, a, b, easeClamped(key[2] ?? 'inOut', u));
     }
   }
   return out;
@@ -324,7 +324,8 @@ const B_IMPALED = pose({ drop: -.12, lean: .55, chestLean: .3, nod: .6, rRaise: 
 export const BOSS_ACTS = {
   staggerPoise: [[0, FROM], [.07, B_RECOIL, 'expoOut'], [.24, ACT.kneel, 'inOut'], [.82, derive(ACT.kneel, { nod: .6, lean: .5 }), 'linear'], [1, BASE, 'inOut']],
   staggerParried: [[0, FROM], [.05, B_PARRIED, 'expoOut'], [.22, B_SLUMP, 'inOut'], [.84, derive(B_SLUMP, { nod: .7, drop: -.25 }), 'linear'], [1, BASE, 'inOut']],
-  riposted: [[0, FROM], [.12, B_IMPALED, 'expoOut'], [.4, derive(B_IMPALED, { nod: .75, lean: .65 }), 'linear'], [.56, ACT.downFlat, 'inCubic'], [.62, derive(ACT.downFlat, { drop: .26 }), 'out'], [.7, ACT.downFlat, 'in'], [1, ACT.downFlat, 'linear']],
+  // stab lands at 0.3 s, the kick at ~0.74 s: impaled, held, kicked flat
+  riposted: [[0, FROM], [.14, derive(B_SLUMP, { lean: .2 }), 'inOut'], [.2, B_IMPALED, 'expoOut'], [.46, derive(B_IMPALED, { nod: .75, lean: .65 }), 'linear'], [.58, ACT.downFlat, 'inCubic'], [.64, derive(ACT.downFlat, { drop: .26 }), 'out'], [.7, ACT.downFlat, 'in'], [1, ACT.downFlat, 'linear']],
   getup: [[0, FROM], [.5, ACT.kneel, 'inOut'], [1, BASE, 'inOut']],
   transition: [[0, FROM], [.3, B.roar.peak, 'inOut'], [.42, B.roar.strike, 'expoOut'], [.75, B.roar.strike, 'linear'], [1, BASE, 'inOut']],
   drink: [[0, FROM], [.3, DRINK, 'inOut'], [.75, DRINK_GULP, 'inOut'], [1, BASE, 'inOut']],
