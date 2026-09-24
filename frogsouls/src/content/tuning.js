@@ -1,0 +1,30 @@
+// Per-boss multipliers written by tools/tune.mjs from simulated fights.
+// hp scales the health pool (fight length); dmg scales every hit (lethality).
+// Regenerate after changing moves, bosses or the player: node tools/tune.mjs
+export const TUNING = {
+  duck: { hp: 1.486, dmg: 1.599 },
+  grandpa: { hp: 1.43, dmg: 1.681 },
+  shrimp: { hp: 1.169, dmg: 1.446 },
+  crab: { hp: 0.826, dmg: 1.182 },
+  otherfrog: { hp: 1.04, dmg: 1.375 },
+  replyguy: { hp: 0.717, dmg: 1.681 },
+  capslock: { hp: 0.925, dmg: 1.124 },
+  firstcomment: { hp: 1.671, dmg: 1.681 },
+  bot: { hp: 1.421, dmg: 1.162 },
+  moderator: { hp: 1.108, dmg: 0.635 },
+  monday: { hp: 0.93, dmg: 1.45 },
+  printer: { hp: 0.969, dmg: 1.955 },
+  vacuum: { hp: 2.012, dmg: 0.845 },
+  meeting: { hp: 1.255, dmg: 1.222 },
+  deadline: { hp: 1.004, dmg: 0.95 },
+  unskippable: { hp: 0.944, dmg: 1.572 },
+  influencer: { hp: 1.404, dmg: 1.47 },
+  captcha: { hp: 0.857, dmg: 1.546 },
+  battery: { hp: 1.102, dmg: 1.352 },
+  algorithm: { hp: 0.947, dmg: 1.051 },
+  lag: { hp: 0.835, dmg: 1.285 },
+  hitbox: { hp: 0.908, dmg: 1.162 },
+  patchnotes: { hp: 0.797, dmg: 1.285 },
+  loading: { hp: 0.532, dmg: 1.653 },
+  bluescreen: { hp: 0.75, dmg: 1.27 },
+};
