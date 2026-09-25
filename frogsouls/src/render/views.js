@@ -4,7 +4,7 @@ import { buildWeapon } from './kit/weapons.js';
 import { buildBoss } from './kit/boss.js';
 import { PlayerAnimator, BossAnimator, VacuumAnimator } from './anim/animator.js';
 import { Trail } from './fx/trail.js';
-import { WEAPONS } from '../sim/weapons.js';
+import { WEAPONS, ARMOURS } from '../sim/weapons.js';
 import { glowMaterial } from './kit/builder.js';
 import { glintTexture, softSprite } from './textures.js';
 
@@ -38,6 +38,24 @@ export class PlayerView {
     this.stepT = 0;
   }
 
+  /** A new armour is a new frog: its colours are baked into the mesh. */
+  setArmour(id) {
+    if (id === this.armourId) return;
+    const first = this.armourId == null;
+    this.armourId = id;
+    if (first && id === 'rags') return;
+    const ar = ARMOURS[id] ?? ARMOURS.rags;
+    const old = this.frog, yaw = this.anim.yaw;
+    this.scene.remove(old.rig.root);
+    this.frog = buildFrog('hero', { cloth: ar.cloth, metal: ar.metal, trim: ar.trim });
+    this.frog.material.userData.u.uFlashColor.value.set(0xff7a5c);
+    this.anim = new PlayerAnimator(this.frog);
+    this.anim.yaw = yaw;
+    this.scene.add(this.frog.rig.root);
+    const w = this.weaponId; this.weaponId = null; this.weapon = null;
+    if (w) this.setWeapon(w);
+  }
+
   setWeapon(id) {
     if (id === this.weaponId) return;
     if (this.weapon) this.frog.rig.joints.socket.remove(this.weapon);
@@ -49,6 +67,7 @@ export class PlayerView {
 
   /** p: the PlayerSim, or anything with the same shape (the hub walker). */
   update(dt, p, combat, realDt = dt) {
+    this.setArmour(p.armourId ?? 'rags');
     this.setWeapon(p.weaponId);
     this.anim.realDt = realDt;
     const o = this._ao ?? (this._ao = { combat: true, weaponTwo: false });

@@ -25,8 +25,9 @@ export const FROG_PALETTES = {
   },
 };
 
-export function buildFrog(variant = 'hero') {
-  const C = FROG_PALETTES[variant] ?? FROG_PALETTES.hero;
+/** @param over palette overrides (armour colours: cloth, metal, trim) */
+export function buildFrog(variant = 'hero', over = null) {
+  const C = { ...(FROG_PALETTES[variant] ?? FROG_PALETTES.hero), ...(over ?? {}) };
   // wet skin, glassy eyes, brass and steel that shine, cloth that doesn't
   const hints = new Map([
     [C.skin, { rough: .36 }], [C.skinDark, { rough: .4 }], [C.belly, { rough: .5 }],

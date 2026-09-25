@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { mergeGeometries, mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PartBuilder: compose many small primitives, each with its own colour, then
@@ -19,7 +19,7 @@ export class PartBuilder {
   constructor(hints = null) { this.parts = []; this.hints = hints; }
 
   _add(geo, color, o = {}) {
-    let g = geo.index ? geo.toNonIndexed() : geo;
+    let g = geo;
     g.deleteAttribute('uv');
     _p.set(o.x ?? 0, o.y ?? 0, o.z ?? 0);
     _e.set(o.rx ?? 0, o.ry ?? 0, o.rz ?? 0, o.order ?? 'XYZ');
@@ -27,6 +27,18 @@ export class PartBuilder {
     _s.set(o.sx ?? 1, o.sy ?? 1, o.sz ?? 1);
     _m.compose(_p, _q, _s);
     g.applyMatrix4(_m);
+    // round things get smooth normals (shared across their faces); boxes and
+    // flat plates keep hard edges, so blades and armour still read crisply
+    const smooth = o.smooth ?? o._round ?? false;
+    if (smooth) {
+      g.deleteAttribute('normal');
+      g = mergeVertices(g, 1e-4);
+      g.computeVertexNormals();
+      g = g.toNonIndexed();
+    } else {
+      g = g.index ? g.toNonIndexed() : g;
+      g.computeVertexNormals();
+    }
     const n = g.attributes.position.count;
     const col = new Float32Array(n * 3);
     _c.set(color);
@@ -44,8 +56,6 @@ export class PartBuilder {
       for (let i = 0; i < n; i++) { col[i * 3] = _c.r; col[i * 3 + 1] = _c.g; col[i * 3 + 2] = _c.b; }
     }
     g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-    // normals are recomputed in the shader (flat shading) but shadows want them
-    g.computeVertexNormals();
     // baked occlusion: faces turned to the ground sit in their own shadow
     const nrm = g.attributes.normal;
     for (let i = 0; i < n; i++) {
@@ -63,11 +73,11 @@ export class PartBuilder {
 
   box(w, h, d, color, o) { return this._add(new THREE.BoxGeometry(w, h, d), color, o); }
   /** Faceted ellipsoid — low-poly spheres read far better than smooth ones here. */
-  blob(rx, ry, rz, color, o = {}) { return this._add(new THREE.IcosahedronGeometry(1, o.detail ?? 1), color, { ...o, sx: rx, sy: ry, sz: rz }); }
-  sphere(r, color, o = {}) { return this._add(new THREE.SphereGeometry(r, o.seg ?? 10, o.rings ?? 7), color, o); }
-  cyl(rt, rb, h, color, o = {}) { return this._add(new THREE.CylinderGeometry(rt, rb, h, o.seg ?? 7), color, o); }
-  cone(r, h, color, o = {}) { return this._add(new THREE.ConeGeometry(r, h, o.seg ?? 6), color, o); }
-  torus(r, t, color, o = {}) { return this._add(new THREE.TorusGeometry(r, t, o.tseg ?? 5, o.seg ?? 12, o.arc ?? Math.PI * 2), color, o); }
+  blob(rx, ry, rz, color, o = {}) { return this._add(new THREE.IcosahedronGeometry(1, o.detail ?? 2), color, { _round: true, ...o, sx: rx, sy: ry, sz: rz }); }
+  sphere(r, color, o = {}) { return this._add(new THREE.SphereGeometry(r, Math.max(o.seg ?? 14, 12), Math.max(o.rings ?? 10, 8)), color, { _round: true, ...o }); }
+  cyl(rt, rb, h, color, o = {}) { return this._add(new THREE.CylinderGeometry(rt, rb, h, Math.max(o.seg ?? 12, 10)), color, { _round: true, ...o }); }
+  cone(r, h, color, o = {}) { return this._add(new THREE.ConeGeometry(r, h, o.seg ?? 10), color, { _round: (o.seg ?? 10) > 5, ...o }); }
+  torus(r, t, color, o = {}) { return this._add(new THREE.TorusGeometry(r, t, Math.max(o.tseg ?? 7, 6), Math.max(o.seg ?? 18, 12), o.arc ?? Math.PI * 2), color, { _round: true, ...o }); }
   /** Flat disc/ring lying in XZ. */
   disc(r, color, o = {}) { return this._add(new THREE.CircleGeometry(r, o.seg ?? 12), color, { rx: -Math.PI / 2, ...o }); }
   /** Extruded 2D outline (x,y points), e.g. a halberd head or a speech bubble. */
@@ -127,7 +137,7 @@ export const ACTOR_ENV = {
 export function actorMaterial(opts = {}, shared = null) {
   const { rim = 0x9fb7d0, rimStrength = 0.35, rough = 0.82, metal = 0.06, wire = false } = opts;
   const mat = new THREE.MeshStandardMaterial({
-    vertexColors: true, flatShading: true, roughness: rough, metalness: metal, wireframe: wire,
+    vertexColors: true, flatShading: false, roughness: rough, metalness: metal, wireframe: wire,
   });
   mat.userData.opts = opts;
   const u = shared ?? {

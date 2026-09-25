@@ -11,6 +11,9 @@
 //             buttons on the right
 // ─────────────────────────────────────────────────────────────────────────────
 
+// combat actions survive frames where the fight doesn't tick (120 Hz screens,
+// hitstop) until a sim step takes them, or 0.3 s passes
+const COMBAT = new Set(['light', 'heavy', 'roll', 'parry', 'heal']);
 const PRESS = ['light', 'heavy', 'roll', 'parry', 'heal', 'lock', 'interact', 'pause', 'up', 'down', 'left', 'right', 'confirm', 'back', 'tap'];
 
 export class Input {
@@ -20,6 +23,7 @@ export class Input {
     this.look = { x: 0, y: 0 };           // accumulated this frame (pixels-ish)
     this.held = { sprint: false, block: false };
     this.pressed = new Set();
+    this.latchT = {};                      // combat presses wait for the fight to use them
     this.device = matchMedia('(pointer: coarse)').matches ? 'touch' : 'kb';
     this.keys = new Set();
     this.mouse = { left: false, right: false, locked: false };
@@ -33,7 +37,7 @@ export class Input {
     if (ui) this._bindTouch(ui);
   }
 
-  press(a) { this.pressed.add(a); }
+  press(a) { this.pressed.add(a); if (COMBAT.has(a)) this.latchT[a] = 0; }
   took(a) { if (this.pressed.has(a)) { this.pressed.delete(a); return true; } return false; }
   has(a) { return this.pressed.has(a); }
 
@@ -125,12 +129,13 @@ export class Input {
       if (!el) return;
       el.addEventListener('pointerdown', (e) => {
         e.preventDefault(); e.stopPropagation(); this.device = 'touch';
+        try { el.setPointerCapture(e.pointerId); } catch { /* old browsers */ }
         el.classList.add('press');
         if (hold) this.touch[hold] = true; else this.press(action);
         navigator.vibrate?.(8);
       });
       const up = () => { el.classList.remove('press'); if (hold) this.touch[hold] = false; };
-      el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('pointerleave', up);
+      el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('lostpointercapture', up);
     };
     btn('#bAtk', 'light'); btn('#bHvy', 'heavy'); btn('#bRoll', 'roll'); btn('#bPar', 'parry');
     btn('#bBlk', null, 'block'); btn('#bHeal', 'heal'); btn('#bLock', 'lock'); btn('#bAct', 'interact'); btn('#bPause', 'pause');
@@ -175,7 +180,11 @@ export class Input {
   }
 
   /** Call once per frame before the game reads input. */
+  /** The fight stepped with these presses: they're used up. */
+  consumeCombat() { for (const a of COMBAT) this.pressed.delete(a); }
+
   update(dt) {
+    this._dt = dt;
     const pad = this._pollPad(dt);
     let mx = 0, my = 0;
     if (this.keys.has('KeyW') || this.keys.has('ArrowUp')) my += 1;
@@ -205,6 +214,11 @@ export class Input {
 
   endFrame() {
     // unconsumed presses live for one frame only; the sim has its own buffer
-    for (const a of PRESS) this.pressed.delete(a);
+    for (const a of PRESS) if (!COMBAT.has(a)) this.pressed.delete(a);
+    for (const a of COMBAT) {
+      if (!this.pressed.has(a)) continue;
+      this.latchT[a] = (this.latchT[a] ?? 0) + (this._dt ?? .016);
+      if (this.latchT[a] > .3) this.pressed.delete(a);
+    }
   }
 }

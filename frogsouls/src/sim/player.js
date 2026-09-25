@@ -1,4 +1,4 @@
-import { WEAPONS } from './weapons.js';
+import { WEAPONS, ARMOURS } from './weapons.js';
 import { angleDiff, clamp, damp, inArc, turnToward, yawTo } from './util.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -82,6 +82,8 @@ export class PlayerSim {
     this.dmgMult = 1 + (s.strength ?? 0) * 0.065;
     this.maxFlasks = 3 + (s.flask ?? 0);
     this.flaskHeal = 0.40 + (s.potency ?? 0) * 0.04;
+    const ar = ARMOURS[s.armour ?? 'rags'] ?? ARMOURS.rags;
+    this.armourId = ar.id; this.armourDef = ar.def; this.armourRegen = ar.regen;
   }
 
   get weapon() { return WEAPONS[this.weaponId]; }
@@ -278,7 +280,7 @@ export class PlayerSim {
 
   _regen(dt, intent) {
     if (this.regenLock > 0) { this.regenLock -= dt; return; }
-    let rate = PLAYER.staminaRegen * (this.mods.staminaRegen ?? 1);
+    let rate = PLAYER.staminaRegen * (this.mods.staminaRegen ?? 1) * (this.armourRegen ?? 1);
     if (this.state === 'block') rate *= PLAYER.blockRegenScale;
     if (this.sprinting) rate = -PLAYER.sprintDrain;
     if (this.state === 'attack' || this.state === 'roll' || this.state === 'parry') rate = 0;
@@ -491,6 +493,7 @@ export class PlayerSim {
   }
 
   _takeDamage(d, hit, blocked = false) {
+    d *= 1 - (this.armourDef ?? 0);
     this.hp -= d;
     this.stats.dmgTaken += d;
     this.lastHitBy = hit.name ?? hit.kind ?? null;

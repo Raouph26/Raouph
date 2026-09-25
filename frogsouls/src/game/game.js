@@ -14,7 +14,7 @@ import { Music } from '../audio/music.js';
 import { UI } from '../ui/ui.js';
 import { Fight, TICK, EMPTY_INTENT } from '../sim/fight.js';
 import { PlayerSim } from '../sim/player.js';
-import { WEAPONS, WEAPON_ORDER } from '../sim/weapons.js';
+import { WEAPONS, WEAPON_ORDER, ARMOURS, ARMOUR_ORDER } from '../sim/weapons.js';
 import { WORLDS, bossForFight, worldOfBoss } from '../content/worlds.js';
 import { BOSSES } from '../content/bosses.js';
 import { STATS, levelCost, totalLevels, flyReward, TOAD_LINES } from '../content/progression.js';
@@ -294,7 +294,7 @@ export class Game {
     let first = true;
     while (this.acc >= TICK) {
       this.interp.snap(f);
-      if (first) f.step(TICK, intent);
+      if (first) { f.step(TICK, intent); this.input.consumeCombat(); }
       else {                                   // presses belong to the first step only
         const q = Object.assign(this._quiet, intent);
         q.light = q.heavy = q.roll = q.parry = q.heal = false;
@@ -574,6 +574,7 @@ export class Game {
     const intent = this._intent(!this.ui.menuOpen && !this.busy);
     intent.lock = false;
     w.update(dt, intent, null);
+    this.input.consumeCombat();
     const lim = 19.2 - w.radius, d = Math.hypot(w.x, w.z);
     if (d > lim) { w.x *= lim / d; w.z *= lim / d; }
     // don't walk through the toad
@@ -627,9 +628,25 @@ export class Game {
       }
       list.push({ html: 'weapons' });
       for (const id of WEAPON_ORDER) {
-        const wpn = WEAPONS[id], owned = S.d.weapons.includes(id), eq = S.d.weapon === id;
-        list.push({ label: wpn.name, sub: owned ? wpn.desc : 'somebody else has this one', cls: eq ? 'equipped' : owned ? 'owned' : '', disabled: !owned,
-          value: eq ? '<b>equipped</b>' : '', action: () => { S.equip(id); this.sfx('uiOk'); this.openShop(pick(TOAD_LINES.equip)); } });
+        const wpn = WEAPONS[id], owned = S.d.weapons.includes(id), eq = S.d.weapon === id, forSale = !owned && wpn.price;
+        list.push({ label: wpn.name, sub: owned || forSale ? wpn.desc : 'somebody else has this one', cls: eq ? 'equipped' : owned ? 'owned' : '',
+          disabled: !owned && (!forSale || S.d.flies < wpn.price),
+          value: eq ? '<b>equipped</b>' : forSale ? `<span class="cost">${wpn.price.toLocaleString()}</span>` : '',
+          action: () => {
+            if (!owned) { if (!S.spend(wpn.price)) { this.sfx('deny'); return this.openShop(pick(TOAD_LINES.poor)); } S.unlockWeapon(id); this.sfx('buy'); }
+            S.equip(id); this.walker?.applyStats(S.stats()); this.sfx('uiOk'); this.openShop(pick(TOAD_LINES.equip));
+          } });
+      }
+      list.push({ html: 'armour' });
+      for (const id of ARMOUR_ORDER) {
+        const ar = ARMOURS[id], owned = S.d.armours.includes(id), worn = S.d.armour === id;
+        list.push({ label: ar.name, sub: ar.desc, cls: worn ? 'equipped' : owned ? 'owned' : '', disabled: !owned && S.d.flies < ar.price,
+          value: worn ? '<b>worn</b>' : owned ? '' : `<span class="cost">${ar.price.toLocaleString()}</span>`,
+          action: () => {
+            if (!owned && !S.spend(ar.price)) { this.sfx('deny'); return this.openShop(pick(TOAD_LINES.poor)); }
+            if (!owned) this.sfx('buy');
+            S.buyArmour(id); this.walker?.applyStats(S.stats()); this.sfx('uiOk'); this.openShop(pick(TOAD_LINES.equip));
+          } });
       }
       list.push({ label: 'leave', action: () => this.closeMenu() });
       return list;
@@ -662,11 +679,26 @@ export class Game {
     this.input.menuMode = true;
     const has = this.save.exists;
     this.ui.openMenu({ cls: 'title', items: [
-      ...(has ? [{ label: 'continue', sub: `${this._progressLine()}`, action: () => this._start(false) }] : []),
-      { label: 'new game', sub: has ? 'starts over — keeps your settings' : 'a small knight, a large problem', action: () => (has ? this._confirmNew() : this._start(true)) },
-      { label: 'settings', action: () => this.openSettings(() => this.showTitle()) },
-      { label: 'controls', action: () => this.openControls(() => this.showTitle()) },
+      { label: 'play', sub: has ? this._progressLine() : 'a small knight, a large problem', action: () => this._start(!has) },
+      ...(has ? [{ label: 'new game', sub: 'starts over — keeps your settings', action: () => this._confirmNew() }] : []),
+      { label: 'options', sub: 'sound · camera · graphics · controls', action: () => this.openOptions(() => this.showTitle()) },
+      { label: 'credits', action: () => this.openCredits() },
     ], onBack: () => {} });
+  }
+
+  openOptions(back) {
+    this.ui.openMenu({ kicker: 'options', title: 'Options', items: [
+      { label: 'settings', sub: 'sound · camera · graphics · tips', action: () => this.openSettings(() => this.openOptions(back)) },
+      { label: 'controls', sub: 'how to not croak', action: () => this.openControls(() => this.openOptions(back)) },
+      { label: 'back', action: back },
+    ], onBack: back });
+  }
+
+  openCredits() {
+    const back = () => this.showTitle();
+    this.ui.openMenu({ kicker: 'credits', title: 'Frogsouls', lead: 'A boss rush for a very small knight. Design, code, animation, sound and music made together with Claude. Every model is built from small shapes; every sound is synthesised live.',
+      side: '<p>no real people were harmed.</p><p>several fake ones were.</p>',
+      items: [{ label: 'back', action: back }], onBack: back });
   }
 
   _progressLine() {

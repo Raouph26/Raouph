@@ -88,4 +88,24 @@ export const WEAPONS = {
   },
 };
 
-export const WEAPON_ORDER = ['cleaver', 'needle', 'banhammer', 'lance', 'doomscroll'];
+// swords the Old Toad sells: variations on the cleaver's moveset
+function variant(base, o) {
+  const tweak = (a) => ({ ...a, startup: +(a.startup * o.speed).toFixed(3), recovery: +(a.recovery * o.speed).toFixed(3),
+    dmg: Math.round(a.dmg * o.dmg), cost: Math.round(a.cost * o.cost), poise: Math.round(a.poise * o.dmg), reach: +(a.reach * o.reach).toFixed(2) });
+  return { ...base, ...o.meta, light: base.light.map(tweak), heavy: base.heavy.map(tweak), run: tweak(base.run), riposte: Math.round(base.riposte * o.dmg) };
+}
+WEAPONS.sabre = variant(WEAPONS.cleaver, { speed: .82, dmg: .8, cost: .8, reach: 1.02,
+  meta: { id: 'sabre', name: 'LILY SABRE', cls: 'sword', desc: 'Light, quick, faintly smells of pond.', guard: .7, stability: .85, trail: 0x9fe8ff, price: 1200 } });
+WEAPONS.greatsword = variant(WEAPONS.cleaver, { speed: 1.28, dmg: 1.5, cost: 1.35, reach: 1.15,
+  meta: { id: 'greatsword', name: 'TOADSTOOL GREATSWORD', cls: 'sword', desc: 'Mostly mushroom. Somehow still sharp.', guard: .9, stability: 1.35, trail: 0xff9a6a, price: 2600 } });
+
+export const WEAPON_ORDER = ['cleaver', 'sabre', 'greatsword', 'needle', 'banhammer', 'lance', 'doomscroll'];
+
+// armour: less damage taken, a slower breath for the heavy ones, and a new look
+export const ARMOURS = {
+  rags:   { id: 'rags',   name: 'TRAVEL TUNIC',  desc: 'Blue. Honest. Not armour.',                     def: 0,   regen: 1,   price: 0,    cloth: 0x33507c, metal: 0x9aa1a8, trim: 0xc99f4c },
+  moss:   { id: 'moss',   name: 'MOSS MAIL',     desc: 'Soft on the outside. Softer inside. −8% damage.', def: .08, regen: 1,   price: 800,  cloth: 0x4f6b2e, metal: 0x7f8f6a, trim: 0xa0b060 },
+  bark:   { id: 'bark',   name: 'BARK PLATE',    desc: 'A tree agreed to this. −15% damage, slower breath.', def: .15, regen: .9, price: 2000, cloth: 0x5a3a22, metal: 0x8a6a4a, trim: 0xd0a050 },
+  gilded: { id: 'gilded', name: 'GILDED PAD',    desc: 'Lily pad, gold leaf, no regrets. −22% damage.', def: .22, regen: .95, price: 4500, cloth: 0x2a2440, metal: 0xe8c060, trim: 0xffe08a },
+};
+export const ARMOUR_ORDER = ['rags', 'moss', 'bark', 'gilded'];

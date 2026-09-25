@@ -5,7 +5,7 @@ import { labelTexture } from '../textures.js';
 // Environment building blocks. Repeated things are instanced: one draw for
 // three hundred reeds. Everything is flat-shaded vertex colour, like the cast.
 
-export const envMat = () => new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: .92, metalness: .02 });
+export const envMat = () => new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: false, roughness: .92, metalness: .02 });
 
 /** Shared clock for everything the wind moves. The stage advances it. */
 export const WIND = { uTime: { value: 0 } };

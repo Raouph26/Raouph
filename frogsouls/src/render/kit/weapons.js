@@ -19,6 +19,27 @@ const BUILDERS = {
       .cone(.1, .18, STEEL, { y: .96, ry: Math.PI / 4, seg: 4 });
     return { base: .08, tip: 1.02 };
   },
+  sabre(b) {
+    grip(b, .24);
+    b.torus(.07, .016, BRASS, { y: .0, rz: Math.PI / 2, arc: Math.PI, seg: 10 })        // knuckle bow
+      .box(.24, .035, .06, BRASS, { y: .02 });
+    for (let i = 0; i < 8; i++) {                                                     // a gently curved blade
+      const t = i / 7;
+      b.box(.075 - t * .03, .13, .022, i % 2 ? STEEL : 0xc8d4dc, { x: t * t * .12, y: .1 + t * .9, rz: -t * .22 });
+    }
+    b.cone(.035, .12, STEEL, { x: .13, y: 1.06, rz: -.3, seg: 4 });
+    return { base: .12, tip: 1.1, tipX: .13 };
+  },
+  greatsword(b) {
+    grip(b, .4);
+    b.box(.5, .08, .12, 0x8a4a3a, { y: .04 })                                          // mushroom-cap guard
+      .blob(.12, .08, .12, 0xd8c8b0, { x: .25, y: .05 }).blob(.12, .08, .12, 0xd8c8b0, { x: -.25, y: .05 })
+      .box(.26, 1.25, .05, STEEL, { y: .72 })
+      .box(.06, 1.15, .06, STEEL_D, { y: .7 })
+      .cone(.15, .26, STEEL, { y: 1.47, ry: Math.PI / 4, seg: 4 })
+      .blob(.05, .03, .02, 0xd84a3a, { x: .08, y: .4, z: .03 }).blob(.04, .025, .02, 0xd84a3a, { x: -.07, y: .6, z: .03 });
+    return { base: .15, tip: 1.58 };
+  },
   needle(b) {
     grip(b, .24);
     b.torus(.085, .014, STEEL_D, { y: .03, rx: Math.PI / 2, seg: 10 })
