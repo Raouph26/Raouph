@@ -15,8 +15,8 @@ import { WIND } from './env/props.js';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const C = (h) => new THREE.Color(h);
-const NUM_KEYS = ['fog', 'exposure', 'key', 'amb', 'rim', 'moon', 'fill', 'bloom', 'vignette', 'sat', 'contrast'];
-const COL_KEYS = ['fogCol', 'skyTop', 'skyHor', 'keyCol', 'ambSky', 'ambGnd', 'rimCol'];
+const NUM_KEYS = ['fog', 'exposure', 'key', 'amb', 'rim', 'moon', 'fill', 'bloom', 'vignette', 'sat', 'contrast', 'sunVis', 'cloud'];
+const COL_KEYS = ['fogCol', 'skyTop', 'skyHor', 'keyCol', 'ambSky', 'ambGnd', 'rimCol', 'glow', 'cloudCol', 'cloudShade'];
 const WHITE = new THREE.Color(0xffffff);
 
 export class Stage {
@@ -75,6 +75,7 @@ export class Stage {
       fog: L.fog, fogCol: C(L.fogCol), skyTop: C(L.skyTop), skyHor: C(L.skyHor), exposure: L.exposure,
       key: L.key, keyCol: C(L.keyCol), amb: L.amb, ambSky: C(L.ambSky), ambGnd: C(L.ambGnd), rim: L.rim, rimCol: C(L.rimCol),
       sun: L.sun, ele: L.ele, moon: L.moon ? 1 : 0, fill: L.fill ?? .3, bloom: L.bloom, vignette: L.vignette, sat: L.sat, contrast: L.contrast,
+      sunVis: L.sunVis ?? 0, cloud: L.cloud ?? 0, glow: C(L.glow ?? L.skyHor), cloudCol: C(L.cloudCol ?? 0xffffff), cloudShade: C(L.cloudShade ?? 0x404040),
       tint: new THREE.Vector3(...L.tint),
     };
   }
@@ -174,6 +175,11 @@ export class Stage {
     this.key.target.position.set(fx, 0, fz);
     this.rim.position.set(-Math.sin(a) * 20, 9, -Math.cos(a) * 20);
     this.sky.u.uTop.value.copy(c.skyTop); this.sky.u.uHor.value.copy(c.skyHor); this.sky.u.uMoon.value = c.moon;
+    const su = this.sky.u;
+    su.uSunDir.value.set(Math.sin(a) * Math.cos(e), Math.sin(e), Math.cos(a) * Math.cos(e)).normalize();
+    su.uSunCol.value.copy(c.keyCol); su.uSun.value = c.sunVis; su.uCloud.value = c.cloud;
+    su.uGlow.value.copy(c.glow); su.uCloudCol.value.copy(c.cloudCol); su.uCloudShade.value.copy(c.cloudShade);
+    this.sunDir = su.uSunDir.value;
     this.ringMat.color.copy(c.keyCol).lerp(WHITE, .3);
     this.water.u.uLightDir.value.set(Math.sin(a), Math.sin(e) + .2, Math.cos(a)).normalize();
 

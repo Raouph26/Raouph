@@ -67,16 +67,40 @@ const upMat = () => new THREE.ShaderMaterial({
   depthTest: false, depthWrite: false,
 });
 
+// light shafts: march from each pixel toward the sun, gathering bright sky
+const shaftMat = () => new THREE.ShaderMaterial({
+  uniforms: { tSrc: { value: null }, uSun: { value: new THREE.Vector2(.5, .5) }, uThresh: { value: .6 }, uAspect: { value: 1 } },
+  vertexShader: VERT,
+  fragmentShader: `
+    uniform sampler2D tSrc; uniform vec2 uSun; uniform float uThresh, uAspect; varying vec2 vUv;
+    float rand(vec2 c){ return fract(sin(dot(c, vec2(12.9898, 78.233))) * 43758.5453); }
+    void main(){
+      vec2 delta = (uSun - vUv) / 28.0;
+      vec2 uv = vUv + delta * rand(vUv * 500.0);
+      vec3 acc = vec3(0.0); float decay = 1.0;
+      for (int i = 0; i < 28; i++) {
+        vec3 c = texture2D(tSrc, uv).rgb;
+        float l = max(max(c.r, c.g), c.b);
+        acc += c * smoothstep(uThresh, uThresh * 2.5, l) * decay;
+        decay *= .965; uv += delta;
+      }
+      float r = length((vUv - uSun) * vec2(uAspect, 1.0));
+      gl_FragColor = vec4(acc / 28.0 * exp(-r * 1.6), 1.0);
+    }`,
+  depthTest: false, depthWrite: false,
+});
+
 const finalMat = () => new THREE.ShaderMaterial({
   uniforms: {
     tScene: { value: null }, tBloom: { value: null }, uBloom: { value: .6 }, uExposure: { value: 1 }, uBloomOn: { value: 1 },
     uTime: { value: 0 }, uSat: { value: 1 }, uContrast: { value: 1 }, uTint: { value: new THREE.Vector3(1, 1, 1) },
     uVignette: { value: .5 }, uGrain: { value: .045 }, uAberration: { value: 0 }, uFlash: { value: 0 }, uHurt: { value: 0 },
     uBlue: { value: 0 }, uFade: { value: 0 }, uAspect: { value: 1 },
+    tShaft: { value: null }, uShaft: { value: 0 }, uShaftCol: { value: new THREE.Color(1, 1, 1) },
   },
   vertexShader: VERT,
   fragmentShader: `
-    uniform sampler2D tScene, tBloom; uniform float uBloom, uExposure, uBloomOn;
+    uniform sampler2D tScene, tBloom, tShaft; uniform float uBloom, uExposure, uBloomOn, uShaft; uniform vec3 uShaftCol;
     uniform float uTime, uSat, uContrast, uVignette, uGrain, uAberration, uFlash, uHurt, uBlue, uFade, uAspect; uniform vec3 uTint;
     varying vec2 vUv;
     float rand(vec2 c){ return fract(sin(dot(c, vec2(12.9898, 78.233))) * 43758.5453); }
@@ -96,7 +120,11 @@ const finalMat = () => new THREE.ShaderMaterial({
         vec2 off = d * uAberration * 0.02;
         c = vec3(hdr(vUv + off).r, hdr(vUv).g, hdr(vUv - off).b);
       } else c = hdr(vUv);
+      if (uShaft > 0.0) c += texture2D(tShaft, vUv).rgb * uShaftCol * uShaft;
       c = srgb(aces(c));
+      // split tone: cool shadows, warm highlights — the filmic look
+      float lum = dot(c, vec3(0.2126, 0.7152, 0.0722));
+      c += (vec3(-.012, .0, .03) * (1.0 - smoothstep(0.0, .45, lum)) + vec3(.03, .012, -.02) * smoothstep(.5, 1.0, lum));
       float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
       c = mix(vec3(l), c, uSat);
       c = (c - 0.5) * uContrast + 0.5;
@@ -120,6 +148,9 @@ export class Post {
     this.scene = rt({ depthBuffer: true, samples: 0 });
     this.down = Array.from({ length: this.levels }, () => rt());
     this.up = Array.from({ length: this.levels - 1 }, () => rt());
+    this.shaftRT = rt();
+    this.shaftM = shaftMat();
+    this.shaft = { on: false, x: .5, y: .5, strength: 0, color: new THREE.Color() };
     this.pre = prefilterMat(); this.dn = downMat(); this.upm = upMat(); this.fin = finalMat();
     this.quad = new FullScreenQuad(this.pre);
     this.bloom = true;
@@ -143,6 +174,7 @@ export class Post {
       bw = Math.max(1, Math.round(bw / 2)); bh = Math.max(1, Math.round(bh / 2));
       this.down[i].setSize(bw, bh);
       if (i < this.levels - 1) this.up[i].setSize(bw, bh);
+      if (i === 1) this.shaftRT.setSize(bw, bh);
     }
   }
 
@@ -184,6 +216,15 @@ export class Post {
       f.tBloom.value = this.scene.texture;
       f.uBloomOn.value = 0;
     }
+    const sh = this.shaft;
+    if (sh.on && sh.strength > .01) {
+      const m = this.shaftM.uniforms;
+      m.tSrc.value = this.bloom ? this.down[0].texture : this.scene.texture;
+      m.uThresh.value = this.bloom ? .5 : 1.2;
+      m.uSun.value.set(sh.x, sh.y); m.uAspect.value = this.w / this.h;
+      this._pass(this.shaftM, this.shaftRT);
+      f.tShaft.value = this.shaftRT.texture; f.uShaft.value = sh.strength; f.uShaftCol.value.copy(sh.color);
+    } else f.uShaft.value = 0;
     f.tScene.value = this.scene.texture;
     f.uAspect.value = this.w / this.h;
     this._pass(this.fin, null);

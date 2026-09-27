@@ -12,7 +12,7 @@ const errs = [];
 p.on('pageerror', (e) => errs.push(e.message));
 await p.goto('http://localhost:5190/', { waitUntil: 'domcontentloaded', timeout: 60000 });
 await p.waitForFunction(() => !!window.__game, null, { timeout: 60000 });
-await p.keyboard.press('KeyX'); await p.waitForTimeout(1500);
+await p.waitForSelector('#bootGo', { state: 'visible', timeout: 60000 }).catch(() => {}); await p.keyboard.press('KeyX'); await p.waitForTimeout(1500);
 for (const id of ids) {
   await p.evaluate((id) => window.__game.startFight(id), id);
   await p.waitForFunction(() => window.__game.phase === 'intro', null, { timeout: 60000 });

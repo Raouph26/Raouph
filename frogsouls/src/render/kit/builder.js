@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries, mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { sculptPrim } from './sculpt.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PartBuilder: compose many small primitives, each with its own colour, then
@@ -16,7 +17,23 @@ export class PartBuilder {
    * @param hints Map<color, {rough, metal}> — surface by colour, so a frog's
    *   skin can be wet and glossy while its tunic stays matte cloth.
    */
-  constructor(hints = null) { this.parts = []; this.hints = hints; }
+  constructor(hints = null) { this.parts = []; this.hints = hints; this.prims = []; this.sculptMin = 0; }
+
+  /** Sculpt mode: thick round parts become distance fields (see sculpt.js). */
+  sculpted(minThick = .05) { this.sculptMin = minThick; return this; }
+
+  _try(kind, args, color, o = {}) {
+    if (!this.sculptMin || o.hard) return false;
+    _p.set(o.x ?? 0, o.y ?? 0, o.z ?? 0);
+    _e.set(o.rx ?? 0, o.ry ?? 0, o.rz ?? 0, o.order ?? 'XYZ');
+    _q.setFromEuler(_e);
+    _s.set(o.sx ?? 1, o.sy ?? 1, o.sz ?? 1);
+    const m = new THREE.Matrix4().compose(_p, _q, _s);
+    const p = sculptPrim(kind, args, m, color, o, this.sculptMin);
+    if (!p) return false;
+    this.prims.push(p);
+    return true;
+  }
 
   _add(geo, color, o = {}) {
     let g = geo;
@@ -71,13 +88,13 @@ export class PartBuilder {
     return this;
   }
 
-  box(w, h, d, color, o) { return this._add(new THREE.BoxGeometry(w, h, d), color, o); }
+  box(w, h, d, color, o) { if (this._try('box', [w, h, d], color, o)) return this; return this._add(new THREE.BoxGeometry(w, h, d), color, o); }
   /** Faceted ellipsoid — low-poly spheres read far better than smooth ones here. */
-  blob(rx, ry, rz, color, o = {}) { return this._add(new THREE.IcosahedronGeometry(1, o.detail ?? 2), color, { _round: true, ...o, sx: rx, sy: ry, sz: rz }); }
-  sphere(r, color, o = {}) { return this._add(new THREE.SphereGeometry(r, Math.max(o.seg ?? 14, 12), Math.max(o.rings ?? 10, 8)), color, { _round: true, ...o }); }
-  cyl(rt, rb, h, color, o = {}) { return this._add(new THREE.CylinderGeometry(rt, rb, h, Math.max(o.seg ?? 12, 10)), color, { _round: true, ...o }); }
-  cone(r, h, color, o = {}) { return this._add(new THREE.ConeGeometry(r, h, o.seg ?? 10), color, { _round: (o.seg ?? 10) > 5, ...o }); }
-  torus(r, t, color, o = {}) { return this._add(new THREE.TorusGeometry(r, t, Math.max(o.tseg ?? 7, 6), Math.max(o.seg ?? 18, 12), o.arc ?? Math.PI * 2), color, { _round: true, ...o }); }
+  blob(rx, ry, rz, color, o = {}) { if (this._try('blob', [], color, { ...o, sx: rx, sy: ry, sz: rz })) return this; return this._add(new THREE.IcosahedronGeometry(1, o.detail ?? 2), color, { _round: true, ...o, sx: rx, sy: ry, sz: rz }); }
+  sphere(r, color, o = {}) { if (this._try('sphere', [r], color, o)) return this; return this._add(new THREE.SphereGeometry(r, Math.max(o.seg ?? 14, 12), Math.max(o.rings ?? 10, 8)), color, { _round: true, ...o }); }
+  cyl(rt, rb, h, color, o = {}) { if (this._try('cyl', [rt, rb, h], color, o)) return this; return this._add(new THREE.CylinderGeometry(rt, rb, h, Math.max(o.seg ?? 12, 10)), color, { _round: true, ...o }); }
+  cone(r, h, color, o = {}) { if ((o.seg ?? 10) > 5 && this._try('cone', [r, h], color, o)) return this; return this._add(new THREE.ConeGeometry(r, h, o.seg ?? 10), color, { _round: (o.seg ?? 10) > 5, ...o }); }
+  torus(r, t, color, o = {}) { if (o.arc == null && this._try('torus', [r, t], color, o)) return this; return this._add(new THREE.TorusGeometry(r, t, Math.max(o.tseg ?? 7, 6), Math.max(o.seg ?? 18, 12), o.arc ?? Math.PI * 2), color, { _round: true, ...o }); }
   /** Flat disc/ring lying in XZ. */
   disc(r, color, o = {}) { return this._add(new THREE.CircleGeometry(r, o.seg ?? 12), color, { rx: -Math.PI / 2, ...o }); }
   /** Extruded 2D outline (x,y points), e.g. a halberd head or a speech bubble. */
@@ -88,7 +105,7 @@ export class PartBuilder {
     return this._add(g, color, o);
   }
 
-  get empty() { return this.parts.length === 0; }
+  get empty() { return this.parts.length === 0 && this.prims.length === 0; }
 
   /** The merged geometry alone (for skinning), or null if nothing was added. */
   geometry() {

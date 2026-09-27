@@ -113,6 +113,19 @@ export class Renderer {
       stage.key.shadow.map?.dispose(); stage.key.shadow.map = null;
     }
     stage.key.castShadow = shadowSize > 0;
+    // light shafts toward the sun, when it's on screen (or just off it)
+    const sh = this.post.shaft;
+    sh.on = false;
+    if (stage.sunDir && g.sunVis > .05 && this.q.bloom) {
+      const v = this._sv ??= new THREE.Vector3();
+      v.copy(stage.sunDir).multiplyScalar(100).add(this.camera.position).project(this.camera);
+      if (v.z < 1) {
+        const off = Math.max(Math.abs(v.x), Math.abs(v.y));
+        sh.on = true; sh.x = v.x * .5 + .5; sh.y = v.y * .5 + .5;
+        sh.strength = g.sunVis * .45 * (1 - Math.min(1, Math.max(0, off - 1) / 1.2)) * (1 - this.fx.fade);
+        sh.color.copy(g.keyCol);
+      }
+    }
     this.post.render(this.scene, this.camera);
   }
 }

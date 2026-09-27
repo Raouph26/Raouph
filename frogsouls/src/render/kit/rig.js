@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { PartBuilder, actorTwin } from './builder.js';
+import { sculpt } from './sculpt.js';
 import { I } from '../anim/pose.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -76,7 +77,7 @@ export function createRig(buildName = 'normal', hints = null) {
 
   const parts = {};
   for (const k of ['pelvis', 'spine', 'chest', 'head', 'upperR', 'foreR', 'handR', 'upperL', 'foreL', 'handL',
-    'thighR', 'shinR', 'footR', 'thighL', 'shinL', 'footL']) parts[k] = new PartBuilder(hints);
+    'thighR', 'shinR', 'footR', 'thighL', 'shinL', 'footL']) parts[k] = new PartBuilder(hints).sculpted(.05);
 
   const rig = {
     spec: S, root, joints, parts, meshes: [],
@@ -97,8 +98,26 @@ export function createRig(buildName = 'normal', hints = null) {
         geo.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
         geos.push(geo);
       };
+      // the sculpted body: every thick part of every joint, in root space
+      const items = [];
+      const boneIndex = (b) => { let i = bones.indexOf(b); if (i < 0) i = bones.push(b) - 1; return i; };
+      for (const k in parts) {
+        const pr = parts[k].prims;
+        if (!pr.length) continue;
+        const sc = rig.partScale[k] ?? 1;
+        const toRoot = joints[k].matrixWorld.clone().multiply(new THREE.Matrix4().makeScale(sc, sc, sc));
+        for (const p of pr) p.m.premultiply(toRoot);
+        items.push({ bone: boneIndex(joints[k]), prims: pr });
+      }
+      // joints that may melt into each other: a bone and its parent joint
+      // (limbs have a hinge group in between, so look two levels up)
+      const near = (a, b) => b.parent === a || b.parent?.parent === a || b.parent?.parent?.parent === a;
+      const adj = (i, j) => near(bones[i], bones[j]) || near(bones[j], bones[i]);
+      const body = sculpt(items, adj, { hints });
       for (const k in parts) { const g = parts[k].geometry(); if (g) add(joints[k], g, rig.partScale[k] ?? 1); }
       for (const e of rig.extraSkin) add(e.bone, e.geo);
+      for (const g of geos) if (!g.index) g.setIndex([...Array(g.attributes.position.count).keys()]);
+      if (body) geos.push(body);
       const geo = mergeGeometries(geos, false);
       for (const g of geos) g.dispose();
       // plain meshes (weapons, bottles, claws) keep `material`; the body gets its skinned twin
