@@ -4,6 +4,7 @@ import { PartBuilder, actorMaterial, glowMaterial } from './builder.js';
 import { screenTexture, labelTexture } from '../textures.js';
 import { buildFrog } from './frog.js';
 import { buildWeapon } from './weapons.js';
+import { hasModel, buildModelCharacter } from './model.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Boss assembly: a humanoid rig dressed from the boss's visual spec — body,
@@ -375,6 +376,13 @@ function buildVacuum(v) {
 export function buildBoss(def) {
   const v = def.visual;
   if (v.body === 'vacuum') return buildVacuum(v);
+  // test hookup: the first boss is the imported model, fighting bare-handed
+  if (def.id === 'duck' && hasModel('broly')) {
+    const m = buildModelCharacter('broly');
+    const base = new THREE.Object3D(), tip = new THREE.Object3D(); tip.position.set(0, -.25, 0);
+    m.rig.joints.handR.add(base, tip);
+    return { kind: 'humanoid', rig: m.rig, root: m.rig.root, material: m.material, weapon: { userData: { base, tip } }, fx: extras(), twoHand: false };
+  }
   if (v.body === 'frog') {
     const f = buildFrog(v.variant ?? 'other');
     const w = buildWeapon(v.weapon ?? 'needle', f.material);

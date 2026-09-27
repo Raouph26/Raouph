@@ -7,7 +7,8 @@ const angs = (process.env.ANG ?? '0.5,2.6').split(',').map(Number);
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const p = await (await b.newContext({ viewport: { width: 520, height: 620 } })).newPage();
 const errs = []; p.on('pageerror', (e) => errs.push(e.message)); p.on('console', (m) => m.type() === 'error' && errs.push(m.text()));
-await p.goto('http://localhost:5190/tools/blank.html');
+await p.goto('http://localhost:5190/tools/blank.html'); await p.waitForTimeout(800);
+if (process.env.POSE) await p.evaluate(() => { window.__POSE = 1; });
 for (const id of ids) for (const a of angs) {
   const t = await p.evaluate(async ([id, a]) => {
     const src = await (await fetch('/src/render/kit/frog.js')).text();
@@ -16,10 +17,16 @@ for (const id of ids) for (const a of angs) {
     const { buildFrog } = await import('/src/render/kit/frog.js');
     const { buildBoss } = await import('/src/render/kit/boss.js');
     const { BOSSES } = await import('/src/content/bosses.js');
+    const M = await import('/src/render/kit/model.js');
+    if (!window.__pre) { await M.preloadModels(); window.__pre = 1; }
+    const { pose } = await import('/src/render/anim/pose.js');
+    const { applyPose } = await import('/src/render/kit/rig.js');
     const t0 = performance.now();
-    let root, h = 1.9;
-    if (id === 'frog') root = buildFrog('hero').rig.root;
-    else { const def = BOSSES[id]; const bb = buildBoss(def); root = bb.root; h = 2.4; }
+    let root, h = 1.9, rig;
+    if (id === 'frog') { rig = buildFrog('hero').rig; root = rig.root; }
+    else if (M.MODEL_CFG[id]) { rig = M.buildModelCharacter(id).rig; root = rig.root; }
+    else { const def = BOSSES[id]; const bb = buildBoss(def); root = bb.root; rig = bb.rig; h = 2.4; }
+    if (window.__POSE && rig) applyPose(rig, pose({ rRaise: 1.3, rOut: .3, rElbow: 1.2, lRaise: .3, lOut: .9, lElbow: .4, rHip: .7, rKnee: 1.0, lHip: -.3, lKnee: .3, spineTwist: .3, lean: .2 }));
     const ms = performance.now() - t0;
     const r = window.__r ??= new THREE.WebGLRenderer({ antialias: true });
     r.setSize(520, 620); document.body.appendChild(r.domElement);

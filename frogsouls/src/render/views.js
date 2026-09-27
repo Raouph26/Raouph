@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { buildFrog } from './kit/frog.js';
+import { hasModel, buildModelCharacter, buildModelSword } from './kit/model.js';
 import { buildWeapon } from './kit/weapons.js';
 import { buildBoss } from './kit/boss.js';
 import { PlayerAnimator, BossAnimator, VacuumAnimator } from './anim/animator.js';
@@ -27,7 +28,7 @@ const TWO_HANDED = new Set(['banhammer', 'lance', 'doomscroll']);
 export class PlayerView {
   constructor(scene) {
     this.scene = scene;
-    this.frog = buildFrog('hero');
+    this.frog = hasModel('hero') ? buildModelCharacter('hero') : buildFrog('hero');
     this.anim = new PlayerAnimator(this.frog);
     scene.add(this.frog.rig.root);
     this.trail = new Trail(scene, 0xc9e27a);
@@ -44,6 +45,7 @@ export class PlayerView {
     const first = this.armourId == null;
     this.armourId = id;
     if (first && id === 'rags') return;
+    if (this.frog.kind === 'model') return;          // imported test model: armour colours don't apply
     const ar = ARMOURS[id] ?? ARMOURS.rags;
     const old = this.frog, yaw = this.anim.yaw;
     this.scene.remove(old.rig.root);
@@ -59,7 +61,7 @@ export class PlayerView {
   setWeapon(id) {
     if (id === this.weaponId) return;
     if (this.weapon) this.frog.rig.joints.socket.remove(this.weapon);
-    this.weapon = buildWeapon(id, this.frog.material);
+    this.weapon = hasModel('sword') ? buildModelSword(this.frog.material) : buildWeapon(id, this.frog.material);
     this.frog.rig.joints.socket.add(this.weapon);
     this.weaponId = id;
     this.trail.setColor(WEAPONS[id]?.trail ?? 0xffffff);
@@ -75,7 +77,7 @@ export class PlayerView {
     this.anim.update(dt, p, o);
     // the dew bottle comes out of the hip and into the hand while drinking
     const inHand = this.anim.drinking > .5;
-    this.frog.bottle.visible = inHand; this.frog.hipDew.visible = !inHand;
+    if (this.frog.bottle) { this.frog.bottle.visible = inHand; this.frog.hipDew.visible = !inHand; }
     this.blob.position.set(p.x, .03, p.z);
     this.blob.material.opacity = .5 / (1 + (p.y ?? 0) * 2);
     const live = p.state === 'attack' && p.atk && p.t >= p.atk.spec.startup * 0.75 && p.t <= p.atk.spec.startup + p.atk.spec.active + 0.05;

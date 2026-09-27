@@ -2,7 +2,7 @@
 // The artifact host supplies <!doctype>, <html>, <head>, <body> and the charset
 // and viewport metas, so the page is the title, styles, script and markup only.
 // Prints the bundle name, which the publish call maps into `files`.
-import { readFileSync, writeFileSync, mkdirSync, copyFileSync, readdirSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync, readdirSync, rmSync, cpSync } from 'node:fs';
 
 const html = readFileSync('dist/index.html', 'utf8');
 const bundle = html.match(/src="\.\/assets\/(index-[^"]+\.js)"/)?.[1];
@@ -23,5 +23,10 @@ rmSync('artifact', { recursive: true, force: true });
 mkdirSync('artifact/assets', { recursive: true });
 writeFileSync('artifact/frogsouls.html', page);
 copyFileSync(`dist/assets/${bundle}`, `artifact/assets/${bundle}`);
+// imported models (and their textures) ride along as published files
+try {
+  mkdirSync('artifact/models', { recursive: true });
+  for (const f of readdirSync('dist/models')) if (f.endsWith('.glb')) writeFileSync(`artifact/models/${f}.txt`, readFileSync(`dist/models/${f}`).toString('base64'));
+} catch {}
 for (const f of readdirSync('dist/assets')) if (f !== bundle) console.warn('extra asset not copied:', f);
 console.log(bundle);

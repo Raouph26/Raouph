@@ -4,3 +4,6 @@ dist/
 smoke.mjs
 artifact/
 t.mjs
+
+# test models from uploads (not part of the game)
+public/models/
