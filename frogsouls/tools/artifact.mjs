@@ -26,7 +26,10 @@ copyFileSync(`dist/assets/${bundle}`, `artifact/assets/${bundle}`);
 // imported models (and their textures) ride along as published files
 try {
   mkdirSync('artifact/models', { recursive: true });
-  for (const f of readdirSync('dist/models')) if (f.endsWith('.glb')) writeFileSync(`artifact/models/${f}.txt`, readFileSync(`dist/models/${f}`).toString('base64'));
+  for (const dir of ['kaykit']) {
+    mkdirSync(`artifact/${dir}`, { recursive: true });
+    for (const f of readdirSync(`dist/${dir}`)) if (f.endsWith('.glb')) writeFileSync(`artifact/${dir}/${f}.txt`, readFileSync(`dist/${dir}/${f}`).toString('base64'));
+  }
 } catch {}
 for (const f of readdirSync('dist/assets')) if (f !== bundle) console.warn('extra asset not copied:', f);
 console.log(bundle);

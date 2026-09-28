@@ -1,6 +1,15 @@
 import * as THREE from 'three';
 import { buildFrog } from './kit/frog.js';
 import { hasModel, buildModelCharacter, buildModelSword } from './kit/model.js';
+import { hasCharacter, AnimatedCharacter, AnimatedPlayer, AnimatedBoss } from './kit/animated.js';
+import { PLAYER } from '../sim/player.js';
+
+/** A KayKit character wearing the same interface the views use for built ones. */
+function kaykit(id) {
+  const ch = new AnimatedCharacter(id);
+  const chest = ch.model.getObjectByName('chest') ?? ch.root;
+  return { ch, rig: { root: ch.root, joints: { chest } }, material: ch.material, kind: 'kaykit', scarf: [] };
+}
 import { buildWeapon } from './kit/weapons.js';
 import { buildBoss } from './kit/boss.js';
 import { PlayerAnimator, BossAnimator, VacuumAnimator } from './anim/animator.js';
@@ -28,8 +37,13 @@ const TWO_HANDED = new Set(['banhammer', 'lance', 'doomscroll']);
 export class PlayerView {
   constructor(scene) {
     this.scene = scene;
-    this.frog = hasModel('hero') ? buildModelCharacter('hero') : buildFrog('hero');
-    this.anim = new PlayerAnimator(this.frog);
+    if (hasCharacter('knight')) {
+      this.frog = kaykit('knight');
+      this.anim = new AnimatedPlayer(this.frog.ch, PLAYER);
+    } else {
+      this.frog = hasModel('hero') ? buildModelCharacter('hero') : buildFrog('hero');
+      this.anim = new PlayerAnimator(this.frog);
+    }
     scene.add(this.frog.rig.root);
     this.trail = new Trail(scene, 0xc9e27a);
     this.frog.material.userData.u.uFlashColor.value.set(0xff7a5c);    // getting hit reads red
@@ -45,7 +59,7 @@ export class PlayerView {
     const first = this.armourId == null;
     this.armourId = id;
     if (first && id === 'rags') return;
-    if (this.frog.kind === 'model') return;          // imported test model: armour colours don't apply
+    if (this.frog.kind === 'model' || this.frog.kind === 'kaykit') return;          // imported test model: armour colours don't apply
     const ar = ARMOURS[id] ?? ARMOURS.rags;
     const old = this.frog, yaw = this.anim.yaw;
     this.scene.remove(old.rig.root);
@@ -60,6 +74,7 @@ export class PlayerView {
 
   setWeapon(id) {
     if (id === this.weaponId) return;
+    if (this.frog.kind === 'kaykit') { this.weapon = this.frog.ch.weapon; this.weaponId = id; this.trail.setColor(WEAPONS[id]?.trail ?? 0xffffff); return; }
     if (this.weapon) this.frog.rig.joints.socket.remove(this.weapon);
     this.weapon = hasModel('sword') ? buildModelSword(this.frog.material) : buildWeapon(id, this.frog.material);
     this.frog.rig.joints.socket.add(this.weapon);
@@ -98,10 +113,15 @@ export class BossView {
   constructor(scene, def) {
     this.scene = scene;
     this.def = def;
-    this.b = buildBoss(def);
-    scene.add(this.b.root);
-    if (this.b.kind === 'vacuum') this.anim = new VacuumAnimator(this.b);
-    else this.anim = new BossAnimator(this.b, def);
+    if (def.id === 'duck' && hasCharacter('barbarian')) {
+      const k = kaykit('barbarian');
+      this.b = { kind: 'kaykit', root: k.root ?? k.rig.root, rig: k.rig, material: k.material, weapon: k.ch.weapon, fx: { spin: [], bob: [], screens: [], glows: [], dots: [], rgb: [] } };
+      this.anim = new AnimatedBoss(k.ch, def);
+      scene.add(this.b.root);
+    } else this.b = buildBoss(def);
+    if (this.anim) { /* set above */ }
+    else if (this.b.kind === 'vacuum') { scene.add(this.b.root); this.anim = new VacuumAnimator(this.b); }
+    else { scene.add(this.b.root); this.anim = new BossAnimator(this.b, def); }
     this.trail = new Trail(scene, def.visual?.accent ?? 0xffc27a, { raw: 8, inner: .45 });
     this.trail.mat.uniforms.uOpacity.value = .6;
     this.flash = 0;
