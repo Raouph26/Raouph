@@ -74,6 +74,23 @@ export class BossSim {
     this.flags = {};               // per-fight scratch for gimmicks
 
     this.gimmick = makeGimmick(def.gimmick, this, fight);
+
+    // ── relentless: bosses fight like bosses ─────────────────────────────────
+    // shorter breathers, heavier hands, far sturdier poise, and a kit that
+    // punishes greed, healing and running away (see _react)
+    this.relentless = opts.relentless ?? true;
+    if (this.relentless) {
+      this.dmgMult *= 1.2;
+      this.maxPoise *= 2.1; this.poise = this.maxPoise;
+      this.cdRange = [this.cdRange[0] * .35, this.cdRange[1] * .4];
+      const body = def.visual?.body;
+      const add = ['punish', 'lunge'];
+      if (body !== 'vacuum' && body !== 'frog') add.push('comet', 'pillars');
+      for (const id of add) if (!this.moves.some((m) => m.id === id)) this.moves.push(getMove(id));
+    }
+    this.pressure = 0;             // your recent hits: too many and it answers
+    this.chain = 0;                // moves strung together without a breather
+    this.reactCd = 0;
   }
 
   get hpFrac() { return this.hp / this.maxHp; }
@@ -107,6 +124,8 @@ export class BossSim {
     r.fired = {};
     r.hold = 0;
     if (s.delay && this.rng.chance(s.delay.chance)) r.hold = this.rng.range(s.delay.min ?? 0.2, s.delay.max);
+    // any melee swing may be held back a beat: rolling on rhythm stops working
+    else if (this.relentless && s.hit?.shape === 'arc' && this.rng.chance(.3)) r.hold = this.rng.range(.15, .45);
     if (s.say) this.speak(s.say, 1.6);
     this._spawnAt('windup');
   }
@@ -125,6 +144,13 @@ export class BossSim {
     for (const f of m.followUps ?? []) {
       if (this.rng.chance(f.chance)) { this.startMove(f.id); return; }
     }
+    // strings: straight into another move, up to three deep
+    if (this.relentless && this.chain < 3 && this.rng.chance(.55 - this.chain * .12)) {
+      const pl = this.fight.player;
+      const mv = this._choose(Math.hypot(pl.x - this.x, pl.z - this.z));
+      if (mv) { this.chain++; this.startMove(mv); return; }
+    }
+    this.chain = 0;
   }
 
   _spawnAt(when) {
@@ -360,12 +386,13 @@ export class BossSim {
 
     const dmg = hit.dmg * (this.flags.damageTaken ?? 1);
     this.hp -= dmg;
+    this.pressure += 1;
     this.fight.emit({ type: 'hit', target: 'boss', x: this.x, z: this.z, dmg, heavy: !!hit.heavy, kind: hit.kind, fx: hit.from?.x, fz: hit.from?.z });
 
     if (this.state !== 'stagger' && this.state !== 'riposted' && this.state !== 'transition') {
       this.poise -= hit.poise * (this.flags.poiseTaken ?? 1);
       this.poiseIdle = 0;
-      if (this.poise <= 0) { this.poise = this.maxPoise; this.stagger(1.75, true, 'poise'); }
+      if (this.poise <= 0) { this.poise = this.maxPoise; this.stagger(this.relentless ? 1.25 : 1.75, true, 'poise'); }
     }
 
     this.gimmick?.afterHit?.(this, this.fight, hit, dmg);
@@ -444,6 +471,9 @@ export class BossSim {
     }
 
     const pl = this.fight.player;
+    this.pressure = Math.max(0, this.pressure - dt * 1.1);
+    this.reactCd -= dt;
+    if (this.relentless && this.reactCd <= 0) this._react(pl);
     switch (this.state) {
       case 'neutral': this._neutral(dt); break;
       case 'move': this._stepMove(dt); break;
@@ -534,12 +564,38 @@ export class BossSim {
     }
   }
 
+  /**
+   * The boss reads you. Greedy strings get a burst in the face, a flask at
+   * range gets a lunge, running away gets chased, and a swing in neutral may
+   * be sidestepped and answered.
+   */
+  _react(pl) {
+    if (!pl.alive) return;
+    const d = Math.hypot(pl.x - this.x, pl.z - this.z);
+    const free = this.state === 'neutral' || (this.state === 'move' && this.run?.phase === 'recovery');
+    if (!free) return;
+    const can = (id) => this.moves.some((m) => m.id === id) && (this.moveCd[id] ?? 0) <= 0;
+    let act = null;
+    if (this.pressure >= 2.2 && d < 4.2 && can('punish') && this.rng.chance(.8)) act = 'punish';
+    else if (pl.state === 'heal' && d > 3.5 && d < 15 && can('lunge')) act = 'lunge';
+    else if (pl.state === 'heal' && d <= 3.5) { this.cd = 0; }
+    else if (pl.state === 'roll' && d > 6 && d < 15 && can('lunge') && this.rng.chance(.35)) act = 'lunge';
+    else if (this.state === 'neutral' && pl.state === 'attack' && pl.t < .12 && d < 3.6 && this.def.visual?.body !== 'vacuum' && this.rng.chance(.3)) {
+      const side = this.rng.chance(.5) ? 1 : -1;
+      this.startDodge(this.yaw + side * Math.PI / 2 + Math.PI * .15 * side, 3.4);
+      this.cd = .05;
+      this.reactCd = 1.2;
+      return;
+    }
+    if (act) { this.pressure = 0; this.chain = 0; this.startMove(act); this.reactCd = act === 'punish' ? 2.5 : 1.5; }
+  }
+
   _choose(d) {
     const forced = this.gimmick?.chooseMove?.(this, this.fight, d);
     if (forced) return forced;
     const items = [];
     for (const m of this.moves) {
-      if ((m.phase ?? 1) > this.phase || (this.moveCd[m.id] ?? 0) > 0 || !m.weight) continue;
+      if ((m.phase ?? 1) > this.phase || (this.moveCd[m.id] ?? 0) > 0 || !m.weight || (m.below && this.hpFrac > m.below)) continue;
       const inBand = d >= m.dist[0] - 0.4 && d <= m.dist[1] + 0.4;
       let w = m.weight * (inBand ? 1 : 0);
       if (m.id === this.lastMove) w *= 0.45;        // avoid predictable repeats

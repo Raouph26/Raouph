@@ -129,6 +129,27 @@ export const MOVES = {
     step(.20, 1.0, .40, { spawn: [{ at: 'active', kind: 'ring', p: { speed: 12, maxR: 7, width: 1.2, dmg: 0, push: 7 } }], sfx: 'roar' }),
   ]},
 
+  // ── relentless kit: every boss gets these (see boss.js) ─────────────────
+  // a burst of light when you get greedy: fast, all around, roll or eat it
+  punish: { tell: 'stomp', dist: [0, 4.5], weight: 0, cd: 2.2, steps: [
+    step(.32, .10, .55, { hit: circle(3.5, 20, { knockdown: true }), track: 0, sfx: 'boom',
+      spawn: [{ at: 'active', kind: 'ring', p: { speed: 13, maxR: 5, width: .9, dmg: 0, push: 6 } }] }),
+  ]},
+  // closes any gap in a heartbeat: backing off to heal is not safe
+  lunge: { tell: 'thrust', dist: [4, 15], weight: 2, cd: 2.6, steps: [
+    step(.40, .20, .55, { hit: arc(3.4, 26, 22), advance: 9, track: 9, trackActive: 1.8, sfx: 'whoosh' }),
+  ]},
+  // up into the sky, then down like a comet where you're about to be
+  comet: { tell: 'leap', dist: [0, 18], weight: 2, cd: 7, below: .6, steps: [
+    step(.55, 1.05, .8, { leap: { height: 9, predict: .55, max: 16 }, hit: circle(3.6, 32, { knockdown: true, landing: true }), track: 8, sfx: 'boom',
+      spawn: [{ at: 'end', kind: 'ring', p: { speed: 9, maxR: 9, width: .8, dmg: 14 } }] }),
+  ]},
+  // pillars of light walking toward you
+  pillars: { tell: 'cast', dist: [3, 20], weight: 2, cd: 6, below: .75, steps: [
+    step(.55, .10, .25, { spawn: [{ at: 'active', kind: 'line', p: { count: 8, spacing: 1.6, delay: .45, delayStep: .09, radius: 1.15, dmg: 20 } }], track: 7, sfx: 'boom' }),
+    step(.30, .10, .6, { spawn: [{ at: 'active', kind: 'line', p: { count: 8, spacing: 1.6, delay: .45, delayStep: .09, radius: 1.15, dmg: 20 } }], track: 9, sfx: 'boom' }),
+  ]},
+
   // ── the other frog uses the frog's own kit ────────────────────────────────
   mLight3: { tell: 'slashR', dist: [0, 3.2], weight: 4, cd: 1.1, rig: 'player', steps: [
     step(.44, .09, .18, { tell: 'thrust', hit: arc(2.9, 28, 12), advance: .9, sfx: 'whooshSmall' }),
