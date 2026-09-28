@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Animated characters: rigged GLB models with their own animation clips
@@ -16,15 +17,33 @@ const BASE = import.meta.env?.BASE_URL ?? './';
 const cache = new Map();
 
 export const CHARACTERS = {
-  knight: { url: 'kaykit/Knight.glb', height: 1.75, show: ['1H_Sword', 'Round_Shield', 'Knight_Helmet', 'Knight_Cape'] },
-  barbarian: { url: 'kaykit/Barbarian.glb', height: 1.9, show: ['2H_Axe', 'Barbarian_Hat', 'Barbarian_Cape'] },
+  knight: { url: 'kaykit/Knight.glb', height: 1.75, show: ['1H_Sword', 'Round_Shield', 'Knight_Helmet', 'Knight_Cape'], idle: 'Idle' },
+  barbarian: { url: 'kaykit/Barbarian.glb', height: 1.9, show: ['2H_Axe', 'Barbarian_Hat', 'Barbarian_Cape'], idle: '2H_Melee_Idle' },
+  // the skeleton bosses: weapons are separate props held in the hand slots
+  skWarrior: { url: 'kaykit/Skeleton_Warrior.glb', height: 1.9, r: 'Skeleton_Axe', l: 'Skeleton_Shield_Large_A', idle: 'Idle_Combat', skeleton: true },
+  skRogue: { url: 'kaykit/Skeleton_Rogue.glb', height: 1.85, r: 'Skeleton_Blade', idle: 'Idle_Combat', skeleton: true },
+  skMage: { url: 'kaykit/Skeleton_Mage.glb', height: 1.9, r: 'Skeleton_Staff', idle: 'Idle_Combat', skeleton: true },
+  skMinion: { url: 'kaykit/Skeleton_Minion.glb', height: 1.8, r: 'Skeleton_Blade', l: 'Skeleton_Shield_Small_A', idle: 'Idle_Combat', skeleton: true },
 };
+const PROPS = ['Skeleton_Axe', 'Skeleton_Blade', 'Skeleton_Staff', 'Skeleton_Shield_Large_A', 'Skeleton_Shield_Small_A'];
+
+/** Which character plays a boss: the barbarian for the first, skeletons by fighting style after that. */
+export function characterForBoss(def) {
+  const body = def.visual?.body;
+  if (body === 'vacuum') return null;
+  if (def.id === 'duck') return 'barbarian';
+  const st = def.style;
+  if (st === 'brute' || st === 'sovereign') return 'skWarrior';
+  if (st === 'caster' || st === 'sweeper') return 'skMage';
+  if (st === 'duelist' || st === 'hound' || st === 'mirror') return 'skRogue';
+  return 'skMinion';
+}
 const WEAPON_NODES = ['1H_Sword', '2H_Sword', '1H_Sword_Offhand', 'Badge_Shield', 'Rectangle_Shield', 'Round_Shield', 'Spike_Shield',
   '1H_Axe', '2H_Axe', '1H_Axe_Offhand', 'Barbarian_Round_Shield', 'Mug', 'Knight_Helmet', 'Knight_Cape', 'Barbarian_Hat', 'Barbarian_Cape'];
 
 // the artifact host serves no .glb: published builds carry them as base64 text
 async function loadGLB(url) {
-  const loader = new GLTFLoader();
+  const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
   if (!import.meta.env?.PROD) return loader.loadAsync(url);
   const r = await fetch(url + '.txt');
   if (!r.ok) throw new Error(url + ' ' + r.status);
@@ -34,10 +53,24 @@ async function loadGLB(url) {
   return loader.parseAsync(u8.buffer, '');
 }
 
+const pending = new Map();
+/** Load one character (and its props) once; later calls share the same promise. */
+export function ensureCharacter(id) {
+  if (cache.has(id)) return Promise.resolve();
+  if (!pending.has(id)) {
+    const c = CHARACTERS[id];
+    const props = [c.r, c.l].filter(Boolean).filter((n) => !cache.has('prop:' + n));
+    pending.set(id, Promise.all([
+      loadGLB(BASE + c.url).then((g) => cache.set(id, g)),
+      ...props.map((n) => loadGLB(BASE + 'kaykit/' + n + '.glb').then((g) => cache.set('prop:' + n, g.scene))),
+    ]).catch((e) => { console.warn('character', id, e.message); pending.delete(id); }));
+  }
+  return pending.get(id);
+}
 export async function preloadCharacters() {
-  await Promise.all(Object.entries(CHARACTERS).map(async ([id, c]) => {
-    try { cache.set(id, await loadGLB(BASE + c.url)); } catch (e) { console.warn('character', id, e.message); }
-  }));
+  await Promise.all(['knight', 'barbarian'].map(ensureCharacter));
+  // the skeletons arrive in the background; a fight that starts first waits for its own
+  setTimeout(() => { for (const id of ['skWarrior', 'skRogue', 'skMage', 'skMinion']) ensureCharacter(id); }, 1500);
 }
 export const hasCharacter = (id) => cache.has(id);
 
@@ -66,8 +99,9 @@ export class AnimatedCharacter {
     this.id = id;
     this.root = new THREE.Group();
     this.model = SkeletonUtils.clone(gltf.scene);
-    for (const n of WEAPON_NODES) { const o = this.model.getObjectByName(n); if (o) o.visible = c.show.includes(n); }
-    const box = new THREE.Box3().setFromObject(this.model);
+    for (const n of WEAPON_NODES) { const o = this.model.getObjectByName(n); if (o) o.visible = (c.show ?? []).includes(n); }
+    this.idle = c.idle ?? 'Idle';
+    const box = new THREE.Box3().setFromObject(this.model, true);
     this.baseScale = c.height / (box.max.y - box.min.y);
     this.model.scale.setScalar(this.baseScale);
     this.root.add(this.model);
@@ -90,8 +124,18 @@ export class AnimatedCharacter {
     this.loco = {};           // looping layers by name, with weights
     this.locoT = 0;
 
+    // separate props go into the hand slots
+    for (const [side, name] of [['r', c.r], ['l', c.l]]) {
+      const src = name && cache.get('prop:' + name);
+      const slot = this.model.getObjectByName('handslot.' + side);
+      if (!src || !slot) continue;
+      const prop = src.clone(true); prop.name = name;
+      prop.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.material = o.material.clone(); } });
+      slot.add(prop);
+    }
     // weapon line for trails: the visible weapon, base → tip along its long axis
-    const wn = c.show.map((n) => this.model.getObjectByName(n)).find((o) => o && /Sword|Axe/.test(o.name));
+    const wn = [...(c.show ?? []), c.r].filter(Boolean).map((n) => this.model.getObjectByName(n)).find((o) => o && /Sword|Axe|Blade|Staff/.test(o.name));
+    this.weaponName = wn?.name;
     this.weapon = { userData: { base: new THREE.Object3D(), tip: new THREE.Object3D() } };
     if (wn) {
       const wb = new THREE.Box3();
@@ -131,45 +175,88 @@ export class AnimatedCharacter {
     return this.strike.get(name);
   }
 
-  /** Play a one-shot clip at an explicit 0..1 point of its length. */
-  pose(name, k, fadeIn = .08) {
+  /** Play a one-shot clip at an explicit time (seconds into the clip). */
+  poseAt(name, t, fadeIn = .1) {
     const a = this.action(name);
     if (!a) return;
-    if (!this.cur || this.cur.name !== name || this.cur.restart) {
-      if (this.cur && this.cur.name !== name) this.prev = { action: this.cur.action, w: this.oneW };
-      this.cur = { name, action: a, fade: fadeIn };
+    const restart = this.cur?.restart;
+    if (!this.cur || this.cur.name !== name || restart) {
+      // crossfade from wherever we were — even from the same clip, via a frozen copy
+      if (this.cur) {
+        const from = this.cur.name === name ? this._ghost(name) : this.cur.action;
+        if (from !== this.cur.action) from.time = this.cur.action.time;
+        this.prev = { action: from, w: 1 };
+      }
+      this.cur = { name, action: a, fade: this.cur ? fadeIn : fadeIn * .8 };
       this.fadeK = 0;
     }
-    a.time = Math.min(.999, Math.max(0, k)) * a.getClip().duration;
+    a.time = Math.min(Math.max(0, t), a.getClip().duration - 1e-3);
     this.want = 1;
   }
 
-  /** Map a sim windup/active/recovery onto a clip so its strike lands on the active frame. */
-  poseStrike(name, phase, k) {
-    const s = this.strikeOf(name);
-    const lead = .06;                                 // the swing is already under way as the hit opens
-    let f;
-    if (phase === 'windup') f = k * (s - lead);
-    else if (phase === 'hold') f = s - lead;
-    else if (phase === 'active') f = s - lead + k * lead * 2;
-    else f = s + lead + k * (1 - s - lead);
-    this.pose(name, f);
+  /** A second action on the same clip (a clip can't crossfade with itself). */
+  _ghost(name) {
+    const key = name + '#ghost';
+    let g = this.actions.get(key);
+    if (!g) {
+      const clip = this.clips.get(name).clone(); clip.name = key;
+      g = this.mixer.clipAction(clip); g.play(); g.paused = true; g.setEffectiveWeight(0);
+      this.actions.set(key, g);
+    }
+    return g;
+  }
+
+  pose(name, k, fadeIn) {
+    const clip = this.clips.get(name);
+    if (clip) this.poseAt(name, k * clip.duration, fadeIn);
+  }
+
+  /**
+   * An attack whose hit must land on the sim's active window. The clip plays
+   * at close to its own speed (0.6×–1.7×): a short wind-up starts part way
+   * into the clip, a long one reaches the strike early and holds there —
+   * the "raised and waiting" of a souls telegraph. After the strike it plays
+   * on at natural speed and fades out when the sim is done with it.
+   * @param t seconds into the current phase; dur that phase's length
+   */
+  poseTimed(name, phase, t, dur) {
+    const clip = this.clips.get(name);
+    if (!clip) return;
+    const D = clip.duration, S = this.strikeOf(name) * D, pre = .03;
+    let time;
+    if (phase === 'windup') {
+      const rate = Math.min(1.7, Math.max(.6, S / Math.max(dur, .01)));
+      const start = Math.max(0, S - pre - dur * rate);
+      time = Math.min(S - pre, start + t * rate);
+    } else if (phase === 'hold') time = S - pre;
+    else if (phase === 'active') time = S - pre + t * Math.max(1, pre * 2 / Math.max(dur, .01));
+    else time = S + pre + t;
+    this.poseAt(name, time, .07);
   }
 
   restart() { if (this.cur) this.cur.restart = true; }
   release() { this.want = 0; }
 
-  /** Loop layer: blend locomotion clips by weight (they run on their own time). */
-  locomotion(dt, weights, rate = 1) {
+  /**
+   * Looping layer. weights: { clip: w }; each clip runs at `rates[clip]`
+   * (speed-matched strides) and walk/run cycles stay in phase.
+   */
+  locomotion(dt, weights, rates = {}) {
     for (const [name, w] of Object.entries(weights)) {
       const a = this.action(name);
       if (!a) continue;
-      a.paused = false; a.timeScale = rate;
+      a.paused = false; a.timeScale = rates[name] ?? 1;
       const L = this.loco[name] ?? (this.loco[name] = { a, w: 0 });
       L.target = w;
     }
+    // walking and running share one gait phase so the blend never scissors
+    const walk = this.loco.Walking_A, run = this.loco.Running_A;
+    if (walk && run && walk.w > .02 && run.w > .02) {
+      const lead = walk.w > run.w ? walk.a : run.a, other = lead === walk.a ? run.a : walk.a;
+      other.time = (lead.time / lead.getClip().duration) * other.getClip().duration;
+    }
     for (const L of Object.values(this.loco)) {
-      L.w += ((L.target ?? 0) - L.w) * (1 - Math.exp(-14 * dt));
+      L.w += ((L.target ?? 0) - L.w) * (1 - Math.exp(-10 * dt));
       L.target = 0;
     }
   }
@@ -177,7 +264,7 @@ export class AnimatedCharacter {
   update(dt) {
     // one-shot layer fades in fast and out a touch slower
     const tgt = this.want ?? 0;
-    this.oneW += (tgt - this.oneW) * (1 - Math.exp(-(tgt > this.oneW ? 28 : 12) * dt));
+    this.oneW += (tgt - this.oneW) * (1 - Math.exp(-(tgt > this.oneW ? 22 : 9) * dt));
     if (this.cur) {
       if (this.cur.restart) this.cur.restart = false;
       this.fadeK = Math.min(1, (this.fadeK ?? 1) + dt / Math.max(this.cur.fade, .001));
@@ -187,8 +274,9 @@ export class AnimatedCharacter {
     const one = this.oneW;
     for (const [name, a] of this.actions) {
       let w = 0;
-      if (this.cur && a === this.cur.action) w = one * (this.fadeK ?? 1);
-      else if (this.prev && a === this.prev.action) w = one * (1 - (this.fadeK ?? 1));
+      const fk = this.fadeK ?? 1, e = fk * fk * (3 - 2 * fk);
+      if (this.cur && a === this.cur.action) w = one * (this.prev ? e : 1);
+      else if (this.prev && a === this.prev.action) w = one * (1 - e);
       const L = this.loco[name];
       if (L) w += (1 - one) * (L.w / Math.max(locoSum, 1e-3));
       a.setEffectiveWeight(w);
@@ -225,6 +313,28 @@ const dodgeClip = (rel) => {
   return rel > 0 ? 'Dodge_Left' : 'Dodge_Right';
 };
 
+/**
+ * Locomotion for either driver: idle ↔ walk ↔ run by speed, strafes and a
+ * back-pedal by direction, every cycle played at the rate that matches its
+ * stride to the ground speed (no skating). `sc` is the character's scale.
+ */
+function locoFor(ch, dt, vx, vz, yaw, sc) {
+  const s = Math.sin(yaw), c = Math.cos(yaw);
+  const fwd = (vx * s + vz * c) / sc, side = (vx * c - vz * s) / sc;
+  const sp = Math.hypot(fwd, side);
+  const move = clamp01(sp / .9), run = clamp01((sp - 2.4) / 1.6);
+  const W = { [ch.idle]: 1 - move }, R = {};
+  if (move > 0) {
+    if (Math.abs(side) > Math.abs(fwd) * 1.3) { const n = side > 0 ? 'Running_Strafe_Left' : 'Running_Strafe_Right'; W[n] = move; R[n] = Math.max(.6, sp / 3.6); }
+    else if (fwd < -.2) { W.Walking_Backwards = move; R.Walking_Backwards = Math.max(.6, sp / 1.7); }
+    else {
+      W.Walking_A = move * (1 - run); W.Running_A = move * run;
+      R.Walking_A = Math.min(1.5, Math.max(.7, sp / 1.8)); R.Running_A = Math.min(1.4, Math.max(.75, sp / 4.8));
+    }
+  }
+  ch.locomotion(dt, W, R);
+}
+
 /** Drives an AnimatedCharacter from the PlayerSim, the way PlayerAnimator drives the frog. */
 export class AnimatedPlayer {
   constructor(ch, PLAYER) { this.ch = ch; this.P = PLAYER; this.yaw = null; this.drinking = 0; this.lastT = 0; this.lastState = null; }
@@ -232,6 +342,7 @@ export class AnimatedPlayer {
   parried() {}
   flinch() {}
   blockHit() {}
+  _loco(dt, vx, vz, yaw) { locoFor(this.ch, dt, vx, vz, yaw, 1); }
   update(dt, p, { combat = true } = {}) {
     const ch = this.ch, P = this.P;
     ch.root.position.set(p.x, p.y ?? 0, p.z);
@@ -241,34 +352,25 @@ export class AnimatedPlayer {
     this.lastT = p.t; this.lastState = p.state;
     if (restarted) ch.restart();
 
-    // locomotion: idle / walk / run / strafe / back, by velocity relative to facing
-    const s = Math.sin(this.yaw), c = Math.cos(this.yaw);
-    const fwd = p.vx * s + p.vz * c, side = p.vx * c - p.vz * s;
-    const sp = Math.hypot(p.vx, p.vz);
-    const run = clamp01((sp - 2.2) / 2), move = clamp01(sp / 1.2);
-    const W = {};
-    W.Idle = 1 - move;
-    if (move > 0) {
-      const back = fwd < -Math.abs(side) * .7, strafe = Math.abs(side) > Math.abs(fwd) * 1.2;
-      if (strafe) W[side > 0 ? 'Running_Strafe_Left' : 'Running_Strafe_Right'] = move;
-      else if (back) W.Walking_Backwards = move;
-      else { W.Walking_A = move * (1 - run); W.Running_A = move * run; }
-    }
-    ch.locomotion(dt, W, 1);
-
+    this._loco(dt, p.vx, p.vz, this.yaw, 1, combat);
     let drinking = 0;
     switch (p.state) {
       case 'attack': {
         const sp2 = p.atk.spec;
-        const ph = p.t < sp2.startup ? 'windup' : p.t < sp2.startup + sp2.active ? 'active' : 'recovery';
-        const k = ph === 'windup' ? p.t / sp2.startup : ph === 'active' ? (p.t - sp2.startup) / sp2.active : (p.t - sp2.startup - sp2.active) / sp2.recovery;
-        ch.poseStrike(PLAYER_ATTACK[sp2.anim] ?? '1H_Melee_Attack_Slice_Horizontal', ph, clamp01(k));
+        const clip = PLAYER_ATTACK[sp2.anim] ?? '1H_Melee_Attack_Slice_Horizontal';
+        if (p.t < sp2.startup) ch.poseTimed(clip, 'windup', p.t, sp2.startup);
+        else if (p.t < sp2.startup + sp2.active) ch.poseTimed(clip, 'active', p.t - sp2.startup, sp2.active);
+        else ch.poseTimed(clip, 'recovery', p.t - sp2.startup - sp2.active, sp2.recovery);
         break;
       }
       case 'roll': ch.pose(dodgeClip(p.rollRel ?? 0), clamp01(p.t / (P.roll.duration + P.roll.recovery)) * .92, .04); break;
       case 'block': ch.pose('Blocking', .5); break;
       case 'parry': { const tot = P.parry.startup + P.parry.window + P.parry.recovery; ch.pose('Block_Attack', clamp01(p.t / tot) * .7, .04); break; }
-      case 'riposte': ch.poseStrike('1H_Melee_Attack_Stab', p.t < .18 ? 'windup' : p.t < .4 ? 'active' : 'recovery', p.t < .18 ? p.t / .18 : p.t < .4 ? (p.t - .18) / .22 : clamp01((p.t - .4) / (P.riposte.duration - .4))); break;
+      case 'riposte':
+        if (p.t < .18) ch.poseTimed('1H_Melee_Attack_Stab', 'windup', p.t, .18);
+        else if (p.t < .4) ch.poseTimed('1H_Melee_Attack_Stab', 'active', p.t - .18, .22);
+        else ch.poseTimed('1H_Melee_Attack_Stab', 'recovery', p.t - .4, 1);
+        break;
       case 'heal': { const k = clamp01(p.t / P.flask.duration); ch.pose('Use_Item', k); drinking = k > .1 && k < .86 ? 1 : 0; break; }
       case 'hurt': ch.pose(this.hurtB ? 'Hit_B' : 'Hit_A', clamp01(p.t / P.hurt), .03); break;
       case 'knockdown': {
@@ -300,6 +402,14 @@ export class AnimatedBoss {
     ch.root.scale.setScalar(.85 * (def.scale ?? 1.6));
   }
   flinch() {}
+  /** Clip for a tell; two-handed chops for the axe men, one-handed cuts for blades. */
+  clipFor(tell) {
+    const one = /Blade|Sword/.test(this.ch.weaponName ?? '');
+    const c = BOSS_TELL[tell] ?? '2H_Melee_Attack_Chop';
+    if (one) return ({ '2H_Melee_Attack_Slice': '1H_Melee_Attack_Slice_Horizontal', '2H_Melee_Attack_Chop': '1H_Melee_Attack_Chop', '2H_Melee_Attack_Stab': '1H_Melee_Attack_Stab' })[c] ?? c;
+    if (this.ch.clips.has('1H_Melee_Attack_Jump_Chop') && tell === 'stomp') return '1H_Melee_Attack_Jump_Chop';
+    return c;
+  }
   update(dt, b) {
     const ch = this.ch;
     ch.root.position.set(b.x, b.y, b.z);
@@ -309,18 +419,7 @@ export class AnimatedBoss {
     const key = b.state + ':' + (an.moveId ?? '') + ':' + an.step;
     if (key !== this.lastKey) { ch.restart(); this.lastKey = key; }
 
-    const sc = .85 * (b.def?.scale ?? 1.6);
-    const sp = Math.hypot(b.vx, b.vz) / sc;
-    const s = Math.sin(this.yaw), c = Math.cos(this.yaw);
-    const side = (b.vx * c - b.vz * s) / sc, fwd = (b.vx * s + b.vz * c) / sc;
-    const move = clamp01(sp / .8), run = clamp01((sp - 2) / 1.5);
-    const W = { '2H_Melee_Idle': 1 - move };
-    if (move > 0) {
-      if (Math.abs(side) > Math.abs(fwd) * 1.2) W[side > 0 ? 'Running_Strafe_Left' : 'Running_Strafe_Right'] = move;
-      else if (fwd < 0) W.Walking_Backwards = move;
-      else { W.Walking_A = move * (1 - run); W.Running_A = move * run; }
-    }
-    ch.locomotion(dt, W, 1);
+    locoFor(ch, dt, b.vx, b.vz, this.yaw, .85 * (b.def?.scale ?? 1.6));
 
     switch (b.state) {
       case 'move': {
@@ -331,15 +430,23 @@ export class AnimatedBoss {
           else ch.pose('Jump_Land', an.k);
         } else if (tell === 'charge' || tell === 'bounce' || tell === 'scuttle') {
           if (an.phase === 'active') { ch.release(); ch.locomotion(dt, { Running_B: 1 }, 1.6); }
-          else ch.poseStrike('2H_Melee_Attack_Chop', an.phase === 'recovery' ? 'recovery' : 'windup', an.phase === 'windup' ? an.k * .4 : an.k);
+          else ch.pose(this.ch.clips.has('Taunt') ? 'Taunt' : 'Cheer', an.k * .5);
         } else if (tell === 'spin' && an.phase === 'active') ch.pose('2H_Melee_Attack_Spinning', (an.k * 2) % 1);
-        else ch.poseStrike(BOSS_TELL[tell] ?? '2H_Melee_Attack_Chop', an.phase, clamp01(an.k));
+        else {
+          const run = b.run, st = run?.step;
+          const clip = this.clipFor(tell);
+          if (!st) ch.release();
+          else if (an.phase === 'windup') ch.poseTimed(clip, 'windup', run.t, st.windup);
+          else if (an.phase === 'hold') ch.poseTimed(clip, 'hold', 0, 1);
+          else if (an.phase === 'active') ch.poseTimed(clip, 'active', run.t - st.windup - run.hold, st.active);
+          else ch.poseTimed(clip, 'recovery', run.t - st.windup - run.hold - st.active, st.recovery);
+        }
         break;
       }
       case 'stagger': ch.pose('Hit_B', clamp01(b.t / Math.max(b.stagDur, .1)), .03); break;
       case 'riposted': ch.pose('Death_A', clamp01(b.t / 1.5) * .95, .03); break;
       case 'getup': ch.pose('Lie_StandUp', clamp01(b.t / .75), .05); break;
-      case 'transition': case 'pause': ch.pose('Cheer', clamp01(b.t / 1.6)); break;
+      case 'transition': case 'pause': ch.pose(ch.clips.has('Taunt') ? 'Taunt' : 'Cheer', clamp01(b.t / 1.6)); break;
       case 'dodge': ch.pose(dodgeClip(angDiff(this.yaw, b.flags.dodgeYaw ?? this.yaw)), clamp01(b.t / .6)); break;
       case 'drink': ch.pose('Use_Item', clamp01(b.t / 1.25)); break;
       case 'dead': ch.pose('Death_A', clamp01(b.t / 1.2)); break;

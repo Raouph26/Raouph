@@ -1,3 +1,4 @@
+import { characterForBoss, ensureCharacter } from '../render/kit/animated.js';
 import * as THREE from 'three';
 import { Renderer } from '../render/renderer.js';
 import { Stage } from '../render/stage.js';
@@ -221,6 +222,9 @@ export class Game {
     await this.ui.fade(1, .4);
     this._leaveFight();
     const { def, hpMult, dmgMult, world } = bossForFight(id, this.save.d.ng);
+    // its model may still be streaming in: wait for it behind the fade (never forever)
+    const cid = characterForBoss(def);
+    if (cid) await Promise.race([ensureCharacter(cid), new Promise((r) => setTimeout(r, 8000))]);
     this.world = world;
     this.fight = new Fight({ boss: def, stats: this.save.stats(), seed: (Math.random() * 1e9) | 0, hpMult, dmgMult });
     this.fightId = id;

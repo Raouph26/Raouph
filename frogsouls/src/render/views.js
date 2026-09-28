@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { buildFrog } from './kit/frog.js';
 import { hasModel, buildModelCharacter, buildModelSword } from './kit/model.js';
-import { hasCharacter, AnimatedCharacter, AnimatedPlayer, AnimatedBoss } from './kit/animated.js';
+import { hasCharacter, AnimatedCharacter, AnimatedPlayer, AnimatedBoss, characterForBoss } from './kit/animated.js';
 import { PLAYER } from '../sim/player.js';
 
 /** A KayKit character wearing the same interface the views use for built ones. */
@@ -113,8 +113,9 @@ export class BossView {
   constructor(scene, def) {
     this.scene = scene;
     this.def = def;
-    if (def.id === 'duck' && hasCharacter('barbarian')) {
-      const k = kaykit('barbarian');
+    const cid = characterForBoss(def);
+    if (cid && hasCharacter(cid)) {
+      const k = kaykit(cid);
       this.b = { kind: 'kaykit', root: k.root ?? k.rig.root, rig: k.rig, material: k.material, weapon: k.ch.weapon, fx: { spin: [], bob: [], screens: [], glows: [], dots: [], rgb: [] } };
       this.anim = new AnimatedBoss(k.ch, def);
       scene.add(this.b.root);
