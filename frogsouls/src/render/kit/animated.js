@@ -14,16 +14,20 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 // ─────────────────────────────────────────────────────────────────────────────
 
 const BASE = import.meta.env?.BASE_URL ?? './';
+/** three.js strips '.', ':', '/', '[' and ']' from node names on load ("hand.r" → "handr"). */
+const byName = (root, name) => root.getObjectByName(name) ?? root.getObjectByName(name.replace(/[\[\].:\/]/g, ''));
 const cache = new Map();
 
+export const STRETCH = { legs: 1.35, torso: 1.12, arms: 1.18 };
+
 export const CHARACTERS = {
-  knight: { url: 'kaykit/Knight.glb', height: 1.75, show: ['1H_Sword', 'Round_Shield', 'Knight_Helmet', 'Knight_Cape'], idle: 'Idle' },
-  barbarian: { url: 'kaykit/Barbarian.glb', height: 1.9, show: ['2H_Axe', 'Barbarian_Hat', 'Barbarian_Cape'], idle: '2H_Melee_Idle' },
+  knight: { url: 'kaykit/Knight.glb', height: 1.95, show: ['1H_Sword', 'Round_Shield', 'Knight_Helmet', 'Knight_Cape'], idle: 'Idle' },
+  barbarian: { url: 'kaykit/Barbarian.glb', height: 2.05, show: ['2H_Axe', 'Barbarian_Hat', 'Barbarian_Cape'], idle: '2H_Melee_Idle' },
   // the skeleton bosses: weapons are separate props held in the hand slots
-  skWarrior: { url: 'kaykit/Skeleton_Warrior.glb', height: 1.9, r: 'Skeleton_Axe', l: 'Skeleton_Shield_Large_A', idle: 'Idle_Combat', skeleton: true },
-  skRogue: { url: 'kaykit/Skeleton_Rogue.glb', height: 1.85, r: 'Skeleton_Blade', idle: 'Idle_Combat', skeleton: true },
-  skMage: { url: 'kaykit/Skeleton_Mage.glb', height: 1.9, r: 'Skeleton_Staff', idle: 'Idle_Combat', skeleton: true },
-  skMinion: { url: 'kaykit/Skeleton_Minion.glb', height: 1.8, r: 'Skeleton_Blade', l: 'Skeleton_Shield_Small_A', idle: 'Idle_Combat', skeleton: true },
+  skWarrior: { url: 'kaykit/Skeleton_Warrior.glb', height: 2.1, r: 'Skeleton_Axe', l: 'Skeleton_Shield_Large_A', idle: 'Idle_Combat', skeleton: true },
+  skRogue: { url: 'kaykit/Skeleton_Rogue.glb', height: 2.0, r: 'Skeleton_Blade', idle: 'Idle_Combat', skeleton: true },
+  skMage: { url: 'kaykit/Skeleton_Mage.glb', height: 2.05, r: 'Skeleton_Staff', idle: 'Idle_Combat', skeleton: true },
+  skMinion: { url: 'kaykit/Skeleton_Minion.glb', height: 1.95, r: 'Skeleton_Blade', l: 'Skeleton_Shield_Small_A', idle: 'Idle_Combat', skeleton: true },
 };
 const PROPS = ['Skeleton_Axe', 'Skeleton_Blade', 'Skeleton_Staff', 'Skeleton_Shield_Large_A', 'Skeleton_Shield_Small_A'];
 
@@ -76,7 +80,7 @@ export const hasCharacter = (id) => cache.has(id);
 
 /** Strike frame of a clip: when the right hand moves fastest (as a 0..1 fraction). */
 function strikeFrac(model, clip) {
-  const hand = model.getObjectByName('handslot.r');
+  const hand = byName(model, 'handslot.r');
   if (!hand) return .45;
   const mixer = new THREE.AnimationMixer(model);
   const act = mixer.clipAction(clip); act.play();
@@ -99,10 +103,30 @@ export class AnimatedCharacter {
     this.id = id;
     this.root = new THREE.Group();
     this.model = SkeletonUtils.clone(gltf.scene);
-    for (const n of WEAPON_NODES) { const o = this.model.getObjectByName(n); if (o) o.visible = (c.show ?? []).includes(n); }
+    for (const n of WEAPON_NODES) { const o = byName(this.model, n); if (o) o.visible = (c.show ?? []).includes(n); }
     this.idle = c.idle ?? 'Idle';
     const box = new THREE.Box3().setFromObject(this.model, true);
-    this.baseScale = c.height / (box.max.y - box.min.y);
+    // taller proportions: KayKit characters are chibi; every frame, after the
+    // clips have posed the rig, the leg, spine and arm bones are lengthened
+    // (the feet and hands are scaled back so they keep their size)
+    this.stretch = [];
+    const S = c.stretch ?? STRETCH;
+    for (const [bone, k, undo] of [['upperleg.l', S.legs, 0], ['upperleg.r', S.legs, 0], ['foot.l', 1 / S.legs, 1], ['foot.r', 1 / S.legs, 1],
+      ['spine', S.torso, 0], ['head', 1 / S.torso, 1], ['upperarm.l', S.arms, 0], ['upperarm.r', S.arms, 0], ['hand.l', 1 / S.arms, 1], ['hand.r', 1 / S.arms, 1]]) {
+      const b = byName(this.model, bone);
+      if (!b) continue;
+      // lengthwise axis: the dominant direction of the child joint's offset
+      const kid = b.children.find((o) => o.isBone);
+      const v = kid ? kid.position : new THREE.Vector3(0, 1, 0);
+      const ax = Math.abs(v.x) > Math.abs(v.y) && Math.abs(v.x) > Math.abs(v.z) ? 'x' : Math.abs(v.y) > Math.abs(v.z) ? 'y' : 'z';
+      this.stretch.push({ b, k, undo, ax });
+    }
+    this.hips = byName(this.model, 'hips');
+    this.legK = S.legs;
+    this._applyStretch();
+    this.model.updateMatrixWorld(true);
+    const box2 = new THREE.Box3().setFromObject(this.model, true);
+    this.baseScale = c.height / (box2.max.y - box2.min.y);
     this.model.scale.setScalar(this.baseScale);
     this.root.add(this.model);
     this.model.traverse((o) => {
@@ -127,14 +151,14 @@ export class AnimatedCharacter {
     // separate props go into the hand slots
     for (const [side, name] of [['r', c.r], ['l', c.l]]) {
       const src = name && cache.get('prop:' + name);
-      const slot = this.model.getObjectByName('handslot.' + side);
+      const slot = byName(this.model, 'handslot.' + side);
       if (!src || !slot) continue;
       const prop = src.clone(true); prop.name = name;
       prop.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.material = o.material.clone(); } });
       slot.add(prop);
     }
     // weapon line for trails: the visible weapon, base → tip along its long axis
-    const wn = [...(c.show ?? []), c.r].filter(Boolean).map((n) => this.model.getObjectByName(n)).find((o) => o && /Sword|Axe|Blade|Staff/.test(o.name));
+    const wn = [...(c.show ?? []), c.r].filter(Boolean).map((n) => byName(this.model, n)).find((o) => o && /Sword|Axe|Blade|Staff/.test(o.name));
     this.weaponName = wn?.name;
     this.weapon = { userData: { base: new THREE.Object3D(), tip: new THREE.Object3D() } };
     if (wn) {
@@ -152,6 +176,20 @@ export class AnimatedCharacter {
       uFlash: { value: 0 }, uFlashColor: { value: new THREE.Color(0xfff2dc) }, uGlow: { value: 0 }, uGlowColor: { value: new THREE.Color(0xffc46a) },
       uDissolve: { value: 0 }, uDissolveColor: { value: new THREE.Color(0xffb35a) }, uRimColor: { value: new THREE.Color() }, uRimStrength: { value: 0 },
     } } };
+  }
+
+  _applyStretch(on = true) {
+    // applied after the clips pose the rig, removed before the next update
+    // (a bone no clip touches would otherwise stretch a bit more every frame)
+    const p = on ? 1 : -1;
+    for (const { b, k, undo, ax } of this.stretch) {
+      const f = k ** p;
+      if (undo) b.scale.multiplyScalar(f);      // hands, feet, head: back to their own size
+      else b.scale[ax] *= f;
+    }
+    // the hips ride higher on longer legs, so the feet stay on the ground
+    if (this.hips) this.hips.position.y *= (1 + (this.legK - 1) * .9) ** p;
+    this.stretched = on;
   }
 
   action(name) {
@@ -284,7 +322,9 @@ export class AnimatedCharacter {
     if (this.fadeK >= 1) this.prev = null;
     if (tgt === 0 && one < .01) this.cur = null;
     this.want = 0;
+    if (this.stretched) this._applyStretch(false);
     this.mixer.update(dt);
+    this._applyStretch();
     // flash / dissolve on the real materials
     const u = this.material.userData.u;
     const f = u.uFlash.value, g = u.uGlow.value;
